@@ -63,6 +63,15 @@ public sealed class ParsedEntry
     /// </summary>
     public List<LabelledText> Extracted { get; set; } = new();
 
+    /// <summary>The entry's tags (a weapon's <c>weapons</c>, which the Strike action reads).</summary>
+    public List<string> Tags { get; set; } = new();
+
+    /// <summary>
+    /// Properties a table gives an item that are not text to redact: the field key and the YAML value as the pack writes it (a bare number, a quoted string, a flow list or map).
+    /// They come from the statistics of a table row and hold no prose.
+    /// </summary>
+    public List<LabelledText> Raw { get; set; } = new();
+
     public string Render() =>
         string.Join('\n', Parts.Select(p =>
             p.Label.Length == 0 ? p.Text
@@ -111,6 +120,11 @@ public sealed class FinalEntry
 
     /// <summary>The extracted labelled fields after redaction, by the target type's field key, in the type's order.</summary>
     public List<LabelledText> Extracted { get; set; } = new();
+
+    public List<string> Tags { get; set; } = new();
+
+    /// <summary>A table's statistics for an item, by field key, as the YAML value the pack writes (see <see cref="ParsedEntry.Raw"/>).</summary>
+    public List<LabelledText> Raw { get; set; } = new();
 }
 
 /// <summary>
@@ -144,7 +158,7 @@ public static partial class EntriesStage
         ["[free-action]"] = ("free", "[free action]"),
     };
 
-    public static List<ParsedEntry> Run(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, string book, IReadOnlyDictionary<string, string>? shipped = null)
+    public static List<ParsedEntry> Run(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, string book, IReadOnlyDictionary<string, string>? shipped = null, IReadOnlyList<SpineNode>? spine = null)
     {
         var compounds = Compounds(blocks, ranges);
         var entries = new List<ParsedEntry>();
@@ -154,6 +168,7 @@ public static partial class EntriesStage
             entries.AddRange(range.Row.Parser switch
             {
                 "rules" => ParseRule(range, slice, book, compounds),
+                "items" => ParseItems(range, slice, blocks, spine ?? throw new DegreesException("The items parser needs the book's bookmarks."), book, compounds),
                 "glossary" => ParseGlossary(range, slice, book, compounds),
                 "actions" => ParseActions(range, slice, book, compounds),
                 // The tradition lists make no entry: they are read past, and counted against the spells (ImportPipeline.CheckSpellCounts).
@@ -173,8 +188,9 @@ public static partial class EntriesStage
             string? keeper = shipped != null && shipped.TryGetValue(group.Key, out var folder) && folders.Contains(folder) ? folder : null;
             if (keeper == null)
             {
-                var plain = group.Where(e => e.Type is not ("action" or "spell")).Select(e => e.Folder).Distinct().ToList();
-                keeper = plain.Count == 1 ? plain[0] : plain.Count == 0 ? group.First(e => e.Type == "action").Folder : null;
+                // Nothing shipped under the id (or no pack to read): what shipping order would give. The entry of the earliest take-list row keeps the slug (the chapters are taken in the order they
+                // were shipped); within one row a rule or any other type keeps it against an action, and an action against a spell. So a run reads the same ids with or without a pack folder.
+                keeper = group.OrderBy(e => e.RowNumber).ThenBy(e => e.Type == "spell" ? 2 : e.Type == "action" ? 1 : 0).ThenBy(e => e.Type, StringComparer.Ordinal).First().Folder;
             }
 
             foreach (var entry in group.Where(e => keeper != null && e.Folder != keeper))
@@ -197,9 +213,42 @@ public static partial class EntriesStage
     {
         var name = range.Own ? range.Row.OwnName ?? range.Row.PathOf(range)[^1] : range.Row.PathOf(range)[^1];
         var entry = NewEntry(range, book, Clean(name), compounds);
-        var reader = new BodyReader(entry, compounds, false, range.Row.TableRows, null, range.Row.Subheadings);
+        if (range.Row.ReadPast)
+        {
+            // A section whose text the row reads past (its blocks are claimed, so they are not left out text, and no entry is made).
+            return new List<ParsedEntry>();
+        }
+
+        var reader = new BodyReader(entry, compounds, false, range.Row.TableRows, null, range.Row.Subheadings, range.Row.ProseBoxes);
+        var skipping = false;
         foreach (var block in slice)
         {
+            // A stat table is the items rows' (see StatTables), and the caption under a picture of an item is no text.
+            if (block.Role == StatTables.Role || (range.Row.ArtLabels && IsArtLabel(block)))
+            {
+                continue;
+            }
+
+            if (range.Row.FoldChildren && block.Role == "entry-header")
+            {
+                // A child section whose title is in the entry-header font is a paragraph of the entry (its title, then its text), or is read past when the row names it.
+                var title = Clean(string.Join(' ', block.Lines));
+                skipping = range.Row.ReadPastChildren.Any(t => t.Equals(title, StringComparison.OrdinalIgnoreCase));
+                if (!skipping)
+                {
+                    reader.EndParagraph();
+                    reader.Read(block with { Role = "body", Lines = new List<string> { title }, Info = null });
+                    reader.EndParagraph();
+                }
+
+                continue;
+            }
+
+            if (skipping)
+            {
+                continue;
+            }
+
             if (range.Row.Subheadings && block.Role == "block-header")
             {
                 // A heading that has no bookmark (a sub-subsection, an activity's name): a paragraph of its own, in title case. A heading with a bracket or a parenthesis in it is a format
@@ -899,7 +948,7 @@ public static partial class EntriesStage
             Type = type ?? range.Row.Target,
             Folder = folder ?? range.Row.FolderName,
             Chapter = range.Row.Chapter,
-            Source = book + " > " + string.Join(" > ", range.Row.PathOf(range)) + (sourceTail == null ? string.Empty : " > " + sourceTail),
+            Source = SpanText.Normalize(book + " > " + string.Join(" > ", range.Row.PathOf(range)) + (sourceTail == null ? string.Empty : " > " + sourceTail)),
             // An actions row's or a spells row's category is for the rule entries it also writes (an action or a spell has no category field).
             Category = type != null ? category : range.Row.Parser == "actions" || range.Row.Boxes.Count > 0 ? null : range.Row.Category,
             Approved = range.Row.Approved,
@@ -1021,7 +1070,10 @@ public static partial class EntriesStage
         /// True for a reader whose body-font blocks (a stat block's lines, the example of how a spell is set out) are set ragged-right with hanging indents, as a feat's text is: they are read in the
         /// run-on way, while the justified rules-font text around them is read as ever.
         /// </param>
-        public BodyReader(ParsedEntry entry, HashSet<string> compounds, bool runOn = false, bool tableRows = false, HashSet<string>? statLabels = null, bool bodyRunOn = false)
+        /// <param name="proseBoxes">
+        /// True for a row that says <see cref="TakeRow.ProseBoxes"/>: a block that opens with a line that is only a bold label is a box of prose (a heading, then ragged lines of text), not a small table, so its lines run on.
+        /// </param>
+        public BodyReader(ParsedEntry entry, HashSet<string> compounds, bool runOn = false, bool tableRows = false, HashSet<string>? statLabels = null, bool bodyRunOn = false, bool proseBoxes = false)
         {
             _entry = entry;
             _compounds = compounds;
@@ -1029,9 +1081,12 @@ public static partial class EntriesStage
             _tableRows = tableRows;
             _stat = statLabels;
             _bodyRunOn = bodyRunOn;
+            _proseBoxes = proseBoxes;
         }
 
         private readonly bool _bodyRunOn;
+
+        private readonly bool _proseBoxes;
 
         private readonly bool _tableRows;
         private readonly HashSet<string>? _stat;
@@ -1097,7 +1152,7 @@ public static partial class EntriesStage
             // A block whose lines start at four or more different places is text set around a piece of art: its set-in lines are not first lines of paragraphs.
             var raggedLeft = block.Info != null && block.Info.Select(x => Math.Round(x.Left / 3)).Distinct().Count() >= 4;
             // A block that opens with a line that is only a bold label is a small table (a title row, then one row to a line) in a run-on row.
-            var rowsBlock = (_runOn || _tableRows) && block.Info is { Count: > 1 } && block.Info[0].Label.Length > 0
+            var rowsBlock = !_proseBoxes && (_runOn || _tableRows) && block.Info is { Count: > 1 } && block.Info[0].Label.Length > 0
                 && SpanText.Normalize(block.Lines[0]).Trim() == SpanText.Normalize(block.Info[0].Label).Trim() && !KnownLabels.Contains(SpanText.Normalize(block.Info[0].Label).Trim().ToLowerInvariant());
             for (var i = 0; i < block.Lines.Count; i++)
             {
@@ -1129,6 +1184,15 @@ public static partial class EntriesStage
                 {
                     startsParagraph = false; // a line set short by the layout, not by the end of a sentence: the text goes on
                 }
+                // A box of prose or a formula in a body block (a row with proseBoxes) wraps with a hanging indent: a line that goes on with an operator, or starts with one, or starts in lowercase after a line
+                // that does not end a sentence, is the same line (a formula is never cut at its plus sign).
+                if (_proseBoxes && block.Role == "body" && _parts.Count > 0 && text.Length > 0 && !text.StartsWith('•') && _parts[^1].Label.Length == 0
+                    && _parts[^1].Text.ToString().TrimEnd() is { Length: > 0 } before
+                    && (text.StartsWith("+ ", StringComparison.Ordinal) || before[^1] is '+' or '=' || (char.IsLower(text[0]) && !".!?:;\"”)".Contains(before[^1]))))
+                {
+                    startsParagraph = false;
+                }
+
                 if (rowsBlock && !(_stat != null && _parts.Count > 0 && text.Length > 0 && char.IsLower(text[0])))
                 {
                     startsParagraph = true; // a table's rows: one line each, whatever the line before it ran to

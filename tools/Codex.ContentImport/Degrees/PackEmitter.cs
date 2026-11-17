@@ -30,6 +30,11 @@ public static class PackEmitter
                 sb.Append("- id: ").Append(Scalar(e.Id, 4)).Append('\n');
                 sb.Append("  name: ").Append(Scalar(e.Name, 4)).Append('\n');
                 sb.Append("  source: ").Append(Scalar(e.Source, 4)).Append('\n');
+                if (e.Tags.Count > 0)
+                {
+                    sb.Append("  tags: [").Append(string.Join(", ", e.Tags.Select(t => Scalar(t, 4)))).Append("]\n");
+                }
+
                 if (e.Description.Length > 0)
                 {
                     sb.Append("  description: ").Append(Scalar(e.Description, 4)).Append('\n');
@@ -86,6 +91,12 @@ public static class PackEmitter
                     properties.Append("    ").Append(x.Label).Append(": ").Append(Scalar(x.Text, 6)).Append('\n');
                 }
 
+                // An item's statistics from a table: the value is already the YAML the field takes (a bare number, a quoted string, a flow map).
+                foreach (var x in e.Raw)
+                {
+                    properties.Append("    ").Append(x.Label).Append(": ").Append(x.Text).Append('\n');
+                }
+
                 if (properties.Length > 0)
                 {
                     sb.Append("  properties:\n").Append(properties);
@@ -97,6 +108,27 @@ public static class PackEmitter
 
         files[ReportFile] = Report(report);
         return files;
+    }
+
+    /// <summary>
+    /// The committed rules pack of the Four Degrees system, found by walking up from the program's folder and from the working folder to a <c>content/systems/four-degrees/packs/rules-core</c> folder;
+    /// null when there is none. It is the one source of stable ids (<see cref="ShippedIds"/>) whether or not a run names a pack folder.
+    /// </summary>
+    public static string? CommittedPackDir()
+    {
+        foreach (var start in new[] { AppContext.BaseDirectory, Directory.GetCurrentDirectory() })
+        {
+            for (var dir = new DirectoryInfo(start); dir != null; dir = dir.Parent)
+            {
+                var candidate = Path.Combine(dir.FullName, "content", "systems", "four-degrees", "packs", "rules-core");
+                if (Directory.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+        }
+
+        return null;
     }
 
     /// <summary>The ids already in a pack folder, each with the folder of its file (<c>&lt;folder&gt;/&lt;folder&gt;.yaml</c>). Nothing else of the files is read.</summary>
@@ -127,6 +159,43 @@ public static class PackEmitter
         }
 
         return result;
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex HomebrewId = new(@"^\s*-\s+(?:\{\s*)?id:\s*[""']?([A-Za-z0-9][A-Za-z0-9_-]*)", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// The ids of the sibling <c>homebrew-core</c> pack (the folder beside the pack folder): every list item of a yaml file there that opens with an id, in the three forms the files use
+    /// (<c>- id: x</c>, <c>- id: "x"</c> and <c>- { id: x, ... }</c>). More than the pack's entries may match (a nested list item), which only makes the clash check stricter.
+    /// </summary>
+    public static HashSet<string> HomebrewIds(string packDir)
+    {
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        var home = Path.Combine(Path.GetFullPath(packDir), "..", "homebrew-core");
+        if (!Directory.Exists(home))
+        {
+            return ids;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(home, "*.yaml", SearchOption.AllDirectories))
+        {
+            foreach (var line in File.ReadLines(file))
+            {
+                var m = HomebrewId.Match(line);
+                if (m.Success)
+                {
+                    ids.Add(m.Groups[1].Value);
+                }
+            }
+        }
+
+        return ids;
+    }
+
+    /// <summary>The ids of the entries that equal an id of the homebrew pack, in any type: the run fails on any (the homebrew ids are invented, and an id may not repeat across types).</summary>
+    public static List<string> HomebrewClashes(IEnumerable<FinalEntry> entries, string packDir)
+    {
+        var homebrew = HomebrewIds(packDir);
+        return entries.Select(e => e.Id).Where(homebrew.Contains).Distinct(StringComparer.Ordinal).OrderBy(i => i, StringComparer.Ordinal).ToList();
     }
 
     private static string Report(IEnumerable<ReportRow> rows)

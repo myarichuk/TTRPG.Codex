@@ -701,6 +701,7 @@ Armor class. With body armor worn: its base plus the Dexterity modifier (limited
 | `typeProperty` | text (a number is text too) | Item properties: the armor type ("light", "medium", "heavy", "shield"), the base AC of body armor, its Dexterity cap (absent: uncapped; 0: no Dexterity), and the flat bonus any item gives. |
 | `baseProperty` | text (a number is text too) | The item property with body armor's base armor class; an item that has it is body armor. Default `armorBase`. |
 | `dexCapProperty` | text (a number is text too) | The item property capping the Dexterity added to body armor (absent: no cap; 0: none added). Default `armorDexCap`. |
+| `dexCapLimitsOnlyBonus` | true or false | True when the cap is a maximum of the Dexterity bonus only: a cap of 0 lets a negative modifier through (the armor does not hide a clumsy wearer's penalty). False (the default): a cap of 0 or less adds no Dexterity either way. |
 | `bonusProperty` | text (a number is text too) | The property with a flat bonus, on any equipped item (a shield, a ring) or on a pick in `bonusLists`. Default `armorClassBonus`. |
 | `shieldType` | text (a number is text too) | The TypeProperty value that marks a shield. |
 | `bonusLists` | list of text (a number is text too) | Lists whose picks may add BonusProperty (a fighting style feat), and the pick property that limits the bonus to wearers of body armor. |

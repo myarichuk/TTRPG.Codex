@@ -35,6 +35,56 @@
   description: "Some armor imposes a penalty on specific skill checks and DCs. If a creature is wearing armor that imparts a skill penalty, that penalty is applied to the creature's Strength- and Dexterity-based skill checks and skill DCs, unless the action has the attack trait."
   properties:
     category: "Skills"
+- id: "armor-class"
+  name: "Armor Class"
+  source: "pc > Chapter 6: Equipment > Armor > Armor Class"
+  description: |-
+    Your Armor Class (AC) measures how well you can defend against attacks. When a creature attacks you, your Armor Class is the DC for that attack roll.
+    Armor Class = 10 + Dexterity modifier (up to your armor's Dex Cap) + proficiency bonus + armor's item
+    bonus to AC + other bonuses + penalties
+    Use your proficiency bonus for the category (light, medium, or heavy) or for the specific type of armor you're wearing. If you're not wearing armor, use your proficiency in unarmored defense.
+  properties:
+    category: "Equipment"
+- id: "armor-specialization-effects"
+  name: "Armor Specialization Effects"
+  source: "pc > Chapter 6: Equipment > Armor > Armor Specialization Effects"
+  description: |-
+    Certain class features can grant you additional benefits with certain armors. This is called an armor specialization effect. The exact effect depends on which armor group your armor belongs to, as listed below.
+    Chain: The armor can bend with a critical hit and absorb some of the blow. Reduce the damage from critical hits by 4 + the value of the armor's potency rune for medium armor, or 6 + the value of the armor's potency rune for heavy armor. This can't reduce the damage to less than the damage rolled for the hit before doubling for a critical hit.
+    Composite: The numerous overlapping pieces of this armor protect you from piercing attacks. You gain resistance to piercing damage equal to 1 + the value of the armor's potency rune for medium armor, or 2 + the value of the armor's potency rune for heavy armor.
+    Leather: The thick second skin of the armor disperses blunt force to reduce bludgeoning damage. You gain resistance to bludgeoning damage equal to 1 + the value of the armor's potency rune for medium armor, or 2 + the value of the armor's potency rune for heavy armor.
+    Plate: The sturdy plate provides no purchase for a cutting edge. You gain resistance to slashing damage equal to 1 + the value of the armor's potency rune for medium armor, or 2 + the value of the armor's potency rune for heavy armor.
+  properties:
+    category: "Equipment"
+- id: "armor-statistics"
+  name: "Armor Statistics"
+  source: "pc > Chapter 6: Equipment > Armor > Armor Statistics"
+  description: |-
+    The Unarmored Defense table provides the statistics for the various forms of protection without wearing armor. The Armor table provides the statistics for suits of armor that can be purchased and worn, organized by category. The columns in both tables provide the following statistics.
+    Category
+    The armor's category—unarmored, light armor, medium armor, or heavy armor—indicates which proficiency bonus you use while wearing the armor.
+    AC Bonus
+    This number is the item bonus you add for the armor when determining Armor Class.
+    Dexterity Modifier Cap (Dex Cap)
+    This number is the maximum amount of your Dexterity modifier that can apply to your AC while you are wearing a given suit of armor. For example, if you have a Dexterity modifier of +4 and you are wearing a suit of half plate, you apply only a +1 bonus from your Dexterity modifier to your AC while wearing that armor.
+    Check Penalty
+    While wearing your armor, you take this penalty to Strength- and Dexterity-based skill checks, except for those that have the attack trait. If you meet the armor's Strength threshold (see Strength below), you don't take this penalty.
+    Speed Penalty
+    While wearing a suit of armor, you take the penalty listed in this entry to your Speed, as well as to any other movement types you have, such as a climb Speed or swim Speed, to a minimum Speed of 5 feet. If you meet the armor's Strength threshold (see below), you reduce the penalty by 5 feet.
+    Strength
+    This entry indicates the Strength modifier at which you are strong enough to overcome some of the armor's penalties. If your Strength modifier is equal to or greater than this value, you no longer take the armor's check penalty, and you decrease the Speed penalty by 5 feet (to no penalty if the penalty was -5 feet, or to a -5-foot penalty if the penalty was -10 feet).
+    Bulk
+    This entry gives the armor's Bulk, assuming you're wearing the armor and distributing its weight across your body. A suit of armor that's carried usually has 1 more Bulk than what's listed here (or 1 Bulk total for armor of light Bulk). An armor's Bulk is increased or decreased if it's sized for creatures that aren't Small or Medium in size.
+    Group
+    Each type of clothing and armor belongs to an armor group, which classifies it with similar types of armor. Some abilities reference armor groups, typically to grant armor specialization effects, which are described in Armor Specialization Effects.
+    Armor Traits
+    The traits for each suit of armor presented in this book appear in this entry.
+    Bulwark: The armor covers you so completely that it provides benefits against some damaging effects. On Reflex saves to avoid a damaging effect, such as a fireball, you add a +3 modifier instead of your Dexterity modifier.
+    Comfort: The armor is so comfortable that you can rest normally while wearing it.
+    Flexible: The armor is pliable and doesn't hinder most actions. You don't apply its check penalty to Acrobatics or Athletics checks.
+    Noisy: This armor is loud and likely to alert others to your presence. The armor's check penalty applies to Stealth checks even if you have the required Strength modifier.
+  properties:
+    category: "Equipment"
 - id: "athletics"
   name: "Athletics"
   source: "pc > Chapter 4: Skills > Skills > Athletics"
@@ -43,6 +93,21 @@
     Escape: When you use the Escape basic action, you can use your Athletics modifier instead of your unarmed attack modifier.
   properties:
     category: "Skills"
+- id: "attack-rolls"
+  name: "Attack Rolls"
+  source: "pc > Chapter 6: Equipment > Weapons > Attack Rolls"
+  description: |-
+    When making an attack roll, determine the result by rolling 1d20 and adding your attack modifier for the weapon or unarmed attack you're using. Modifiers for melee and ranged attacks are calculated differently.
+    Melee attack roll result = d20 roll + Strength modifier (or optionally Dexterity modifier for a finesse weapon) + proficiency bonus + other bonuses + penalties
+    Ranged attack roll result = d20 roll + Dexterity modifier + proficiency bonus + other bonuses + penalties
+  properties:
+    category: "Equipment"
+- id: "attacking-with-a-shield"
+  name: "Attacking With a Shield"
+  source: "pc > Chapter 6: Equipment > Shields > Attacking With a Shield"
+  description: "A shield can be used as a martial weapon for attacks, using the statistics listed for a shield bash on the Martial Melee Weapons table. The shield bash is an option only for shields that weren't designed to be used as weapons. A shield can't have runes added to it. You can also buy and attach a shield boss or shield spikes to a shield to make it a more practical weapon. These can also be found on the Martial Melee Weapons table. These work like other weapons and can even be etched with runes."
+  properties:
+    category: "Equipment"
 - id: "basic-competence"
   name: "Basic Competence"
   source: "pc > Chapter 4: Skills > Skills > Performance"
@@ -55,6 +120,62 @@
   description: "If a spell's Defenses entry specifies a \"basic\" saving throw, the spell's potential effects all relate to the damage listed in the spell's description. The target takes no damage on a critical success, half damage on a success, full damage on a failure, or double damage on a critical failure."
   properties:
     category: "Spells"
+- id: "bulk"
+  name: "Bulk"
+  source: "pc > Chapter 6: Equipment > Bulk"
+  description: "Carrying especially heavy or unwieldy items can make it more difficult for you to move, as can overloading yourself with too much gear. The Bulk value of an item reflects how difficult the item is to handle, representing its size, weight, and general awkwardness. If you have a high Strength modifier, you usually don't need to worry about Bulk unless you're carrying numerous substantial items."
+  properties:
+    category: "Equipment"
+- id: "bulk-conversions-for-different-sizes"
+  name: "Bulk Conversions for Different Sizes"
+  source: "pc > Chapter 6: Equipment > Items and Sizes > Bulk Conversions for Different Sizes"
+  description: |-
+    As shown in the Bulk Conversions table, Large or larger creatures are less encumbered by bulky items than Small or Medium creatures, while Tiny creatures become overburdened more quickly. A Large creature treats 10 items of 1 Bulk as 1 Bulk, a Huge creature treats 10 items of 2 Bulk as 1 Bulk, and so on. A Tiny creature treats 10 items of negligible Bulk as 1 Bulk. Negligible items work in a similar way—a Huge creature treats items of 1 Bulk as negligible, so it can carry any number of items of 1 Bulk. A Tiny creature doesn't treat any items as having negligible Bulk.
+    Bulk Conversions
+    Creature Bulk Treats Treats as
+    Size Limit as Light Negligible
+    Tiny Half — none
+    Small or Med. Standard L —
+    Large x2 1 Bulk L
+    Huge x4 2 Bulk 1 Bulk
+    Gargantuan x8 4 Bulk 2 Bulk
+  properties:
+    category: "Equipment"
+- id: "bulk-limits"
+  name: "Bulk Limits"
+  source: "pc > Chapter 6: Equipment > Bulk > Bulk Limits"
+  description: |-
+    You can carry an amount of Bulk equal to 5 plus your Strength modifier without penalty; if you carry more, you gain the encumbered condition. You can't hold or carry more Bulk than 10 plus your Strength modifier.
+    Encumbered
+    You are carrying more weight than you can manage. While you're encumbered, you're clumsy 1 and take a -10-foot penalty to all your Speeds. As with all penalties to your Speed, this can't reduce your Speed below 5 feet.
+  properties:
+    category: "Equipment"
+- id: "bulk-of-coins"
+  name: "Bulk of Coins"
+  source: "pc > Chapter 6: Equipment > Bulk > Bulk of Coins"
+  description: "Coins are a popular means of exchange due to their portability, but they can still add up. A thousand coins of any denomination or combination of denominations count as 1 Bulk. It's not usually necessary to determine the Bulk of coins in fractions of 1,000; simply round down fractions of 1,000. In other words, 100 coins don't count as a light item, and 1,999 coins are 1 Bulk, not 2."
+  properties:
+    category: "Equipment"
+- id: "bulk-of-creatures"
+  name: "Bulk of Creatures"
+  source: "pc > Chapter 6: Equipment > Bulk > Bulk of Creatures"
+  description: |-
+    You might need to know the Bulk of a creature, especially if you need to carry someone. This table lists the typical Bulk of a creature, but the GM might adjust this number.
+    Size of Creature Bulk
+    Tiny 1
+    Small 3
+    Medium 6
+    Large 12
+    Huge 24
+    Gargantuan 48
+  properties:
+    category: "Equipment"
+- id: "bulk-values"
+  name: "Bulk Values"
+  source: "pc > Chapter 6: Equipment > Bulk > Bulk Values"
+  description: "Items can have a number to indicate their Bulk value, or they can be light (indicated by an L) or negligible (indicated by a —) for the purpose of determining Bulk. For instance, full plate armor is 4 Bulk, a longsword is 1 Bulk, a dagger or scroll is light, and a piece of chalk is negligible. Ten light items count as 1 Bulk, and you round down fractions (so 9 light items count as 0 Bulk, and 11 light items count as 1 Bulk). Items of negligible Bulk don't count toward Bulk unless you try to carry vast numbers of them, as determined by the GM."
+  properties:
+    category: "Equipment"
 - id: "cantrips"
   name: "Cantrips"
   source: "pc > Chapter 7: Spells > Cantrips"
@@ -63,6 +184,12 @@
     A cantrip is always automatically heightened to half your level, rounded up. For a typical spellcaster, this means its rank is equal to the highest rank of spell slot you have.
   properties:
     category: "Spells"
+- id: "carrying-items"
+  name: "Carrying Items"
+  source: "pc > Chapter 6: Equipment > Carrying Items"
+  description: "A character carries items in three ways: held, worn, and stowed. Held items are in your hands; a character typically has two hands, allowing them to hold an item in each hand or a single two-handed item using both hands. Worn items are tucked into pockets, belt pouches, bandoliers, weapon sheaths, and so forth, and they can be retrieved and returned relatively quickly. Stowed items are in a backpack or a similar container, and they are more difficult to access."
+  properties:
+    category: "Equipment"
 - id: "casting-rituals"
   name: "Casting Rituals"
   source: "pc > Chapter 7: Spells > Spell Lists > Rituals > Casting Rituals"
@@ -116,6 +243,17 @@
     **Critical Failure.** As failure, and you reduce the degree of success of the primary skill check by one step.
   properties:
     category: "Spells"
+- id: "coins-and-currency"
+  name: "Coins and Currency"
+  source: "pc > Chapter 6: Equipment > Coins and Currency"
+  description: |-
+    Though you might be able to barter valuable items in some areas, currency is the most versatile way to make transactions when you head to market. The most common currency is coins. There are four common types of coins, each standardized in weight and value.
+    • The copper piece (cp) is worth one-tenth of a silver piece.
+    • The silver piece (sp) is the standard unit of currency. Each silver piece is a standard weight of silver and is typically accepted by any merchant or kingdom no matter where it was minted.
+    • The gold piece (gp) is often used for purchasing magic items and other expensive items, as 1 gold piece is worth 10 silver pieces or 100 copper pieces.
+    • The platinum piece (pp) is used for the purchase of very expensive items or as a way to easily transport large sums of currency. A platinum piece is worth 10 gold pieces, 100 silver pieces, or 1,000 copper pieces.
+  properties:
+    category: "Equipment"
 - id: "condition-values"
   name: "Condition Values"
   source: "pc > Conditions Appendix > Condition Values"
@@ -191,6 +329,46 @@
     17 10 45,000 gp
   properties:
     category: "Spells"
+- id: "critical-hits"
+  name: "Critical Hits"
+  source: "pc > Chapter 6: Equipment > Weapons > Critical Hits"
+  description: "When you make a Strike with a weapon or unarmed attack and succeed with a natural 20 (the number on the die is 20), or if the result of your attack exceeds the target's AC by 10, you achieve a critical success (also known as a critical hit). If you critically succeed at a Strike, your attack deals double damage."
+  properties:
+    category: "Equipment"
+- id: "critical-specialization"
+  name: "Critical Specialization"
+  source: "pc > Chapter 6: Equipment > Weapons > Critical Specialization"
+  description: |-
+    Certain effects can grant you benefits when you make a Strike with certain weapons and get a critical success. This is called a critical specialization effect. The exact effect depends on which weapon group your weapon belongs to, as listed below. You can always decide not to add the critical specialization effect of your weapon.
+    Axe: Choose one creature adjacent to the initial target and within reach. If its AC is lower than your attack roll result for the critical hit, you deal damage to that creature equal to the result of the weapon damage die you rolled (including extra dice for its striking rune, if any). This amount isn't doubled, and no bonuses or other additional dice apply to this damage.
+    Bomb: Increase the radius of the bomb's splash damage (if any) to 10 feet.
+    Bow: If the target of the critical hit is adjacent to a surface, it gets stuck to that surface by the missile. The target is immobilized and must spend an Interact action to attempt a DC 10 Athletics check to pull the missile free; it can't move from its space until it succeeds. The creature doesn't become stuck if it is incorporeal, is liquid, or could otherwise escape without effort (such as by being large enough that the missile would not be an impediment.)
+    Brawling: The target must succeed at a Fortitude save against your class DC or be slowed 1 until the end of your next turn.
+    Club: You knock the target up to 10 feet in a straight line away from you, in a direction of your choice. This is forced movement.
+    Crossbow: The target takes 1d8 persistent bleed damage. You gain an item bonus to this bleed damage equal to the weapon's item bonus to attack rolls.
+    Dart: The target takes 1d6 persistent bleed damage. You gain an item bonus to this bleed damage equal to the weapon's item bonus to attack rolls.
+    Flail: The target is knocked prone unless they succeed at a Reflex save against your class DC.
+    Hammer: The target is knocked prone unless they succeed at a Fortitude save against your class DC.
+    Knife: The target takes 1d6 persistent bleed damage. You gain an item bonus to this bleed damage equal to the weapon's item bonus to attack rolls.
+    Pick: The weapon viciously pierces the target, who takes 2 additional damage per weapon damage die.
+    Polearm: The target is moved 5 feet in a direction of your choice. This is forced movement.
+    Shield: You knock the target back from you 5 feet. This is forced movement.
+    Sling: The target must succeed at a Fortitude save against your class DC or be stunned 1.
+    Spear: Weapons of this type pierce the target, weakening its attacks. The target is clumsy 1 until the start of your next turn.
+    Sword: The target is made off-balance by your attack, becoming off-guard until the start of your next turn.
+  properties:
+    category: "Equipment"
+- id: "damage-rolls"
+  name: "Damage Rolls"
+  source: "pc > Chapter 6: Equipment > Weapons > Damage Rolls"
+  description: |-
+    When the result of your attack roll with a weapon or unarmed attack equals or exceeds your target's AC, you hit your target! Roll the weapon or unarmed attack's damage die and add the relevant modifiers, bonuses, and penalties to determine the amount of damage you deal. Calculate a damage roll as follows.
+    Melee damage roll = damage die of weapon or unarmed attack + Strength modifier + bonuses + penalties
+    Ranged damage roll = damage die of weapon (+ Strength modifier for a thrown weapon or half Strength modifier for a propulsive weapon) + bonuses + penalties
+    Ranged weapons don't normally add an attribute modifier to the damage roll, though weapons with the propulsive trait add half your Strength modifier (or your full modifier if it is a negative number), and thrown weapons add your full Strength modifier.
+    Magic weapons with striking, greater striking, or major striking runes add one or more weapon damage dice to your damage roll. These extra dice are the same die size as the weapon's damage die. At higher levels, most characters also gain extra damage from weapon specialization.
+  properties:
+    category: "Equipment"
 - id: "deception"
   name: "Deception"
   source: "pc > Chapter 4: Skills > Skills > Deception"
@@ -221,6 +399,38 @@
   description: "Some abilities and spells can disrupt a spell, causing it to have no effect and be lost. When you lose a spell, you've already expended the spell slot and spent the spell's costs and actions. If a spell is disrupted during a Sustain action, the spell immediately ends."
   properties:
     category: "Spells"
+- id: "donning-and-removing-armor"
+  name: "Donning and Removing Armor"
+  source: "pc > Chapter 6: Equipment > Armor > Donning and Removing Armor"
+  description: "Getting in and out of armor is time consuming—so make sure you're wearing it when you need it! Donning and removing armor are both activities involving many Interact actions. It takes 1 minute to don light armor, 5 minutes to don medium or heavy armor, and 1 minute to remove any armor."
+  properties:
+    category: "Equipment"
+- id: "dragging"
+  name: "Dragging"
+  source: "pc > Chapter 6: Equipment > Bulk > Dragging"
+  description: "In some situations, you might drag an object or creature rather than carry it. If you're dragging something, treat its Bulk as half. Typically, you can drag one thing at a time, you must use both hands to do so, and you drag slowly—roughly 50 feet per minute. Use the total Bulk of what you're dragging, for instance, if you're dragging a sack filled with treasure, total the Bulk of everything inside."
+  properties:
+    category: "Equipment"
+- id: "drawing-and-stowing-items"
+  name: "Drawing and Stowing Items"
+  source: "pc > Chapter 6: Equipment > Carrying Items > Drawing and Stowing Items"
+  description: |-
+    Drawing a worn item or changing how you're carrying an item usually requires you to use an Interact action (or sometimes the Release action). Many ways of using items require you to spend multiple actions. For example, drinking a potion worn at your belt requires using an Interact action to draw it and then using a second action to drink it as described in its Activate entry.
+    The number of hands you need to Interact is usually clear, and if it changes during the action the action takes the maximum number of hands needed during it. The GM decides if it's unclear. You can draw, pick up, or hold an item that needs two hands using only one hand, but you need to subsequently change your grip to hold it in two hands if you want to wield or use it.
+    Interact
+    You can use the Interact action to:
+    • Draw, put away, or swap an item. You must be holding the item to put it away or wearing it to draw it. Swapping allows you to put away one item and draw another in the same action (such as putting away a dagger and drawing a mace). Abilities that specify what you do when you Interact only allow this if they say so; the Quick Draw feat lets a rogue Interact to draw a weapon, but doesn't allow them to stow one as well. Swapping lets you swap only one item for another; if you were wielding two weapons, you could put away one of them and draw a different item, but you would need to put away the second weapon separately.
+    • Pick up an item from the ground.
+    • Pass off or take a held item from a willing creature. The creature you're passing to must have a hand free. You can also attempt to throw an item to someone. You typically need to succeed at a DC 15 ranged attack with a 10-foot range increment to do so.
+    • Detach a shield or other item from you using one hand.
+    • Change your grip by adding a hand to an item.
+    • Retrieve a stowed item from a backpack, pouch, or similar container (or put one away). You'll often need to Interact to open or close the backpack or container.
+    Release
+    You can use the Release free action to:
+    • Drop an item to the ground.
+    • Change your grip by removing a hand from an item.
+  properties:
+    category: "Equipment"
 - id: "durations"
   name: "Durations"
   source: "pc > Chapter 7: Spells > Durations"
@@ -236,6 +446,20 @@
   description: "A ritual's effect depends on the result of the primary check. If an effect lists a save DC, use your spell DC for the ritual's magic tradition (or 12 + your level + your highest mental attribute modifier, if you don't have a spell DC)."
   properties:
     category: "Spells"
+- id: "equipment"
+  name: "Equipment"
+  source: "pc > Chapter 6: Equipment"
+  description: |-
+    Your character starts out with 15 gold pieces (150 silver pieces) to spend on any common items from this chapter. Items with an uncommon rarity can be purchased only if you have special access from abilities you selected during character creation or your GM gives you permission to purchase them.
+    Once you've purchased your starting items, there are three main ways to gain new items and equipment: you can find them during an adventure, make them using the Crafting skill, or purchase them from a merchant.
+  properties:
+    category: "Equipment"
+- id: "estimating-an-item-s-bulk"
+  name: "Estimating an Item's Bulk"
+  source: "pc > Chapter 6: Equipment > Bulk > Estimating an Item's Bulk"
+  description: "Generally, an item that weighs 5 to 10 pounds is 1 Bulk, an item weighing less than a few ounces is negligible, and anything in between is light. Particularly unwieldy items might have higher Bulk values. For example, a 10-foot pole isn't heavy, but its length makes it awkward to manage, so its Bulk is 1. Items made for larger or smaller creatures have greater or lesser Bulk."
+  properties:
+    category: "Equipment"
 - id: "exploration-and-downtime-activities"
   name: "Exploration and Downtime Activities"
   source: "pc > Chapter 4: Skills > Skill Checks and DCs > Exploration and Downtime Activities"
@@ -291,6 +515,12 @@
     If you want to identify a spell but don't have it prepared or in your repertoire, you must spend an action on your turn attempting to identify it using Recall Knowledge. You typically notice a spell being cast due to its sensory spell manifestations. Identifying long-lasting spells that are already in place requires using Identify Magic instead of Recall Knowledge because you don't have the advantage of watching the spell being cast.
   properties:
     category: "Spells"
+- id: "improvised-weapons"
+  name: "Improvised Weapons"
+  source: "pc > Chapter 6: Equipment > Weapons > Improvised Weapons"
+  description: "If you attack with something that wasn't built to be a weapon, such as a chair or a vase, you're making an attack with an improvised weapon. Improvised weapons are simple weapons. You take a -2 item penalty to attack rolls with an improvised weapon. The GM determines the amount and type of damage the attack deals, if any, as well as any weapon traits that the improvised weapon should have."
+  properties:
+    category: "Equipment"
 - id: "income-earned"
   name: "Income Earned"
   source: "pc > Chapter 4: Skills > General Skill Actions"
@@ -338,12 +568,65 @@
   description: "You bend others to your will using threats. Unlike Deception or Diplomacy, Intimidation is typically a blunt instrument with little room for nuance or care."
   properties:
     category: "Skills"
+- id: "item-damage"
+  name: "Item Damage"
+  source: "pc > Chapter 6: Equipment > Item Damage"
+  description: |-
+    An item can be broken or destroyed if it takes enough damage. Every item has a Hardness value. Each time an item takes damage, reduce any damage the item takes by its Hardness. The rest of the damage reduces the item's Hit Points. Normally an item takes damage only when a creature is directly attacking it—commonly targeted items include doors and traps. A creature that attacks you doesn't normally damage your armor or other gear, even if it hits you. However, the Shield Block reaction can cause your shield to take damage as you use it to prevent damage to yourself, and some monsters have exceptional abilities that can damage your items.
+    An item that takes damage can become broken and eventually destroyed. It becomes broken when its Hit Points are equal to or lower than its Broken Threshold (BT); once its Hit Points are reduced to 0, it is destroyed. A broken item has the broken condition until Repaired above its Broken Threshold. Anything that automatically makes an item broken immediately reduces its Hit Points to its Broken Threshold if the item had more Hit Points than that when the effect occurred. If an item has no Broken Threshold, then it has no relevant changes to its function due to being broken, but it's still destroyed at 0 Hit Points. A destroyed item can't be Repaired.
+    An item's Hardness, Hit Points, and Broken Threshold usually depend on the material the item is made of.
+  properties:
+    category: "Equipment"
+- id: "item-level"
+  name: "Item Level"
+  source: "pc > Chapter 6: Equipment > Item Level"
+  description: "Each item has an item level, which represents the item's complexity and any magic used in its construction. Simpler items with a lower level are easier to construct, and you can't Craft items that have a higher level than your own. If an item's level isn't listed, its level is 0. While characters can use items of any level, GMs should keep in mind that allowing characters access to items far above their current level may have a negative impact on the game."
+  properties:
+    category: "Equipment"
+- id: "items-and-sizes"
+  name: "Items and Sizes"
+  source: "pc > Chapter 6: Equipment > Items and Sizes"
+  description: |-
+    The Bulk rules in this chapter are for Small and Medium creatures, as most ancestries are these sizes; however, other uncommon or rare ancestries might be larger or smaller and require items specially made for creatures of those sizes. Large creatures can carry more, and smaller creatures can carry less, as noted on the Bulk Conversions table.
+    These rules for Bulk limits come up most often when a group tries to load up a mount or animal companion. The rules for items of different sizes tend to come into play when the characters defeat a big creature that has gear, since usually the only creatures of other sizes are creatures under the GM's control.
+    In most cases, Small or Medium creatures can wield a Large weapon, though it's unwieldy, giving them the clumsy 1 condition, and the larger size is canceled by the difficulty of swinging the weapon, so it grants no special benefit. Large armor is simply too large for Small and Medium creatures.
+  properties:
+    category: "Equipment"
+- id: "items-of-different-sizes"
+  name: "Items of Different Sizes"
+  source: "pc > Chapter 6: Equipment > Items and Sizes > Items of Different Sizes"
+  description: |-
+    Creatures of sizes other than Small or Medium need items appropriate to their size. These items have different Bulk and possibly a different Price. The Differently Sized Items table provides the Price and Bulk conversion for such items.
+    Differently Sized Items
+    Creature Light Negligible
+    Size Price Bulk Becomes Becomes
+    Tiny Standard Half* — —
+    Small or Med. Standard Standard L —
+    Large x2 x2 1 Bulk L
+    Huge x4 x4 2 Bulk 1 Bulk
+    Gargantuan x8 x8 4 Bulk 2 Bulk
+    * An item that would have its Bulk reduced below 1 has
+    light Bulk.
+    For example, a morningstar sized for a Medium creature has a Price of 1 gp and 1 Bulk, so one made for a Huge creature is 4 gp and 4 Bulk. One made for a Tiny creature still costs 1 gp (due to its intricacy) and has 1/2 Bulk (rounding down to light Bulk). Because the way that a creature treats Bulk and the Bulk of gear sized for it scale the same way, Tiny or Large (or larger) creatures can usually wear and carry about the same amount of gear as a Medium creature.
+    Higher-level magic items that cost significantly more than 8 times the cost of a mundane item use their listed Price regardless of size. Precious materials, however, have a Price based on the Bulk of the item, so multiply the Bulk value as described on the Differently Sized Items table, then use the formula in the material's entry to determine the item's Price.
+  properties:
+    category: "Equipment"
 - id: "key-attribute"
   name: "Key Attribute"
   source: "pc > Chapter 4: Skills > Key Attribute"
   description: "Each skill is tied to a key attribute. You add your modifier for this attribute to checks and DCs when using that skill. For example, skulking about the shadows of a city at night with Stealth uses your Dexterity modifier, navigating the myriad personalities and power plays of court politics with Society uses your Intelligence modifier, and so on. If the GM deems it appropriate for a certain situation, however, they might have you use a different attribute modifier for a skill check or when determining your skill DC."
   properties:
     category: "Skills"
+- id: "kinds-of-ammunition"
+  name: "Kinds of Ammunition"
+  source: "pc > Chapter 6: Equipment > Weapons > Weapon Descriptions"
+  description: |-
+    **Arrow.** These projectiles are the ammunition for bows. The shaft of an arrow is made of wood. It is stabilized in flight by fletching at one end and bears a metal head on the other.
+    **Blowgun Dart.** These thin, light darts are typically made of hardwood and stabilized with fletching of down or fur. They are often hollow so they can be used to deliver poison.
+    **Bolt.** Shorter than traditional arrows but similar in construction, bolts are the ammunition used by crossbows.
+    **Sling Bullet.** These are small metal balls, typically either iron or lead, designed to be used as ammunition in slings.
+  properties:
+    category: "Equipment"
 - id: "learned-spells"
   name: "Learned Spells"
   source: "pc > Chapter 4: Skills > General Skill Actions"
@@ -396,6 +679,14 @@
     • Recall Knowledge about diseases, injuries, poisons, and other ailments. You can use this to perform forensic examinations if you spend 10 minutes (or more, as determined by the GM) checking for evidence such as wound patterns. This is most useful when determining how a body was injured or killed.
   properties:
     category: "Skills"
+- id: "multiple-attack-penalty"
+  name: "Multiple Attack Penalty"
+  source: "pc > Chapter 6: Equipment > Weapons > Attack Rolls > Multiple Attack Penalty"
+  description: |-
+    If you use an action with the attack trait more than once on the same turn, your attacks after the first take a penalty called a multiple attack penalty. Your second attack takes a -5 penalty, and any subsequent attacks take a -10 penalty.
+    The multiple attack penalty doesn't apply to attacks you make when it isn't your turn (such as attacks made as part of a reaction, like Reactive Strike). You can use a weapon with the agile trait to reduce your multiple attack penalty.
+  properties:
+    category: "Equipment"
 - id: "nature"
   name: "Nature"
   source: "pc > Chapter 4: Skills > Skills > Nature"
@@ -413,6 +704,18 @@
   description: "If you get focus spells from a class or other source that doesn't grant spellcasting ability, the ability that gives you focus spells also provides your proficiency for your spell attack modifier and spell DC, as well as the magical tradition of your focus spells. Though you can cast your focus spells, you don't qualify for feats and other rules that require you to be a spellcaster or have a spellcasting class feature—those require you to have spell slots."
   properties:
     category: "Spells"
+- id: "object-immunities"
+  name: "Object Immunities"
+  source: "pc > Chapter 6: Equipment > Item Damage > Object Immunities"
+  description: |-
+    Inanimate objects and hazards are immune to bleed, death effects, disease, healing, mental effects, nonlethal attacks, poison, spirit, vitality, void, as well as the doomed, drained, fatigued, paralyzed, sickened, and unconscious conditions. Conscious, thinking items are not immune to mental effects. Many objects are immune to other conditions, at the GM's discretion. For instance, a sword can't move, so it can't take a penalty to its Speed, but a spinning blade trap might be affected.
+    Broken
+    Broken is a condition that affects objects. An object is broken when damage has reduced its Hit Points below its Broken Threshold. A broken object can't be used for its normal function, nor does it grant bonuses—with the exception of armor. Broken armor still grants its item bonus to AC, but it also imparts a status penalty to AC depending on its category: -1 for broken light armor,
+    -2 for broken medium armor, or -3 for broken heavy armor.
+    A broken item still imposes penalties and limitations normally incurred by carrying, holding, or wearing it. For example, broken armor would still impose its Dexterity modifier cap, check penalty, and so forth.
+    If an effect makes an item broken automatically and the item has more HP than its Broken Threshold, that effect also reduces the item's current HP to the Broken Threshold.
+  properties:
+    category: "Equipment"
 - id: "occultism"
   name: "Occultism"
   source: "pc > Chapter 4: Skills > Skills > Occultism"
@@ -425,6 +728,12 @@
     • Learn a Spell from the occult tradition.
   properties:
     category: "Skills"
+- id: "other-currency"
+  name: "Other Currency"
+  source: "pc > Chapter 6: Equipment > Coins and Currency > Other Currency"
+  description: "Art objects, gems, and raw materials (such as those used for the Craft activity) can be used much like currency: you can sell them for the same Price you can buy them."
+  properties:
+    category: "Equipment"
 - id: "overriding-conditions"
   name: "Overriding Conditions"
   source: "pc > Conditions Appendix > Overriding Conditions"
@@ -484,6 +793,12 @@
     You might gain an ability that allows you to swap prepared spells or perform other aspects of preparing spells at different times throughout the day, but only your daily preparation counts for the purpose of effects that last until the next time you prepare spells.
   properties:
     category: "Spells"
+- id: "price"
+  name: "Price"
+  source: "pc > Chapter 6: Equipment > Price"
+  description: "Most items in the following tables have a Price, which is the amount of currency it typically takes to purchase that item. An item with a Price of \"—\" can't be purchased. An item with a Price of 0 is normally free, but its value could be higher based on the materials used to create it. Most items can be sold for half their Price, but coins, gems, art objects, and raw materials (such as components for the Craft activity) can be exchanged for their full Price."
+  properties:
+    category: "Equipment"
 - id: "ranges-areas-and-targets"
   name: "Ranges, Areas, and Targets"
   source: "pc > Chapter 7: Spells > Ranges, Areas, and Targets"
@@ -537,6 +852,36 @@
     Disguises and illusions fool the spell as long as they appear to match its parameters. For a spell to detect something visually, the spell's origin point must have line of sight. Darkness doesn't prevent this, but invisibility does, as does a successful Stealth check to Hide (against the spell's DC). For auditory detection, line of sight isn't necessary, though the sound must be audible at the spell's origin point. A Stealth check to Sneak can fool the sensor.
   properties:
     category: "Spells"
+- id: "shield-statistics"
+  name: "Shield Statistics"
+  source: "pc > Chapter 6: Equipment > Shields > Shield Statistics"
+  description: |-
+    Shields have statistics that follow the same rules as armor: Price, Speed Penalty, and Bulk. See Armor Statistics for the rules for those statistics. Their other statistics are described here.
+    AC Bonus
+    A shield grants a circumstance bonus to AC, but only when the shield is raised. This requires using the Raise a Shield action.
+    Hardness
+    Whenever a shield takes damage, the amount of damage it takes is reduced by this amount. This number is particularly relevant for shields because of the Shield Block feat. The rules for Hardness appear in Item Damage.
+    HP (BT)
+    This column lists the shield's Hit Points (HP) and Broken Threshold (BT). These measure how much damage the shield can take before it's destroyed (its total HP) and how much it can take before being broken and unusable (its BT). These matter primarily for the Shield Block reaction.
+  properties:
+    category: "Equipment"
+- id: "shields"
+  name: "Shields"
+  source: "pc > Chapter 6: Equipment > Shields"
+  description: |-
+    Raise a Shield is the action most commonly used with shields. All shields, unless specifically noted or described otherwise, must be strapped to your arm and held in one hand, so you can't hold anything with that hand and Raise a Shield, and you lose the shield's benefits if that hand is no longer free. A buckler, however, doesn't take up your hand, so you can Raise a Shield with a buckler if the hand is free (or, at the GM's discretion, if it's holding a simple, lightweight object that's not a weapon).
+    When you have a tower shield raised, you can use the Take Cover action to increase the circumstance bonus to AC to +4. This lasts until the shield is no longer raised, or until any of the normal conditions that end Take Cover, whichever comes first. If you would provide lesser cover against an attack, having your tower shield raised provides standard cover against it (and other creatures can Take Cover as normal using the cover from your shield).
+    If you have access to the Shield Block reaction (from your class or from a feat), you can use it while Raising your Shield to reduce the damage you take by an amount equal to the shield's Hardness. Both you and the shield then take any remaining damage.
+  properties:
+    category: "Equipment"
+- id: "shoddy-items"
+  name: "Shoddy Items"
+  source: "pc > Chapter 6: Equipment > Shoddy Items"
+  description: |-
+    Improvised or of dubious make, shoddy items are never available for purchase except for in the most desperate of communities. When available, a shoddy item usually costs half the Price of a standard item, though you can never sell one.
+    Attacks and checks involving a shoddy item take a -2 item penalty. This penalty also applies to any DCs that a shoddy item applies to (such as the AC provided when wearing shoddy armor, or the DC to break out of shoddy manacles). A shoddy suit of armor also worsens the armor's check penalty by 2. A shoddy item's Hit Points and Broken Threshold are each half that of a normal item of its type.
+  properties:
+    category: "Equipment"
 - id: "skill-actions"
   name: "Skill Actions"
   source: "pc > Chapter 4: Skills > Skill Actions"
@@ -688,9 +1033,92 @@
   description: "A spell with a touch range requires you to physically touch the target. You use your unarmed reach to determine whether you can touch the creature. You can usually touch them automatically, though the spell might specify that they can attempt a saving throw or that you must attempt a spell attack roll. If an ability increases the range of a touch spell, start at 0 feet and increase from there."
   properties:
     category: "Spells"
+- id: "unarmed-attacks"
+  name: "Unarmed Attacks"
+  source: "pc > Chapter 6: Equipment > Weapons > Unarmed Attacks"
+  description: |-
+    Almost all characters start out trained in unarmed attacks. You can Strike with your fist or another body part, calculating your attack and damage rolls in the same way you would with a weapon. Unarmed attacks can belong to a weapon group, and they might have weapon traits. However, unarmed attacks aren't weapons, and effects and abilities that work with weapons never work with unarmed attacks unless they specifically say so.
+    The Unarmed Attacks table lists the statistics for an unarmed attack with a fist, though you'll usually use the same statistics for attacks made with any other parts of your body. Certain ancestry feats, class features, and spells give access to special, more powerful unarmed attacks. For instance, a creature with sharp jaws can attack with them. While most unarmed attacks are melee, some, especially those from certain ancestries, might even be ranged, like the leshy's ability to launch hard seedpods. Details for those unarmed attacks are provided in the abilities that grant them.
+  properties:
+    category: "Equipment"
 - id: "walls"
   name: "Walls"
   source: "pc > Chapter 7: Spells > Walls"
   description: "Spells that create walls list the depth, length, and height of the wall, also specifying how it can be positioned. Some walls can be shaped; you can manipulate the wall into a form other than a straight line, choosing its contiguous path square by square. The path of a shaped wall can't enter the same space more than once, but it can double back so one section is adjacent to another section of the wall."
   properties:
     category: "Spells"
+- id: "weapon-statistics"
+  name: "Weapon Statistics"
+  source: "pc > Chapter 6: Equipment > Weapons > Weapon Statistics"
+  description: |-
+    The tables list the statistics for various melee and ranged weapons that you can purchase, as well as the statistics for striking with a fist (or another basic unarmed attack). The tables present the following weapon statistics. All weapons are level 0 unless noted otherwise.
+    Damage
+    This entry lists the weapon's damage die and the type of damage it deals: B for bludgeoning, P for piercing, or S for slashing.
+    Damage Dice
+    Each weapon lists the damage die used for its damage roll. A standard weapon deals one die of damage, but a magical striking rune can increase the number of dice rolled, as can some special actions and spells. These additional dice use the same die size as the weapon or unarmed attack's normal damage die.
+    Counting Damage Dice
+    Effects based on a weapon's number of damage dice include only the weapon's damage die plus any extra dice from a striking rune. They don't count extra dice from abilities, critical specialization effects, property runes, weapon traits, or the like.
+    Increasing Die Size
+    When an effect calls on you to increase the size of your weapon damage dice, instead of using its normal weapon damage dice, use the next larger die, as listed below (so if you were using a d4, you'd use a d6, and so on). If you are already using a d12, the size is already at its maximum. You can't increase your weapon damage die size more than once.
+    1d4 » 1d6 » 1d8 » 1d10 » 1d12
+    Range
+    Ranged and thrown weapons have a range increment. Attacks with these weapons work normally up to that distance. Attack rolls beyond a weapon's range increment take a -2 penalty for each additional multiple of that increment between you and the target. Attacks beyond the sixth range increment are impossible.
+    For example, a shortbow takes no penalty against a target up to 60 feet away, a -2 penalty against a target beyond 60 feet but up to 120 feet away, and a -4 penalty against a target beyond 120 feet but up to 180 feet away, and so on, up to 360 feet.
+    Reload
+    While all weapons need some amount of time to get into position, many ranged weapons also need to be loaded and reloaded. This entry indicates how many Interact actions it takes to reload such weapons or draw certain thrown weapons, like shuriken. This can be 0 if drawing ammunition and firing or throwing the weapon are part of the same action. If an item takes 2 or more actions to reload, the GM determines whether they must be performed together as an activity, or you can spend some of those actions during one turn and the rest during your
+    next turn.
+    An item with an entry of "—" must be drawn to be thrown, which usually takes an Interact action just like drawing any other weapon. Reloading a ranged weapon and drawing a thrown weapon both require a free hand. Switching your grip to free a hand and then to place your hands in the grip necessary to wield the weapon are both included in the actions you spend to reload a weapon.
+    Bulk
+    This entry gives the weapon's Bulk. A weapon's Bulk is increased or decreased if it's sized for creatures that aren't Small or Medium size.
+    Hands
+    Some weapons require one hand to wield, and others require two. A few items, such as a longbow, list 1+ for its Hands entry. You can hold a weapon with a 1+ entry in one hand, but the process of shooting it requires using a second to retrieve, nock, and loose an arrow. This means you can do things with your free hand while holding the bow without changing your grip, but the other hand must be free when you shoot. To properly wield a 1+ weapon, you must hold it in one hand and also have a hand free.
+    Weapons requiring two hands typically deal more damage. Some one-handed weapons have the two-hand trait, causing them to deal a different size of weapon damage die when used in two hands. In addition, some abilities require you to wield a weapon in two hands. You meet this requirement while holding the weapon in two hands, even if it doesn't require two hands or have the two-hand trait.
+    If an action or other ability requires you to use a "two-handed weapon," it applies for any weapon you wield in two hands. Any permanent adjustments to the weapon, such as a rune that can be added to a "one-handed weapon," uses the Hands entry in the weapon table exactly (1+ counts as one-handed for this purpose).
+    Group
+    A weapon or unarmed attack's group classifies it with similar weapons. Groups affect some abilities and what the weapon does on a critical hit if you have the critical specialization benefits for that weapon or unarmed attack.
+    Weapon Traits
+    The traits a weapon or unarmed attack has are listed in this entry. Any trait that refers to a "weapon" can also apply to an unarmed attack that has that trait. Traits are described in Weapon Traits.
+    Ammunition
+    Some entries in the ranged weapons tables are followed by an entry for the type of ammunition that weapon launches. The damage die is determined by the weapon, not the ammunition. Because that and other relevant statistics vary by weapon, ammunition entries list only the name, quantity, Price, and Bulk. Using ammunition destroys it.
+  properties:
+    category: "Equipment"
+- id: "weapon-traits"
+  name: "Weapon Traits"
+  source: "pc > Chapter 6: Equipment > Weapons > Weapon Traits"
+  description: |-
+    Weapons and unarmed attacks can have these traits. Weapons crafted and used by a given ancestry (such as the elven curve blade) often have the trait for that ancestry.
+    Agile: The multiple attack penalty you take with this weapon on the second attack on your turn is -4 instead of -5, and -8 instead of -10 on the third and subsequent attacks in the turn.
+    Attached: An attached weapon must be combined with another piece of gear to be used. The trait lists what type of item the weapon must be attached to. You must be wielding or wearing the item the weapon is attached to in order to attack with it. For example, shield spikes are attached to a shield, allowing you to attack with the spikes instead of a shield bash. An attached weapon is usually bolted onto or built into the item it's attached to, and typically an item can have only one weapon attached to it. An attached weapon can be affixed to an item with 10 minutes of work and a successful DC 10 Crafting check; this includes the time needed to remove the weapon from a previous item, if necessary. Typically the weapon can't be used if the item it's attached to is broken. If an item is destroyed, its attached weapon can usually be salvaged.
+    Backstabber: When you hit an off-guard creature, this weapon deals 1 precision damage in addition to its normal damage. The precision damage increases to 2 if the weapon is a +3 weapon.
+    Backswing: You can use the momentum from a missed attack with this weapon to lead into your next attack. After missing with this weapon on your turn, you gain a +1 circumstance bonus to your next attack with this weapon before the end of your turn.
+    Concealable: This weapon is designed to be inconspicuous or easily concealed. You gain a +2 circumstance bonus to Stealth checks and DCs to hide or conceal a weapon with this trait.
+    Deadly: On a critical hit, the weapon adds a weapon damage die of the listed size. Roll this after doubling the weapon's damage. This increases to two dice if the weapon has a greater striking rune and three dice if the weapon has a major striking rune. For instance, a rapier with a greater striking rune deals 2d8 extra piercing damage on a critical hit. An ability that changes the size of the weapon's normal damage dice doesn't change the size of its deadly die.
+    Disarm: You can use this weapon to Disarm with the Athletics skill even if you don't have a free hand. This uses the weapon's reach (if different from your own) and adds the weapon's item bonus to attack rolls (if any) as an item bonus to the Athletics check. If you critically fail a check to Disarm using the weapon, you can drop the weapon to take the effects of a failure instead of a critical failure. On a critical success, you still need a free hand if you want to take the item.
+    Fatal: The fatal trait includes a die size. On a critical hit, the weapon's damage die increases to that die size instead of the normal die size, and the weapon adds one additional damage die of the listed size.
+    Finesse: You can use your Dexterity modifier instead of your Strength modifier on attack rolls using this melee weapon. You still calculate damage using Strength.
+    Forceful: This weapon becomes more dangerous as you build momentum. When you attack with it more than once on your turn, the second attack gains a circumstance bonus to damage equal to the number of weapon damage dice, and each later attack gains a circumstance bonus to damage equal to double the number of damage dice.
+    Free-Hand: This weapon doesn't take up your hand, usually because it is built into your armor. A free-hand weapon can't be Disarmed. You can use the hand covered by your free-hand weapon to wield other items, perform manipulate actions, and so on. You can't attack with a free-hand weapon if you're wielding anything in that hand or otherwise using that hand. When you're not wielding anything and not otherwise using the hand, you can use abilities that require you to have a hand free as well as those that require you to be wielding a weapon in that hand. Each of your hands can have only one free-hand weapon on it.
+    Jousting: The weapon is suited for mounted combat with a harness or similar means. When mounted, if you moved at least 10 feet on the action before your attack, add a circumstance bonus to damage for that attack equal to the number of damage dice for the weapon. In addition, while mounted, you can wield the weapon in one hand, changing the damage die to the listed value. As a part of your action to Mount a creature, you can switch your grip on a jousting weapon to one-handed. After that, changing your grip takes the same actions described in Carrying Items. If you dismount while wielding a jousting weapon one-handed, you can switch to using two hands as part of that action if you have a hand free at that point. If not, you'll still be holding the weapon in one hand, but not wielding it.
+    Monk: Many monks learn to use these weapons.
+    Nonlethal: Attacks with this weapon are nonlethal, and are used to knock creatures unconscious instead of kill them. You can use a nonlethal weapon to make a lethal attack with a -2 circumstance penalty.
+    Parry: This weapon can be used defensively to block attacks. While wielding this weapon, if your proficiency with it is trained or better, you can spend a single action to position your weapon defensively, gaining a +1 circumstance bonus to AC until the start of your next turn.
+    Propulsive: You add half your Strength modifier (if positive) to damage rolls with a propulsive ranged weapon. If you have a negative Strength modifier, you add your full Strength modifier instead.
+    Ranged Trip: The weapon can be used to Trip with the Athletics skill within the weapon's first range increment. The skill check takes a -2 circumstance penalty. You can add the weapon's item bonus to attack rolls as a bonus to the check. A ranged trip weapon doesn't deal any damage when used to Trip. These weapons are usually thrown.
+    Reach: This weapon can be used to attack enemies up to 10 feet away instead of only adjacent enemies. For creatures with reach, the weapon increases their reach by 5 feet.
+    Shove: You can use this weapon to Shove with the Athletics skill even if you don't have a free hand. This uses the weapon's reach (if different from your own) and adds the weapon's item bonus to attack rolls as an item bonus to the Athletics check. If you critically fail a check to Shove using the weapon, you can drop the weapon to take the effects of a failure instead of a critical failure.
+    Sweep: This weapon makes wide swinging attacks. When you attack with this weapon, you gain a +1 circumstance bonus to your attack roll if you already attempted to attack a different target this turn using this weapon.
+    Thrown: You can throw this weapon as a ranged attack; it is a ranged weapon when thrown. You add your Strength modifier to damage as you would for a melee weapon. When this trait appears on a melee weapon, it also includes the range increment. Ranged weapons with this trait use the range increment in the weapon's Range entry.
+    Trip: You can use this weapon to Trip with the Athletics skill even if you don't have a free hand. This uses the weapon's reach (if different from your own) and adds the weapon's item bonus to attack rolls as an item bonus to the Athletics check. If you critically fail a check to Trip using the weapon, you can drop the weapon to take the effects of a failure instead of a critical failure.
+    Twin: These weapons are used as a pair. When you attack with a twin weapon, you add a circumstance bonus to the damage roll equal to the weapon's number of damage dice if you have previously attacked with a different weapon of the same type this turn. The weapons must be of the same type, but they don't need to have the same runes.
+    Two-Hand: This weapon can be wielded with two hands to change its weapon damage die to the indicated value. This change applies to all the weapon's damage dice.
+    Unarmed: An unarmed attack uses your body rather than a manufactured weapon. An unarmed attack isn't a weapon, though has a weapon group and might have weapon traits. An unarmed attack can't be Disarmed. It also doesn't take up a hand, though a fist or other grasping appendage generally works like a free-hand weapon.
+    Versatile: A versatile weapon can be used to deal a different type of damage than its listed type. This trait indicates the alternate damage type. For instance, a piercing weapon with versatile S can deal piercing or slashing damage. You choose the damage type each time you attack.
+    Volley: This ranged weapon is less effective at close distances. Your attacks against targets that are at a distance within the range listed take a -2 penalty.
+  properties:
+    category: "Equipment"
+- id: "wielding-items"
+  name: "Wielding Items"
+  source: "pc > Chapter 6: Equipment > Carrying Items > Wielding Items"
+  description: "Some abilities require you to wield an item, typically a weapon. You're wielding an item any time you're holding it in the number of hands needed to use it effectively. When wielding an item, you're not just carrying it around—you're ready to use it. Other abilities might require you to be wearing the item, to be holding it, or simply to have it."
+  properties:
+    category: "Equipment"

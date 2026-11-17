@@ -152,17 +152,42 @@ entityTypes:
     label: Armor
     pluralLabel: Armor
     folder: armor
+    # Body armor and shields are one type: the sheet's inventory lists `armor`, and it tells a shield by `armorType: shield` (a flat `armorClassBonus` on any equipped item) and body armor by a numeric `armorBase`.
     fields:
-      - { key: armorBase,     label: Armor bonus, type: Number }
-      - { key: armorDexCap,   label: Dexterity cap, type: Number }
-      - { key: armorCategory, label: Category, type: Dropdown, options: [light, medium, heavy] }
+      - { key: armorBase,     label: Base armor class, type: Number, description: "The armor class the suit gives before Dexterity: 10 plus the armor bonus the book prints. Empty on a shield." }
+      - { key: armorDexCap,   label: Dexterity cap, type: Number, description: "The most Dexterity modifier that counts toward armor class in this armor. Empty: no cap. 0: none counts." }
+      - { key: armorCategory, label: Category, type: Dropdown, options: [unarmored, light, medium, heavy], description: "The proficiency the armor uses. Unarmored is clothing that gives no armor bonus. Empty on a shield." }
+      - { key: armorType,     label: Armor type, type: Dropdown, options: [shield], description: "Shield for a shield (the sheet adds its armor class bonus while it is equipped); empty for body armor." }
+      - { key: armorClassBonus, label: Shield bonus, type: Number, description: "A shield's circumstance bonus to armor class while it is raised. The sheet adds it whenever the shield is equipped, since it does not model raising one." }
+      - { key: hardness,      label: Hardness, type: Number, description: "Damage a shield takes less from each hit." }
+      - { key: hp,            label: Hit points, type: Number, description: "A shield's hit points." }
+      - { key: brokenThreshold, label: Broken threshold, type: Number, description: "A shield is broken (and unusable) at this many hit points or fewer." }
+      - { key: checkPenalty,  label: Check penalty, type: Number, description: "The penalty to Strength and Dexterity skill checks. Empty: none." }
+      - { key: speedPenalty,  label: Speed penalty, type: Number, description: "The penalty to Speed, in feet. Empty: none." }
+      - { key: strength,      label: Strength, type: Number, description: "The Strength modifier at which the check penalty goes away and the speed penalty is reduced." }
+      - { key: bulk,          label: Bulk, type: Text, description: "The Bulk as printed: a number, or L for light. Empty: none." }
+      - { key: group,         label: Group, type: Text, description: "The armor group, which armor specialization effects name." }
+      - { key: traits,        label: Traits, type: TagList, description: "Trait keys, as the Library's trait entries name them." }
+      - { key: price,         label: Price, type: Text, description: "The price as printed, with its coin." }
+      - { key: level,         label: Level, type: Number, description: "The item level, where the book prints one. Empty: level 0." }
   - type: weapon
     label: Weapon
     pluralLabel: Weapons
     folder: weapons
+    # The Strike action reads `tag: weapons` and the entry's `use` map (attack, abilities, damage), as the homebrew weapons write them.
     fields:
-      - { key: weaponCategory, label: Category, type: Dropdown, options: [simple, martial, unarmed] }
-      - { key: traits,         label: Traits,   type: TagList }
+      - { key: weaponCategory, label: Category, type: Dropdown, options: [simple, martial, advanced, unarmed], description: "The weapon proficiency the weapon uses." }
+      - { key: traits,         label: Traits,   type: TagList, description: "Trait keys, as the Library's trait entries name them." }
+      - { key: damage,         label: Damage dice, type: Text, description: "The damage dice, as the Strike rolls them (for example 1d6)." }
+      - { key: damageType,     label: Damage type, type: Dropdown, options: [bludgeoning, piercing, slashing] }
+      - { key: range,          label: Range, type: Number, description: "The range increment in feet. Empty: a melee weapon with no range of its own." }
+      - { key: reload,         label: Reload, type: Number, description: "The Interact actions to reload it. 0: loaded as part of the attack. Empty: none." }
+      - { key: hands,          label: Hands, type: Text, description: "The hands needed to wield it, as printed: 1, 2 or 1+." }
+      - { key: bulk,           label: Bulk, type: Text, description: "The Bulk as printed: a number, or L for light. Empty: none." }
+      - { key: group,          label: Group, type: Text, description: "The weapon group, which critical specialization effects name." }
+      - { key: price,          label: Price, type: Text, description: "The price as printed, with its coin." }
+      - { key: level,          label: Level, type: Number, description: "The item level, where the book prints one. Empty: level 0." }
+      - { key: ammunition,     label: Ammunition, type: Text, description: "For a ranged weapon: the ammunition it uses, with the quantity, price and Bulk as the book prints them." }
   - type: trinket
     label: Trinket
     pluralLabel: Trinkets
@@ -518,6 +543,7 @@ sheetRules:
     key: armorClass
     unarmored: "10 + mod(dex)"
     dexAttribute: dex
+    dexCapLimitsOnlyBonus: true  # the book's Dexterity cap is a maximum of the bonus: a cap of 0 still lets a negative modifier through
     rank: { list: armor, property: armorCategory, unarmored: unarmored }
 
   # Ranked lists beside the skills, on the skills' ranks (trained to legendary, worth level plus 2 to 8). Perception and the class DC
@@ -540,6 +566,7 @@ sheetRules:
         - { key: unarmed, label: Unarmed }
         - { key: simple,  label: Simple weapons }
         - { key: martial, label: Martial weapons }
+        - { key: advanced, label: Advanced weapons }
 
   # What a character can do with a roll: a Strike with each equipped weapon (its attack bonus is the attribute plus the rank in its category).
   actions:

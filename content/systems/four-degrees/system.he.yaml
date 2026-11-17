@@ -132,15 +132,38 @@ entityTypes:
     label: שריון
     pluralLabel: שריונות
     fields:
-      armorBase: { label: בונוס שריון }
+      armorBase: { label: דרגת שריון בסיסית }
       armorDexCap: { label: תקרת זריזות }
       armorCategory: { label: קטגוריה }
+      armorType: { label: סוג שריון }
+      armorClassBonus: { label: בונוס מגן }
+      hardness: { label: קשיחות }
+      hp: { label: נקודות חיים }
+      brokenThreshold: { label: סף שבירה }
+      checkPenalty: { label: קנס לבדיקות }
+      speedPenalty: { label: קנס מהירות }
+      strength: { label: כוח }
+      bulk: { label: נפח }
+      group: { label: קבוצה }
+      traits: { label: תכונות }
+      price: { label: מחיר }
+      level: { label: רמה }
   weapon:
     label: נשק
     pluralLabel: כלי נשק
     fields:
       weaponCategory: { label: קטגוריה }
       traits: { label: תכונות נשק }
+      damage: { label: קוביות נזק }
+      damageType: { label: סוג נזק }
+      range: { label: טווח }
+      reload: { label: טעינה }
+      hands: { label: ידיים }
+      bulk: { label: נפח }
+      group: { label: קבוצה }
+      price: { label: מחיר }
+      level: { label: רמה }
+      ammunition: { label: תחמושת }
   trinket: { label: קמע, pluralLabel: קמעות }
   magic-item:
     label: חפץ קסום
@@ -203,6 +226,7 @@ values:
   Unarmed: לא חמוש
   Simple weapons: נשק פשוט
   Martial weapons: נשק צבאי
+  Advanced weapons: נשק מתקדם
   Strike: מכה
   Sense DC: דרגת קושי חושית
   Speed: מהירות

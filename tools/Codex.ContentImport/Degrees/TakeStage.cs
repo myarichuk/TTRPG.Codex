@@ -30,7 +30,10 @@ public static class TakeStage
     private static readonly Dictionary<string, string[]> Claims = new(StringComparer.Ordinal)
     {
         ["entries"] = new[] { "entry-header", "rules", "body", "tag", "icon", "table" },
-        ["rules"] = new[] { "rules", "body", "tag", "icon", "table" },
+        // A stat table (armor, shields, weapons) is carved out of its page for the items row to read; a range of another row that holds one reads past it.
+        ["rules"] = new[] { "rules", "body", "tag", "icon", "table", StatTables.Role },
+        // The descriptions of the items: paragraphs that open with a name. The stat tables of their pages are the row's other half.
+        ["items"] = new[] { "rules", "body", "tag", "icon", StatTables.Role },
         ["glossary"] = new[] { "body" },
         // The tradition lists: a heading per rank (entry-header) and the lines of names and summaries under it.
         ["spelllists"] = new[] { "entry-header", "body", "tag", "table" },
@@ -333,6 +336,7 @@ public static class TakeStage
     {
         var allowed = Claims[range.Row.Parser].Concat(range.Row.HeaderRole == null ? Array.Empty<string>() : new[] { range.Row.HeaderRole })
             .Concat(range.Row.Subheadings ? new[] { "block-header" } : Array.Empty<string>())
+            .Concat(range.Row.FoldChildren ? new[] { "entry-header" } : Array.Empty<string>())
             .Concat(range.Row.Groups ? new[] { "section" } : Array.Empty<string>()).ToArray();
         // A row that names its boxes (or says how many it reads past) holds headings of the header role that have no entry's shape: each starts a box.
         var boxes = range.Row.Boxes.Count > 0 || range.Row.ReadPastBoxes > 0;

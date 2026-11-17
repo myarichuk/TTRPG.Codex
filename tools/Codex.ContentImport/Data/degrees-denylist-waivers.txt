@@ -280,3 +280,40 @@ triple time
 untamed form
 uplifting overture
 warden spells
+# Chapter 6 (equipment) review. `breastplate` is a type of armor (an ordinary word, the index of a left-out section capitalizes it); `reactive` is a word of a reaction's name (the weapons rules name it as an example);
+# `gms` is the plural of the abbreviation for the game's referee that the waived `gm` already is; `bt` is the abbreviation of a shield's broken threshold.
+breastplate
+reactive
+gms
+bt
+# Ordinary English words of the equipment text (a kind of cloth, a mesh of linked rings, a unit of coin, rounding a fraction, a whip's strand, a trait's grasping, the plural of armor, the places a weapon is used) that
+# a left-out section capitalizes in its index or titles; each was read in its sentence.
+linked
+cloth
+armors
+unit
+rounding
+grasping
+sites
+strand
+# Pairs of game terms of the equipment text, each read in its sentence: two statistics that meet in a table's line or a label (`dex cap`, `ac bonus`, `speed penalty`, `hp bt`, `threshold bt`), two words that meet across a
+# bold label or a full stop (`bulk bulk`, `price bulk`, `class ac`, `points hp`, `strike you`) and the name of a reaction a rule gives as an example (`reactive strike`).
+dex cap
+class ac
+ac bonus
+speed penalty
+bulk bulk
+price bulk
+threshold bt
+reactive strike
+strike you
+points hp
+hp bt
+# The creature sizes that meet down a column of the table of the Bulk of creatures (`tiny small`, `small medium`, `medium large`, `large huge`), and a box's heading and the sentence under it (`encumbered you`).
+tiny small
+small medium
+medium large
+large huge
+encumbered you
+# `shades` is an ordinary noun (a spell's text opens with it, the book writes it in lowercase twice elsewhere); regenerating the common-word file from the book as it stands now counts the word's third lowercase use no more.
+shades

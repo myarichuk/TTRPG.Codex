@@ -132,15 +132,38 @@ entityTypes:
     label: Доспех
     pluralLabel: Доспехи
     fields:
-      armorBase: { label: Бонус брони }
+      armorBase: { label: Базовый класс брони }
       armorDexCap: { label: Предел Ловкости }
       armorCategory: { label: Категория }
+      armorType: { label: Тип доспеха }
+      armorClassBonus: { label: Бонус щита }
+      hardness: { label: Твёрдость }
+      hp: { label: Очки здоровья }
+      brokenThreshold: { label: Порог поломки }
+      checkPenalty: { label: Штраф к проверкам }
+      speedPenalty: { label: Штраф к Скорости }
+      strength: { label: Сила }
+      bulk: { label: Громоздкость }
+      group: { label: Группа }
+      traits: { label: Свойства }
+      price: { label: Цена }
+      level: { label: Уровень }
   weapon:
     label: Оружие
     pluralLabel: Оружие
     fields:
       weaponCategory: { label: Категория }
       traits: { label: Свойства }
+      damage: { label: Кости урона }
+      damageType: { label: Вид урона }
+      range: { label: Дистанция }
+      reload: { label: Перезарядка }
+      hands: { label: Руки }
+      bulk: { label: Громоздкость }
+      group: { label: Группа }
+      price: { label: Цена }
+      level: { label: Уровень }
+      ammunition: { label: Боеприпасы }
   trinket: { label: Безделушка, pluralLabel: Безделушки }
   magic-item:
     label: Волшебный предмет
@@ -203,6 +226,7 @@ values:
   Unarmed: Безоружный
   Simple weapons: Простое оружие
   Martial weapons: Воинское оружие
+  Advanced weapons: Продвинутое оружие
   Strike: Удар
   Sense DC: СЛ восприятия
   Speed: Скорость

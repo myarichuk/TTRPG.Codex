@@ -2874,6 +2874,10 @@
           ],
           "description": "The item property capping the Dexterity added to body armor (absent: no cap; 0: none added). Default `armorDexCap`."
         },
+        "dexCapLimitsOnlyBonus": {
+          "type": "boolean",
+          "description": "True when the cap is a maximum of the Dexterity bonus only: a cap of 0 lets a negative modifier through (the armor does not hide a clumsy wearer's penalty). False (the default): a cap of 0 or less adds no Dexterity either way."
+        },
         "bonusProperty": {
           "type": [
             "string",

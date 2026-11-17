@@ -711,6 +711,10 @@ public class ArmorClassRules
     /// <summary>The item property capping the Dexterity added to body armor (absent: no cap; 0: none added). Default
     /// <c>armorDexCap</c>.</summary>
     public string DexCapProperty { get; set; } = "armorDexCap";
+
+    /// <summary>True when the cap is a maximum of the Dexterity bonus only: a cap of 0 lets a negative modifier through (the armor
+    /// does not hide a clumsy wearer's penalty). False (the default): a cap of 0 or less adds no Dexterity either way.</summary>
+    public bool DexCapLimitsOnlyBonus { get; set; }
     /// <summary>The property with a flat bonus, on any equipped item (a shield, a ring) or on a pick in <c>bonusLists</c>.
     /// Default <c>armorClassBonus</c>.</summary>
     public string BonusProperty { get; set; } = "armorClassBonus";

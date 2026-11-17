@@ -312,6 +312,13 @@ public static class RedactionStage
         return fixes;
     }
 
+    /// <summary>The rows of a table that name no entry among <paramref name="entries"/>. The denylist step fails on any: a row it cannot find would silently leave its removed words off the list.</summary>
+    public static List<RedactionRow> RowsWithoutEntry(IEnumerable<RedactionEntry> entries, RedactionTable table)
+    {
+        var list = entries.ToList();
+        return table.Rows.Where(row => !list.Any(e => row.Names(e.Id))).ToList();
+    }
+
     /// <summary>The normalized text of every span a row matches, before any edit, with the row and the entry id. Used by the denylist step: redacted text is left-out text.</summary>
     public static List<(RedactionRow Row, string Id, string Text)> SourceSpans(IEnumerable<RedactionEntry> entries, RedactionTable table)
     {

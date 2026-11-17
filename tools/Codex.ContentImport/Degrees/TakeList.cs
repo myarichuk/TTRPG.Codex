@@ -124,6 +124,61 @@ public sealed class TakeRow
     /// </summary>
     public string? ListHeading { get; set; }
 
+    /// <summary>
+    /// For an <c>items</c> row: what the row's entries are (<c>armor</c>, <c>shield</c> or <c>weapon</c>). The row's own <see cref="Paths"/> are the sections that describe the items (a description
+    /// is a paragraph that opens with the item's name and a colon); the item's statistics are the rows of the stat tables.
+    /// </summary>
+    public string? ItemKind { get; set; }
+
+    /// <summary>For an <c>items</c> row: the sections whose pages hold the row's stat tables. Only these pages are read for tables (see <see cref="StatTables"/>).</summary>
+    public List<List<string>> Tables { get; set; } = new();
+
+    /// <summary>
+    /// For an <c>items</c> row: the column label lists a header row of its stat tables may carry, after the name column (each begins with <c>Price</c>). A header with any other labels is not a table.
+    /// Each label must be named by a bookmark of the chapter (see <see cref="ImportPipeline.CheckTableLabels"/>), so the columns are counted against the document.
+    /// </summary>
+    public List<List<string>> TableColumns { get; set; } = new();
+
+    /// <summary>
+    /// For an <c>items</c> row: names of table rows (and descriptions) that are not made into entries, each with the reason in <see cref="CountsDiffer"/>. A name that matches no row or description fails the run.
+    /// </summary>
+    public List<string> Exclude { get; set; } = new();
+
+    /// <summary>
+    /// For an <c>items</c> row: names of table rows the book has no description for. Each becomes an entry from its row alone (its description is its trait line and notes). A name that has a description,
+    /// or is not a row, fails the run.
+    /// </summary>
+    public List<string> Undescribed { get; set; } = new();
+
+    /// <summary>
+    /// For an <c>items</c> row: names of descriptions that have no row of their own (the kinds of ammunition, whose prices sit under the weapons that fire them). They become the paragraphs of one <c>rule</c> entry,
+    /// <see cref="RuleName"/>, of the category <see cref="RuleCategory"/>.
+    /// </summary>
+    public List<string> RuleDescriptions { get; set; } = new();
+
+    public string? RuleName { get; set; }
+
+    public string? RuleCategory { get; set; }
+
+    /// <summary>For an <c>items</c> row or a <c>rules</c> row among pictures of items: the body lines set in capitals alone (a label under a picture) are skipped, and the run prints how many.</summary>
+    public bool ArtLabels { get; set; }
+
+    /// <summary>
+    /// For a <c>rules</c> row with subheadings: a block of body text that opens with a bold heading line is a box of prose (the weapon rules' boxes on damage dice), not a small table, so its ragged lines run on.
+    /// </summary>
+    public bool ProseBoxes { get; set; }
+
+    /// <summary>For a <c>rules</c> row: the section's text is read past, no entry is made (its blocks are claimed, so they are not counted as left out).</summary>
+    public bool ReadPast { get; set; }
+
+    /// <summary>
+    /// For a <c>rules</c> row: the child sections of the path's section, whose titles are in the entry-header font, are paragraphs of the one entry (the title, then the text). The bookmark children are
+    /// counted against those titles (see <see cref="ImportPipeline.CheckFoldCounts"/>). The names in <see cref="ReadPastChildren"/> are children whose text is left out of the entry.
+    /// </summary>
+    public bool FoldChildren { get; set; }
+
+    public List<string> ReadPastChildren { get; set; } = new();
+
     /// <summary>True for the row that holds the spells the four tradition lists name: its level words include <c>spell</c>. Only these are counted against the lists.</summary>
     public bool OnTraditionLists => LevelWords.Contains("spell", StringComparer.OrdinalIgnoreCase);
 
@@ -151,10 +206,10 @@ public sealed class PlannedRow
 
 public sealed partial class TakeList
 {
-    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions", "spelllists" };
+    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions", "spelllists", "items" };
 
     /// <summary>The parsers that exist. Any other parser in the list fails the run, so a row cannot silently take nothing.</summary>
-    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions", "spelllists" };
+    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions", "spelllists", "items" };
 
     public List<TakeRow> Rows { get; set; } = new();
 
@@ -306,6 +361,34 @@ public sealed partial class TakeList
             if ((r.Groups || r.ListHeading != null) && (r.Parser != "entries" || r.LevelWord == null || r.Target != "spell"))
             {
                 throw new DegreesException($"Take-list row {n}: groups and listHeading belong to an entries row of spells with a levelWord.");
+            }
+
+            var itemRow = r.Parser == "items";
+            if ((r.ArtLabels && !itemRow && r.Parser != "rules") || ((r.ReadPast || r.FoldChildren || r.ProseBoxes || r.ReadPastChildren.Count > 0) && r.Parser != "rules") || (r.ReadPastChildren.Count > 0 && !r.FoldChildren))
+            {
+                throw new DegreesException($"Take-list row {n}: artLabels belong to the items and rules parsers, readPast and foldChildren to the rules parser, and readPastChildren to a foldChildren row.");
+            }
+
+            if (!itemRow && (r.Undescribed.Count > 0 || r.RuleDescriptions.Count > 0 || r.RuleName != null || r.RuleCategory != null))
+            {
+                throw new DegreesException($"Take-list row {n}: undescribed, ruleDescriptions, ruleName and ruleCategory belong to the items parser.");
+            }
+
+            if (r.RuleDescriptions.Count > 0 && (string.IsNullOrWhiteSpace(r.RuleName) || string.IsNullOrWhiteSpace(r.RuleCategory)))
+            {
+                throw new DegreesException($"Take-list row {n}: ruleDescriptions need a ruleName and a ruleCategory.");
+            }
+
+            if (itemRow != (r.ItemKind != null) || (!itemRow && (r.Tables.Count > 0 || r.TableColumns.Count > 0 || r.Exclude.Count > 0))
+                || (itemRow && (r.ItemKind is not ("armor" or "shield" or "weapon") || r.Tables.Count == 0 || r.TableColumns.Count == 0
+                    || r.TableColumns.Any(c => c.Count < 2 || c[0] != "Price" || c.Any(string.IsNullOrWhiteSpace)))))
+            {
+                throw new DegreesException($"Take-list row {n}: itemKind, tables and tableColumns (each list starting with Price) belong to the items parser, which needs all three and an itemKind of armor, shield or weapon.");
+            }
+
+            if (r.Exclude.Count > 0 && string.IsNullOrWhiteSpace(r.CountsDiffer))
+            {
+                throw new DegreesException($"Take-list row {n}: exclude needs a countsDiffer reason.");
             }
 
             if ((r.LeadName != null && r.Parser != "actions") || (r.TailFromHeader && r.Parser != "rules") || (r.TableRows && r.Parser == "glossary"))

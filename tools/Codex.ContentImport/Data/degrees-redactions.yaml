@@ -727,3 +727,202 @@ rows:
     span: { sha256: "8b34b85e57d4baaab7cb04a52408328f660a495f1aff855d1ff7964f60211950", length: 27 }
     action: cut
     reason: "A line that names the patron the setting coined for this hex cantrip; the cantrip's mechanic does not depend on it."
+  # Chapter 6 (equipment): sentences that point to a page, a section of another book or a sidebar. The mechanic is kept; a pointer to a section the pack has as a rule entry names it.
+  - book: pc
+    entry: buckler
+    field: description
+    span: { sha256: "501b00fe0419fa183698f03cbbb84b8ae91347f7f1477ca317386f9c06da2607", length: 115 }
+    action: replace
+    text: "**Note.** Gaining a shield's circumstance bonus to AC requires using the Raise a Shield action."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: steel-shield
+    field: description
+    span: { sha256: "501b00fe0419fa183698f03cbbb84b8ae91347f7f1477ca317386f9c06da2607", length: 115 }
+    action: replace
+    text: "**Note.** Gaining a shield's circumstance bonus to AC requires using the Raise a Shield action."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: tower-shield
+    field: description
+    span: { sha256: "501b00fe0419fa183698f03cbbb84b8ae91347f7f1477ca317386f9c06da2607", length: 115 }
+    action: replace
+    text: "**Note.** Gaining a shield's circumstance bonus to AC requires using the Raise a Shield action."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: wooden-shield
+    field: description
+    span: { sha256: "501b00fe0419fa183698f03cbbb84b8ae91347f7f1477ca317386f9c06da2607", length: 115 }
+    action: replace
+    text: "**Note.** Gaining a shield's circumstance bonus to AC requires using the Raise a Shield action."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: explorer-s-clothing
+    field: description
+    span: { sha256: "af48ef8716edbf54d54351a73e3dfd99f61713fffdd9d67d60b6f11f8d77fbf5", length: 191 }
+    action: replace
+    text: "Though it's not armor and uses your unarmored defense proficiency, it still has a Dex Cap and can grant an item bonus to AC if etched with potency runes."
+    reason: "A sentence that sent the reader to a section of another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: armor-statistics
+    field: description
+    span: { sha256: "b44a2023d98ce6947ccd8207cde9c1dbb3b9e55e759b833403a2b2bade0749be", length: 139 }
+    action: replace
+    text: "An armor's Bulk is increased or decreased if it's sized for creatures that aren't Small or Medium in size."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: armor-statistics
+    field: description
+    span: { sha256: "50c2ba1953385e56ac4e965d7c3d026d9330de2c9f8001d6064909ef027a2e8c", length: 120 }
+    action: replace
+    text: "Some abilities reference armor groups, typically to grant armor specialization effects, which are described in Armor Specialization Effects."
+    reason: "A sentence that sent the reader to a page of the book; the pointer names the section the pack has as a rule entry."
+  - book: pc
+    entry: attack-rolls
+    field: description
+    span: { sha256: "2d4bb2518700f34af29b99f6f20f90c7c6a14ea43d27c1e2cc3f381694a66fe1", length: 96 }
+    action: replace
+    text: "Modifiers for melee and ranged attacks are calculated differently."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: damage-rolls
+    field: description
+    span: { sha256: "800e252d0f4ae6b5be13b95f561be7a1ebaf773bd2da330052022e8a7daa357a", length: 66 }
+    action: replace
+    text: "Calculate a damage roll as follows."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: drawing-and-stowing-items
+    field: description
+    span: { sha256: "d8b14def42997981be70692e0e0e8f55de96a1144d7c7a95e00f81dd8dbc0926", length: 37 }
+    action: cut
+    reason: "A sentence that only pointed to a page of the book."
+  - book: pc
+    entry: equipment
+    field: description
+    span: { sha256: "1b0943773d788de4ee5d9a463eb223dda59f4574f6b7f4ca5eeb859e2a153aae", length: 59 }
+    action: cut
+    reason: "A sentence that only pointed to a page of the book."
+  - book: pc
+    entry: estimating-an-item-s-bulk
+    field: description
+    span: { sha256: "0f509a1df3bf997eebcc0771f413bec6eb9504aaf8966e81460d8368d7029562", length: 97 }
+    action: replace
+    text: "Items made for larger or smaller creatures have greater or lesser Bulk."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: item-damage
+    field: description
+    span: { sha256: "54ddc3c48ac1593f588a96ab9c0e32a038313972b9f962b156004a9fc7abbdf0", length: 44 }
+    action: cut
+    reason: "A sentence that only pointed to another book."
+  - book: pc
+    entry: items-of-different-sizes
+    field: description
+    span: { sha256: "2709ee8742b945d5417c94897ee817c2c7cc82342f86838e7a23c5d85cd59f30", length: 58 }
+    action: cut
+    reason: "A sentence that only pointed to a page of another book."
+  - book: pc
+    entry: shield-statistics
+    field: description
+    span: { sha256: "25514156d13b544c0e58873e53291ffd938f39a56d4807a5850112ee3686d770", length: 48 }
+    action: replace
+    text: "See Armor Statistics for the rules for those statistics."
+    reason: "A sentence that sent the reader to a page of the book; the pointer names the section the pack has as a rule entry."
+  - book: pc
+    entry: shield-statistics
+    field: description
+    span: { sha256: "2a6cd1ce12d2a583368c0619cd616c68196e158a4f32d051f7d9a51b8f154af6", length: 65 }
+    action: replace
+    text: "This requires using the Raise a Shield action."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: shield-statistics
+    field: description
+    span: { sha256: "9c59fe9fab21f10494e2bd7a9c71b6ed015ad6d6bd29e142bc43b7d51c88a113", length: 42 }
+    action: replace
+    text: "The rules for Hardness appear in Item Damage."
+    reason: "A sentence that sent the reader to a page of the book; the pointer names the section the pack has as a rule entry."
+  - book: pc
+    entry: weapon-statistics
+    field: description
+    span: { sha256: "1561bdcf576fad6f7e95f64645e627cb0d721843f7221ae14ef5f51206a42135", length: 193 }
+    action: replace
+    text: "The tables list the statistics for various melee and ranged weapons that you can purchase, as well as the statistics for striking with a fist (or another basic unarmed attack)."
+    reason: "A sentence that sent the reader to pages of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: weapon-statistics
+    field: description
+    span: { sha256: "1f957d1501416c7d922d4bf3080fd386578f62f06d8580fbfc53cdb5ddf46a59", length: 136 }
+    action: replace
+    text: "A weapon's Bulk is increased or decreased if it's sized for creatures that aren't Small or Medium size."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: weapon-statistics
+    field: description
+    span: { sha256: "8b01649d4cf547c0ec9a8c5cbd3f69fb903d848d814462b734bea21ad6113cc8", length: 187 }
+    action: replace
+    text: "Groups affect some abilities and what the weapon does on a critical hit if you have the critical specialization benefits for that weapon or unarmed attack."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: weapon-statistics
+    field: description
+    span: { sha256: "7e6bdb7b8fe775b7e631587caa6a05dd13a9fbe1092a5b7040da154d3ae7c76b", length: 33 }
+    action: replace
+    text: "Traits are described in Weapon Traits."
+    reason: "A sentence that sent the reader to a page of the book; the pointer names the section the pack has as a rule entry."
+  - book: pc
+    entry: weapon-traits
+    field: description
+    span: { sha256: "e74859dbd758aad699c8aa2ad68331aca1d9f995dc32ee7765572389e0343f08", length: 76 }
+    action: replace
+    text: "After that, changing your grip takes the same actions described in Carrying Items."
+    reason: "A sentence that sent the reader to a page of the book; the pointer names the section the pack has as a rule entry."
+  - book: pc
+    entry: weapon-traits
+    field: description
+    span: { sha256: "ec77bb6a472d1a16c64e009b8e4aedc08e2549e3214ddde1409771b640b8f8aa", length: 40 }
+    action: cut
+    reason: "A sentence that only pointed to another book."
+  - book: pc
+    entry: composite-longbow
+    field: description
+    span: { sha256: "57d6c79ed0be141df0ea1bcdaed9b4438608fb26832d9a314324fe79cf733de7", length: 157 }
+    action: replace
+    text: "Any time an ability is specifically restricted to a longbow, it also applies to composite longbows unless otherwise stated."
+    reason: "A sentence whose example named a deity of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: sawtooth-saber
+    field: description
+    span: { sha256: "c9bfd0274ba1e462ab2038761499d8649a5c5207ac723f4aa8cdecea8fb4c342", length: 107 }
+    action: replace
+    text: "This curved blade is serrated like a saw, hence the name."
+    reason: "A sentence that named a group of the setting as the weapon's users; the weapon's description is kept in plain words."
+  - book: pc
+    entry: unarmed-attacks
+    field: description
+    span: { sha256: "f26bb8b466e61339dd26aab9ba868a0e9512f332dd168918606ba90d5dcaf743", length: 84 }
+    action: replace
+    text: "For instance, a creature with sharp jaws can attack with them."
+    reason: "A sentence whose example named a heritage the setting coined; the mechanic is kept in plain words."
+  - book: pc
+    entry: critical-specialization
+    field: description
+    span: { sha256: "82920dcc0f6c9436f8fa7eb120dcc33db43dd041a15ad00681d95c1257d5f298", length: 88 }
+    action: replace
+    text: "The exact effect depends on which weapon group your weapon belongs to, as listed below."
+    reason: "A word the extraction broke in two at a line end, put back together."
+  - book: pc
+    entry: katana
+    field: description
+    span: { sha256: "8fe716087ab2b8e508f58c164e4131a05a6483355852ae69cfb4ebc4a13c0098", length: 78 }
+    action: replace
+    text: "A katana is a curved, single-edged sword known for its wickedly sharp blade."
+    reason: "A misprint of an ordinary word in the book's sentence, corrected."
+  - book: pc
+    entry: shield-statistics
+    field: description
+    span: { sha256: "6809e01d3c10d6a2a222a52562cdd3cfb85c6249aa843a410586427620e54a97", length: 153 }
+    action: replace
+    text: "These measure how much damage the shield can take before it's destroyed (its total HP) and how much it can take before being broken and unusable (its BT)."
+    reason: "A misprint in the book's sentence (the opening bracket of a parenthesis is missing), corrected."

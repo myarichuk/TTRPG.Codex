@@ -22,6 +22,14 @@
 #   listHeading (entries row with a level word) a heading in the block-header font, anywhere in the book, under which a table lists every entry of the row by rank: the independent count
 #   subheadings (rules parser) a heading in the block-header font inside a section that has no bookmark is a paragraph of the entry; runsToTitle: the bookmark paths whose section's text goes on over a page break
 #             above the next title (the pages between are sidebars, or the bookmark ends early); any other path still fails when text sits there
+#   items     (parser) equipment: the paths are the sections that describe the items (a paragraph that opens with the item's name and a colon). Their statistics are the rows of the stat tables on the pages of `tables`
+#             (the stat table reader carves them out before the page is cut into columns); a header row is a name cell and one of the `tableColumns` label lists, each starting with Price, and each label must be the
+#             title of a bookmark of the chapter. `itemKind` is armor, shield or weapon. A table row and its description are joined by name: a row or a description with no partner fails the run, unless `exclude`
+#             names it (with its reason in `countsDiffer`), `undescribed` names a row that has no paragraph (its entry is its row), or `ruleDescriptions` names descriptions with no row, which become the paragraphs of one
+#             rule (`ruleName`, `ruleCategory`)
+#   artLabels (items and rules rows) the lines set in capitals alone, which are the labels under a picture, are skipped, and the run prints how many
+#   readPast / foldChildren / readPastChildren / proseBoxes (rules parser) readPast claims a section's blocks and makes no entry; foldChildren makes the child sections whose titles are in the entry-header font paragraphs
+#             of one entry (counted against the bookmark children, and the names in readPastChildren leave their text out); proseBoxes reads a box of body text that opens with a bold heading as prose, not as a table
 #   own       paths (rules parser) whose own text, between the section's title and its first child section, becomes one entry named by ownName
 #   planned   (below the rows) sections a later chapter takes: not read, only not counted as "left out" by the denylist generator
 # Dropped material is never named here: the setting, religion, example-of-play and map sections are simply absent.
@@ -275,6 +283,179 @@ rows:
       - Creature Creation Rituals
     paths:
       - ["Chapter 7: Spells", Spell Lists, Rituals, Rituals]
+# The equipment chapter, without its gear (6b). Its rules prose is `rule` entries of the category Equipment; the item statistics are in tables (armor, shields, weapons), which the stat table reader
+# carves out of their pages, and each row of a table is joined by name to the paragraph that describes it (the `items` parser). Sidebars are all left out.
+  - chapter: equipment
+    book: pc
+    parser: rules
+    target: rule
+    category: Equipment
+    approved: true
+    tableRows: true
+    # The headings of the chapter's sections (a section's own title and its children's) share one font, so the chapter's own text cannot be counted against its bookmark children by font.
+    countsDiffer: The chapter's section headings and their children's share a font, so the count by font does not apply to the chapter's own text.
+    own:
+      - ["Chapter 6: Equipment"]
+    ownName: Equipment
+  - chapter: equipment
+    book: pc
+    parser: rules
+    target: rule
+    category: Equipment
+    approved: true
+    tableRows: true
+    subheadings: true
+    artLabels: true
+    # A section whose text goes on over a page break above the next title.
+    runsToTitle:
+      - ["Chapter 6: Equipment", Carrying Items, Drawing and Stowing Items]
+      # The box of the broken condition sits at the top of the next page, above the next section's title.
+      - ["Chapter 6: Equipment", Item Damage, Object Immunities]
+    own:
+      - ["Chapter 6: Equipment", Coins and Currency]
+      - ["Chapter 6: Equipment", Carrying Items]
+      - ["Chapter 6: Equipment", Bulk]
+      - ["Chapter 6: Equipment", Item Damage]
+      - ["Chapter 6: Equipment", Items and Sizes]
+    paths:
+      - ["Chapter 6: Equipment", Coins and Currency, Other Currency]
+      - ["Chapter 6: Equipment", Price]
+      - ["Chapter 6: Equipment", Item Level]
+      - ["Chapter 6: Equipment", Carrying Items, Wielding Items]
+      - ["Chapter 6: Equipment", Carrying Items, Drawing and Stowing Items]
+      - ["Chapter 6: Equipment", Bulk, Bulk Limits]
+      - ["Chapter 6: Equipment", Bulk, Bulk Values]
+      - ["Chapter 6: Equipment", Bulk, Estimating an Item’s Bulk]
+      - ["Chapter 6: Equipment", Bulk, Bulk of Coins]
+      - ["Chapter 6: Equipment", Bulk, Bulk of Creatures]
+      - ["Chapter 6: Equipment", Bulk, Dragging]
+      - ["Chapter 6: Equipment", Item Damage, Object Immunities]
+      - ["Chapter 6: Equipment", Shoddy Items]
+      - ["Chapter 6: Equipment", Items and Sizes, Bulk Conversions for Different Sizes]
+      - ["Chapter 6: Equipment", Items and Sizes, Items of Different Sizes]
+  # Armor: the rules of wearing it, its specialization effects, and the statistics of the table. The statistics section's children are the table's columns, each a paragraph of one rule.
+  - chapter: equipment
+    book: pc
+    parser: rules
+    target: rule
+    category: Equipment
+    approved: true
+    tableRows: true
+    artLabels: true
+    paths:
+      - ["Chapter 6: Equipment", Armor, Armor Class]
+      - ["Chapter 6: Equipment", Armor, Donning and Removing Armor]
+      - ["Chapter 6: Equipment", Armor, Armor Specialization Effects]
+  - chapter: equipment
+    book: pc
+    parser: rules
+    target: rule
+    category: Equipment
+    approved: true
+    artLabels: true
+    foldChildren: true
+    subheadings: true
+    proseBoxes: true
+    runsToTitle:
+      - ["Chapter 6: Equipment", Armor, Armor Statistics]
+    paths:
+      - ["Chapter 6: Equipment", Armor, Armor Statistics]
+      - ["Chapter 6: Equipment", Shields, Shield Statistics]
+      - ["Chapter 6: Equipment", Weapons, Weapon Statistics]
+  - chapter: equipment
+    book: pc
+    parser: rules
+    target: rule
+    category: Equipment
+    approved: true
+    tableRows: true
+    artLabels: true
+    proseBoxes: true
+    own:
+      - ["Chapter 6: Equipment", Shields]
+    paths:
+      - ["Chapter 6: Equipment", Shields, Attacking With a Shield]
+      - ["Chapter 6: Equipment", Weapons, Attack Rolls, Multiple Attack Penalty]
+      - ["Chapter 6: Equipment", Weapons, Damage Rolls]
+      - ["Chapter 6: Equipment", Weapons, Critical Hits]
+      - ["Chapter 6: Equipment", Weapons, Unarmed Attacks]
+      - ["Chapter 6: Equipment", Weapons, Improvised Weapons]
+      - ["Chapter 6: Equipment", Weapons, Critical Specialization]
+  - chapter: equipment
+    book: pc
+    parser: rules
+    target: rule
+    category: Equipment
+    approved: true
+    tableRows: true
+    proseBoxes: true
+    runsToTitle:
+      - ["Chapter 6: Equipment", Weapons, Weapon Traits]
+    paths:
+      - ["Chapter 6: Equipment", Weapons, Weapon Traits]
+    own:
+      - ["Chapter 6: Equipment", Weapons, Attack Rolls]
+  # The items. A description is a paragraph that opens with the item's name and a colon; its statistics are the row of a table with the same name. A row of a table that is not an item, or an item of the gear
+  # chapter that the weapons table lists, is excluded by name with its reason.
+  - chapter: equipment
+    book: pc
+    parser: items
+    target: armor
+    folder: armor
+    itemKind: armor
+    approved: true
+    artLabels: true
+    countsDiffer: The first row of the unarmored table says no armor is worn, which is no item and has no description.
+    exclude:
+      - No armor
+    tables:
+      - ["Chapter 6: Equipment", Armor]
+    tableColumns:
+      - ["Price", "AC Bonus", "Dex Cap", "Check Penalty", "Speed Penalty", "Bulk", "Group", "Armor Traits"]
+      - ["Price", "AC Bonus", "Dex Cap", "Check Penalty", "Speed Penalty", "Strength", "Bulk", "Group", "Armor Traits"]
+    paths:
+      - ["Chapter 6: Equipment", Armor, Armor Descriptions]
+  - chapter: equipment
+    book: pc
+    parser: items
+    target: armor
+    folder: armor
+    itemKind: shield
+    approved: true
+    artLabels: true
+    tables:
+      - ["Chapter 6: Equipment", Shields]
+    tableColumns:
+      - ["Price", "AC Bonus", "Speed Penalty", "Bulk", "Hardness", "HP (BT)"]
+    paths:
+      - ["Chapter 6: Equipment", Shields, Shield Descriptions]
+  - chapter: equipment
+    book: pc
+    parser: items
+    target: weapon
+    itemKind: weapon
+    approved: true
+    artLabels: true
+    countsDiffer: The alchemical bomb is a weapon of the gear chapter whose statistics are there, so its table row and its description are left to that step.
+    exclude:
+      - Alchemical bomb
+    # A fist is a row of the unarmed attacks table with no paragraph of its own; its entry is its row, and the unarmed attacks rule has the rest. The four kinds of ammunition are described but listed under the weapons that fire them.
+    undescribed:
+      - Fist
+    ruleDescriptions:
+      - Arrow
+      - Blowgun Dart
+      - Bolt
+      - Sling Bullet
+    ruleName: Kinds of Ammunition
+    ruleCategory: Equipment
+    tables:
+      - ["Chapter 6: Equipment", Weapons]
+    tableColumns:
+      - ["Price", "Damage", "Bulk", "Hands", "Group", "Weapon Traits"]
+      - ["Price", "Damage", "Range", "Reload", "Bulk", "Hands", "Group", "Weapon Traits"]
+    paths:
+      - ["Chapter 6: Equipment", Weapons, Weapon Descriptions]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
@@ -285,5 +466,5 @@ planned:
       - ["Chapter 1: Introduction", Character Creation]
       - ["Chapter 2: Ancestries & Backgrounds"]
       - ["Chapter 3: Classes"]
-      - ["Chapter 6: Equipment"]
+      - ["Chapter 6: Equipment", Gear]
       - ["Chapter 8: Playing the Game"]
