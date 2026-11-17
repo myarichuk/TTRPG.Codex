@@ -164,6 +164,17 @@ entityTypes:
       price: { label: מחיר }
       level: { label: רמה }
       ammunition: { label: תחמושת }
+  gear:
+    label: ציוד
+    pluralLabel: ציוד
+    fields:
+      kind: { label: סוג, valueLabels: { gear: { label: ציוד, pluralLabel: ציוד }, bomb: { label: פצצה, pluralLabel: פצצות }, elixir: { label: אליקסיר, pluralLabel: אליקסירים }, alchemical-tool: { label: כלי אלכימי, pluralLabel: כלים אלכימיים }, assistive: { label: אמצעי עזר, pluralLabel: אמצעי עזר }, barding: { label: שריון לבעלי חיים, pluralLabel: שריון לבעלי חיים } } }
+      traits: { label: תכונות }
+      price: { label: מחיר }
+      bulk: { label: נפח }
+      hands: { label: ידיים }
+      level: { label: רמה }
+      variantOf: { label: רשום תחת }
   trinket: { label: קמע, pluralLabel: קמעות }
   magic-item:
     label: חפץ קסום

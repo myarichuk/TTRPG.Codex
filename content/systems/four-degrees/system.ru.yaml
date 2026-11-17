@@ -164,6 +164,17 @@ entityTypes:
       price: { label: Цена }
       level: { label: Уровень }
       ammunition: { label: Боеприпасы }
+  gear:
+    label: Снаряжение
+    pluralLabel: Снаряжение
+    fields:
+      kind: { label: Вид, valueLabels: { gear: { label: Снаряжение, pluralLabel: Снаряжение }, bomb: { label: Бомба, pluralLabel: Бомбы }, elixir: { label: Эликсир, pluralLabel: Эликсиры }, alchemical-tool: { label: Алхимический инструмент, pluralLabel: Алхимические инструменты }, assistive: { label: Вспомогательное средство, pluralLabel: Вспомогательные средства }, barding: { label: Конская броня, pluralLabel: Конская броня } } }
+      traits: { label: Свойства }
+      price: { label: Цена }
+      bulk: { label: Громоздкость }
+      hands: { label: Руки }
+      level: { label: Уровень }
+      variantOf: { label: Перечислен под }
   trinket: { label: Безделушка, pluralLabel: Безделушки }
   magic-item:
     label: Волшебный предмет
