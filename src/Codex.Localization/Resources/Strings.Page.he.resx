@@ -196,7 +196,6 @@
   <data name="Page.AiSettings.ModelDetailContext" xml:space="preserve"><value>הקשר {0}</value></data>
   <data name="Page.AiSettings.ModelDetailText" xml:space="preserve"><value>הקשר {0} · קלט {1} / פלט {2} למיליון אסימונים</value></data>
   <data name="Page.AiSettings.ModelDetailFree" xml:space="preserve"><value>הקשר {0} · חינם</value></data>
-  <data name="Page.AiSettings.ModelDetailImage" xml:space="preserve"><value>{0} לתמונה</value></data>
   <data name="Page.AiSettings.PricesAutofilled" xml:space="preserve"><value>מולא לפי הרשימה של OpenRouter עבור מודל זה. כדאי לבדוק מול התוכנית שלכם; אפשר לשנות כל ערך.</value></data>
   <data name="Page.AiSettings.ApiKey" xml:space="preserve"><value>מפתח API</value></data>
   <data name="Page.AiSettings.ApiKeyKeep" xml:space="preserve"><value>(השאירו ריק כדי לשמור את המפתח הקיים)</value></data>

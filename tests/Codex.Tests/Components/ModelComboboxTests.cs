@@ -45,6 +45,37 @@ public sealed class ModelComboboxTests : ComponentTestBase
     }
 
     [Fact]
+    public void AnOptionsDomId_FollowsTheOption_NotItsPlaceInTheList()
+    {
+        // aria-activedescendant names an option by id; if a re-render moves the option, the id must move with it.
+        var cut = Render(Few);
+        string IdOf(string value) => cut.FindAll("[role=option]").Single(o => o.GetAttribute("data-value") == value).Id;
+        var before = Few.ToDictionary(o => o.Id, o => IdOf(o.Id));
+
+        cut.Render(p => p.Add(c => c.Options, (IReadOnlyList<ModelOption>)[.. Few.Reverse()]));
+
+        Assert.All(Few, o => Assert.Equal(before[o.Id], IdOf(o.Id)));
+        Assert.Equal(3, before.Values.Distinct().Count());
+    }
+
+    [Fact]
+    public async Task Sync_TakesTheFieldsTextAsTheTruth_AndSaysNothingWhenTheyAlreadyAgree()
+    {
+        var changes = new List<string?>();
+        var cut = Render(Few, value: "ab", changed: changes.Add);
+
+        // What the field really holds after the browser applied an outside change, while the server believed otherwise.
+        await cut.InvokeAsync(() => cut.Instance.PickAsync("claude-haiku-5-5"));
+        changes.Clear();
+        await cut.InvokeAsync(() => cut.Instance.SyncAsync("claude-haiku-5-5"));
+        Assert.Empty(changes);
+
+        await cut.InvokeAsync(() => cut.Instance.SyncAsync("ab"));
+        Assert.Equal(["ab"], changes);
+        Assert.Equal("ab", cut.Instance.Value);
+    }
+
+    [Fact]
     public void AnOption_ShowsItsNameIdDetailAndToolsBadge()
     {
         var cut = Render(Few);

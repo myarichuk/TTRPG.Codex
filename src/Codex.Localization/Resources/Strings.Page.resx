@@ -196,7 +196,6 @@
   <data name="Page.AiSettings.ModelDetailContext" xml:space="preserve"><value>{0} context</value></data>
   <data name="Page.AiSettings.ModelDetailText" xml:space="preserve"><value>{0} context · in {1} / out {2} per 1M tokens</value></data>
   <data name="Page.AiSettings.ModelDetailFree" xml:space="preserve"><value>{0} context · free</value></data>
-  <data name="Page.AiSettings.ModelDetailImage" xml:space="preserve"><value>{0} per image</value></data>
   <data name="Page.AiSettings.PricesAutofilled" xml:space="preserve"><value>Filled in from OpenRouter's list for this model. Check them against your plan; you can change any of them.</value></data>
   <data name="Page.AiSettings.ApiKey" xml:space="preserve"><value>API key</value></data>
   <data name="Page.AiSettings.ApiKeyKeep" xml:space="preserve"><value>(leave blank to keep the stored key)</value></data>

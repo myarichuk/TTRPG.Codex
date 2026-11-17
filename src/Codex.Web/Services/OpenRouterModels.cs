@@ -4,10 +4,12 @@ using Codex.Core.AI;
 
 namespace Codex.Web.Services;
 
-/// <summary>A model OpenRouter lists, trimmed to what the settings page shows. Prices are what OpenRouter charges, in US dollars, in the
-/// units the price fields use; a price OpenRouter does not give is null, never zero.</summary>
+/// <summary>A model OpenRouter lists, trimmed to what the settings page shows. Prices are what OpenRouter charges per million tokens, in
+/// US dollars, in the units the price fields use; a price OpenRouter does not give is null, never zero. Only chat models carry prices:
+/// OpenRouter prices a picture model per token of picture, and the one field named "image" is what sending a picture <em>in</em> costs
+/// (its docs: "Cost per image input"), so there is no price per picture to offer.</summary>
 public sealed record OpenRouterModel(string Id, string Name, int? ContextLength, decimal? InputPerMTok, decimal? OutputPerMTok,
-    decimal? CachedInputPerMTok, decimal? PerImage, bool Tools);
+    decimal? CachedInputPerMTok, bool Tools);
 
 /// <summary>
 /// OpenRouter's public model list (<c>/api/v1/models</c>, which needs no key), kept for an hour so the settings page can offer
@@ -27,7 +29,7 @@ public sealed class OpenRouterModels(IHttpClientFactory http, TimeProvider? cloc
     public static readonly TimeSpan Fresh = TimeSpan.FromHours(1);
     private static readonly TimeSpan RetryAfterFailure = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
-    private const long MaxBytes = 16 * 1024 * 1024;
+    public const long MaxBytes = 16 * 1024 * 1024;
 
     private readonly TimeProvider time = clock ?? TimeProvider.System;
     private readonly Slot text = new();
@@ -92,8 +94,19 @@ public sealed class OpenRouterModels(IHttpClientFactory http, TimeProvider? cloc
         response.EnsureSuccessStatusCode();
         if (response.Content.Headers.ContentLength > MaxBytes) throw new InvalidDataException("the list is larger than expected");
 
+        // Bounded as it is read, not only by the length the reply claims: a chunked reply claims none.
         await using var body = await response.Content.ReadAsStreamAsync(limit.Token);
-        using var doc = await JsonDocument.ParseAsync(body, cancellationToken: limit.Token);
+        using var buffer = new MemoryStream();
+        var chunk = new byte[81920];
+        int read;
+        while ((read = await body.ReadAsync(chunk, limit.Token)) > 0)
+        {
+            if (buffer.Length + read > MaxBytes) throw new InvalidDataException("the list is larger than expected");
+            buffer.Write(chunk, 0, read);
+        }
+
+        buffer.Position = 0;
+        using var doc = await JsonDocument.ParseAsync(buffer, cancellationToken: limit.Token);
         return Parse(doc.RootElement, imageModels);
     }
 
@@ -122,8 +135,7 @@ public sealed class OpenRouterModels(IHttpClientFactory http, TimeProvider? cloc
 
             result.Add(new OpenRouterModel(id, Str(item, "name") is { Length: > 0 } name ? name : id, context,
                 imageModels ? null : PerMTok(prices, "prompt"), imageModels ? null : PerMTok(prices, "completion"),
-                imageModels ? null : PerMTok(prices, "input_cache_read"),
-                imageModels ? Number(Get(prices, "image")) : null, tools));
+                imageModels ? null : PerMTok(prices, "input_cache_read"), tools));
         }
 
         return result;

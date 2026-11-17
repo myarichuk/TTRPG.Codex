@@ -105,7 +105,6 @@ public sealed class OpenRouterModelsTests
         Assert.Equal(0.15m, mini.InputPerMTok);
         Assert.Equal(0.6m, mini.OutputPerMTok);
         Assert.Equal(0.075m, mini.CachedInputPerMTok);
-        Assert.Null(mini.PerImage);
 
         var plain = models!.Single(m => m.Id == "acme/no-tools");
         Assert.Equal(2m, plain.InputPerMTok);
@@ -137,17 +136,64 @@ public sealed class OpenRouterModelsTests
     }
 
     [Fact]
-    public async Task ImageList_AsksForImageModels_AndOnlyAPerPictureFigureBecomesAPrice()
+    public async Task ImageList_AsksForImageModels_AndOffersNoPrice_NotEvenFromTheFieldNamedImage()
     {
         var handler = Handler.Json(TextList);
         var models = await Service(handler).ListAsync(imageModels: true);
 
         Assert.Contains("output_modalities=image", handler.Requests.Single().RequestUri!.Query);
         Assert.Equal(["acme/draw-flat", "acme/draw-tokens"], models!.Select(m => m.Id).ToArray());
-        Assert.Equal(0.04m, models.Single(m => m.Id == "acme/draw-flat").PerImage);
-        // Priced per token of picture, which is not the price of a picture: better none than a wrong one.
-        Assert.Null(models.Single(m => m.Id == "acme/draw-tokens").PerImage);
-        Assert.All(models, m => Assert.Null(m.InputPerMTok));
+        // acme/draw-flat lists "image": "0.04". OpenRouter's docs call that field the cost per image sent IN, not the cost of a
+        // picture made, so it must not turn into a price per picture; better none than a wrong one.
+        Assert.All(models, m =>
+        {
+            Assert.Null(m.InputPerMTok);
+            Assert.Null(m.OutputPerMTok);
+            Assert.Null(m.CachedInputPerMTok);
+        });
+    }
+
+    private sealed class Endless(string start) : Stream
+    {
+        private readonly byte[] head = Encoding.UTF8.GetBytes(start);
+        private long position;
+
+        public long Served => position;
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                buffer[offset + i] = position < head.Length ? head[position] : (byte)' ';
+                position++;
+            }
+
+            return count;
+        }
+
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => position; set => throw new NotSupportedException(); }
+        public override void Flush() { }
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    [Fact]
+    public async Task AReplyThatNeverEnds_IsCutOffAtTheLimit_EvenWhenItClaimsNoLength()
+    {
+        // A chunked reply has no Content-Length to check; the cap has to hold as the bytes arrive.
+        var endless = new Endless("{ \"data\": [");
+        var handler = new Handler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(endless) }));
+
+        var list = await Service(handler).ListAsync(false);
+
+        Assert.Null(list);
+        Assert.True(endless.Served <= OpenRouterModels.MaxBytes + 81920, $"read {endless.Served} bytes");
+        Assert.True(endless.Served > OpenRouterModels.MaxBytes / 2, "it should have been read up to the limit, not given up on early");
     }
 
     [Fact]

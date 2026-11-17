@@ -237,6 +237,8 @@ export function attach(root, dotnet) {
             close();
             event.stopPropagation();
         } else if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && list.hidden) {
+            // Opening the list is all this press does: combobox-nav is not listening yet, so without this the caret would jump.
+            event.preventDefault();
             open();
         }
     };
@@ -268,7 +270,11 @@ export function attach(root, dotnet) {
         /** The server changed the value from outside. Applied only if the field still holds `expected`, the text the server last
          *  knew: if more was typed since, that is newer and wins (the server hears about it from the input event). */
         setValue(value, expected) {
-            if (input.value === expected) input.value = value;
+            if (input.value !== expected) return;
+            input.value = value;
+            // Say what the field now holds. Anything typed in the meantime that the server has not heard yet reaches it first, so
+            // the server ends up with what is on the screen even if the text was typed and undone while this was on its way.
+            dotnet.invokeMethodAsync('SyncAsync', input.value).catch(() => { /* the page is closing */ });
         },
         dispose() {
             observer.disconnect();

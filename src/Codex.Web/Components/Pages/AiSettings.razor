@@ -1,4 +1,5 @@
 @page "/settings/ai"
+@implements IDisposable
 @using System.Security.Claims
 @using Codex.Core.AI
 @using Codex.Persistence
@@ -133,7 +134,7 @@ else
                         @* A combo box: the service's models are suggested and narrowed as you type, and anything else can still be
                            typed (a local server's own names, a model that is not listed). Anthropic, OpenAI and Gemini come from
                            AiModelCatalog; OpenRouter's, being hundreds that change weekly, are fetched live (OpenRouterModels). *@
-                        <ModelCombobox Id="ai-model" TestId="ai-model" @bind-Value="editing.ModelId" Options="ModelOptions" OnPick="OnModelPickedAsync"
+                        <ModelCombobox Id="ai-model" TestId="ai-model" Value="@editing.ModelId" ValueChanged="OnModelChangedAsync" Options="ModelOptions" OnPick="OnModelPickedAsync"
                                        Placeholder="@(purpose == Purpose.Image ? L["Page.AiSettings.ModelPhImage"] : L["Page.AiSettings.ModelPhText"])"
                                        Required="true" Invalid="@Invalid("model")" Loading="OpenRouterLoading" Failed="OpenRouterFailed" />
                         @if (editing.Kind == "openrouter")
@@ -187,10 +188,6 @@ else
                                     <input id="ai-price-image-label" class="field-input" maxlength="@AiPrice.MaxLabelLength" @bind="editing.PriceLabel" placeholder="USD" data-testid="ai-price-image-label" />
                                 </div>
                             </div>
-                            @if (pricesAutoFilled)
-                            {
-                                <div class="field-hint" data-testid="ai-prices-autofilled">@L["Page.AiSettings.PricesAutofilled"]</div>
-                            }
                             <div id="ai-price-image-hint" class="field-hint">@L["Page.AiSettings.PriceImageHint"]</div>
                         </div>
                     }
@@ -367,7 +364,7 @@ else
         formError = null;
         invalid.Clear();
         editing = new AiProviderConfig();
-        pricesAutoFilled = false;
+        ForgetAutoFill();
         ApplyPreset(p == Purpose.Image ? "openai" : "openrouter");
         EnsureOpenRouter();
         if (focus)
@@ -398,14 +395,15 @@ else
             PriceLabel = provider.PriceLabel,
             CreatedAt = provider.CreatedAt
         };
-        pricesAutoFilled = false;
+        ForgetAutoFill();
         EnsureOpenRouter();
     }
 
     private void OnPresetChanged(ChangeEventArgs e)
     {
+        // Prices that came with an OpenRouter model belong to that model, not to the service about to replace it.
+        DropAutoFilledPrices();
         ApplyPreset(e.Value?.ToString() ?? "custom");
-        pricesAutoFilled = false;
         EnsureOpenRouter();
     }
 
@@ -415,8 +413,12 @@ else
     // fetched (the id is typed by hand then); switching the service away and back asks again.
     private readonly Dictionary<Purpose, IReadOnlyList<OpenRouterModel>?> openRouter = new();
     private readonly HashSet<Purpose> openRouterLoading = new();
-    // The price fields were filled in from OpenRouter's list, and nobody has typed in them since: a different model replaces them.
+    // The price fields were filled in from OpenRouter's list (for autoFilledFor), and nobody has typed in them since: a different
+    // model replaces them, and so does leaving that model or its service. autoFilledLabel: the currency label was ours too.
     private bool pricesAutoFilled;
+    private string? autoFilledFor;
+    private bool autoFilledLabel;
+    private bool disposed;
     private (Purpose Purpose, string Kind, bool Live)? optionsFor;
     private IReadOnlyList<ModelOption> optionsCache = [];
 
@@ -445,7 +447,8 @@ else
         string? detail;
         if (p == Purpose.Image)
         {
-            detail = m.PerImage is { } each ? L["Page.AiSettings.ModelDetailImage", AiPrice.Format(each, "USD", culture)] : null;
+            // OpenRouter prices a picture model per token of picture: nothing there reads as a price per picture.
+            detail = null;
         }
         else if (m.InputPerMTok is { } input && m.OutputPerMTok is { } output)
         {
@@ -480,13 +483,23 @@ else
             // Not worth more than a typed id: the field still works.
         }
 
-        await InvokeAsync(() =>
+        if (disposed) return;
+        try
         {
-            openRouterLoading.Remove(forPurpose);
-            openRouter[forPurpose] = list;
-            StateHasChanged();
-        });
+            await InvokeAsync(() =>
+            {
+                openRouterLoading.Remove(forPurpose);
+                openRouter[forPurpose] = list;
+                StateHasChanged();
+            });
+        }
+        catch (ObjectDisposedException)
+        {
+            // The page was closed while the list was on its way.
+        }
     }
+
+    public void Dispose() => disposed = true;
 
     /// <summary>A model was picked from OpenRouter's list: fill in the prices it lists, as far as it lists them. The numbers are
     /// OpenRouter's, which is not always what a plan costs, so they stay editable (and saved ones can be edited any time). Prices
@@ -498,26 +511,49 @@ else
             return Task.CompletedTask;
         }
 
-        var untouched = editing.InputPricePerMTok == null && editing.OutputPricePerMTok == null && editing.CachedInputPricePerMTok == null && editing.PricePerImage == null;
+        // A picture model has no price per picture to offer (see OpenRouterModel), so only chat models bring prices.
+        if (purpose == Purpose.Image) return Task.CompletedTask;
+
+        var untouched = editing.InputPricePerMTok == null && editing.OutputPricePerMTok == null && editing.CachedInputPricePerMTok == null;
         if (!pricesAutoFilled && !untouched) return Task.CompletedTask;
 
-        if (purpose == Purpose.Image)
-        {
-            editing.PricePerImage = model.PerImage;
-        }
-        else
-        {
-            editing.InputPricePerMTok = model.InputPerMTok;
-            editing.OutputPricePerMTok = model.OutputPerMTok;
-            editing.CachedInputPricePerMTok = model.CachedInputPerMTok;
-        }
-
-        pricesAutoFilled = editing.InputPricePerMTok != null || editing.OutputPricePerMTok != null || editing.CachedInputPricePerMTok != null || editing.PricePerImage != null;
-        if (pricesAutoFilled && string.IsNullOrWhiteSpace(editing.PriceLabel)) editing.PriceLabel = "USD";
+        editing.InputPricePerMTok = model.InputPerMTok;
+        editing.OutputPricePerMTok = model.OutputPerMTok;
+        editing.CachedInputPricePerMTok = model.CachedInputPerMTok;
+        pricesAutoFilled = editing.InputPricePerMTok != null || editing.OutputPricePerMTok != null || editing.CachedInputPricePerMTok != null;
+        autoFilledFor = pricesAutoFilled ? model.Id : null;
+        autoFilledLabel = pricesAutoFilled && string.IsNullOrWhiteSpace(editing.PriceLabel);
+        if (autoFilledLabel) editing.PriceLabel = "USD";
         return Task.CompletedTask;
     }
 
-    private void PriceEdited() => pricesAutoFilled = false;
+    /// <summary>The model field changed, by typing or by a pick. Prices that came from OpenRouter for another model go: a typed
+    /// id that is no longer the one they were listed for would otherwise keep them under a note saying they are its own.</summary>
+    private Task OnModelChangedAsync(string? id)
+    {
+        editing.ModelId = id;
+        if (pricesAutoFilled && id != autoFilledFor) DropAutoFilledPrices();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Takes back what <see cref="OnModelPickedAsync"/> filled in. Numbers someone typed are never touched.</summary>
+    private void DropAutoFilledPrices()
+    {
+        if (!pricesAutoFilled) return;
+        editing.InputPricePerMTok = editing.OutputPricePerMTok = editing.CachedInputPricePerMTok = null;
+        if (autoFilledLabel && editing.PriceLabel == "USD") editing.PriceLabel = null;
+        ForgetAutoFill();
+    }
+
+    private void ForgetAutoFill()
+    {
+        pricesAutoFilled = false;
+        autoFilledFor = null;
+        autoFilledLabel = false;
+    }
+
+    // Typing in a price field makes the numbers the person's own.
+    private void PriceEdited() => ForgetAutoFill();
 
     /// <summary>Fills in the service's defaults. On a model being edited, a field the user changed from the old
     /// service's default is kept: switching the service must not quietly swap their model for another (paid) one.</summary>

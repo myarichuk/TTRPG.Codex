@@ -126,8 +126,13 @@ public class ModelPickerE2ETests : IClassFixture<AppFixture>
         await Input(page).PressAsync("Escape");
         await Assertions.Expect(List(page)).ToBeHiddenAsync();
 
+        // Opening the list is all that first ArrowDown does: the caret stays where it was.
+        await Input(page).FillAsync("abc");
+        await Input(page).PressAsync("Home");
+        await Input(page).PressAsync("Escape");
         await Input(page).PressAsync("ArrowDown");
         await Assertions.Expect(List(page)).ToBeVisibleAsync();
+        Assert.Equal(0, await Input(page).EvaluateAsync<int>("el => el.selectionStart"));
 
         // Nothing listed matches: it says what will happen to the text, and the text is the model.
         await Input(page).FillAsync("my-own-local-model");
@@ -245,7 +250,7 @@ public class ModelPickerE2ETests : IClassFixture<AppFixture>
     }
 
     [Fact]
-    public async Task AnOpenRouterImageModel_BringsAPerPicturePrice_OnlyWhenOpenRouterLists_OneNotAGuess()
+    public async Task AnOpenRouterImageModel_BringsNoPrice_BecauseOpenRouterListsNoneForAPicture()
     {
         var (context, page) = await OpenAsync();
         await using var _ = context;
@@ -257,12 +262,46 @@ public class ModelPickerE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(Options(page)).ToHaveCountAsync(2);
         await Options(page).Filter(new() { HasText = "Acme: Draw" }).First.ClickAsync();
         await Assertions.Expect(Input(page)).ToHaveValueAsync(FakeOpenRouter.DrawFlat);
-        await Assertions.Expect(page.GetByTestId("ai-price-image")).ToHaveValueAsync("0.04");
+        // The fake lists "image": "0.04" for it, which OpenRouter defines as the cost of an image sent in; it is not a picture's price.
+        await Assertions.Expect(page.GetByTestId("ai-price-image")).ToHaveValueAsync(string.Empty);
+        await Assertions.Expect(page.GetByTestId("ai-prices-autofilled")).ToHaveCountAsync(0);
 
-        // A model OpenRouter prices per token of picture has no price per picture: the field is emptied, not guessed.
+        // A price the person enters stays through a pick.
+        await page.GetByTestId("ai-price-image").CommitAsync("0.05");
         await Input(page).ClickAsync();
         await Options(page).Filter(new() { HasText = "Draw By Token" }).ClickAsync();
-        await Assertions.Expect(page.GetByTestId("ai-price-image")).ToHaveValueAsync(string.Empty);
+        await Assertions.Expect(page.GetByTestId("ai-price-image")).ToHaveValueAsync("0.05");
+    }
+
+    [Fact]
+    public async Task PricesThatCameFromOpenRouter_GoWithTheModelTheyWereFor_NotToAnotherServiceOrAnotherId()
+    {
+        var (context, page) = await OpenAsync();
+        await using var _ = context;
+
+        // Another service: the prices, and the label they brought, do not travel.
+        await Input(page).ClickAsync();
+        await Options(page).Filter(new() { HasText = "Acme: Chat Mini" }).ClickAsync();
+        await Assertions.Expect(page.GetByTestId("ai-price-in")).ToHaveValueAsync("0.15");
+        await E2EHelpers.PickAiServiceAsync(page, "anthropic", "Anthropic");
+        await Assertions.Expect(page.GetByTestId("ai-price-in")).ToHaveValueAsync(string.Empty);
+        await Assertions.Expect(page.GetByTestId("ai-price-out")).ToHaveValueAsync(string.Empty);
+        await Assertions.Expect(page.GetByTestId("ai-price-label")).ToHaveValueAsync(string.Empty);
+        await Assertions.Expect(page.GetByTestId("ai-prices-autofilled")).ToHaveCountAsync(0);
+
+        // Another id typed over the picked one: the note said "for this model", so it goes, and so do the numbers.
+        await E2EHelpers.PickAiServiceAsync(page, "openrouter", "OpenRouter");
+        await Input(page).ClickAsync();
+        await Options(page).Filter(new() { HasText = "Acme: Chat Mini" }).ClickAsync();
+        await Assertions.Expect(page.GetByTestId("ai-price-in")).ToHaveValueAsync("0.15");
+        await Input(page).FillAsync("acme/some-other-model");
+        await Assertions.Expect(page.GetByTestId("ai-price-in")).ToHaveValueAsync(string.Empty);
+        await Assertions.Expect(page.GetByTestId("ai-prices-autofilled")).ToHaveCountAsync(0);
+
+        // Numbers someone typed are theirs, and stay when the id changes.
+        await page.GetByTestId("ai-price-in").CommitAsync("7");
+        await Input(page).FillAsync("acme/yet-another");
+        await Assertions.Expect(page.GetByTestId("ai-price-in")).ToHaveValueAsync("7");
     }
 
     [Fact]

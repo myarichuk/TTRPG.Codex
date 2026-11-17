@@ -14,7 +14,7 @@
         @for (var i = 0; i < shown.Count; i++)
         {
             var option = shown[i];
-            <li @key="option.Id" id="@(ListId + "-" + i)" role="option" class="model-combobox-option" data-value="@option.Id">
+            <li @key="option.Id" id="@(ListId + "-" + OptionKey(option.Id))" role="option" class="model-combobox-option" data-value="@option.Id">
                 <span class="model-combobox-main">
                     <span class="model-combobox-name" dir="auto">@(option.Label ?? option.Id)</span>
                     @if (option.Label != null && option.Label != option.Id)
@@ -76,6 +76,7 @@
     private IJSObjectReference? module;
     private IJSObjectReference? handle;
     private DotNetObjectReference<ModelCombobox>? self;
+    private bool disposed;
     // What narrows the list: what the user typed, not the field's value. A field that already holds a model shows the whole list
     // when opened, and only typing narrows it.
     private string? query;
@@ -87,6 +88,10 @@
     private string? domValue;
 
     private string ListId => Id + "-list";
+
+    /// <summary>A short key for an option's DOM id that stays the same wherever the option is in the list, so the field's
+    /// aria-activedescendant keeps naming the same option when the list is re-rendered under it.</summary>
+    private static string OptionKey(string id) => ((uint)StringComparer.Ordinal.GetHashCode(id)).ToString("x8");
 
     protected override void OnInitialized() => domValue = initialValue = Value;
 
@@ -109,6 +114,18 @@
         if (option != null) await OnPick.InvokeAsync(option);
     }
 
+    /// <summary>Called from the browser right after it applied a value pushed from here: what the field holds now. Input events
+    /// sent before that arrive first, so whatever they left in <c>Value</c> is replaced by what the field really shows, and the two
+    /// cannot stay apart (the field is the truth: it is what the person sees and what is saved).</summary>
+    [JSInvokable]
+    public async Task SyncAsync(string text)
+    {
+        if (text == (Value ?? string.Empty) && text == (domValue ?? string.Empty)) return;
+        query = null;
+        Value = domValue = text;
+        await ValueChanged.InvokeAsync(text);
+    }
+
     protected override void OnParametersSet()
     {
         // The value was changed from outside (another service chosen, a model picked): what was typed no longer applies.
@@ -121,9 +138,24 @@
         {
             if (firstRender)
             {
-                module = await JS.InvokeAsync<IJSObjectReference>("import", "/" + Assets["lib/model-combobox/model-combobox.js"]);
+                var imported = await JS.InvokeAsync<IJSObjectReference>("import", "/" + Assets["lib/model-combobox/model-combobox.js"]);
+                if (disposed)
+                {
+                    await imported.DisposeAsync();
+                    return;
+                }
+
+                module = imported;
                 self = DotNetObjectReference.Create(this);
-                handle = await module.InvokeAsync<IJSObjectReference>("attach", root, self);
+                var attached = await module.InvokeAsync<IJSObjectReference>("attach", root, self);
+                if (disposed)
+                {
+                    await attached.InvokeVoidAsync("dispose");
+                    await attached.DisposeAsync();
+                    return;
+                }
+
+                handle = attached;
             }
 
             // The value was changed from outside, not typed or picked (those keep domValue in step): put it in the field. The
@@ -135,14 +167,16 @@
                 await handle.InvokeVoidAsync("setValue", Value ?? string.Empty, expected);
             }
         }
-        catch (JSDisconnectedException)
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
         {
-            // The circuit went away before the field was wired: nothing to wire.
+            // The circuit went away before the field was wired, or the script would not load: nothing to wire. The field is
+            // still a text box, which is all it needs to be to work.
         }
     }
 
     public async ValueTask DisposeAsync()
     {
+        disposed = true;
         try
         {
             if (handle != null) await handle.InvokeVoidAsync("dispose");
