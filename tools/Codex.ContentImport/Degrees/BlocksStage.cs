@@ -1,7 +1,8 @@
 namespace Codex.ContentImport.Degrees;
 
 /// <summary>Where one line of a block sits, and the bold run it starts with (a field label such as a degree name), or empty.</summary>
-public sealed record LineInfo(double Left, double Right, string Label, List<LineCell>? Cells = null);
+/// <param name="Bold">The bold runs of the line after its leading label, in order (a field label in the middle of a line, such as the second label of a line of the shape "Label value; Label value"). Null when there are none.</param>
+public sealed record LineInfo(double Left, double Right, string Label, List<LineCell>? Cells = null, List<string>? Bold = null);
 
 /// <summary>One cell of a line that has more than one: the words between two gaps wider than a word space, and where the cell starts.</summary>
 public sealed record LineCell(double Left, string Text);
@@ -122,7 +123,15 @@ public static class BlocksStage
         private readonly List<string> _keys;
         private readonly HashSet<int> _matched = new();
 
-        public SidebarTitleSet(IEnumerable<string> titles) => _keys = titles.Select(Key).ToList();
+        private readonly HashSet<int> _exact;
+
+        /// <param name="titles">The page's sidebar titles. One that starts with `=` came from splitting a bookmark on the word "and": it must match its heading exactly, not by a part of it, so a wrong split fails loudly.</param>
+        public SidebarTitleSet(IEnumerable<string> titles)
+        {
+            var list = titles.ToList();
+            _keys = list.Select(Key).ToList();
+            _exact = list.Select((t, i) => t.StartsWith('=') ? i : -1).Where(i => i >= 0).ToHashSet();
+        }
 
         /// <summary>How many of the page's sidebars no heading was found for.</summary>
         public int Missing => _keys.Count - _matched.Count;
@@ -133,7 +142,18 @@ public static class BlocksStage
             for (var i = 0; i < _keys.Count; i++)
             {
                 var title = _keys[i];
-                if (key == title || (key.Length >= 8 && title.Length >= 8 && Distance(key, title) <= 2)
+                if (key == title)
+                {
+                    _matched.Add(i);
+                    return true;
+                }
+
+                if (_exact.Contains(i))
+                {
+                    continue;
+                }
+
+                if ((key.Length >= 8 && title.Length >= 8 && Distance(key, title) <= 2)
                     || (key.Length >= 4 && key.Length < title.Length && (title.StartsWith(key, StringComparison.Ordinal) || title.EndsWith(key, StringComparison.Ordinal))))
                 {
                     _matched.Add(i);
@@ -414,7 +434,7 @@ public static class BlocksStage
 
     private static double Centre(LayoutWord w) => (w.Left + w.Right) / 2;
 
-    private sealed record Line(List<LayoutWord> Words, string Role, double Top, double Bottom, double Left, double Right, string Text, string Label);
+    private sealed record Line(List<LayoutWord> Words, string Role, double Top, double Bottom, double Left, double Right, string Text, string Label, List<string>? Bold = null);
 
     private static List<Line> Lines(List<LayoutWord> words)
     {
@@ -435,7 +455,7 @@ public static class BlocksStage
         {
             var ordered = row.OrderBy(w => w.Left).ToList();
             return new Line(ordered, LineRole(ordered), ordered.Max(w => w.Top), ordered.Min(w => w.Bottom), ordered[0].Left, ordered.Max(w => w.Right),
-                string.Join(' ', ordered.Select(w => w.Text)), LeadingLabel(ordered));
+                string.Join(' ', ordered.Select(w => w.Text)), LeadingLabel(ordered), BoldRuns(ordered));
         }).ToList();
     }
 
@@ -466,7 +486,7 @@ public static class BlocksStage
             }
 
             var lineCells = Cells(line.Words);
-            var info = new LineInfo(line.Left, line.Right, line.Label, lineCells.Count >= 2 ? lineCells.Select(c => new LineCell(c.Left, c.Text)).ToList() : null);
+            var info = new LineInfo(line.Left, line.Right, line.Label, lineCells.Count >= 2 ? lineCells.Select(c => new LineCell(c.Left, c.Text)).ToList() : null, line.Bold);
             if (open != null && open.Role == line.Role && open.Bottom - line.Top <= BlockGap)
             {
                 open.Lines.Add(line.Text);
@@ -506,7 +526,8 @@ public static class BlocksStage
             && (lines[end].Role != "block-header" || Cells(lines[end].Words).Count >= 2)
             && Aligned(lines[end], starts))
         {
-            multi |= Cells(lines[end].Words).Count >= 2;
+            // The row with two cells must be a body line: another header line with two cells (a stat-block header under a stat-block header) is no proof of a table.
+            multi |= lines[end].Role != "block-header" && Cells(lines[end].Words).Count >= 2;
             end++;
         }
 
@@ -601,9 +622,10 @@ public static class BlocksStage
     {
         var kept = new List<Block>();
         var gone = new List<Block>();
-        var inside = false;
         var runs = 0;
         var left = double.NaN;
+
+        var inside = false;
 
         // A column that opens with body text straight after a column that ended inside a sidebar is that sidebar's continuation, which has no heading to find.
         var bodyAfter = previousColumnEndedInside && blocks.Count > 0 && blocks[0].Role == "body";
@@ -688,7 +710,12 @@ public static class BlocksStage
 
                 if (double.IsNaN(left) && b.Role == "body")
                 {
-                    left = b.Left;
+                    // A single line at the top of a column that follows one that ended inside the sidebar is no guide to where the sidebar's text is set in: it is the end of a
+                    // sentence that ran over from the other column, set at its own place.
+                    if (!(i <= 1 && previousColumnEndedInside && b.Lines.Count == 1))
+                    {
+                        left = b.Left;
+                    }
                 }
                 else if (b.Role == "body" && b.Left < left - SidebarIndent)
                 {
@@ -731,6 +758,40 @@ public static class BlocksStage
         }
 
         return (bullet == 1 ? "• " : string.Empty) + string.Join(' ', run.Select(w => w.Text));
+    }
+
+    /// <summary>The bold runs that follow plain words on a line (a field label in the middle of it), or null when there are none. The line's leading bold run is its label and not listed.</summary>
+    private static List<string>? BoldRuns(List<LayoutWord> ordered)
+    {
+        bool Bold(LayoutWord w) => w.Role is "rules" or "body" && w.Font.Contains("Bold", StringComparison.OrdinalIgnoreCase);
+
+        var runs = new List<string>();
+        var seenPlain = false;
+        var i = 0;
+        while (i < ordered.Count)
+        {
+            if (!Bold(ordered[i]))
+            {
+                seenPlain = true;
+                i++;
+                continue;
+            }
+
+            var j = i;
+            while (j < ordered.Count && Bold(ordered[j]))
+            {
+                j++;
+            }
+
+            if (seenPlain)
+            {
+                runs.Add(string.Join(' ', ordered.Skip(i).Take(j - i).Select(w => w.Text)));
+            }
+
+            i = j;
+        }
+
+        return runs.Count == 0 ? null : runs;
     }
 
     /// <summary>The role most of the line's letters have. Icons are ignored unless the line has nothing else.</summary>

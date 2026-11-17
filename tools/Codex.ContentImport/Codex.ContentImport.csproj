@@ -19,6 +19,7 @@
     <EmbeddedResource Include="Data\degrees-redactions.yaml" LogicalName="degrees-redactions.yaml" />
     <EmbeddedResource Include="Data\degrees-denylist.sha256" LogicalName="degrees-denylist.sha256" />
     <EmbeddedResource Include="Data\degrees-common.sha256" LogicalName="degrees-common.sha256" />
+    <EmbeddedResource Include="Data\degrees-pairs.sha256" LogicalName="degrees-pairs.sha256" />
     <EmbeddedResource Include="Data\degrees-allowlist.txt" LogicalName="degrees-allowlist.txt" />
     <EmbeddedResource Include="Data\degrees-denylist-waivers.txt" LogicalName="degrees-denylist-waivers.txt" />
   </ItemGroup>

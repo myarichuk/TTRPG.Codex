@@ -91,3 +91,145 @@ lowered
 disabling
 locks
 investigating
+# Chapter 5a review (spells): each word is an action (dismiss, refocus, escape), a size, the abbreviation of a statistic in the creature line of one spell's rules box, an ordinary word that opens
+# a sentence or a list item, or an ordinary English word of a spell's name that the index or a section the take-list leaves out also capitalizes. None is a name of a place, person, deity or creature kind.
+dismiss
+dismissed
+refocus
+escaping
+huge
+gargantuan
+str
+dex
+con
+int
+wis
+cha
+fort
+ref
+furthermore
+beating
+armament
+blessed
+boundary
+cuisine
+execute
+mirage
+monstrosity
+omen
+omens
+scouting
+zealous
+# Also ordinary English words of the spells' text (a verb, a noun, a season, an animal or a thing a spell makes), which the book capitalizes in the index or a section the take-list leaves out;
+# the importer's lowercase gate caught each in the pack's text after the capitalized one passed.
+beverages
+brand
+discrete
+drain
+expanse
+improving
+interacts
+mantis
+outer
+pot
+repeat
+repetition
+summer
+swipe
+therefore
+transformation
+vampire
+vicious
+web
+# Two reviewed pairs of words (a line of two words waives that pair on the pair list, not either word): the names of two actions, which the index and a left-out section write in capitals too.
+sense motive
+take cover
+# The pair list no longer leaves off a pair because the taken text says it, so each pair the packs say that the left-out text also capitalizes is waived here, by name. All 86 were read:
+# names of actions, skills, defenses, statistics and conditions, the example Lore subjects of the skills chapter, and two words that meet across a label, a bullet or an ability's name
+# (an ordinary word opening text after a label); none is a name of a place, person, deity, group or creature kind.
+ac perception
+ac reflex
+administer first
+alcohol lore
+amphibious it
+arcana crafting
+arcana nature
+arcana occultism
+arcane spell
+armor class
+avoid notice
+broken threshold
+burrower it
+climber it
+cooking lore
+cover tracks
+crafting lore
+create forgery
+critical failure
+critical success
+darkvision it
+dc if
+dc it
+dc the
+dcs some
+deception diplomacy
+decipher writing
+detect magic
+dexterity it
+dragon breath
+drop prone
+earn income
+experienced tracker
+failure the
+fast movement
+first aid
+flier it
+focus point
+force open
+gather information
+gm for
+high jump
+hit point
+hit points
+identify alchemy
+identify magic
+income you
+intelligence wisdom
+intimidating prowess
+knowledge you
+long jump
+lore cooking
+lore performance
+manual dexterity
+medicine nature
+movement increase
+nature occultism
+occultism religion
+perception dc
+persistent damage
+points if
+points you
+prescient consumable
+prescient planner
+price the
+recall knowledge
+recalling knowledge
+religion society
+requirements you
+sense direction
+shield block
+society dc
+spell rank
+stealth dc
+strikes you
+subsist you
+success the
+the gm
+tough your
+treat disease
+treat poison
+treat wounds
+trigger the
+tumble through
+warfare lore
+you stride

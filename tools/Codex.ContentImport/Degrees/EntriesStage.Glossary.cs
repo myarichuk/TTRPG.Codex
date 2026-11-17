@@ -50,6 +50,13 @@ public static partial class EntriesStage
             return;
         }
 
+        // A hyphen after a number at a line end ("100-" then "foot") is the hyphen of the compound, which stays, with no space after it. A suspended hyphen ("2- and 3-action") is not joined.
+        if (sb[^1] == '-' && sb.Length >= 2 && char.IsDigit(sb[^2]) && char.IsLower(text[0]) && !(text.Split(' ')[0] is "and" or "or" or "to"))
+        {
+            sb.Append(text);
+            return;
+        }
+
         // A hyphen at a line end: a word the book also writes with its hyphen inside a line keeps it, any other is a break in the word and goes.
         if (sb[^1] == '-' && sb.Length >= 2 && char.IsLetter(sb[^2]) && char.IsLower(text[0]))
         {

@@ -517,6 +517,37 @@ public class DegreesRedactionTests : IDisposable
     }
 
     [Fact]
+    public void ANameOfTwoOrdinaryWordsIsCaughtByThePairList_AndOnlyWhenBothAreCapitalizedAndAdjacent()
+    {
+        // Invented words: neither is on the word list, but the two together are a name the left-out text sets in capitals.
+        var pairs = new Denylist(new[] { Denylist.PairHash("Vorpal", "Gleam") });
+        var said = FixturePack("- id: one\n  name: Plain Stone\n  text: A tale of the Vorpal Gleam, told twice.\n");
+        var finding = Assert.Single(PackWordCheck.CheckDenylist(said, NoDenylist, pairs));
+        Assert.Equal((1, "pair of words on the denylist", Denylist.PairHash("vorpal", "gleam")), (finding.Entry, finding.Kind, finding.Detail));
+        Assert.DoesNotContain("orpal", finding.ToString(), StringComparison.OrdinalIgnoreCase);
+
+        Assert.Empty(PackWordCheck.CheckDenylist(FixturePack("- id: one\n  name: Plain Stone\n  text: A vorpal gleam, and a Vorpal blade. Gleam alone.\n"), NoDenylist, pairs));
+        Assert.Empty(PackWordCheck.CheckDenylist(said, NoDenylist));
+
+        // Made from left-out text: the pair is hashed unless it is a title, waived, or one of its words is on the word list already; game text of a taken range does not hide it.
+        var blocks = new BlocksResult(
+            new List<Block>
+            {
+                new(1, 0, "body", 0, 0, 100, 700, new List<string> { "The Vorpal Gleam rises. Ember Wick burns. Quiet Moss grows." }, null),
+                new(2, 0, "rules", 0, 0, 100, 700, new List<string> { "Quiet Moss is game text." }, null),
+            },
+            0, 0, 0, new Dictionary<string, int>(), new List<int>(), new List<Block>(), new List<int>());
+        var span = new SpineNode(0, "Sec", new[] { "Sec" }, 2, 2, false);
+        var range = new TakenRange(new TakeRow { Chapter = "c", Book = "pc", Parser = "rules", Target = "rule", Paths = { new List<string> { "Sec" } } }, 1, span, 1, 2);
+        var made = ImportPipeline.DenylistPairs(blocks, new[] { range }, null, new[] { "ember" });
+
+        Assert.Contains(Denylist.PairHash("vorpal", "gleam"), made);
+        Assert.DoesNotContain(Denylist.PairHash("ember", "wick"), made);   // a word of it is on the word list
+        Assert.Contains(Denylist.PairHash("quiet", "moss"), made);         // game text of a taken range does not hide it
+        Assert.DoesNotContain(Denylist.PairHash("quiet", "moss"), ImportPipeline.DenylistPairs(blocks, new[] { range }, null, new[] { "ember" }, new HashSet<string> { "quiet moss" })); // a reviewed waiver does
+    }
+
+    [Fact]
     public void AnInvisibleCharacterInsideAWordDoesNotHideItFromTheDenylist()
     {
         var hidden = "Zor" + (char)0x200B + "blax";
@@ -601,7 +632,7 @@ public class DegreesRedactionTests : IDisposable
             // Joined, so a failure lists every finding (xunit shortens a collection to five).
             var flagged = string.Join("; ", PackWordCheck.CheckAllowlist(pack, terms, deny, Denylist.EmbeddedCommon()).Select(f => f.ToString()).Distinct().Order());
             Assert.True(flagged.Length == 0, flagged);
-            var denied = string.Join("; ", PackWordCheck.CheckDenylist(pack, deny).Select(f => f.ToString()));
+            var denied = string.Join("; ", PackWordCheck.CheckDenylist(pack, deny, Denylist.EmbeddedPairs()).Select(f => f.ToString()));
             Assert.True(denied.Length == 0, denied);
         }
     }

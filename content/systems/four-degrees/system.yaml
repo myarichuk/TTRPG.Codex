@@ -132,10 +132,10 @@ entityTypes:
     fields:
       - { key: kind,         label: Kind,         type: Dropdown, options: [spell, cantrip, focus], description: "The word the header sets before the rank." }
       - { key: rank,         label: Rank,         type: Number, description: "The printed rank (1 to 10). A cantrip's is the rank it is cast at." }
-      - { key: actions,      label: Actions,      type: Dropdown, options: [one, two, three, reaction, free], description: "The action cost in the header. Empty: a spell that takes minutes or hours (see Cast time)." }
+      - { key: actions,      label: Actions,      type: Dropdown, options: [one, two, three, reaction, free], description: "The action cost in the header. Empty: a spell that takes minutes or hours, or a range of action costs (see Cast time)." }
       - { key: traits,       label: Traits,       type: TagList, description: "Trait keys, as the Library's trait entries name them." }
       - { key: traditions,   label: Traditions,   type: TagList, description: "The magical traditions whose lists hold the spell: arcane, divine, occult, primal." }
-      - { key: castTime,     label: Cast time,    type: Text, description: "The time a spell that takes longer than a turn needs." }
+      - { key: castTime,     label: Cast time,    type: Text, description: "The time a spell that takes longer than a turn needs, or the range of action costs of a spell that has no one cost (1 to 3 actions)." }
       - { key: cost,         label: Cost,         type: Text }
       - { key: trigger,      label: Trigger,      type: LongText }
       - { key: requirements, label: Requirements, type: LongText }

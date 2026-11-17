@@ -12,6 +12,12 @@
 #   leadName  (actions parser) the name, in our own words, of the one rule made from the range's prose before its first heading
 #   tailFromHeader  (rules parser) the range ends at the first heading in the block-header font; what follows in the section (overview tables) is read past
 #   tableRows       a block of mostly multi-cell lines, or one that opens with a bold label line, is a table the extraction did not rebuild: one row to a line
+#   spelllists (parser) the four spell lists of the spells chapter: read past, no entry; the (name, rank) pairs on them are the independent count of the spells
+#   levelWord (entries parser) a header ends in the type's word and a number; `spell|cantrip` gives several words, and the one found is the entry's kind
+#   boxes / readPastBoxes (entries row with a level word) a heading in the header font that has no entry's shape starts a box among the entries: each named title becomes a rule entry (the row's category),
+#             and the number of the others, which are read past, must be the one stated
+#   subheadings (rules parser) a heading in the block-header font inside a section that has no bookmark is a paragraph of the entry; runsToTitle: the bookmark paths whose section's text goes on over a page break
+#             above the next title (the pages between are sidebars, or the bookmark ends early); any other path still fails when text sits there
 #   own       paths (rules parser) whose own text, between the section's title and its first child section, becomes one entry named by ownName
 #   planned   (below the rows) sections a later chapter takes: not read, only not counted as "left out" by the denylist generator
 # Dropped material is never named here: the setting, religion, example-of-play and map sections are simply absent.
@@ -126,6 +132,96 @@ rows:
     countsDiffer: Two jumps have an action icon and no trait line, and the actions that take no set number of actions (exploration, downtime and the like) have no action icon (some have exploration or downtime for a trait, some neither), so the headings, trait lines and icons are counted three ways that differ by those; every heading has an icon or a trait line, or it would not be a heading.
     paths:
       - ["Chapter 4: Skills", Skills]
+  # The spells chapter (5a). Its rules prose is `rule` entries of the category Spells: the chapter's own introduction, each section's own text, and each child section on its own. A
+  # heading with no bookmark inside a section (a sub-subsection, an activity's name, the format line of the spell example) is a paragraph of the entry. Sidebars are all left out.
+  - chapter: spells
+    book: pc
+    parser: rules
+    target: rule
+    category: Spells
+    approved: true
+    own:
+      - ["Chapter 7: Spells"]
+    ownName: Spellcasting
+  - chapter: spells
+    book: pc
+    parser: rules
+    target: rule
+    category: Spells
+    approved: true
+    subheadings: true
+    # The only sections whose text goes on over a page break above the next title: the end of Heightened Spells (the next page's first lines), Innate Spells, and Targets (the whole page between is a sidebar).
+    runsToTitle:
+      - ["Chapter 7: Spells", Spell Slots, Heightened Spells]
+      - ["Chapter 7: Spells", Innate Spells]
+      - ["Chapter 7: Spells", "Ranges, Areas, and Targets", Targets]
+    own:
+      - ["Chapter 7: Spells", Spell Slots]
+      - ["Chapter 7: Spells", Focus Spells]
+      - ["Chapter 7: Spells", Casting Spells]
+      - ["Chapter 7: Spells", "Ranges, Areas, and Targets"]
+      - ["Chapter 7: Spells", Durations]
+      - ["Chapter 7: Spells", Defenses]
+    paths:
+      - ["Chapter 7: Spells", Spell Slots, Prepared Spells]
+      - ["Chapter 7: Spells", Spell Slots, Spontaneous Spells]
+      - ["Chapter 7: Spells", Spell Slots, Heightened Spells]
+      - ["Chapter 7: Spells", Cantrips]
+      - ["Chapter 7: Spells", Focus Spells, Spellcasters with Focus Spells]
+      - ["Chapter 7: Spells", Focus Spells, Non-Spellcasters with Focus Spells]
+      - ["Chapter 7: Spells", Focus Spells, Focus Points from Multiple Sources]
+      - ["Chapter 7: Spells", Innate Spells]
+      - ["Chapter 7: Spells", Casting Spells, Costs and Loci]
+      - ["Chapter 7: Spells", Casting Spells, Long Casting Times]
+      - ["Chapter 7: Spells", Casting Spells, Disrupted and Lost Spells]
+      - ["Chapter 7: Spells", "Ranges, Areas, and Targets", Touch Range]
+      - ["Chapter 7: Spells", "Ranges, Areas, and Targets", Areas]
+      - ["Chapter 7: Spells", "Ranges, Areas, and Targets", Targets]
+      - ["Chapter 7: Spells", "Ranges, Areas, and Targets", Line of Effect]
+      - ["Chapter 7: Spells", Durations, Sustaining Spells]
+      - ["Chapter 7: Spells", Durations, Long Durations]
+      - ["Chapter 7: Spells", Durations, Dismissing]
+      - ["Chapter 7: Spells", Defenses, Basic Saving Throws]
+      - ["Chapter 7: Spells", Spell Attacks]
+      - ["Chapter 7: Spells", Identifying Spells]
+      - ["Chapter 7: Spells", Counteracting]
+      - ["Chapter 7: Spells", Hostile Actions]
+      - ["Chapter 7: Spells", Setting Triggers]
+      - ["Chapter 7: Spells", Walls]
+      - ["Chapter 7: Spells", Reading Spells]
+  # The four tradition lists are read past: they give no entry, only the independent count of the spells (name, rank, tradition).
+  - chapter: spells
+    book: pc
+    parser: spelllists
+    target: spell
+    approved: true
+    # A list goes on at the top of the page its next list starts on.
+    runsToTitle:
+      - ["Chapter 7: Spells", Spell Lists, Arcane Spells]
+      - ["Chapter 7: Spells", Spell Lists, Divine Spells]
+      - ["Chapter 7: Spells", Spell Lists, Occult Spells]
+      - ["Chapter 7: Spells", Spell Lists, Primal Spells]
+    paths:
+      - ["Chapter 7: Spells", Spell Lists, Arcane Spells]
+      - ["Chapter 7: Spells", Spell Lists, Divine Spells]
+      - ["Chapter 7: Spells", Spell Lists, Occult Spells]
+      - ["Chapter 7: Spells", Spell Lists, Primal Spells]
+  # The spells themselves have no child bookmarks. A header is `NAME [icon] SPELL n` or `NAME [icon] CANTRIP n` in the block-header font; a heading of the same font that has no such
+  # shape starts a box among the spells: two are taken as rules (a table of the creature level a summon can reach, the stats of one spell's creature) and one is read past.
+  - chapter: spells
+    book: pc
+    parser: entries
+    target: spell
+    category: Spells
+    approved: true
+    headerRole: block-header
+    levelWord: spell|cantrip
+    boxes:
+      - The Summon Trait
+      - Phantasmal Minion Statistics
+    readPastBoxes: 1
+    paths:
+      - ["Chapter 7: Spells", Spell Lists, Spells]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
@@ -137,5 +233,7 @@ planned:
       - ["Chapter 2: Ancestries & Backgrounds"]
       - ["Chapter 3: Classes"]
       - ["Chapter 6: Equipment"]
-      - ["Chapter 7: Spells"]
+      # The focus spells and the rituals of the spell lists are the next step (5b).
+      - ["Chapter 7: Spells", Spell Lists, Focus Spells]
+      - ["Chapter 7: Spells", Spell Lists, Rituals]
       - ["Chapter 8: Playing the Game"]

@@ -449,3 +449,169 @@ rows:
     span: { sha256: "198698a2660654828bf41d9fb21916cea66da075b253de6bd24a1d2257f99c94", length: 52 }
     action: cut
     reason: "A sentence that only pointed to an example box that the pack leaves out."
+  - book: pc
+    entry: basic-saving-throws
+    field: description
+    span: { sha256: "08a22b46c4f1923320987a21eb68926daab0a13ea9a8f152a399634a06999a1f", length: 56 }
+    action: cut
+    reason: "A sentence that only pointed to a page of the book."
+  - book: pc
+    entry: casting-spells
+    field: description
+    span: { sha256: "a1fd369372041630e591726ed5c948284c30e33d16825b56c0ae2a7cb8f5e1c2", length: 243 }
+    action: replace
+    text: "If your character has a long-term disability that prevents or complicates them from speaking, work with the GM to determine an analogous way they cast their spells, such as tapping in code on their staff or whistling."
+    reason: "A sentence that sent the reader to a page, a section of another book or a sidebar; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: defenses
+    field: description
+    span: { sha256: "00c9be84a5f06161c646f6789c5041d065844a0f7a62a55c2d4f78ca25c41358", length: 97 }
+    action: cut
+    reason: "A sentence that only pointed to a page of the book."
+  - book: pc
+    entry: disrupted-and-lost-spells
+    field: description
+    span: { sha256: "33f8779cf673dc449ccad0de023c434cc80493b1e44dffc5d4225b436e329bd4", length: 57 }
+    action: cut
+    reason: "A sentence that only pointed to a page of the book."
+  - book: pc
+    entry: line-of-effect
+    field: description
+    span: { sha256: "2d6f4c637069cc9bc1d8391ec4ef9354af8987587f8fae4cee1bc0a174f43869", length: 60 }
+    action: cut
+    reason: "A sentence that only pointed to a page of the book."
+  - book: pc
+    entry: prepared-spells
+    field: description
+    span: { sha256: "a810ed80379d26f1461ed3783c5974cb7dd1ee495c32f0f3d7258aea726129df", length: 46 }
+    action: cut
+    reason: "A sentence that only pointed to a page of the book."
+  - book: pc
+    entry: reading-spells
+    field: description
+    span: { sha256: "22b275fc0e3b94fad5fa67fa7717948ba2f684dc7bf685ced555a82d00c2eaef", length: 179 }
+    action: replace
+    text: "**Defense and Duration.** If a spell allows the target to attempt a saving throw or use their AC to defend against it, the type of defense appears here."
+    reason: "A sentence that sent the reader to a page, a section of another book or a sidebar; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: targets
+    field: description
+    span: { sha256: "d026468b39cdd2df1013acf9934c584318bcad16c8db555d18e648d8ec55a2e0", length: 124 }
+    action: replace
+    text: "At the GM's discretion, you can attempt to target a creature you can't see."
+    reason: "A sentence that sent the reader to a page, a section of another book or a sidebar; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: the-summon-trait
+    field: description
+    span: { sha256: "1bed567b4f8d950147bdfd350d81be73fea3f6a987749138782ace8af673fdd0", length: 62 }
+    action: replace
+    text: "Such creatures can be found in books of creatures."
+    reason: "A sentence that sent the reader to a page, a section of another book or a sidebar; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: alarm
+    field: description
+    span: { sha256: "a132a1b24993e852ca82b2255e9e2bf3bf22666732f5502157339ae7a509a4fa", length: 145 }
+    action: replace
+    text: "**Heightened (3rd).** You can specify a trigger for which types of creatures sound the alarm spell, as described in Setting Triggers."
+    reason: "A sentence that sent the reader to a page, a section of another book or a sidebar; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: charm
+    field: description
+    span: { sha256: "df5cb5652c281a573560ed98c854cfac566c40c6b2d55878fe9f98d3fde04350", length: 169 }
+    action: replace
+    text: "**Success.** The target is unaffected but thinks your spell was something harmless instead of charm, unless it identifies the spell (see Identifying Spells)."
+    reason: "A sentence that sent the reader to a page, a section of another book or a sidebar; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: ghostly-weapon
+    field: description
+    span: { sha256: "e924ff6781cf4aad916d7bf3ef30ef3b88b927b2d3a0243fccafb763eb2dd2f5", length: 226 }
+    action: replace
+    text: "It gains the effects of the ghost touch property rune, meaning it is magical if it wasn't already, is especially effective against incorporeal creatures, and can be wielded by a corporeal or incorporeal creature."
+    reason: "A sentence that sent the reader to a page, a section of another book or a sidebar; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: infuse-vitality
+    field: description
+    span: { sha256: "c86e6c267b9a65db1d5716e87d83d3e49cf6ac86750fd4cdfd94b262b4737f93", length: 70 }
+    action: replace
+    text: "(This damage typically damages only undead.)"
+    reason: "A sentence that sent the reader to a page, a section of another book or a sidebar; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: phantasmal-minion
+    field: description
+    span: { sha256: "ae73c8a302379c1cd11cc340b07739a54c1ba65cc8265f1403481d6647a4429e", length: 45 }
+    action: replace
+    text: "You summon a phantasmal minion (see Phantasmal Minion Statistics)."
+    reason: "A sentence that sent the reader to a page, a section of another book or a sidebar; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: subconscious-suggestion
+    field: description
+    span: { sha256: "25ecdaef09f390bf069d4e70d6a9e3b1a8ef792ab197cd1f69e8e4410a30289d", length: 148 }
+    action: replace
+    text: "You implant a subconscious suggestion deep within the target's mind for them to follow when a trigger you specify occurs (as described in Setting Triggers)."
+    reason: "A sentence that sent the reader to a page, a section of another book or a sidebar; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: raise-dead
+    field: description
+    span: { sha256: "fada5c910219633cb41d57900a2e1175a3ec3429109914588537c6824fa649f1", length: 210 }
+    action: replace
+    text: "If the creature's time has come (at the GM's discretion), or if the creature doesn't wish to return to life, this spell automatically fails, but the cost isn't consumed in the casting."
+    reason: "A sentence that named a deity or a place of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: raise-dead
+    field: description
+    span: { sha256: "2ec3cee3520708cab2d3caea8bd71c6b49da6581b33d73c309f720e25df35fac", length: 217 }
+    action: replace
+    text: "The time spent beyond death leaves the target temporarily debilitated, making it clumsy 2, drained 2, and enfeebled 2 for 1 week; these conditions can't be removed or reduced by any means until the week has passed."
+    reason: "A sentence that named a deity or a place of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: summon-celestial
+    field: description
+    span: { sha256: "9809fae8da7c6dfabff2a1e448cff1d45f6770ce6d88d5db83b76d74bbd98c21", length: 78 }
+    action: cut
+    reason: "An example sentence that named a deity of the setting and kinds of beings it invented; the rule before it is kept."
+  - book: pc
+    entry: summon-fiend
+    field: description
+    span: { sha256: "2178ccbfe5e221c80a5214dbc5970174fb81fd92553b5b354092ab2a4d5a04e2", length: 96 }
+    action: cut
+    reason: "An example sentence that named a deity of the setting and kinds of beings it invented; the rule before it is kept."
+  - book: pc
+    entry: summon-monitor
+    field: description
+    span: { sha256: "0633d8447d28a437242dbe7db3c3c061b11e04b228fe31e26999e1d877d57b0f", length: 83 }
+    action: cut
+    reason: "An example sentence that named a deity of the setting and kinds of beings it invented; the rule before it is kept."
+  - book: pc
+    entry: interplanar-teleport
+    field: description
+    span: { sha256: "34724f1a60a6055417cb69d837cb154ae648ecf0b3d5a2f63cd699c8ed2137ea", length: 98 }
+    action: replace
+    text: "The targets move to another plane."
+    reason: "A sentence that named planes or realms of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: shadow-blast
+    field: description
+    span: { sha256: "ba2aa4e4c13e738d318687acdccec01c744a4d8c9199fda94eebc502d1ce6555", length: 63 }
+    action: replace
+    text: "You shape shadow substance into a blast."
+    reason: "A sentence that named planes or realms of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: umbral-journey
+    field: description
+    span: { sha256: "7a8481ce1e794267f83e681732e7c194feee0fd00a6d64e133d952b0f6fc3e1a", length: 87 }
+    action: replace
+    text: "You move partially into a plane of shadow, using its warped nature to speed your travels."
+    reason: "A sentence that named planes or realms of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: vitality-lash
+    field: description
+    span: { sha256: "c56ee6cae2b779d42aae47fbe98ce4636f93b2f1bcec61297db1520b1cfd44dd", length: 78 }
+    action: replace
+    text: "You demolish the target's corrupted essence with the energy of creation."
+    reason: "A sentence that named a deity or a place of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: avatar
+    field: description
+    span: { sha256: "a5f70c041c923b32f1fae0072d3450fc70e35ef5c206d02993cca98402e9f7cc", length: 72 }
+    action: drop-entry
+    reason: "The spell's mechanic is a list of battle forms, one named for each deity of the setting, so it cannot be kept without the names."

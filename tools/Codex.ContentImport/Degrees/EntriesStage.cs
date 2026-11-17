@@ -29,6 +29,15 @@ public sealed class ParsedEntry
     /// <summary>The level in the header, for a row whose headers carry one (<see cref="TakeRow.LevelWord"/>).</summary>
     public int? Level { get; set; }
 
+    /// <summary>For a row with several level words (<c>spell|cantrip</c>): the one this header has, in lowercase.</summary>
+    public string? Kind { get; set; }
+
+    /// <summary>For a spell whose header gives a range of action costs: the cost as a cast time ("1 to 3 actions"), since the action dropdown names one cost.</summary>
+    public string? VariableCost { get; set; }
+
+    /// <summary>For a spell: the traditions its labelled line lists, in lowercase, in the book's order.</summary>
+    public List<string> Traditions { get; set; } = new();
+
     /// <summary>The words of the trait line. They wait for chapter 2: the system has no trait type yet, so nothing writes them.</summary>
     public List<string> Traits { get; set; } = new();
 
@@ -88,6 +97,9 @@ public sealed class FinalEntry
     /// <summary>The level, the action cost and the trait keys, for a type that has them (a feat).</summary>
     public int? Level { get; set; }
 
+    public string? Kind { get; set; }
+    public List<string> Traditions { get; set; } = new();
+
     public string? Actions { get; set; }
     public List<string> Traits { get; set; } = new();
 
@@ -129,7 +141,7 @@ public static partial class EntriesStage
         ["[free-action]"] = ("free", "[free action]"),
     };
 
-    public static List<ParsedEntry> Run(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, string book)
+    public static List<ParsedEntry> Run(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, string book, IReadOnlyDictionary<string, string>? shipped = null)
     {
         var compounds = Compounds(blocks, ranges);
         var entries = new List<ParsedEntry>();
@@ -141,16 +153,31 @@ public static partial class EntriesStage
                 "rules" => ParseRule(range, slice, book, compounds),
                 "glossary" => ParseGlossary(range, slice, book, compounds),
                 "actions" => ParseActions(range, slice, book, compounds),
+                // The tradition lists make no entry: they are read past, and counted against the spells (ImportPipeline.CheckSpellCounts).
+                "spelllists" => new List<ParsedEntry>(),
                 _ => ParseEntries(range, slice, book, compounds),
             });
         }
 
         // An action's id is its name's slug, so it can equal a feat's, a condition's or a rule's. The redaction rows name an entry by id alone, so an id may not repeat across
         // types: the action takes the suffix (see ActionIdSuffix). Two entries of one type with one id are still a mistake and fail below.
-        var taken = entries.Where(e => e.Type != "action").Select(e => e.Id).ToHashSet(StringComparer.Ordinal);
-        foreach (var action in entries.Where(e => e.Type == "action" && taken.Contains(e.Id)))
+        // The same holds for a spell, named like a feat, a condition, a trait, a rule or an action more than once. Which of two entries that share a slug keeps it: the one whose folder holds
+        // that id in the pack already committed (`shipped`, id to folder), since an id that has shipped is never renamed, whatever a later chapter brings. With nothing shipped under the id,
+        // the entry of the type that is neither an action nor a spell keeps it, and an action keeps it against a spell. Every other entry of the group takes the suffix of its type.
+        foreach (var group in entries.GroupBy(e => e.Id, StringComparer.Ordinal).Where(g => g.Select(e => e.Type).Distinct().Count() > 1).ToList())
         {
-            action.Id += ActionIdSuffix;
+            var folders = group.Select(e => e.Folder).Distinct().ToList();
+            string? keeper = shipped != null && shipped.TryGetValue(group.Key, out var folder) && folders.Contains(folder) ? folder : null;
+            if (keeper == null)
+            {
+                var plain = group.Where(e => e.Type is not ("action" or "spell")).Select(e => e.Folder).Distinct().ToList();
+                keeper = plain.Count == 1 ? plain[0] : plain.Count == 0 ? group.First(e => e.Type == "action").Folder : null;
+            }
+
+            foreach (var entry in group.Where(e => keeper != null && e.Folder != keeper))
+            {
+                entry.Id += entry.Type switch { "action" => ActionIdSuffix, "spell" => SpellIdSuffix, var other => "-" + other };
+            }
         }
 
         // The redaction rows name an entry by id alone, so an id may not repeat even across types.
@@ -165,23 +192,61 @@ public static partial class EntriesStage
 
     private static List<ParsedEntry> ParseRule(TakenRange range, List<Block> slice, string book, HashSet<string> compounds)
     {
-        var name = range.Own ? range.Row.OwnName! : range.Row.PathOf(range)[^1];
+        var name = range.Own ? range.Row.OwnName ?? range.Row.PathOf(range)[^1] : range.Row.PathOf(range)[^1];
         var entry = NewEntry(range, book, Clean(name), compounds);
-        new BodyReader(entry, compounds, false, range.Row.TableRows).ReadAll(slice);
+        var reader = new BodyReader(entry, compounds, false, range.Row.TableRows, null, range.Row.Subheadings);
+        foreach (var block in slice)
+        {
+            if (range.Row.Subheadings && block.Role == "block-header")
+            {
+                // A heading that has no bookmark (a sub-subsection, an activity's name): a paragraph of its own, in title case. A heading with a bracket or a parenthesis in it is a format
+                // line (an example of how a stat block is set out) and stays as printed.
+                var text = Clean(string.Join(' ', block.Lines));
+                reader.EndParagraph();
+                reader.Read(block with { Role = "body", Lines = new List<string> { text.Contains('[') || text.Contains('(') ? text : TitleCase(text) }, Info = null });
+                reader.EndParagraph();
+                continue;
+            }
+
+            reader.Read(block);
+            if (range.Row.Subheadings && block.Role == "tag")
+            {
+                reader.EndParagraph(); // the trait line under a heading is a paragraph of its own
+            }
+        }
+
+        reader.Finish();
         return new List<ParsedEntry> { entry };
     }
 
     private static List<ParsedEntry> ParseEntries(TakenRange range, List<Block> slice, string book, HashSet<string> compounds)
     {
+        var row = range.Row;
+        var spell = row.Target == "spell";
         var result = new List<ParsedEntry>();
         var readers = new List<BodyReader>();
         var traitsOpen = false;
+        var hasBoxes = row.LevelWord != null && (row.Boxes.Count > 0 || row.ReadPastBoxes > 0);
+        var inBox = false;
+        BodyReader? boxReader = null;
+        var readPast = 0;
         foreach (var block in slice)
         {
-            if (range.Row.IsHeader(block))
+            if (row.IsHeader(block))
             {
+                inBox = false;
+                boxReader = null;
                 var header = Clean(string.Join(' ', block.Lines));
                 string? actions = null;
+                string? variableCost = null;
+                if (spell && Regex.Match(header, @"\[(?<a>[^\]]+)\]\s+TO\s+\[(?<b>[^\]]+)\]", RegexOptions.CultureInvariant) is { Success: true } range2)
+                {
+                    // A cost that runs from one number of actions to another ("[1 action] TO [3 actions]") has no one action cost: the dropdown stays empty and the cost is the spell's cast time.
+                    string Count(string icon) => Icons.Values.FirstOrDefault(i => i.Text == $"[{icon}]").Actions ?? icon;
+                    variableCost = $"{Count(range2.Groups["a"].Value)} to {Count(range2.Groups["b"].Value)} actions";
+                    header = header.Replace(range2.Value, string.Empty, StringComparison.Ordinal);
+                }
+
                 foreach (var (_, icon) in Icons)
                 {
                     if (header.Contains(icon.Text, StringComparison.Ordinal))
@@ -193,20 +258,70 @@ public static partial class EntriesStage
 
                 header = Regex.Replace(header, " {2,}", " ").Trim();
                 int? level = null;
-                if (range.Row.LevelWord != null)
+                string? kind = null;
+                if (row.LevelWord != null)
                 {
-                    // "NAME [icon] WORD 3": the name is set in capitals, the level is the number after the row's word.
-                    var m = Regex.Match(header, @"^(?<name>.+?)\s+" + Regex.Escape(range.Row.LevelWord) + @"\s+(?<level>\d+)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                    // "NAME [icon] WORD 3": the name is set in capitals, the level is the number after the row's word (or one of its words: spell, cantrip).
+                    var m = Regex.Match(header, @"^(?<name>.+?)\s+" + row.LevelPattern + @"\s+(?<level>\d+)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
                     level = int.Parse(m.Groups["level"].Value, CultureInfo.InvariantCulture);
+                    kind = row.LevelWords.Length > 1 ? m.Groups["word"].Value.ToLowerInvariant() : null;
                     header = TitleCase(m.Groups["name"].Value);
                 }
 
                 var entry = NewEntry(range, book, header, compounds);
                 entry.Actions = actions;
                 entry.Level = level;
+                entry.Kind = kind;
+                entry.VariableCost = variableCost;
                 result.Add(entry);
-                readers.Add(new BodyReader(entry, compounds, range.Row.LevelWord != null, range.Row.TableRows));
+                readers.Add(new BodyReader(entry, compounds, row.LevelWord != null, row.TableRows, spell ? SpellStatLabels : null));
                 traitsOpen = true;
+                continue;
+            }
+
+            // A heading with no entry's shape starts a box (a table or a block of rules set among the entries): the row names it and takes it as a rule entry, or counts it as read past.
+            if (hasBoxes && !inBox && block.Role == (row.HeaderRole ?? "entry-header"))
+            {
+                var title = TitleCase(Clean(string.Join(' ', block.Lines)));
+                inBox = true;
+                traitsOpen = false;
+                if (row.Boxes.Contains(title, StringComparer.OrdinalIgnoreCase))
+                {
+                    var rule = NewEntry(range, book, title, compounds, "rule", "rules", row.Category);
+                    result.Add(rule);
+                    boxReader = new BodyReader(rule, compounds, false, row.TableRows, null, true);
+                    readers.Add(boxReader);
+                }
+                else
+                {
+                    readPast++;
+                    boxReader = null;
+                }
+
+                continue;
+            }
+
+            if (inBox)
+            {
+                if (boxReader != null)
+                {
+                    if (block.Role == (row.HeaderRole ?? "entry-header"))
+                    {
+                        // A heading inside the box (a stat block's own name): a paragraph of its own, in title case.
+                        boxReader.EndParagraph();
+                        boxReader.Read(block with { Role = "body", Lines = new List<string> { TitleCase(Clean(string.Join(' ', block.Lines))) }, Info = null });
+                        boxReader.EndParagraph();
+                    }
+                    else
+                    {
+                        boxReader.Read(block);
+                        if (block.Role == "tag")
+                        {
+                            boxReader.EndParagraph(); // the trait line is a paragraph of its own
+                        }
+                    }
+                }
+
                 continue;
             }
 
@@ -214,12 +329,12 @@ public static partial class EntriesStage
             {
                 var words = Clean(string.Join(' ', block.Lines)).Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 // A trait line set in capitals (the feats' tag line) is a list of trait keys.
-                result[^1].Traits.AddRange(range.Row.LevelWord != null ? words.Select(w => w.ToLowerInvariant()) : words);
+                result[^1].Traits.AddRange(row.LevelWord != null ? words.Select(w => w.ToLowerInvariant()) : words);
                 continue;
             }
 
             // A lone line in capitals, set well in from the column's edge where a header's left edge is (a label of the page's art), is not entry text.
-            if (range.Row.LevelWord != null && IsStrayLabel(block, slice, range.Row))
+            if (row.LevelWord != null && IsStrayLabel(block, slice, row))
             {
                 continue;
             }
@@ -228,20 +343,96 @@ public static partial class EntriesStage
             readers[^1].Read(block);
         }
 
+        if (hasBoxes && readPast != row.ReadPastBoxes)
+        {
+            throw new DegreesException($"Chapter {row.Chapter}, path {range.PathNumber}: the range holds {readPast} box(es) the row does not take, but the row says it reads {row.ReadPastBoxes} past.");
+        }
+
         foreach (var reader in readers)
         {
             reader.Finish();
         }
 
-        if (range.Row.LevelWord != null)
+        if (row.LevelWord != null)
         {
-            foreach (var entry in result)
+            foreach (var entry in result.Where(e => e.Type == row.Target))
             {
-                ExtractFields(entry);
+                if (spell)
+                {
+                    ExtractSpellFields(entry);
+                }
+                else
+                {
+                    ExtractFields(entry);
+                }
             }
         }
 
         return result;
+    }
+
+    /// <summary>The labels of a spell's stat lines and its heightened entries, in lowercase. A bold run that opens a spell's text line and is none of these (a creature's attack, an art label) is not a label.</summary>
+    private static readonly HashSet<string> SpellStatLabels = new(StringComparer.Ordinal)
+    {
+        "traditions", "cast", "cost", "trigger", "requirements", "range", "area", "target", "targets", "defense", "duration", "heightened",
+    };
+
+    /// <summary>The spell type's fields beside its header and traditions, in the system's order: the field key and the labels that fill it.</summary>
+    private static readonly (string Key, string[] Labels)[] SpellFieldLabels =
+    {
+        ("castTime", new[] { "cast" }), ("cost", new[] { "cost" }), ("trigger", new[] { "trigger" }), ("requirements", new[] { "requirements" }),
+        ("range", new[] { "range" }), ("area", new[] { "area" }), ("targets", new[] { "targets", "target" }), ("defense", new[] { "defense" }), ("duration", new[] { "duration" }),
+    };
+
+    internal static readonly string[] TraditionKeys = { "arcane", "divine", "occult", "primal" };
+
+    /// <summary>A label's key for the stat-label test: lowercase, and without the parenthesized part of a heightened entry's label ("Heightened (+1)").</summary>
+    private static string StatKey(string label)
+    {
+        var open = label.IndexOf('(', StringComparison.Ordinal);
+        return (open > 0 ? label[..open] : label).Trim().ToLowerInvariant();
+    }
+
+    /// <summary>Takes the spell's traditions and the labelled lines the type has a field of its own for out of its parts.</summary>
+    private static void ExtractSpellFields(ParsedEntry entry)
+    {
+        var traditions = entry.Parts.Where(p => p.Label.Length > 0 && StatKey(p.Label.TrimEnd('.', ':', ' ')) == "traditions").ToList();
+        if (traditions.Count > 1)
+        {
+            throw new DegreesException($"A spell of chapter {entry.Chapter} has the traditions label more than once.");
+        }
+
+        if (traditions.Count == 1)
+        {
+            entry.Traditions.AddRange(traditions[0].Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(t => t.ToLowerInvariant()));
+            if (entry.Traditions.Any(t => !TraditionKeys.Contains(t)))
+            {
+                throw new DegreesException($"A spell of chapter {entry.Chapter} lists a tradition that is not one of the four.");
+            }
+
+            entry.Parts.Remove(traditions[0]);
+            entry.Fields.Remove(traditions[0]);
+        }
+
+        foreach (var (key, labels) in SpellFieldLabels)
+        {
+            var found = entry.Parts.Where(p => p.Label.Length > 0 && labels.Contains(StatKey(p.Label.TrimEnd('.', ':', ' ')))).ToList();
+            if (found.Count > 1 || (key == "castTime" && entry.VariableCost != null && found.Count > 0))
+            {
+                throw new DegreesException($"A spell of chapter {entry.Chapter} has the label of '{key}' more than once, or twice with a range of action costs in its header.");
+            }
+
+            if (key == "castTime" && entry.VariableCost != null)
+            {
+                entry.Extracted.Add(new LabelledText(key, entry.VariableCost));
+            }
+            else if (found.Count == 1)
+            {
+                entry.Extracted.Add(new LabelledText(key, found[0].Text));
+                entry.Parts.Remove(found[0]);
+                entry.Fields.Remove(found[0]);
+            }
+        }
     }
 
 /// <summary>
@@ -249,6 +440,9 @@ public static partial class EntriesStage
     /// otherwise share one id, and a redaction row names an entry by id alone. The suffix is a plain word, so the id stays readable and stable.
     /// </summary>
     public const string ActionIdSuffix = "-action";
+
+    /// <summary>The suffix a spell's id takes when its name's slug is the id of an entry of any other type (see <see cref="ActionIdSuffix"/>).</summary>
+    public const string SpellIdSuffix = "-spell";
 
     /// <summary>The labelled lines an action has a field of its own for (the system's action type, after its action cost, traits, skill and proficiency).</summary>
     private static readonly string[] ActionFieldKeys = { "frequency", "trigger", "requirements" };
@@ -290,6 +484,68 @@ public static partial class EntriesStage
             else
             {
                 box = null;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>The indexes (in <paramref name="slice"/>) of the blocks inside a box of an <c>entries</c> row with a level word, whether the row takes the box or reads it past: the heading and what follows up to the next entry.</summary>
+    public static HashSet<int> BoxIndexes(TakeRow row, List<Block> slice)
+    {
+        var result = new HashSet<int>();
+        if (row.LevelWord == null || (row.Boxes.Count == 0 && row.ReadPastBoxes == 0))
+        {
+            return result;
+        }
+
+        var inBox = false;
+        for (var i = 0; i < slice.Count; i++)
+        {
+            if (row.IsHeader(slice[i]))
+            {
+                inBox = false;
+            }
+            else if (!inBox && slice[i].Role == (row.HeaderRole ?? "entry-header"))
+            {
+                inBox = true;
+            }
+
+            if (inBox)
+            {
+                result.Add(i);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>The blocks of the boxes an <c>entries</c> row with a level word reads past: its boxes that are not among the row's named ones (see <see cref="TakeRow.Boxes"/>), heading included.</summary>
+    public static List<Block> ReadPastBoxBlocks(TakeRow row, List<Block> slice)
+    {
+        var result = new List<Block>();
+        if (row.LevelWord == null || (row.Boxes.Count == 0 && row.ReadPastBoxes == 0))
+        {
+            return result;
+        }
+
+        var inBox = false;
+        var taken = false;
+        foreach (var block in slice)
+        {
+            if (row.IsHeader(block))
+            {
+                inBox = false;
+            }
+            else if (!inBox && block.Role == (row.HeaderRole ?? "entry-header"))
+            {
+                inBox = true;
+                taken = row.Boxes.Contains(TitleCase(Clean(string.Join(' ', block.Lines))), StringComparer.OrdinalIgnoreCase);
+            }
+
+            if (inBox && !taken)
+            {
+                result.Add(block);
             }
         }
 
@@ -554,6 +810,12 @@ public static partial class EntriesStage
         }
 
         var edge = slice.Where(b => b.Page == block.Page && b.Column == block.Column && row.IsHeader(b)).Select(b => b.Left).DefaultIfEmpty(double.NaN).Min();
+        if (double.IsNaN(edge))
+        {
+            // A column with no header on it (the middle of a spell that runs on from the column before): the edge is where the column's other text starts.
+            edge = slice.Where(b => b.Page == block.Page && b.Column == block.Column && !ReferenceEquals(b, block) && b.Role == "body" && b.Lines.Count > 1).Select(b => b.Left).DefaultIfEmpty(double.NaN).Min();
+        }
+
         return !double.IsNaN(edge) && block.Left - edge > 10;
     }
 
@@ -612,8 +874,8 @@ public static partial class EntriesStage
             Folder = folder ?? range.Row.FolderName,
             Chapter = range.Row.Chapter,
             Source = book + " > " + string.Join(" > ", range.Row.PathOf(range)) + (sourceTail == null ? string.Empty : " > " + sourceTail),
-            // An actions row's category is for the rule entries it also writes (an action has no category field).
-            Category = type != null ? category : range.Row.Parser == "actions" ? null : range.Row.Category,
+            // An actions row's or a spells row's category is for the rule entries it also writes (an action or a spell has no category field).
+            Category = type != null ? category : range.Row.Parser == "actions" || range.Row.Boxes.Count > 0 ? null : range.Row.Category,
             Approved = range.Row.Approved,
             RowNumber = range.RowNumber,
             Name = name,
@@ -723,15 +985,28 @@ public static partial class EntriesStage
         /// <param name="tableRows">
         /// True for a row that says <see cref="TakeRow.TableRows"/>: a block whose lines mostly have two or more cells is a table the extraction could not rebuild, and is read one row to a line. A block that opens with a line that is only a bold label is read the same way, as in a run-on row.
         /// </param>
-        public BodyReader(ParsedEntry entry, HashSet<string> compounds, bool runOn = false, bool tableRows = false)
+        /// <param name="statLabels">
+        /// For a spell: the labels (in lowercase, without the parenthesis of a heightened entry) that open a paragraph and may also stand in the middle of a line after a semicolon, as
+        /// the second label does in a line of the shape "Label value; Label value". Any other bold run at a line start that is not a bullet's heading is plain text (the attack lines of a battle form).
+        /// </param>
+        /// <param name="bodyRunOn">
+        /// True for a reader whose body-font blocks (a stat block's lines, the example of how a spell is set out) are set ragged-right with hanging indents, as a feat's text is: they are read in the
+        /// run-on way, while the justified rules-font text around them is read as ever.
+        /// </param>
+        public BodyReader(ParsedEntry entry, HashSet<string> compounds, bool runOn = false, bool tableRows = false, HashSet<string>? statLabels = null, bool bodyRunOn = false)
         {
             _entry = entry;
             _compounds = compounds;
             _runOn = runOn;
             _tableRows = tableRows;
+            _stat = statLabels;
+            _bodyRunOn = bodyRunOn;
         }
 
+        private readonly bool _bodyRunOn;
+
         private readonly bool _tableRows;
+        private readonly HashSet<string>? _stat;
 
         public void ReadAll(List<Block> blocks)
         {
@@ -750,7 +1025,7 @@ public static partial class EntriesStage
         public void Read(Block block, bool plain = false)
         {
             var saved = _runOn;
-            _runOn = saved && !plain;
+            _runOn = (saved || (_bodyRunOn && block.Role == "body")) && !plain;
             try
             {
                 ReadBlock(block);
@@ -800,10 +1075,19 @@ public static partial class EntriesStage
             {
                 var info = block.Info?[i] ?? new LineInfo(block.Left, block.Right, string.Empty);
                 var text = block.Lines[i];
-                var label = SpanText.Normalize(info.Label).TrimEnd('.', ':', ' ');
+                var rawLabel = info.Label;
+                if (_stat != null && rawLabel.Length > 0 && !rawLabel.StartsWith("• ", StringComparison.Ordinal)
+                    && !_stat.Contains(StatKey(SpanText.Normalize(rawLabel))) && !KnownLabels.Contains(SpanText.Normalize(rawLabel).TrimEnd('.', ':', ' ').ToLowerInvariant()))
+                {
+                    rawLabel = string.Empty; // a bold run that is no label of a spell's text
+                }
+
+                var label = SpanText.Normalize(rawLabel).TrimEnd('.', ':', ' ');
                 // A first-line indent starts a paragraph even after a line that ran to the edge. A bullet's own wrapped lines are not read this way.
                 // A line that is only a page pointer, set in from the edge (a labelled line that ran on), continues the line before it; the pointer itself is dropped by Clean.
-                var indented = _parts.Count > 0 && info.Left - block.Left > Indent && !_parts[^1].Text.ToString().StartsWith('•') && !(_runOn && PageRefLine().IsMatch(text)) && !raggedLeft;
+                var indented = _parts.Count > 0 && info.Left - block.Left > Indent && !_parts[^1].Text.ToString().StartsWith('•') && !(_runOn && PageRefLine().IsMatch(text)) && !raggedLeft
+                    // A spell's text has no first-line indents: a line set in from the edge under a paragraph with no label of its own is the hanging indent of an inset (a reaction, an affliction).
+                    && !(_stat != null && _parts[^1].Label.Length == 0);
                 var startsParagraph = _parts.Count == 0 || text.StartsWith('•') || indented || (i == 0 ? (samePlace && !_runOn) || _previousShort : _previousShort);
                 if (_runOn && _parts.Count > 0 && _parts[^1].Label.Length > 0 && !text.StartsWith('•'))
                 {
@@ -816,25 +1100,49 @@ public static partial class EntriesStage
                 {
                     startsParagraph = false; // a line set short by the layout, not by the end of a sentence: the text goes on
                 }
-                if (rowsBlock)
+                if (rowsBlock && !(_stat != null && _parts.Count > 0 && text.Length > 0 && char.IsLower(text[0])))
                 {
                     startsParagraph = true; // a table's rows: one line each, whatever the line before it ran to
                 }
 
-                if (label.Length > 0 && KnownLabels.Contains(label.ToLowerInvariant()))
+                if (label.Length > 0 && (KnownLabels.Contains(label.ToLowerInvariant()) || (_stat != null && _stat.Contains(StatKey(label)))))
                 {
                     Start(label);
-                    text = text[Math.Min(text.Length, info.Label.Length)..].TrimStart();
+                    text = text[Math.Min(text.Length, rawLabel.Length)..].TrimStart();
+                    if (_stat != null && StatKey(label) == "heightened" && !label.Contains('(', StringComparison.Ordinal) && text.StartsWith('(') && text.IndexOf(')', StringComparison.Ordinal) is var close and > 0)
+                    {
+                        // The rank in a heightened entry's label ("Heightened (+1)") is set in the plain face in some entries: it is part of the label all the same.
+                        _parts[^1] = (label + " " + text[..(close + 1)], _parts[^1].Text);
+                        text = text[(close + 1)..].TrimStart();
+                    }
                 }
-                else if (_runOn && startsParagraph && label.Length > 0 && text.StartsWith(info.Label, StringComparison.Ordinal) && text.Length > info.Label.Length)
+                else if (_runOn && startsParagraph && label.Length > 0 && text.StartsWith(rawLabel, StringComparison.Ordinal) && text.Length > rawLabel.Length)
                 {
                     // A bold run-in heading at the start of a paragraph (a pet's statistics, say) is a label like the known ones.
                     Start(label);
-                    text = text[info.Label.Length..].TrimStart();
+                    text = text[rawLabel.Length..].TrimStart();
                 }
                 else if (startsParagraph)
                 {
                     Start(string.Empty);
+                }
+
+                if (_stat != null && info.Bold != null)
+                {
+                    // A second label in the middle of a line, after a semicolon (a line of the shape "Label value; Label value"): the line is cut there and the label starts a field of its own.
+                    foreach (var run in info.Bold)
+                    {
+                        var marker = "; " + run;
+                        var at = text.IndexOf(marker, StringComparison.Ordinal);
+                        if (at < 0 || !_stat.Contains(StatKey(SpanText.Normalize(run))))
+                        {
+                            continue;
+                        }
+
+                        Append(text[..at]);
+                        Start(SpanText.Normalize(run).TrimEnd('.', ':', ' '));
+                        text = text[(at + marker.Length)..].TrimStart();
+                    }
                 }
 
                 Append(text);
@@ -860,6 +1168,11 @@ public static partial class EntriesStage
             foreach (var (label, sb) in _parts)
             {
                 var text = Clean(sb.ToString());
+                if (_stat != null && label.Length > 0 && _stat.Contains(StatKey(label)))
+                {
+                    text = text.TrimEnd(';', ' '); // a stat line that goes on with another label ends in the semicolon between them
+                }
+
                 if (label.Length == 0)
                 {
                     if (text.Length > 0)

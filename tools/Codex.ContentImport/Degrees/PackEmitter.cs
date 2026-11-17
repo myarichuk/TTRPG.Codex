@@ -42,9 +42,15 @@ public static class PackEmitter
                 }
 
                 // A type's own fields, in the system's order: level, actions, traits, then the extracted labelled fields (their keys are the type's).
+                // A spell's header word is its kind and its number a rank; every other type with a header number calls it a level.
+                if (e.Type == "spell" && e.Kind != null)
+                {
+                    properties.Append("    kind: ").Append(Scalar(e.Kind, 6)).Append('\n');
+                }
+
                 if (e.Level != null)
                 {
-                    properties.Append("    level: ").Append(e.Level.Value.ToString(CultureInfo.InvariantCulture)).Append('\n');
+                    properties.Append(e.Type == "spell" ? "    rank: " : "    level: ").Append(e.Level.Value.ToString(CultureInfo.InvariantCulture)).Append('\n');
                 }
 
                 if (e.Actions != null)
@@ -57,6 +63,11 @@ public static class PackEmitter
                 if (e.Traits.Count > 0)
                 {
                     properties.Append("    traits: [").Append(string.Join(", ", e.Traits.Select(t => Scalar(t, 6)))).Append("]\n");
+                }
+
+                if (e.Traditions.Count > 0)
+                {
+                    properties.Append("    traditions: [").Append(string.Join(", ", e.Traditions.Select(t => Scalar(t, 6)))).Append("]\n");
                 }
 
                 // An action's skill and least proficiency come after its traits, and before its labelled lines.
@@ -86,6 +97,36 @@ public static class PackEmitter
 
         files[ReportFile] = Report(report);
         return files;
+    }
+
+    /// <summary>The ids already in a pack folder, each with the folder of its file (<c>&lt;folder&gt;/&lt;folder&gt;.yaml</c>). Nothing else of the files is read.</summary>
+    public static Dictionary<string, string> ShippedIds(string packDir)
+    {
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (!Directory.Exists(packDir))
+        {
+            return result;
+        }
+
+        foreach (var dir in Directory.GetDirectories(packDir))
+        {
+            var folder = Path.GetFileName(dir);
+            var file = Path.Combine(dir, folder + ".yaml");
+            if (!File.Exists(file))
+            {
+                continue;
+            }
+
+            foreach (var line in File.ReadLines(file))
+            {
+                if (line.StartsWith("- id: \"", StringComparison.Ordinal) && line.EndsWith('"'))
+                {
+                    result[line[7..^1]] = folder;
+                }
+            }
+        }
+
+        return result;
     }
 
     private static string Report(IEnumerable<ReportRow> rows)
