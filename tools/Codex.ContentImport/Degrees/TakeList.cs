@@ -52,6 +52,24 @@ public sealed class TakeRow
     /// </summary>
     public int? SpillsOnto { get; set; }
 
+    /// <summary>The block role an entry header is set in. Entry-header by default; a chapter whose headers share the block-header font says so here.</summary>
+    public string? HeaderRole { get; set; }
+
+    /// <summary>
+    /// For an <c>entries</c> row whose headers end in a word and a number (the type's word and the entry's level): that word. A header block then needs this shape, and the range
+    /// starts at the first one (what comes before it is read past, see <see cref="TakenRange.LeadStart"/>).
+    /// </summary>
+    public string? LevelWord { get; set; }
+
+    /// <summary>True when <paramref name="block"/> is an entry header of this row.</summary>
+    public bool IsHeader(Block block) =>
+        block.Role == (HeaderRole ?? "entry-header")
+        && (LevelWord == null || LevelHeader().IsMatch(SpanText.Normalize(string.Join(' ', block.Lines))));
+
+    private Regex? _levelHeader;
+
+    private Regex LevelHeader() => _levelHeader ??= new Regex(@"\s" + Regex.Escape(LevelWord!) + @"\s+\d+$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
     /// <summary>The bookmark path of a taken range, whichever list it came from.</summary>
     public List<string> PathOf(TakenRange range) => range.Own ? Own[range.PathNumber - Paths.Count - 1] : Paths[range.PathNumber - 1];
 
@@ -184,6 +202,16 @@ public sealed partial class TakeList
                 {
                     throw new DegreesException($"Take-list row {n}: a bookmark path is taken twice.");
                 }
+            }
+
+            if ((r.HeaderRole != null || r.LevelWord != null) && r.Parser != "entries")
+            {
+                throw new DegreesException($"Take-list row {n}: headerRole and levelWord belong to the entries parser.");
+            }
+
+            if (r.LevelWord != null && r.HeaderRole == null)
+            {
+                throw new DegreesException($"Take-list row {n}: levelWord needs a headerRole.");
             }
 
             if (r.Own.Count > 0 && r.Parser != "rules")

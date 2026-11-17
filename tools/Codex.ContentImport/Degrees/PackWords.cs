@@ -95,7 +95,7 @@ public sealed record PackFinding(string File, int Entry, string Path, string Kin
 /// exempt only when its lowercase form is also used lowercase somewhere in the pack, so a name after "Mr." or "Step 1." is still flagged.
 /// Denylist: every word of every key, value, id, tag and file name is hashed; a match is reported by hash.
 /// </summary>
-public static class PackWordCheck
+public static partial class PackWordCheck
 {
     /// <summary>Top-level entry keys whose values are structure, not prose (the id, the tags and the source line). The denylist gate still reads them.</summary>
     private static readonly HashSet<string> StructuralKeys = new(StringComparer.Ordinal) { "id", "tags", "source" };
@@ -254,6 +254,9 @@ public static class PackWordCheck
         return Rune.IsUpper(first) || Rune.GetUnicodeCategory(first) == UnicodeCategory.TitlecaseLetter;
     }
 
+    [GeneratedRegex(@"(?m)^((?:- )?\*\*[^*\n]+\.\*\*) ")]
+    private static partial Regex BoldLabel();
+
     private static IEnumerable<string> CapitalsToCheck(Item item, HashSet<string> lowerUsed, Denylist? common, Denylist denylist)
     {
         if (item.IsLabel)
@@ -261,7 +264,8 @@ public static class PackWordCheck
             return Words(item.Text).Where(IsCapital);
         }
 
-        var text = SpanText.Normalize(item.Text);
+        // A bold label ("**Success.** The target ...", a degree of success or a labelled field) is a sentence of its own: what follows it opens a sentence.
+        var text = BoldLabel().Replace(SpanText.Normalize(item.Text), "$1\n");
         var result = new List<string>();
         foreach (var sentence in SpanText.Sentences(text))
         {

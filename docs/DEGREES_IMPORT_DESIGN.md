@@ -382,3 +382,38 @@ lowercase form is used elsewhere in the pack. Two things move to chapter 1 becau
   (each still needed: the words are capitalized in sections the take-list leaves out; one, a word of a taken title, is now left off the denylist in code) and gained 3 (the plural of
   a trait, and two ordinary words that open a sentence in a trait's rules). A row's `spillsOnto` that is not the page the next section starts on now fails the run.
 - `LEGAL.md` and the pack manifest say the pack now holds the glossary's trait definitions.
+
+## 12. Chapter 3 (feats): the prerequisite and the run
+
+**Built, and what differs from section 3:**
+- Prerequisite commit: the `feat` type in four-degrees `system.yaml` gains `level` (number), `actions` (dropdown: one, two, three, reaction, free; words, because a bare `1` is read back as a number), `traits` (tag list),
+  `prerequisites`, `trigger`, `requirements`, `special` (long text) and `frequency`, `cost` (text), with an icon and summary and filter fields. Nothing else in the file changed. Its one other user is the sheet's `feats` list
+  (an entry reference); the `features: { list: feats }` source reads a pick's `modifiers`, `uses`, `spends`, `options` and `adds`, and none of the new keys collides with those.
+- `packs/rules-core/` now also holds 126 feats (the general and skill feats of the book's feats chapter; 296 entries in all). The feats chapter has no child bookmarks, its entries are not in the entry-header font, and its header
+  is `NAME [icon] FEAT n` in the block-header font, set in capitals. A row says `headerRole: block-header` and `levelWord: feat`: a header block has that role and ends in the word and a number, the name is put in
+  title case (a small joining word stays lowercase), and the level and the action icon come from the header. The trait line (the `tag` block after the header) is a list of lowercase trait keys; all but one are keys of
+  shipped traits (that word has no definition in the glossary and is kept as it is). Labelled lines (prerequisites, frequency, trigger, requirements, cost, special) become the type's own fields; the rest, with the degrees of
+  success, is the description. A redaction row can name any of those fields.
+- The chapter's title is two blocks in the section font ("CHAPTER 5:" above "FEATS"), so the title search accepts a run of section blocks. The range starts at the first header: the introduction and the three pages of
+  overview tables before it are read past (`TakenRange.LeadStart`). They are game text of a section the take-list takes, so they are not "left out" for the denylist (as they were not when the chapter was only planned),
+  and their page, which has one column, is not held to the one-column check.
+- Counts, from the document four ways (`ImportPipeline.CheckLevelCounts`, run beside `CheckGlossaryCounts`): 126 header-font blocks of the header shape, 126 trait-line blocks, 126 lines ending in the level marker, and 126
+  rows in the overview tables of the lead. The first three read the same slice and the same role classification, so a feat lost to a sidebar split would lower all of them; the tables are the independent count, and the
+  run also compares their (name, level) pairs with the headers' as sets. Any difference fails the run when the row has no `countsDiffer` reason. By level: 67, 21, 3, 20, 1 and 14 feats of levels 1, 2, 3, 7, 11 and 15.
+  The count check runs in the importer (locally); CI pins only the result (the 126 and the level distribution).
+- Parser fixes, all for rows with a level word (the conditions and glossary output is byte-identical, `--check` passes): the feats' labelled paragraphs wrap with a hanging indent (a wrapped line is set in from the edge, a line at the edge
+  is the next paragraph); a block the extraction cut in the middle of a paragraph is not a paragraph of its own; a block that opens with a line that is only a bold label is a small table, one row to a line; a line that begins in lowercase after a line set short by the layout continues its paragraph; a bold run-in heading at the start of
+  a paragraph (a pet's statistics) is a label; a lone line in capitals set in from the column edge (a label of the page's art, three of them) is not entry text; a line that is only a page pointer continues the line before it.
+  The two example tables of two feats (crafting and performance specialties) are kept as one paragraph line per row, not as table blocks. A bold run-in heading that starts with a bullet renders as a list item (`- **Name.** text`).
+  Not done, from the review's nits: the stray art labels dropped are not counted in `import-report.yaml` (three here), and any bold run-in heading is a label in a run-on row, so a later chapter whose run-in headings are names
+  should be read again.
+- Redaction: 11 rows, all on the description. Seven turn a sentence that sent the reader to a page, a table or another book into the same sentence without the pointer, three cut a sentence that was only a pointer, and one
+  removes two words the setting coined for its own dances from a list of examples. The word gates read capitalized words only, so a coined word written in lowercase passed both; this one was found by listing every lowercase word of
+  the pack that the book writes fewer than three times and reading the list. `RedactedWords` now also hashes every word a row takes out, in any case (words the replacement keeps, and the ordinary words the book writes in lowercase
+  three times or more, are left off), so such a word stays on the denylist whatever a later chapter says. No
+  feat is dropped: none of the 126 depends on a named place, group or deity (a few say "deity" or "plane" as plain game words).
+- Gate changes, in place of rewording: a bold label (`**Success.**`) is a sentence of its own, so the word after it opens a sentence (the degrees of success are in feats and the first gate version read "You" after them as the middle of one).
+- Allowlist: 277 words (the words of the feats' names, skills, actions and the example lists). Waivers: 42 words (skill names, a weapon name, pet abilities and ordinary words) that a left-out section also capitalizes. The denylist was
+  rebuilt from scratch with the real command (994 hashes) and so was the common-word file (4,751).
+- Pinned in `DegreesRulesPackTests`: 126 feats, the level distribution, the shape of every feat's level, traits and fields (and exactly one trait key with no glossary entry), the entry total (296) and the widened `source` pattern (`pc > Chapter 5: Feats`; a chapter's own number is not a page number).
+- `LEGAL.md` and the pack manifest say the pack now also holds the general and skill feats.

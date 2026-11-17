@@ -54,6 +54,8 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Theory]
     [InlineData("condition", 42)] // 46 bookmark children minus 4 sidebars, and 42 entry headers in the taken range
     [InlineData("rule", 3)]       // the appendix's own intro rule, condition values, overriding conditions
+    [InlineData("feat", 126)]     // chapter 3: Chapter 5 of the book has no child bookmarks, so its entries are counted from the document three ways: the 126 header-font blocks that end in the
+                                  // type's word and a level, the 126 trait-line blocks (one follows each header) and the 126 level markers read line by line. They agree, so no countsDiffer reason.
     [InlineData("trait", 125)]    // chapter 2: the glossary's trait definitions. The importer finds 129 definitions and 24 trait lines that only point to a page or another book
                                   // (153), and reads 153 occurrences of the trait mark in the range: the two counts agree, so no countsDiffer reason is needed.
                                   // Four definitions are dropped by redaction rows (names the setting invented), so the pack holds 125.
@@ -72,14 +74,41 @@ public class DegreesRulesPackTests : IAsyncLifetime
     }
 
     [Fact]
+    public void EveryFeatCarriesItsLevelAndTraits_AndTheLevelsAreThePinnedOnes()
+    {
+        var feats = Entries("feat", PackId).ToList();
+        var traitKeys = Entries("trait", PackId).Select(e => e.Id).ToHashSet();
+
+        Assert.All(feats, f =>
+        {
+            Assert.True(f.Properties.TryGetValue("level", out var level) && level is long and >= 1, f.Id);
+            var traits = Assert.IsAssignableFrom<IEnumerable<object>>(f.Properties["traits"]).Select(t => (string)t).ToList();
+            Assert.NotEmpty(traits);
+            Assert.All(traits, t => Assert.Matches("^[a-z]+$", t));
+            if (f.Properties.TryGetValue("actions", out var actions)) Assert.Contains((string)actions, new[] { "one", "two", "three", "reaction", "free" });
+            foreach (var key in new[] { "prerequisites", "frequency", "trigger", "requirements", "cost", "special" })
+            {
+                if (f.Properties.TryGetValue(key, out var text)) Assert.False(string.IsNullOrWhiteSpace(text as string), $"{f.Id} {key}");
+            }
+        });
+
+        // Header levels, counted from the document: 67 first-level feats, then 21, 3, 20, 1 and 14.
+        Assert.Equal(new long[] { 1, 2, 3, 7, 11, 15 }, feats.Select(f => (long)f.Properties["level"]).Distinct().Order());
+        Assert.Equal(new[] { 67, 21, 3, 20, 1, 14 }, new long[] { 1, 2, 3, 7, 11, 15 }.Select(l => feats.Count(f => (long)f.Properties["level"] == l)));
+
+        // A trait line names shipped traits, except the ones the glossary has no definition for (one word on one feat).
+        Assert.Single(feats.SelectMany(f => ((IEnumerable<object>)f.Properties["traits"]).Select(t => (string)t)).Where(t => !traitKeys.Contains(t)).Distinct());
+    }
+
+    [Fact]
     public void ThePackHoldsNothingElse_AndTheReportAgrees()
     {
-        Assert.Equal(45 + 125, AllEntries(PackId).Count());
+        Assert.Equal(45 + 125 + 126, AllEntries(PackId).Count());
 
         // import-report.yaml holds counts and ids only; its totals are the importer's own and must match what loaded.
         var report = File.ReadAllText(Path.Combine(PackFolder, "import-report.yaml"));
         var reported = Regex.Matches(report, @"^  entries: (\d+)$", RegexOptions.Multiline).Sum(m => int.Parse(m.Groups[1].Value));
-        Assert.Equal(45 + 125, reported);
+        Assert.Equal(45 + 125 + 126, reported);
         Assert.DoesNotMatch(@"(?m)^  pageReferencesLeft: [1-9]", report);
     }
 
@@ -88,9 +117,9 @@ public class DegreesRulesPackTests : IAsyncLifetime
     {
         Assert.All(AllEntries(PackId), e =>
         {
-            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index)$", e.Source!); // chapters 1 and 2; a later chapter widens this
+            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9: ]+)$", e.Source!); // chapters 1 to 3 (the feats' chapter title is the book's, with its number); a later chapter widens this
             Assert.DoesNotContain("homebrew", e.Tags);
-            Assert.DoesNotMatch(@"\d", e.Source!); // no page numbers
+            Assert.DoesNotMatch(@"(?<!Chapter )\d", e.Source!); // no page numbers (a chapter's own number is not one)
         });
     }
 

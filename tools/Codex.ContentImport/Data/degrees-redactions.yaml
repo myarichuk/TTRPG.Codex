@@ -177,3 +177,78 @@ rows:
     span: { sha256: "decb9febeb6674e028a4ce942cc37b3c784185d98d3643fdcd195b5990f3356b", length: 113 }
     action: drop-entry
     reason: "The trait's name is one the setting invented for a kind of being, a descriptive term the ORC notice reserves."
+  # Chapter 3 (feats): sentences that point to a page or to another book. The mechanic is kept; the pointer goes.
+  - book: pc
+    entry: bonded-animal
+    field: description
+    span: { sha256: "25f2b0bfb45b27b81d8d627bc362ca4b2e61acd6be50f4d6a16ece5dc40ef269", length: 63 }
+    action: replace
+    text: "A helpful animal is easier to direct."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: communal-crafting
+    field: description
+    span: { sha256: "bdd9a2b6b36ef432a548f1f469c3a9cb70158b4f0695abe0fe13dbbfe1f60abd", length: 220 }
+    action: replace
+    text: "Any helper's roll contributes toward reducing the cost of raw materials using the numbers from the Earn Income table; this uses the ally PC's proficiency rank in the skill and their level - 1 for their level."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: foil-senses
+    field: description
+    span: { sha256: "93ac6c4f220e5900419e705c2689d4762806202fafacac13e964743ffca78f8f", length: 191 }
+    action: replace
+    text: "Whenever you use the Avoid Notice, Hide, or Sneak actions, you are always considered to be taking precautions against special senses."
+    reason: "A sentence that sent the reader to a sidebar on a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: incredible-investiture
+    field: description
+    span: { sha256: "15fab5898ac27c6d7c902ed8a23dd373a110726cb8cb2875dc06946ab7f93493", length: 63 }
+    action: cut
+    reason: "A sentence that only pointed to a page of another book."
+  - book: pc
+    entry: legendary-sneak
+    field: description
+    span: { sha256: "f904582ca645dd6bbe2a1ae9ca6563dee96c4cdf6259f5b12ad0b0db1e5a94ca", length: 60 }
+    action: cut
+    reason: "A sentence that only pointed to a page of the book."
+  - book: pc
+    entry: magical-crafting
+    field: description
+    span: { sha256: "28480c945921648ed18c0465530461f383df09992e103be7e1b4e46b4eb36624", length: 85 }
+    action: replace
+    text: "You can Craft magic items, though some have other requirements."
+    reason: "A sentence that sent the reader to another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: pet
+    field: description
+    span: { sha256: "06fe54f8599a5fbb852c256ddd6d6d8d581ca2ffa27da9b1f42807c6f6f2a8f3", length: 119 }
+    action: replace
+    text: "In some cases, the GM might add some familiar abilities to the pet abilities you can choose."
+    reason: "A sentence that sent the reader to pages of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: prescient-planner
+    field: description
+    span: { sha256: "12eb9b7c02cca932095911475a0c90ad101c4ba74101eeeaef0fe3ac2a58d335", length: 189 }
+    action: replace
+    text: "The item must be a piece of adventuring gear (from the adventuring gear table or other sources of adventuring gear), and can't be a weapon, armor, alchemical item, magic item, or other treasure."
+    reason: "A sentence that sent the reader to a table on a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: ride
+    field: description
+    span: { sha256: "d1d3b285c88a305baa238bd7be8adc48f013d9c58a3eded5f43874fd09706781", length: 29 }
+    action: cut
+    reason: "A sentence that only pointed to a page of the book."
+  - book: pc
+    entry: virtuosic-performer
+    field: description
+    span: { sha256: "41ac50889a515b286b6726d08182cae48f3ef2f18aa2dfbd16d82fa28b0fe1de", length: 31 }
+    action: replace
+    text: "Dance Ballet, jig"
+    reason: "Two items of a list of examples were words the setting coined for its own dances; the other examples are kept and the two go."
+  - book: pc
+    entry: train-animal
+    field: description
+    span: { sha256: "3a138d4f252abf669f3ce8da7f1221731f2cf52813e5b9d2b8fbeb88067432c3", length: 191 }
+    action: replace
+    text: "You can either select a basic action the animal already knows how to do (typically those listed in the Command an Animal action) or attempt to teach the animal a new basic action."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."

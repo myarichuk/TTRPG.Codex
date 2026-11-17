@@ -26,6 +26,9 @@ public sealed class ParsedEntry
     /// <summary>The action icon in the header: 1, 2, 3, reaction or free. Null when the header has none.</summary>
     public string? Actions { get; set; }
 
+    /// <summary>The level in the header, for a row whose headers carry one (<see cref="TakeRow.LevelWord"/>).</summary>
+    public int? Level { get; set; }
+
     /// <summary>The words of the trait line. They wait for chapter 2: the system has no trait type yet, so nothing writes them.</summary>
     public List<string> Traits { get; set; } = new();
 
@@ -36,8 +39,30 @@ public sealed class ParsedEntry
     /// <summary>Every paragraph, field and degree section in source order. An empty label is a plain paragraph.</summary>
     public List<LabelledText> Parts { get; set; } = new();
 
+    /// <summary>
+    /// Labelled fields the target type has a field of its own for (a feat's prerequisites, say): the type's field key and the text, in source order. They are taken out of
+    /// <see cref="Parts"/>, so <see cref="Render"/> does not repeat them.
+    /// </summary>
+    public List<LabelledText> Extracted { get; set; } = new();
+
     public string Render() =>
-        string.Join('\n', Parts.Select(p => p.Label.Length == 0 ? p.Text : $"**{p.Label.TrimEnd('.', ':', ' ')}.** {p.Text}".TrimEnd()));
+        string.Join('\n', Parts.Select(p =>
+            p.Label.Length == 0 ? p.Text
+            // A bold run-in heading that starts with a bullet is a list item.
+            : p.Label.StartsWith("• ", StringComparison.Ordinal) ? $"- **{p.Label[2..].TrimEnd('.', ':', ' ')}.** {p.Text}".TrimEnd()
+            : $"**{p.Label.TrimEnd('.', ':', ' ')}.** {p.Text}".TrimEnd()));
+
+    /// <summary>The text fields the redaction rows may name: the name and description, and any extracted field (its key is the field name).</summary>
+    public Dictionary<string, string> RedactionFields()
+    {
+        var fields = new Dictionary<string, string> { ["name"] = Name, ["description"] = Render() };
+        foreach (var e in Extracted)
+        {
+            fields[e.Label] = e.Text;
+        }
+
+        return fields;
+    }
 }
 
 /// <summary>An entry after redaction: what the pack file holds.</summary>
@@ -53,6 +78,15 @@ public sealed class FinalEntry
     public int RowNumber { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>The level, the action cost and the trait keys, for a type that has them (a feat).</summary>
+    public int? Level { get; set; }
+
+    public string? Actions { get; set; }
+    public List<string> Traits { get; set; } = new();
+
+    /// <summary>The extracted labelled fields after redaction, by the target type's field key, in the type's order.</summary>
+    public List<LabelledText> Extracted { get; set; } = new();
 }
 
 /// <summary>
@@ -126,7 +160,7 @@ public static partial class EntriesStage
         var traitsOpen = false;
         foreach (var block in slice)
         {
-            if (block.Role == "entry-header")
+            if (range.Row.IsHeader(block))
             {
                 var header = Clean(string.Join(' ', block.Lines));
                 string? actions = null;
@@ -139,17 +173,36 @@ public static partial class EntriesStage
                     }
                 }
 
-                var entry = NewEntry(range, book, Regex.Replace(header, " {2,}", " ").Trim(), compounds);
+                header = Regex.Replace(header, " {2,}", " ").Trim();
+                int? level = null;
+                if (range.Row.LevelWord != null)
+                {
+                    // "NAME [icon] WORD 3": the name is set in capitals, the level is the number after the row's word.
+                    var m = Regex.Match(header, @"^(?<name>.+?)\s+" + Regex.Escape(range.Row.LevelWord) + @"\s+(?<level>\d+)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                    level = int.Parse(m.Groups["level"].Value, CultureInfo.InvariantCulture);
+                    header = TitleCase(m.Groups["name"].Value);
+                }
+
+                var entry = NewEntry(range, book, header, compounds);
                 entry.Actions = actions;
+                entry.Level = level;
                 result.Add(entry);
-                readers.Add(new BodyReader(entry, compounds));
+                readers.Add(new BodyReader(entry, compounds, range.Row.LevelWord != null));
                 traitsOpen = true;
                 continue;
             }
 
             if (traitsOpen && block.Role == "tag")
             {
-                result[^1].Traits.AddRange(Clean(string.Join(' ', block.Lines)).Split(' ', StringSplitOptions.RemoveEmptyEntries));
+                var words = Clean(string.Join(' ', block.Lines)).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                // A trait line set in capitals (the feats' tag line) is a list of trait keys.
+                result[^1].Traits.AddRange(range.Row.LevelWord != null ? words.Select(w => w.ToLowerInvariant()) : words);
+                continue;
+            }
+
+            // A lone line in capitals, set well in from the column's edge where a header's left edge is (a label of the page's art), is not entry text.
+            if (range.Row.LevelWord != null && IsStrayLabel(block, slice, range.Row))
+            {
                 continue;
             }
 
@@ -162,7 +215,66 @@ public static partial class EntriesStage
             reader.Finish();
         }
 
+        if (range.Row.LevelWord != null)
+        {
+            foreach (var entry in result)
+            {
+                ExtractFields(entry);
+            }
+        }
+
         return result;
+    }
+
+    internal static bool IsStrayLabel(Block block, List<Block> slice, TakeRow row)
+    {
+        if (block.Role != "body" || block.Lines.Count != 1 || block.Lines[0].Any(char.IsLower) || !block.Lines[0].Any(char.IsLetter))
+        {
+            return false;
+        }
+
+        var edge = slice.Where(b => b.Page == block.Page && b.Column == block.Column && row.IsHeader(b)).Select(b => b.Left).DefaultIfEmpty(double.NaN).Min();
+        return !double.IsNaN(edge) && block.Left - edge > 10;
+    }
+
+    /// <summary>The labels a feat has a field of its own for (the system's feat type): label in lowercase, then the field key. Every other label stays in the description.</summary>
+    private static readonly string[] FeatFieldKeys = { "prerequisites", "frequency", "trigger", "requirements", "cost", "special" };
+
+    private static void ExtractFields(ParsedEntry entry)
+    {
+        foreach (var key in FeatFieldKeys)
+        {
+            var found = entry.Parts.Where(p => p.Label.Length > 0 && p.Label.TrimEnd('.', ':', ' ').Equals(key, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (found.Count > 1)
+            {
+                throw new DegreesException($"An entry of chapter {entry.Chapter} has the field label for '{key}' more than once.");
+            }
+
+            if (found.Count == 1)
+            {
+                entry.Extracted.Add(new LabelledText(key, found[0].Text));
+                entry.Parts.Remove(found[0]);
+                entry.Fields.Remove(found[0]);
+            }
+        }
+    }
+
+    private static readonly HashSet<string> SmallWords = new(StringComparer.Ordinal) { "a", "an", "and", "of", "the", "to", "in", "on", "for", "or", "at", "by" };
+
+    /// <summary>True for a word of a name in title case: it starts with a capital, or it is a small joining word.</summary>
+    public static bool IsNameWord(string word) => word.Length > 0 && (char.IsUpper(word[0]) || SmallWords.Contains(word));
+
+    /// <summary>A name the book sets in capitals, in title case: each word and each part of a hyphenated word begins with a capital, except a small joining word that is not first.</summary>
+    public static string TitleCase(string upper)
+    {
+        var words = upper.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(' ', words.Select((w, i) =>
+        {
+            var lower = w.ToLowerInvariant();
+            return i > 0 && SmallWords.Contains(lower)
+                ? lower
+                : string.Join('-', lower.Split('-').Select(p => p.Length == 0 ? p : char.ToUpperInvariant(p[0]) + p[1..]));
+        }));
     }
 
     private static ParsedEntry NewEntry(TakenRange range, string book, string name, HashSet<string> compounds)
@@ -264,6 +376,9 @@ public static partial class EntriesStage
     [GeneratedRegex(@"\s*\((?:see )?pages? \d+(?:\s*(?:-|,|and)\s*\d+)*\)", RegexOptions.IgnoreCase)]
     private static partial Regex PageRef();
 
+    [GeneratedRegex(@"^\((?:see )?pages? \d+(?:\s*(?:-|,|and)\s*\d+)*\)[.,;:]?$", RegexOptions.IgnoreCase)]
+    private static partial Regex PageRefLine();
+
     [GeneratedRegex(@" +([.,;:])")]
     private static partial Regex SpaceBeforeStop();
 
@@ -275,14 +390,20 @@ public static partial class EntriesStage
     {
         private readonly ParsedEntry _entry;
         private readonly HashSet<string> _compounds;
+        private readonly bool _runOn;
         private readonly List<(string Label, StringBuilder Text)> _parts = new();
         private bool _previousShort = true;
         private (int Page, int Column)? _previousPlace;
 
-        public BodyReader(ParsedEntry entry, HashSet<string> compounds)
+        /// <param name="runOn">
+        /// True for a row whose entries run on in one column (the feats): a line of a labelled paragraph that wraps is set in from the edge (a hanging indent), and a block that
+        /// the extraction cut off in the middle of a paragraph is not a paragraph of its own. Only a short line before it, a label or a first-line indent starts a paragraph.
+        /// </param>
+        public BodyReader(ParsedEntry entry, HashSet<string> compounds, bool runOn = false)
         {
             _entry = entry;
             _compounds = compounds;
+            _runOn = runOn;
         }
 
         public void ReadAll(List<Block> blocks)
@@ -311,18 +432,44 @@ public static partial class EntriesStage
             }
 
             var samePlace = _previousPlace == (block.Page, block.Column);
+            // A block that opens with a line that is only a bold label is a small table (a title row, then one row to a line) in a run-on row.
+            var rowsBlock = _runOn && block.Info is { Count: > 1 } && block.Info[0].Label.Length > 0
+                && SpanText.Normalize(block.Lines[0]).Trim() == SpanText.Normalize(block.Info[0].Label).Trim() && !KnownLabels.Contains(SpanText.Normalize(block.Info[0].Label).Trim().ToLowerInvariant());
             for (var i = 0; i < block.Lines.Count; i++)
             {
                 var info = block.Info?[i] ?? new LineInfo(block.Left, block.Right, string.Empty);
                 var text = block.Lines[i];
                 var label = SpanText.Normalize(info.Label).TrimEnd('.', ':', ' ');
                 // A first-line indent starts a paragraph even after a line that ran to the edge. A bullet's own wrapped lines are not read this way.
-                var indented = _parts.Count > 0 && info.Left - block.Left > Indent && !_parts[^1].Text.ToString().StartsWith('•');
-                var startsParagraph = _parts.Count == 0 || text.StartsWith('•') || indented || (i == 0 ? samePlace || _previousShort : _previousShort);
+                // A line that is only a page pointer, set in from the edge (a labelled line that ran on), continues the line before it; the pointer itself is dropped by Clean.
+                var indented = _parts.Count > 0 && info.Left - block.Left > Indent && !_parts[^1].Text.ToString().StartsWith('•') && !(_runOn && PageRefLine().IsMatch(text));
+                var startsParagraph = _parts.Count == 0 || text.StartsWith('•') || indented || (i == 0 ? (samePlace && !_runOn) || _previousShort : _previousShort);
+                if (_runOn && _parts.Count > 0 && _parts[^1].Label.Length > 0 && !text.StartsWith('•'))
+                {
+                    // A labelled paragraph wraps with a hanging indent: its lines after the first are set in from the edge, and a line at the edge is the next paragraph.
+                    startsParagraph = info.Left - block.Left <= Indent;
+                }
+
+                if (_runOn && startsParagraph && !indented && _parts.Count > 0 && text.Length > 0 && char.IsLower(text[0]) && !text.StartsWith('•')
+                    && _parts[^1].Text.ToString().TrimEnd() is { Length: > 0 } tail && !".!?:;\"”)".Contains(tail[^1]))
+                {
+                    startsParagraph = false; // a line set short by the layout, not by the end of a sentence: the text goes on
+                }
+                if (rowsBlock)
+                {
+                    startsParagraph = true; // a table's rows: one line each, whatever the line before it ran to
+                }
+
                 if (label.Length > 0 && KnownLabels.Contains(label.ToLowerInvariant()))
                 {
                     Start(label);
                     text = text[Math.Min(text.Length, info.Label.Length)..].TrimStart();
+                }
+                else if (_runOn && startsParagraph && label.Length > 0 && text.StartsWith(info.Label, StringComparison.Ordinal) && text.Length > info.Label.Length)
+                {
+                    // A bold run-in heading at the start of a paragraph (a pet's statistics, say) is a label like the known ones.
+                    Start(label);
+                    text = text[info.Label.Length..].TrimStart();
                 }
                 else if (startsParagraph)
                 {

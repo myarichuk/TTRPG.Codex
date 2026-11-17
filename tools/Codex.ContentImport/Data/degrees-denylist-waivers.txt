@@ -1,6 +1,6 @@
 # Denylist waivers of the local book importer: lowercase words a person has reviewed and decided the generated packs may say, although a section the
 # take-list leaves out also capitalizes them. Game terms and ordinary words only (the lines below say which): no names of people, places, deities, creatures or products.
-# Without a line here a word stays on the denylist, and the CI gate fails when a pack says it. Add one line per reviewed word, with the review in the commit message.
+# Without a line here a word stays on the denylist, and the CI gate fails when a pack says it. Add one line per reviewed word, with the review in a comment line here or in the commit message.
 # Chapter 1 review (each word is a defence, ability, skill, statistic or action name, or an ordinary word of a condition's rules, not a name).
 # The chapter 2 run rebuilt the denylist from scratch and tried the pack without any waiver: all of these but one (overriding, now a word of a taken title) were still needed.
 ac
@@ -24,3 +24,48 @@ consumables
 unlike
 # Chapter 2 review: fungal is an ordinary word that opens a trait's sentence; the book never writes it in lowercase, so the opener rule cannot pass it. A waived word may open a sentence.
 fungal
+# Chapter 3 review (feats): each word is a skill, action, pet ability or Lore subject name, a word of a feat's name, or an ordinary word of a feat's rules; none is a name.
+# A left-out section capitalizes them too, so the denylist had them.
+alchemy
+alcohol
+burrower
+burrowing
+coerce
+coercion
+deception
+demoralize
+diversion
+expeditious
+finally
+flier
+intimidating
+intimidation
+occultism
+pcs
+palm
+planner
+prescient
+price
+reposition
+steady
+stride
+striding
+subsist
+warfare
+administer
+cry
+survey
+thief
+additionally
+# The same review, second pass (the allowlist report hid these until its words were reviewed): two skill names, a weapon name and ordinary words of a feat's rules.
+arcana
+diplomacy
+avoidance
+bully
+concealing
+development
+frighten
+max
+morningstar
+# Third pass: an ordinary word of a list of examples whose redaction row names it as a redacted-span word.
+ballet
