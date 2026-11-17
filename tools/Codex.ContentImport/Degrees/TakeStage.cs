@@ -142,7 +142,8 @@ public static class TakeStage
             return caption is { } at ? taken with { End = at, TailEnd = taken.End } : throw new DegreesException($"Chapter {row.Chapter}, path {pathNumber}: the row reads the tail of its section past, but no heading in the block-header font starts one.");
         }
 
-        if (row.LevelWord == null)
+        // A row with groups starts at the section's first group heading, which is the first block after its title: nothing of the section comes before the headings.
+        if (row.LevelWord == null || row.Groups)
         {
             return taken;
         }
@@ -331,7 +332,8 @@ public static class TakeStage
     private static void CheckClaimed(BlocksResult blocks, TakenRange range)
     {
         var allowed = Claims[range.Row.Parser].Concat(range.Row.HeaderRole == null ? Array.Empty<string>() : new[] { range.Row.HeaderRole })
-            .Concat(range.Row.Subheadings ? new[] { "block-header" } : Array.Empty<string>()).ToArray();
+            .Concat(range.Row.Subheadings ? new[] { "block-header" } : Array.Empty<string>())
+            .Concat(range.Row.Groups ? new[] { "section" } : Array.Empty<string>()).ToArray();
         // A row that names its boxes (or says how many it reads past) holds headings of the header role that have no entry's shape: each starts a box.
         var boxes = range.Row.Boxes.Count > 0 || range.Row.ReadPastBoxes > 0;
         var stray = new List<string>();
@@ -340,7 +342,8 @@ public static class TakeStage
             var b = blocks.Blocks[i];
             // With a header role shared with other things (the block-header font), a block of that role that is not a header's shape belongs to no entry.
             if (!allowed.Contains(b.Role) || (!boxes && b.Role == range.Row.HeaderRole && b.Role != "entry-header" && !range.Row.IsHeader(b))
-                || (i == range.Start && range.Row.Parser == "entries" && !range.Row.IsHeader(b)))
+                || (i == range.Start && range.Row.Parser == "entries" && !range.Row.Groups && !range.Row.IsHeader(b))
+                || (range.Row.Groups && i == range.Start && b.Role is not ("section" or "entry-header")))
             {
                 stray.Add($"{b.Role} on page {b.Page} column {b.Column}");
             }

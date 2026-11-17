@@ -53,10 +53,12 @@ public class DegreesRulesPackTests : IAsyncLifetime
 
     [Theory]
     [InlineData("condition", 42)] // 46 bookmark children minus 4 sidebars, and 42 entry headers in the taken range
-    [InlineData("rule", 71)]      // chapter 1: the appendix's own intro rule, condition values, overriding conditions (3); chapter 4: the chapter's own introduction, the checks' own text, 4 sections of the checks,
+    [InlineData("rule", 78)]      // chapter 1: the appendix's own intro rule, condition values, overriding conditions (3); chapter 4: the chapter's own introduction, the checks' own text, 4 sections of the checks,
                                   // 17 skills' descriptions, the lead of the skills, 2 subsections of Performance, 4 of the general actions, one of Crafting and the income table (33); chapter 7: the chapter's
-                                  // own introduction, the 15 spellcasting sections (6 of them with their own text before their children), their 17 children, and two boxes among the spells (35)
-    [InlineData("spell", 324)]    // chapter 7: 325 spell headers = 325 trait lines = 325 traditions lines, and the four tradition lists name the same (name, rank) pairs; one spell is dropped by a redaction row
+                                  // own introduction, the 15 spellcasting sections (6 of them with their own text before their children), their 17 children, and two boxes among the spells (35); and the
+                                  // rules of casting a ritual: the section's own text, its 5 children (the checks section holds the secondary checks) and the box of costs by creature level among the rituals (7)
+    [InlineData("spell", 490)]    // chapter 7: 325 spell headers = 325 trait lines = 325 traditions lines, and the four tradition lists name the same (name, rank) pairs; one spell is dropped by a redaction row (324);
+                                  // 147 focus spells and focus cantrips (147 headers = 147 trait lines = 147 level markers, 59 group headings = 59 bookmarks); 19 rituals (19 headers, and the book's list by rank names them)
     [InlineData("action", 50)]    // chapter 4: the 23 bookmark children (6 general actions and 17 skills) are the 6 action headings and 17 skill headings of their ranges; 50 action headings in all,
                                   // 48 trait lines and 29 action icons (two jumps have no trait line, the activities have no icon), and the overview table of actions lists the same 50 (name, proficiency) pairs
     [InlineData("feat", 126)]     // chapter 3: Chapter 5 of the book has no child bookmarks, so its entries are counted from the document three ways: the 126 header-font blocks that end in the
@@ -158,14 +160,15 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Fact]
     public void EverySpellCarriesItsKindRankAndTraditions_AndTheCountsAreThePinnedOnes()
     {
-        var spells = Entries("spell", PackId).ToList();
+        // The spells of the four lists; the focus spells and the rituals are pinned below.
+        var spells = Entries("spell", PackId).Where(s => s.Source == "pc > Chapter 7: Spells > Spell Lists > Spells").ToList();
         var traitKeys = Entries("trait", PackId).Select(e => e.Id).ToHashSet();
         var texts = new[] { "castTime", "cost", "range", "area", "targets", "defense", "duration", "trigger", "requirements" };
         var tradition = new[] { "arcane", "divine", "occult", "primal" };
 
         Assert.All(spells, s =>
         {
-            Assert.Contains((string)s.Properties["kind"], new[] { "spell", "cantrip" }); // the focus kind is for the next step
+            Assert.Contains((string)s.Properties["kind"], new[] { "spell", "cantrip" }); // the focus and ritual kinds are the other two rows'
             Assert.True(s.Properties["rank"] is long and >= 1 and <= 10, s.Id);
             if (s.Properties.TryGetValue("actions", out var cost)) Assert.Contains((string)cost, new[] { "one", "two", "three", "reaction", "free" });
             var traits = Assert.IsAssignableFrom<IEnumerable<object>>(s.Properties["traits"]).Select(t => (string)t).ToList();
@@ -221,9 +224,123 @@ public class DegreesRulesPackTests : IAsyncLifetime
     }
 
     [Fact]
+    public void EveryFocusSpellCarriesItsKindRankAndGroup_AndTheCountsAreThePinnedOnes()
+    {
+        var focus = Entries("spell", PackId).Where(s => s.Source == "pc > Chapter 7: Spells > Spell Lists > Focus Spells").ToList();
+        var traitKeys = Entries("trait", PackId).Select(e => e.Id).ToHashSet();
+        var classes = new[] { "bard", "cleric", "druid", "ranger", "witch", "wizard" };
+
+        Assert.All(focus, s =>
+        {
+            Assert.Contains((string)s.Properties["kind"], new[] { "focus", "cantrip" });
+            Assert.True(s.Properties["rank"] is long and >= 1 and <= 10, s.Id);
+            if (s.Properties.TryGetValue("actions", out var cost)) Assert.Contains((string)cost, new[] { "one", "two", "three", "reaction", "free" });
+            var traits = Assert.IsAssignableFrom<IEnumerable<object>>(s.Properties["traits"]).Select(t => (string)t).ToList();
+            Assert.Contains("uncommon", traits);
+            Assert.All(traits, t => Assert.Matches("^[a-z]+$", t));
+            Assert.Single(traits.Intersect(classes)); // each belongs to one class
+            Assert.False(string.IsNullOrWhiteSpace(s.Properties["focusGroup"] as string), s.Id);
+            Assert.False(s.Properties.ContainsKey("traditions"), s.Id); // no tradition lists them
+            Assert.False(s.Properties.ContainsKey("category"), s.Id);
+
+            // A focus cantrip says Cantrip in its header and has the cantrip trait; every focus spell has the focus trait. A spell with no action icon says its range of costs as its cast time.
+            Assert.Equal((string)s.Properties["kind"] == "cantrip", traits.Contains("cantrip"));
+            Assert.Equal((string)s.Properties["kind"] == "focus", traits.Contains("focus"));
+            Assert.Equal(!s.Properties.ContainsKey("actions"), s.Properties.ContainsKey("castTime"));
+        });
+
+        // Counted from the document: 147 headers, 131 of them focus spells and 16 focus cantrips. A cantrip's printed number is its rank here too (the book prints several).
+        Assert.Equal(new[] { 131, 16 }, new[] { "focus", "cantrip" }.Select(k => focus.Count(s => (string)s.Properties["kind"] == k)));
+        Assert.Equal(new[] { 64, 4, 5, 46, 6, 1, 1, 1, 1, 2 }, Enumerable.Range(1, 10).Select(r => focus.Count(s => (string)s.Properties["kind"] == "focus" && (long)s.Properties["rank"] == r)));
+        Assert.Equal(new[] { 10, 2, 2, 0, 1, 0, 1 }, Enumerable.Range(1, 7).Select(r => focus.Count(s => (string)s.Properties["kind"] == "cantrip" && (long)s.Properties["rank"] == r)));
+
+        // By class (the class trait of the trait line) and by group (the heading the book sets each under): 59 headings, 3 of them hold no spell of their own (a class's heading above its groups).
+        Assert.Equal(new[] { 19, 74, 9, 11, 20, 14 }, classes.Select(c => focus.Count(s => ((IEnumerable<object>)s.Properties["traits"]).Contains(c))));
+        var groups = focus.GroupBy(s => (string)s.Properties["focusGroup"]).ToDictionary(g => g.Key, g => g.Count());
+        Assert.Equal(56, groups.Count);
+        Assert.Equal(new[] { 19, 1, 13, 7 }, new[] { "Bard Composition Spells", "Druid Order Spells", "Witch Hex Spells", "Patron Hex Cantrips" }.Select(g => groups[g]));
+        Assert.Equal(new[] { 3, 4, 2, 2 }, new[] { "Initiate Warden Spells", "Advanced Warden Spells", "Master Warden Spells", "Peerless Warden Spells" }.Select(g => groups[g]));
+        Assert.Equal(new[] { 1, 2, 3, 2 }, new[] { "Animal Order", "Leaf Order", "Storm Order", "Untamed Order" }.Select(g => groups[g]));
+        // 37 domains of a cleric, two spells each (a rank 1 and a rank 4); the 7 schools of a wizard have two each.
+        var domains = focus.Where(s => ((IEnumerable<object>)s.Properties["traits"]).Contains("cleric")).GroupBy(s => (string)s.Properties["focusGroup"]).ToList();
+        Assert.Equal(37, domains.Count);
+        Assert.All(domains, d => Assert.Equal(new long[] { 1, 4 }, d.Select(s => (long)s.Properties["rank"]).Order()));
+        Assert.Equal(7, focus.Where(s => ((IEnumerable<object>)s.Properties["traits"]).Contains("wizard")).Select(s => (string)s.Properties["focusGroup"]).Distinct().Count());
+
+        // 62 take one action, 51 two, 1 three, 21 are reactions and 7 are free; the other 5 have no icon and a range of costs (to or or) as their cast time.
+        Assert.Equal(new[] { 62, 51, 1, 21, 7, 5 }, new[] { "one", "two", "three", "reaction", "free" }.Select(c => focus.Count(s => s.Properties.TryGetValue("actions", out var v) && (string)v == c)).Append(focus.Count(s => !s.Properties.ContainsKey("actions"))));
+        Assert.Equal(new[] { "1 or 2 actions", "1 to 2 actions", "1 to 2 actions", "1 to 3 actions", "1 to 3 actions" }, focus.Where(s => s.Properties.ContainsKey("castTime")).Select(s => (string)s.Properties["castTime"]).Order());
+        Assert.Equal(new[] { 87, 27, 77, 39, 92, 24, 3, 0 }, new[] { "range", "area", "targets", "defense", "duration", "trigger", "requirements", "cost" }.Select(k => focus.Count(s => s.Properties.ContainsKey(k))));
+
+        // 101 degree sections and 73 heightened entries in the 147 (the importer counts the bold labels at line starts in the document, with the other spells', and fails on a difference).
+        Assert.Equal(101, focus.Sum(s => s.Description!.Split('\n').Count(l => Regex.IsMatch(l, @"^\*\*(Critical Success|Success|Failure|Critical Failure)\.\*\*"))));
+        Assert.Equal(73, focus.Sum(s => s.Description!.Split('\n').Count(l => l.StartsWith("**Heightened", StringComparison.Ordinal))));
+
+        // The trait lines name shipped traits, except nine words the glossary has no definition for.
+        Assert.Equal(new[] { "composition", "fortune", "hex", "morph", "nonlethal", "polymorph", "sanctified", "spellshape", "uncommon" },
+            focus.SelectMany(s => ((IEnumerable<object>)s.Properties["traits"]).Select(t => (string)t)).Where(t => !traitKeys.Contains(t)).Distinct().Order());
+
+        // The patron each hex cantrip names is the setting's: its line is cut, and so is every deity and place a spell's example named (see the redaction rows).
+        Assert.DoesNotContain(focus, s => s.Description!.Contains("**Patron.**", StringComparison.Ordinal));
+        Assert.Contains("**Lesson.**", focus.Single(s => s.Id == "curse-of-death").Description);
+        Assert.Contains("**Muse.**", focus.Single(s => s.Id == "fortissimo-composition").Description);
+    }
+
+    [Fact]
+    public void EveryRitualCarriesItsRankChecksAndCasters_AndTheCountsAreThePinnedOnes()
+    {
+        var rituals = Entries("spell", PackId).Where(s => s.Source == "pc > Chapter 7: Spells > Spell Lists > Rituals > Rituals").ToList();
+        var texts = new[] { "castTime", "cost", "requirements", "secondaryCasters", "primaryCheck", "secondaryChecks", "range", "area", "targets", "duration" };
+
+        Assert.Equal(19, rituals.Count);
+        Assert.All(rituals, s =>
+        {
+            Assert.Equal("ritual", s.Properties["kind"]);
+            Assert.True(s.Properties["rank"] is long and >= 2 and <= 10, s.Id);
+            Assert.False(s.Properties.ContainsKey("actions"), s.Id); // a ritual takes days or hours
+            var traits = Assert.IsAssignableFrom<IEnumerable<object>>(s.Properties["traits"]).Select(t => (string)t).ToList();
+            Assert.Single(traits.Intersect(new[] { "uncommon", "rare" }));
+            Assert.All(traits, t => Assert.Matches("^[a-z]+$", t));
+            Assert.False(s.Properties.ContainsKey("traditions"), s.Id);
+            Assert.False(s.Properties.ContainsKey("focusGroup"), s.Id);
+            Assert.False(s.Properties.ContainsKey("category"), s.Id);
+            // The three labelled lines only a ritual prints, and its casting time, are always there.
+            foreach (var key in new[] { "castTime", "secondaryCasters", "primaryCheck", "secondaryChecks" }) Assert.True(s.Properties.ContainsKey(key), $"{s.Id} {key}");
+            // (A count of one or two secondary casters is a number to the loader: the value is read by its text.)
+            foreach (var key in texts) if (s.Properties.TryGetValue(key, out var text)) Assert.False(string.IsNullOrWhiteSpace(Convert.ToString(text, System.Globalization.CultureInfo.InvariantCulture)), $"{s.Id} {key}");
+            // The second and third labels of a stat line are cut at the semicolon before them.
+            Assert.All(texts.Where(k => s.Properties.ContainsKey(k)), k => Assert.DoesNotMatch("; (Secondary|Primary)", Convert.ToString(s.Properties[k], System.Globalization.CultureInfo.InvariantCulture)!));
+        });
+
+        // The book lists the rituals by rank (the importer compares the list with the entries, as sets of (name, rank), and fails on a difference): 3, 2, 3, 3, 4, 2, 1 and 1 of ranks 2 to 8 and 10.
+        Assert.Equal(new[] { 3, 2, 3, 3, 4, 2, 1, 0, 1 }, new[] { 2, 3, 4, 5, 6, 7, 8, 9, 10 }.Select(r => rituals.Count(s => (long)s.Properties["rank"] == r)));
+        Assert.Equal(18, rituals.Count(s => ((IEnumerable<object>)s.Properties["traits"]).Contains("uncommon")));
+        Assert.Equal(new[] { "rare", "uncommon" }, rituals.SelectMany(s => ((IEnumerable<object>)s.Properties["traits"]).Select(t => (string)t)).Where(t => t is "rare" or "uncommon").Distinct().Order());
+        Assert.Equal(new[] { 19, 15, 1, 12, 5, 10, 10 }, new[] { "castTime", "cost", "requirements", "range", "area", "targets", "duration" }.Select(k => rituals.Count(s => s.Properties.ContainsKey(k))));
+        Assert.Equal(72, rituals.Sum(s => s.Description!.Split('\n').Count(l => Regex.IsMatch(l, @"^\*\*(Critical Success|Success|Failure|Critical Failure)\.\*\*"))));
+        Assert.Equal(11, rituals.Sum(s => s.Description!.Split('\n').Count(l => l.StartsWith("**Heightened", StringComparison.Ordinal))));
+
+        // The sentences of three rituals that named a deity, the realm of the dead or a plane of the setting are replaced (the denylist gate checks that no such name is left).
+        Assert.Contains("beyond death", rituals.Single(s => s.Id == "resurrect").Description);
+        Assert.DoesNotContain("(such as", rituals.Single(s => s.Id == "consecrate").Description, StringComparison.Ordinal); // no parenthetical example is left in the replaced sentence
+        // The older label of a saving throw is the defense field (two focus spells print it), and the option lines of a spell that takes one or two actions are paragraphs of their own.
+        Assert.All(new[] { "pied-piping", "waking-nightmare" }, id => Assert.Equal("Will", Entries("spell", PackId).Single(s => s.Id == id).Properties["defense"]));
+        Assert.DoesNotContain(Entries("spell", PackId), s => s.Description!.Contains("**Saving Throw.**", StringComparison.Ordinal));
+        Assert.Contains("\n[1 action] (manipulate) The spell has a range of touch.", "\n" + Entries("spell", PackId).Single(s => s.Id == "heal-companion").Description);
+    }
+
+    [Fact]
     public void TheSpellcastingRules_AreRulesOfTheCategorySpells_AndTheTwoBoxesAreTheOnlyOnesAmongTheSpells()
     {
-        var rules = Entries("rule", PackId).Where(r => (string)r.Properties["category"] == "Spells").ToList();
+        var casting = Entries("rule", PackId).Where(r => (string)r.Properties["category"] == "Spells").ToList();
+        var rules = casting.Where(r => !r.Source!.Contains("Rituals", StringComparison.Ordinal)).ToList();
+
+        // The rules of casting a ritual: the section's own text, its five children (the secondary checks are a paragraph of the checks) and the box of costs by creature level among the rituals.
+        Assert.Equal(new[] { "casting-rituals", "checks", "cost", "creature-creation-rituals", "effect", "learning-rituals", "secondary-casters" }, casting.Except(rules).Select(r => r.Id).Order());
+        Assert.Equal("pc > Chapter 7: Spells > Spell Lists > Rituals > Casting Rituals", casting.Single(r => r.Id == "casting-rituals").Source);
+        Assert.Equal("pc > Chapter 7: Spells > Spell Lists > Rituals > Rituals", casting.Single(r => r.Id == "creature-creation-rituals").Source);
+        Assert.Contains("Secondary Checks", casting.Single(r => r.Id == "checks").Description);
+        Assert.Equal(42, casting.Count);
 
         Assert.Equal(35, rules.Count);
         Assert.Contains(rules, r => r.Id == "spellcasting" && r.Source == "pc > Chapter 7: Spells");
@@ -243,7 +360,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Fact]
     public void ThePackHoldsNothingElse_AndTheReportAgrees()
     {
-        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35;
+        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7;
         Assert.Equal(total, AllEntries(PackId).Count());
 
         // import-report.yaml holds counts and ids only; its totals are the importer's own and must match what loaded.
@@ -258,7 +375,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     {
         Assert.All(AllEntries(PackId), e =>
         {
-            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9: ]+( > [A-Za-z ,-]+){0,2})$", e.Source!); // chapters 1 to 5a (the chapter title is the book's, with its number, then up to a section and a skill or a child section; a title may have a comma or a hyphen); a later chapter widens this
+            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9: ]+( > [A-Za-z ,-]+){0,4})$", e.Source!); // chapters 1 to 5b (the chapter title is the book's, with its number, then up to a section and a skill or a child section, and the rituals' rules are four deep; a title may have a comma or a hyphen); a later chapter widens this
             Assert.DoesNotContain("homebrew", e.Tags);
             Assert.DoesNotMatch(@"(?<!Chapter )\d", e.Source!); // no page numbers (a chapter's own number is not one)
         });

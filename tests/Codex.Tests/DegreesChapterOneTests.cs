@@ -852,6 +852,42 @@ public class DegreesChapterOneTests : IDisposable
         Assert.Equal("# notes\nthis is not a hash\n", File.ReadAllText(path));
     }
 
+    [Fact]
+    public void MergeDenylist_LiftsTheHashesAWaiverNamesAndOnlyThose()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "degrees-lift-" + Guid.NewGuid().ToString("N") + ".sha256");
+        try
+        {
+            DegreesCommand.MergeDenylist(path, Denylist.Format(new[] { "alpha", "beta", "gamma" }), out _);
+            DegreesCommand.MergeDenylist(path, Denylist.Format(new[] { "delta" }), out var total, lifted: new[] { Denylist.Hash("beta") });
+
+            Assert.Equal(3, total);
+            var held = Denylist.Parse(File.ReadAllText(path));
+            Assert.False(held.Contains(Denylist.Hash("beta")));
+            Assert.All(new[] { "alpha", "gamma", "delta" }, w => Assert.True(held.Contains(Denylist.Hash(w)), w));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ALiftIsScopedToWhatTheBooksOwnTextHashes_AndNoWaiverPassesAReservedName()
+    {
+        // Only a waived word that this book's own run would hash is lifted: a waiver reviewed against another book's text removes nothing here.
+        var lifted = ImportPipeline.LiftedWaivers(new[] { "alpha", "beta", "gamma delta" }, new[] { "zeta" }, new[] { "alpha", "epsilon" });
+        Assert.Equal(new[] { Denylist.Hash("alpha") }, lifted);
+
+        // A waiver that is the name of a dropped entry (or its plural) is refused, so neither gate can pass it.
+        Assert.Throws<DegreesException>(() => ImportPipeline.LiftedWaivers(new[] { "zeta" }, new[] { "zeta" }, new[] { "zeta" }));
+        Assert.Throws<DegreesException>(() => ImportPipeline.LiftedWaivers(new[] { "zetas" }, new[] { "zeta" }, Array.Empty<string>()));
+
+        // The same for pairs: a waived pair is lifted only when the book's text would hash it.
+        var pair = Denylist.Hash("one two");
+        Assert.Equal(new[] { pair }, ImportPipeline.LiftedPairWaivers(new[] { "one two", "three four", "alpha" }, new[] { pair }));
+    }
+
     // ---- review fixes
 
     /// <summary>A four-degrees system folder with a minimal system.yaml and the importer's own pack folder with its manifest. Returns the pack folder.</summary>

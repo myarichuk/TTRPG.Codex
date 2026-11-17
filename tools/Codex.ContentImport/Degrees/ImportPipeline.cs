@@ -65,6 +65,7 @@ public static partial class ImportPipeline
         CheckActionCounts(spine, blocks, ranges, parsed);
         CheckSpellCounts(blocks, ranges, parsed);
         CheckSpellDegrees(blocks, ranges, parsed);
+        CheckRankLists(blocks, ranges, parsed);
 
         // Only this book's rows apply, so one book's rows are never "unmatched" in the other's run.
         var scoped = new RedactionTable { Normalization = redactions.Normalization, Rows = redactions.Rows.Where(r => r.Book == null || r.Book == book).ToList() };
@@ -107,13 +108,16 @@ public static partial class ImportPipeline
         foreach (var range in ranges.Where(r => !r.Own && r.Row.Parser == "entries"))
         {
             var node = range.Node;
-            var children = spine.Where(n => n.Depth == node.Depth + 1 && n.Path.Length == node.Path.Length + 1 && n.Path.Take(node.Path.Length).SequenceEqual(node.Path) && !n.Sidebar).Count();
+            // A row with groups holds a tree of headings (a class, then a domain or an order under it): every bookmark below the section is one heading, in the section font or the entry-header font.
+            var groups = range.Row.Groups;
+            var children = spine.Where(n => n.Path.Length > node.Path.Length && (groups || n.Depth == node.Depth + 1 && n.Path.Length == node.Path.Length + 1)
+                && n.Path.Take(node.Path.Length).SequenceEqual(node.Path) && !n.Sidebar).Count();
             if (children == 0)
             {
                 continue;
             }
 
-            var headers = blocks.Blocks.Skip(range.Start).Take(range.End - range.Start).Count(b => b.Role == "entry-header");
+            var headers = blocks.Blocks.Skip(range.Start).Take(range.End - range.Start).Count(b => b.Role == "entry-header" || (groups && b.Role == "section"));
             compared.Add((children, headers));
             if (children != headers && string.IsNullOrWhiteSpace(range.Row.CountsDiffer))
             {
@@ -222,6 +226,48 @@ public static partial class ImportPipeline
         return compared;
     }
 
+    /// <summary>
+    /// For every taken <c>entries</c> range whose row names a <see cref="TakeRow.ListHeading"/>: the (name, rank) lines of the table under that heading (the book's own list of the row's entries by rank)
+    /// against the (name, rank) of the parsed entries. The two sets must be equal, or the run fails. Returns the (entries, listed) counts of each range.
+    /// </summary>
+    public static List<(int Entries, int Listed)> CheckRankLists(BlocksResult blocks, IEnumerable<TakenRange> ranges, IReadOnlyList<ParsedEntry> parsed)
+    {
+        var compared = new List<(int, int)>();
+        foreach (var range in ranges.Where(r => !r.Own && r.Row.Parser == "entries" && r.Row.ListHeading != null))
+        {
+            var want = BlocksStage.SidebarTitleSet.Key(range.Row.ListHeading!);
+            var headings = Enumerable.Range(0, blocks.Blocks.Count).Where(i => blocks.Blocks[i].Role == "block-header" && BlocksStage.SidebarTitleSet.Key(string.Join(' ', blocks.Blocks[i].Lines)) == want).ToList();
+            if (headings.Count != 1)
+            {
+                throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: the list heading of the row is found {headings.Count} times in the book, so its table is not known.");
+            }
+
+            var listed = new HashSet<(string Name, int Rank)>();
+            var lines = 0;
+            for (var i = headings[0] + 1; i < blocks.Blocks.Count && blocks.Blocks[i].Role == "body"; i++)
+            {
+                foreach (var line in blocks.Blocks[i].Lines.Select(l => SpanText.Normalize(l).Trim()))
+                {
+                    var m = Regex.Match(line, @"^(?<rank>\d{1,2}) (?<name>\p{L}[\p{L} '’-]*)$", RegexOptions.CultureInvariant);
+                    if (m.Success)
+                    {
+                        lines++;
+                        listed.Add((EntriesStage.Slug(m.Groups["name"].Value), int.Parse(m.Groups["rank"].Value, System.Globalization.CultureInfo.InvariantCulture)));
+                    }
+                }
+            }
+
+            var mine = parsed.Where(e => e.RowNumber == range.RowNumber && e.Type == range.Row.Target).Select(e => (EntriesStage.Slug(e.Name), e.Level ?? 0)).ToHashSet();
+            compared.Add((mine.Count, listed.Count));
+            if (lines != listed.Count || !mine.SetEquals(listed))
+            {
+                throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: the book's list by rank has {listed.Count} entries ({lines} lines) and the parsed entries are {mine.Count}: {listed.Except(mine).Count()} listed are not among them and {mine.Except(listed).Count()} parsed are not listed.");
+            }
+        }
+
+        return compared;
+    }
+
     /// <summary>What <see cref="CheckSpellCounts"/> counted.</summary>
     /// <param name="Headers">Spell headers (block-header font, the shape of a name, an optional icon, the kind word and a rank).</param>
     /// <param name="TraitLines">Trait lines directly under a header.</param>
@@ -241,7 +287,8 @@ public static partial class ImportPipeline
     /// </summary>
     public static SpellCounts? CheckSpellCounts(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<ParsedEntry> parsed)
     {
-        var spellRanges = ranges.Where(r => !r.Own && r.Row.Parser == "entries" && r.Row.Target == "spell").ToList();
+        // Only the row of the spells the four lists name is counted against them: the focus spells and the rituals are on no tradition's list.
+        var spellRanges = ranges.Where(r => !r.Own && r.Row.Parser == "entries" && r.Row.Target == "spell" && r.Row.OnTraditionLists).ToList();
         var listRanges = ranges.Where(r => r.Row.Parser == "spelllists").ToList();
         if (spellRanges.Count == 0 && listRanges.Count == 0)
         {
@@ -314,7 +361,8 @@ public static partial class ImportPipeline
             }
         }
 
-        var spells = parsed.Where(e => e.Type == "spell").ToList();
+        var listRows = spellRanges.Select(r => r.RowNumber).ToHashSet();
+        var spells = parsed.Where(e => e.Type == "spell" && listRows.Contains(e.RowNumber)).ToList();
         var onNoList = spells.Count(e => e.Traditions.Count == 0);
         if (onNoList > 0 && spellRanges.All(r => string.IsNullOrWhiteSpace(r.Row.CountsDiffer)))
         {
@@ -748,6 +796,31 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         return leftOut.SelectMany(PackWordCheck.CapitalPairs).Distinct()
             .Where(p => !game.Contains(p) && !denied.Contains(p.First) && !denied.Contains(p.Second) && !(waivers?.Contains(p.First + " " + p.Second) ?? false)) // a waiver line of two words waives that pair
             .Select(p => Denylist.PairHash(p.First, p.Second)).Distinct(StringComparer.Ordinal).OrderBy(h => h, StringComparer.Ordinal).ToList();
+    }
+
+    /// <summary>
+    /// The hashes a waiver lifts from the committed hash file: the waived single words that this book's own left-out text would hash without the waivers (<paramref name="bookWords"/>), so a
+    /// waiver reviewed against one book never removes a hash another book's run put there. A waiver that equals the name of a drop-entry row (or its plural) fails instead: such a name is
+    /// reserved, and no waiver can pass it.
+    /// </summary>
+    public static List<string> LiftedWaivers(IEnumerable<string> waivers, IEnumerable<string> reservedNames, IEnumerable<string> bookWords)
+    {
+        var reserved = reservedNames.SelectMany(n => new[] { n, n + "s", n + "es" }).ToHashSet(StringComparer.Ordinal);
+        var words = waivers.Where(w => !w.Contains(' ')).ToList();
+        if (words.Any(reserved.Contains))
+        {
+            throw new DegreesException("A waiver names an entry a redaction row drops, so a reserved name: no waiver may pass it.");
+        }
+
+        var book = bookWords.ToHashSet(StringComparer.Ordinal);
+        return words.Where(book.Contains).Select(Denylist.Hash).ToList();
+    }
+
+    /// <summary>The pair hashes a pair waiver lifts: the waived pairs that this book's left-out text would hash without the waivers (<paramref name="bookPairs"/>).</summary>
+    public static List<string> LiftedPairWaivers(IEnumerable<string> waivers, IEnumerable<string> bookPairs)
+    {
+        var book = bookPairs.ToHashSet(StringComparer.Ordinal);
+        return waivers.Where(w => w.Contains(' ')).Select(Denylist.Hash).Where(book.Contains).ToList();
     }
 
     public static (List<string> Words, int Excluded) DenylistWords(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlySet<string> waivers, int commonAfter = 3, IReadOnlyList<(int Start, int End)>? planned = null,

@@ -615,3 +615,115 @@ rows:
     span: { sha256: "a5f70c041c923b32f1fae0072d3450fc70e35ef5c206d02993cca98402e9f7cc", length: 72 }
     action: drop-entry
     reason: "The spell's mechanic is a list of battle forms, one named for each deity of the setting, so it cannot be kept without the names."
+  - book: pc
+    entry: consecrate
+    field: description
+    span: { sha256: "9086a641015e2a780287cc4fe03caabebe41e0c74efd8e0b7dbb142d93433c18", length: 260 }
+    action: replace
+    text: "While within the area, worshippers of your deity gain a +1 status bonus to attack rolls, skill checks, saving throws, and Perception checks, and creatures anathema to your deity take a -1 status penalty to those rolls."
+    reason: "A sentence whose example named two deities of the setting; the mechanic is kept without the example."
+  - book: pc
+    entry: planar-displacement
+    field: description
+    span: { sha256: "bbe11c809bc33960133adc15219c625933c7ee0e87635271b2d9062956b483f8", length: 215 }
+    action: replace
+    text: "The skill you use for the primary check must be one that can be used to make a Recall Knowledge check about the intended destination."
+    reason: "A sentence whose example named planes of the setting; the mechanic is kept without the example."
+  - book: pc
+    entry: pulse-of-civilization
+    field: description
+    span: { sha256: "57b2d12690045cfcc39b330b163d27bcf99e2f0fcd8650c342c3669d9533737b", length: 166 }
+    action: replace
+    text: "When you Cast the Spell, you can immediately Recall Knowledge about one of the settlements using its Lore skill, which benefits from the bonus."
+    reason: "A sentence whose example named a city of the setting; the mechanic is kept without the example."
+  - book: pc
+    entry: resurrect
+    field: description
+    span: { sha256: "72addbab2ecd1e12bc16594e0e117b81b70f2c6992501f197791b8f43bfbdfbc", length: 232 }
+    action: replace
+    text: "If the target's time has come or the target doesn't wish to return, this ritual automatically fails, but you discover this after the successful Religion check and can end the ritual without paying the cost."
+    reason: "A sentence that named a deity of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: resurrect
+    field: description
+    span: { sha256: "bbf8d6043b5ab0579a14f77ba2564ab17dadc6aa5d13d584c2777e5a1d4e5ce7", length: 102 }
+    action: replace
+    text: "Instead of inspiring them, the character's time beyond death has left them temporarily debilitated."
+    reason: "A sentence that named the realm of the dead of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: charming-touch
+    field: description
+    span: { sha256: "c51ecdea9632b64530dbb2ecce1e71f49d345a2790f2858bbc2f2c616aa6ae75", length: 178 }
+    action: replace
+    text: "**Success.** The target is unaffected but thinks your spell was something harmless instead of charming touch, unless it identifies the spell (see Identifying Spells)."
+    reason: "A sentence that sent the reader to a page; a pointer by section title that the pack has as a rule entry stays by name."
+  - book: pc
+    entry: cloak-of-shadow
+    field: description
+    span: { sha256: "ed0d466b8d26db2f307044e5875f85ec572d5a1170d597b5f2de4ce7b17ba4b3", length: 144 }
+    action: replace
+    text: "This is a form of magical darkness and can therefore overcome non-magical light or attempt to counteract magical light."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: cost
+    field: description
+    span: { sha256: "b1bbd2ba5528532b80c8debd57dbd5d5b1d57197d6a82337178af6d18d32e3bf", length: 175 }
+    action: replace
+    text: "Most rituals that create permanent creatures, such as create undead, use costs based on the level of the creature, as presented in Creature Creation Rituals."
+    reason: "A sentence that sent the reader to a page; the table it names is a rule entry of the pack, so it stays by name."
+  - book: pc
+    entry: binding-circle
+    field: description
+    span: { sha256: "3f69c2b8ceeff114c49d83a289fffcd024619f6ecc096588a588f3262b2ae9ae", length: 205 }
+    action: replace
+    text: "Fiends and similarly wicked extraplanar creatures are more likely to accept a bargain for a lower cost as long as it allows them to wreak havoc on the universe or inflict evil upon the world along the way."
+    reason: "A sentence that capitalized an ordinary word as the setting's name for its cosmos; the same sentence with the plain word."
+  - book: pc
+    entry: blight
+    field: description
+    span: { sha256: "415b5450eee8e4518047591bba67485cdbad89309f9c265149859905b626caa7", length: 56 }
+    action: replace
+    text: "**Success.** Decrease the crop yield in the area by half."
+    reason: "A misprint of an ordinary verb in the book (one letter missing); corrected so the allowlist need not hold the misprint."
+  - book: pc
+    entry: clinging-ice
+    field: description
+    span: { sha256: "bceda639fd2f8849dfde47f8c18ddd0d7921a35f41c99bbd23f933fdf3b36a13", length: 27 }
+    action: cut
+    reason: "A line that names the patron the setting coined for this hex cantrip; the cantrip's mechanic does not depend on it."
+  - book: pc
+    entry: discern-secrets
+    field: description
+    span: { sha256: "2fa8f24e7cb981cb2219264fda13bb6fe0a2f636a0c834534326a2c7b2b2f671", length: 29 }
+    action: cut
+    reason: "A line that names the patron the setting coined for this hex cantrip; the cantrip's mechanic does not depend on it."
+  - book: pc
+    entry: evil-eye
+    field: description
+    span: { sha256: "27a06186e3c2ca8188b735c01bcabc281ab86c55ca7c135adb272e466a97b448", length: 26 }
+    action: cut
+    reason: "A line that names the patron the setting coined for this hex cantrip; the cantrip's mechanic does not depend on it."
+  - book: pc
+    entry: nudge-fate
+    field: description
+    span: { sha256: "8747fc2cdfbf6ddf8014d679f76768b6063f35d4731f396e710a51ad1225b9fe", length: 30 }
+    action: cut
+    reason: "A line that names the patron the setting coined for this hex cantrip; the cantrip's mechanic does not depend on it."
+  - book: pc
+    entry: shroud-of-night
+    field: description
+    span: { sha256: "16085b27730e71693a4a94efe11bbdc964496efa4227dfcc29755b87c36f39a4", length: 27 }
+    action: cut
+    reason: "A line that names the patron the setting coined for this hex cantrip; the cantrip's mechanic does not depend on it."
+  - book: pc
+    entry: stoke-the-heart
+    field: description
+    span: { sha256: "9ca37aa5aaf879c87583be69139a9a293e9f766de6364a9b7cb1e2e100236b3b", length: 31 }
+    action: cut
+    reason: "A line that names the patron the setting coined for this hex cantrip; the cantrip's mechanic does not depend on it."
+  - book: pc
+    entry: wilding-word
+    field: description
+    span: { sha256: "8b34b85e57d4baaab7cb04a52408328f660a495f1aff855d1ff7964f60211950", length: 27 }
+    action: cut
+    reason: "A line that names the patron the setting coined for this hex cantrip; the cantrip's mechanic does not depend on it."
