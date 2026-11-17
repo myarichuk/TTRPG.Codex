@@ -31,7 +31,7 @@ public static class AiImageGenerator
 {
     public static readonly IReadOnlyList<AiImagePreset> Presets = new[]
     {
-        new AiImagePreset("openai", "OpenAI Images", AIClientFactory.OpenAIEndpoint, "gpt-image-1", true, false, "OpenAI's image models (gpt-image-1, dall-e-3) with your own key."),
+        new AiImagePreset("openai", "OpenAI Images", AIClientFactory.OpenAIEndpoint, "gpt-image-2.5-flare", true, false, "OpenAI's image models (gpt-image-2.5, gpt-image-2.6) with your own key."),
         new AiImagePreset("openrouter", "OpenRouter", AIClientFactory.OpenRouterEndpoint, "google/gemini-2.5-flash-image", true, true, "Any image model OpenRouter lists, e.g. google/gemini-2.5-flash-image or qwen/qwen-image-2.1-turbo. Uses your OpenRouter key."),
         new AiImagePreset("custom", "Custom (OpenAI images API)", string.Empty, string.Empty, false, false, "Any server that implements /v1/images/generations, such as LocalAI or a ComfyUI bridge.")
     };

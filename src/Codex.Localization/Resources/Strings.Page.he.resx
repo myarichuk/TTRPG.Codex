@@ -182,10 +182,21 @@
   <data name="Page.AiSettings.Name" xml:space="preserve"><value>שם</value></data>
   <data name="Page.AiSettings.BaseUrl" xml:space="preserve"><value>כתובת בסיס (URL)</value></data>
   <data name="Page.AiSettings.Model" xml:space="preserve"><value>מודל</value></data>
-  <data name="Page.AiSettings.ModelPhImage" xml:space="preserve"><value>למשל gpt-image-1</value></data>
+  <data name="Page.AiSettings.ModelPhImage" xml:space="preserve"><value>למשל gpt-image-2.5-flare</value></data>
   <data name="Page.AiSettings.ModelPhText" xml:space="preserve"><value>למשל openai/gpt-4o-mini</value></data>
-  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>כל מודל תמונות מ-openrouter.ai/models, למשל google/gemini-2.5-flash-image או qwen/qwen-image-2.1-turbo.</value></data>
-  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>כל מזהה מ-openrouter.ai/models, למשל anthropic/claude-sonnet-4, google/gemini-2.5-flash.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>בחרו ממודלי התמונות של OpenRouter, או הקלידו כל מזהה מ-openrouter.ai/models.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>בחרו מהרשימה העדכנית של OpenRouter, או הקלידו כל מזהה מ-openrouter.ai/models.</value></data>
+  <data name="Page.AiSettings.ModelListLabel" xml:space="preserve"><value>מודלים מוצעים</value></data>
+  <data name="Page.AiSettings.ModelTools" xml:space="preserve"><value>כלים</value></data>
+  <data name="Page.AiSettings.ModelToolsHint" xml:space="preserve"><value>יכול לקרוא לכלים, שהם נחוצים לצ'אט העולם ולעוזר הדמויות.</value></data>
+  <data name="Page.AiSettings.ModelListLoading" xml:space="preserve"><value>טוען את המודלים של OpenRouter…</value></data>
+  <data name="Page.AiSettings.ModelListFailed" xml:space="preserve"><value>לא ניתן היה לטעון את הרשימה של OpenRouter. אפשר להקליד את מזהה המודל.</value></data>
+  <data name="Page.AiSettings.ModelNoMatch" xml:space="preserve"><value>אין מודל ברשימה שמתאים. הטקסט שהקלדתם ישמש כמזהה המודל.</value></data>
+  <data name="Page.AiSettings.ModelMore" xml:space="preserve"><value>מוצגים {0} מתוך {1}. המשיכו להקליד כדי לצמצם את הרשימה.</value></data>
+  <data name="Page.AiSettings.ModelDetailContext" xml:space="preserve"><value>הקשר {0}</value></data>
+  <data name="Page.AiSettings.ModelDetailText" xml:space="preserve"><value>הקשר {0} · קלט {1} / פלט {2} למיליון אסימונים</value></data>
+  <data name="Page.AiSettings.ModelDetailFree" xml:space="preserve"><value>הקשר {0} · חינם</value></data>
+  <data name="Page.AiSettings.PricesAutofilled" xml:space="preserve"><value>מולא לפי הרשימה של OpenRouter עבור מודל זה. כדאי לבדוק מול התוכנית שלכם; אפשר לשנות כל ערך.</value></data>
   <data name="Page.AiSettings.ApiKey" xml:space="preserve"><value>מפתח API</value></data>
   <data name="Page.AiSettings.ApiKeyKeep" xml:space="preserve"><value>(השאירו ריק כדי לשמור את המפתח הקיים)</value></data>
   <data name="Page.AiSettings.KeyPhLocal" xml:space="preserve"><value>לא נדרש לשרת מקומי</value></data>
@@ -232,6 +243,7 @@
   <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>מפתח אחד, מאות מודלים. אפשר לקבל מפתח ב-openrouter.ai/keys.</value></data>
   <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>גישה ישירה ל-OpenAI עם מפתח משלכם.</value></data>
   <data name="Page.AiSettings.Preset.Text.anthropic.Hint" xml:space="preserve"><value>Claude דרך ה-API של Anthropic עצמה. מפתח אפשר לקבל ב-console.anthropic.com.</value></data>
+  <data name="Page.AiSettings.Preset.Text.gemini.Hint" xml:space="preserve"><value>Gemini דרך ה-API של Google התואם ל-OpenAI. מפתח אפשר לקבל ב-Google AI Studio.</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama" xml:space="preserve"><value>Ollama (מקומי)</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama.Hint" xml:space="preserve"><value>מודל שרץ על המחשב שלכם. לא צריך מפתח.</value></data>
   <data name="Page.AiSettings.Preset.Text.lmstudio" xml:space="preserve"><value>LM Studio (מקומי)</value></data>
@@ -241,7 +253,7 @@
   <data name="Page.AiSettings.Preset.Text.custom" xml:space="preserve"><value>שרת אחר (תואם OpenAI)</value></data>
   <data name="Page.AiSettings.Preset.Text.custom.Hint" xml:space="preserve"><value>כל שרת שתומך ב-{0}.</value></data>
   <data name="Page.AiSettings.Preset.Image.openai" xml:space="preserve"><value>OpenAI (תמונות)</value></data>
-  <data name="Page.AiSettings.Preset.Image.openai.Hint" xml:space="preserve"><value>מודלי התמונות של OpenAI (gpt-image-1, dall-e-3) עם מפתח משלכם.</value></data>
+  <data name="Page.AiSettings.Preset.Image.openai.Hint" xml:space="preserve"><value>מודלי התמונות של OpenAI (gpt-image-2.5, gpt-image-2.6) עם מפתח משלכם.</value></data>
   <data name="Page.AiSettings.Preset.Image.openrouter.Hint" xml:space="preserve"><value>כל מודל תמונות ש-OpenRouter מציע, למשל google/gemini-2.5-flash-image או qwen/qwen-image-2.1-turbo. משתמש במפתח ה-OpenRouter שלכם.</value></data>
   <data name="Page.AiSettings.Preset.Image.custom" xml:space="preserve"><value>שרת אחר (API התמונות של OpenAI)</value></data>
   <data name="Page.AiSettings.Preset.Image.custom.Hint" xml:space="preserve"><value>כל שרת שתומך ב-{0}, כמו LocalAI או גשר ל-ComfyUI.</value></data>

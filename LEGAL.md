@@ -11,6 +11,7 @@ Bundled third-party software:
 
 - Bootstrap 5.3.3 - MIT License - `src/Codex.Web/wwwroot/lib/bootstrap/LICENSE`
 - Lucide icons - ISC License - `src/Codex.Web/wwwroot/lib/lucide/LICENSE`
+- @github/combobox-nav 3.0.2 (the keyboard and ARIA behaviour of the model picker's list, bundled unmodified into `src/Codex.Web/wwwroot/lib/model-combobox/model-combobox.js`) - MIT License, Copyright (c) 2018 GitHub - `src/Codex.Web/wwwroot/lib/model-combobox/LICENSE`
 - Avalonia 12 (the tray launcher, `src/Codex.Launcher`) and its SkiaSharp and HarfBuzzSharp
   dependencies - MIT License - https://github.com/AvaloniaUI/Avalonia
 - QRCoder (QR codes in the launcher) - MIT License - https://github.com/codebude/QRCoder

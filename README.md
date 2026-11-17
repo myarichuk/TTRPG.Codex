@@ -85,6 +85,8 @@ a program on that computer.
 | --- | --- |
 | `Codex:DataDirectory` | Where the database, images and backups live. Default: `RavenData` in the per-user folder; a relative path is taken from the app's folder. |
 | `Codex:KeysDirectory` | Where the Data Protection key ring lives. Default: `Keys` beside the data folder. |
+| `Codex:AiModelsFile` | A JSON file of the model names the AI settings page suggests. Default: `ai-models.json` beside the data folder, if there is one. Each service it lists replaces the built-in list for that service; the rest are kept. See "Model suggestions" under AI features. |
+| `Codex:OpenRouterModelsUrl` | Where the AI settings page reads OpenRouter's public model list. Default: `https://openrouter.ai/api/v1`; set it only to point at a mirror. |
 | `Codex:ContentDirectories` | Folders of systems, packs and plugins to load (a list). `Codex:PluginsDirectory` is the older single folder. |
 | `Codex:Systems:InstallDirectory` | Where systems installed from the app live. Default: `Systems` beside the data folder. |
 | `Codex:Systems:GmInstall` | `true` lets anyone signed in install and remove systems, not only the server admin; never while the server is open to the internet. |
@@ -128,6 +130,22 @@ directory, so keep that folder with the data when you move or back it up. The ri
 encrypted at rest, so anyone who can read the data directory can read the keys. The `AI` section of `appsettings.json` is an
 optional server-wide fallback for users who set nothing up. Every account on a LAN server shares it, each within a daily allowance (`AI:DailyLimitPerUser`, above). Nothing is sent to a model until
 someone clicks an AI button.
+
+**Model suggestions.** The model field on the AI settings page is a combobox: it suggests models as you type and
+still takes any text, so a local server's own names work. For Anthropic, OpenAI and Gemini the suggestions are a
+list that ships with the app (`src/Codex.Core/AI/ai-models.json`). To change it without rebuilding, put a file of
+the same shape named `ai-models.json` beside the data folder (or name one with `Codex:AiModelsFile`):
+
+```json
+{ "text": { "anthropic": [ { "id": "claude-sonnet-5-5", "label": "Claude Sonnet 5.5" }, "another-model-id" ] },
+  "image": { "openai": [ "gpt-image-2.5-flare" ] } }
+```
+
+Each service you list replaces the built-in list for that service (an empty list turns it off); the others keep theirs.
+A mistake in the file is logged and the built-in lists are used. For OpenRouter the list is OpenRouter's own, fetched
+(without a key) and kept for an hour, minus its automatic routers; models that can call tools, which the world chat and
+the character assistant need, are marked, and picking one fills in the prices OpenRouter lists, which you can change
+or fill in later by editing the model. If OpenRouter cannot be reached, type the model id.
 
 What the AI does today:
 

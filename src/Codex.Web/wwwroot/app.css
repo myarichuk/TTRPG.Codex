@@ -1553,6 +1553,33 @@ dialog.codex-dialog:modal { position: fixed; }
     background-repeat: no-repeat; background-position: right 0.7rem center; background-size: 0.7rem;
 }
 textarea.field-input { min-height: 6rem; resize: vertical; }
+
+/* The model picker (ModelCombobox): a .field-input with a list under it, dressed like the header's menus. The list is shown and
+   hidden by lib/model-combobox/model-combobox.js; the option under the keyboard carries aria-selected. */
+.model-combobox { position: relative; }
+.model-combobox-input { padding-inline-end: var(--space-11); }
+.model-combobox-chevron {
+    position: absolute; inset-inline-end: var(--space-6); top: 50%; translate: 0 -50%; display: inline-flex;
+    color: var(--border-strong); pointer-events: none;
+}
+.model-combobox-input[aria-expanded="true"] ~ .model-combobox-chevron { color: var(--accent); }
+.model-combobox-list {
+    position: absolute; inset-inline: 0; top: calc(100% + 0.25rem); z-index: var(--z-menu);
+    max-height: min(22rem, 60vh); overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: var(--space-2); list-style: none;
+    background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-md); box-shadow: var(--frame), var(--shadow-2);
+}
+.model-combobox-list[hidden] { display: none; }
+.model-combobox-option {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-5); padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-sm); border-inline-start: 3px solid transparent; color: var(--text-2); cursor: pointer;
+}
+.model-combobox-option:hover { background: var(--surface-2); color: var(--text); }
+.model-combobox-option[aria-selected="true"] { background: var(--accent-soft); border-inline-start-color: var(--accent); color: var(--text); }
+.model-combobox-main { display: flex; flex-direction: column; min-width: 0; flex: 1 1 12rem; }
+.model-combobox-name { color: var(--text); font-weight: 600; overflow-wrap: anywhere; }
+.model-combobox-id { color: var(--text-3); font-size: var(--fs-md); overflow-wrap: anywhere; text-align: start; }
+.model-combobox-detail { color: var(--text-3); font-size: var(--fs-md); font-variant-numeric: tabular-nums; }
+.model-combobox-note { padding: var(--space-4) var(--space-6); color: var(--text-3); font-size: var(--fs-md); }
 .field-check { display: flex; align-items: center; gap: var(--space-4); min-height: 32px; }
 .field-box {
     appearance: none; flex: 0 0 auto; width: 1.3rem; height: 1.3rem; margin: 0; position: relative; cursor: pointer;

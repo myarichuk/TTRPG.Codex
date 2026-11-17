@@ -182,10 +182,21 @@
   <data name="Page.AiSettings.Name" xml:space="preserve"><value>Name</value></data>
   <data name="Page.AiSettings.BaseUrl" xml:space="preserve"><value>Base URL</value></data>
   <data name="Page.AiSettings.Model" xml:space="preserve"><value>Model</value></data>
-  <data name="Page.AiSettings.ModelPhImage" xml:space="preserve"><value>e.g. gpt-image-1</value></data>
+  <data name="Page.AiSettings.ModelPhImage" xml:space="preserve"><value>e.g. gpt-image-2.5-flare</value></data>
   <data name="Page.AiSettings.ModelPhText" xml:space="preserve"><value>e.g. openai/gpt-4o-mini</value></data>
-  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>Any image model from openrouter.ai/models, e.g. google/gemini-2.5-flash-image or qwen/qwen-image-2.1-turbo.</value></data>
-  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>Any id from openrouter.ai/models, e.g. anthropic/claude-sonnet-4, google/gemini-2.5-flash.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>Pick from OpenRouter's image models, or type any id from openrouter.ai/models.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>Pick from OpenRouter's current list, or type any id from openrouter.ai/models.</value></data>
+  <data name="Page.AiSettings.ModelListLabel" xml:space="preserve"><value>Suggested models</value></data>
+  <data name="Page.AiSettings.ModelTools" xml:space="preserve"><value>Tools</value></data>
+  <data name="Page.AiSettings.ModelToolsHint" xml:space="preserve"><value>Can call tools, which the world chat and the character assistant need.</value></data>
+  <data name="Page.AiSettings.ModelListLoading" xml:space="preserve"><value>Loading OpenRouter's models…</value></data>
+  <data name="Page.AiSettings.ModelListFailed" xml:space="preserve"><value>OpenRouter's list could not be loaded. Type the model id instead.</value></data>
+  <data name="Page.AiSettings.ModelNoMatch" xml:space="preserve"><value>No listed model matches. What you typed will be used as the model id.</value></data>
+  <data name="Page.AiSettings.ModelMore" xml:space="preserve"><value>Showing {0} of {1}. Keep typing to narrow the list.</value></data>
+  <data name="Page.AiSettings.ModelDetailContext" xml:space="preserve"><value>{0} context</value></data>
+  <data name="Page.AiSettings.ModelDetailText" xml:space="preserve"><value>{0} context · in {1} / out {2} per 1M tokens</value></data>
+  <data name="Page.AiSettings.ModelDetailFree" xml:space="preserve"><value>{0} context · free</value></data>
+  <data name="Page.AiSettings.PricesAutofilled" xml:space="preserve"><value>Filled in from OpenRouter's list for this model. Check them against your plan; you can change any of them.</value></data>
   <data name="Page.AiSettings.ApiKey" xml:space="preserve"><value>API key</value></data>
   <data name="Page.AiSettings.ApiKeyKeep" xml:space="preserve"><value>(leave blank to keep the stored key)</value></data>
   <data name="Page.AiSettings.KeyPhLocal" xml:space="preserve"><value>Not needed for a local server</value></data>
@@ -232,6 +243,7 @@
   <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>One key, hundreds of models. Get a key at openrouter.ai/keys.</value></data>
   <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>Direct OpenAI access with your own key.</value></data>
   <data name="Page.AiSettings.Preset.Text.anthropic.Hint" xml:space="preserve"><value>Claude through Anthropic's own API. Get a key at console.anthropic.com.</value></data>
+  <data name="Page.AiSettings.Preset.Text.gemini.Hint" xml:space="preserve"><value>Gemini through Google's OpenAI-compatible API. Get a key in Google AI Studio.</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama" xml:space="preserve"><value>Ollama (local)</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama.Hint" xml:space="preserve"><value>A model running on your own machine. No key needed.</value></data>
   <data name="Page.AiSettings.Preset.Text.lmstudio" xml:space="preserve"><value>LM Studio (local)</value></data>
@@ -241,7 +253,7 @@
   <data name="Page.AiSettings.Preset.Text.custom" xml:space="preserve"><value>Custom (OpenAI-compatible)</value></data>
   <data name="Page.AiSettings.Preset.Text.custom.Hint" xml:space="preserve"><value>Any server that implements {0}.</value></data>
   <data name="Page.AiSettings.Preset.Image.openai" xml:space="preserve"><value>OpenAI Images</value></data>
-  <data name="Page.AiSettings.Preset.Image.openai.Hint" xml:space="preserve"><value>OpenAI's image models (gpt-image-1, dall-e-3) with your own key.</value></data>
+  <data name="Page.AiSettings.Preset.Image.openai.Hint" xml:space="preserve"><value>OpenAI's image models (gpt-image-2.5, gpt-image-2.6) with your own key.</value></data>
   <data name="Page.AiSettings.Preset.Image.openrouter.Hint" xml:space="preserve"><value>Any image model OpenRouter lists, e.g. google/gemini-2.5-flash-image or qwen/qwen-image-2.1-turbo. Uses your OpenRouter key.</value></data>
   <data name="Page.AiSettings.Preset.Image.custom" xml:space="preserve"><value>Custom (OpenAI images API)</value></data>
   <data name="Page.AiSettings.Preset.Image.custom.Hint" xml:space="preserve"><value>Any server that implements {0}, such as LocalAI or a ComfyUI bridge.</value></data>

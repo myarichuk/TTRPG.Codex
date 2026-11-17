@@ -182,10 +182,21 @@
   <data name="Page.AiSettings.Name" xml:space="preserve"><value>Название</value></data>
   <data name="Page.AiSettings.BaseUrl" xml:space="preserve"><value>Базовый URL</value></data>
   <data name="Page.AiSettings.Model" xml:space="preserve"><value>Модель</value></data>
-  <data name="Page.AiSettings.ModelPhImage" xml:space="preserve"><value>например, gpt-image-1</value></data>
+  <data name="Page.AiSettings.ModelPhImage" xml:space="preserve"><value>например, gpt-image-2.5-flare</value></data>
   <data name="Page.AiSettings.ModelPhText" xml:space="preserve"><value>например, openai/gpt-4o-mini</value></data>
-  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>Любая модель изображений с openrouter.ai/models, например google/gemini-2.5-flash-image или qwen/qwen-image-2.1-turbo.</value></data>
-  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>Любой идентификатор с openrouter.ai/models, например anthropic/claude-sonnet-4, google/gemini-2.5-flash.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>Выберите из списка моделей изображений OpenRouter или введите любой идентификатор с openrouter.ai/models.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>Выберите из актуального списка OpenRouter или введите любой идентификатор с openrouter.ai/models.</value></data>
+  <data name="Page.AiSettings.ModelListLabel" xml:space="preserve"><value>Подсказки моделей</value></data>
+  <data name="Page.AiSettings.ModelTools" xml:space="preserve"><value>Инструменты</value></data>
+  <data name="Page.AiSettings.ModelToolsHint" xml:space="preserve"><value>Умеет вызывать инструменты, которые нужны чату мира и помощнику по персонажу.</value></data>
+  <data name="Page.AiSettings.ModelListLoading" xml:space="preserve"><value>Загружаю модели OpenRouter…</value></data>
+  <data name="Page.AiSettings.ModelListFailed" xml:space="preserve"><value>Не удалось загрузить список OpenRouter. Введите идентификатор модели вручную.</value></data>
+  <data name="Page.AiSettings.ModelNoMatch" xml:space="preserve"><value>В списке нет подходящих моделей. Введённый текст будет использован как идентификатор модели.</value></data>
+  <data name="Page.AiSettings.ModelMore" xml:space="preserve"><value>Показано {0} из {1}. Продолжайте вводить, чтобы сузить список.</value></data>
+  <data name="Page.AiSettings.ModelDetailContext" xml:space="preserve"><value>контекст {0}</value></data>
+  <data name="Page.AiSettings.ModelDetailText" xml:space="preserve"><value>контекст {0} · вход {1} / выход {2} за 1 млн токенов</value></data>
+  <data name="Page.AiSettings.ModelDetailFree" xml:space="preserve"><value>контекст {0} · бесплатно</value></data>
+  <data name="Page.AiSettings.PricesAutofilled" xml:space="preserve"><value>Заполнено по списку OpenRouter для этой модели. Сверьте со своим тарифом; любое значение можно изменить.</value></data>
   <data name="Page.AiSettings.ApiKey" xml:space="preserve"><value>API-ключ</value></data>
   <data name="Page.AiSettings.ApiKeyKeep" xml:space="preserve"><value>(оставьте пустым, чтобы сохранить текущий ключ)</value></data>
   <data name="Page.AiSettings.KeyPhLocal" xml:space="preserve"><value>Для локального сервера не нужен</value></data>
@@ -232,6 +243,7 @@
   <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>Один ключ — сотни моделей. Ключ можно получить на openrouter.ai/keys.</value></data>
   <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>Прямой доступ к OpenAI с вашим ключом.</value></data>
   <data name="Page.AiSettings.Preset.Text.anthropic.Hint" xml:space="preserve"><value>Claude через собственный API Anthropic. Ключ можно получить на console.anthropic.com.</value></data>
+  <data name="Page.AiSettings.Preset.Text.gemini.Hint" xml:space="preserve"><value>Gemini через OpenAI-совместимый API Google. Ключ можно получить в Google AI Studio.</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama" xml:space="preserve"><value>Ollama (локально)</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama.Hint" xml:space="preserve"><value>Модель на вашем компьютере. Ключ не нужен.</value></data>
   <data name="Page.AiSettings.Preset.Text.lmstudio" xml:space="preserve"><value>LM Studio (локально)</value></data>
@@ -241,7 +253,7 @@
   <data name="Page.AiSettings.Preset.Text.custom" xml:space="preserve"><value>Свой сервер (совместимый с OpenAI)</value></data>
   <data name="Page.AiSettings.Preset.Text.custom.Hint" xml:space="preserve"><value>Любой сервер, который поддерживает {0}.</value></data>
   <data name="Page.AiSettings.Preset.Image.openai" xml:space="preserve"><value>OpenAI (изображения)</value></data>
-  <data name="Page.AiSettings.Preset.Image.openai.Hint" xml:space="preserve"><value>Модели изображений OpenAI (gpt-image-1, dall-e-3) с вашим ключом.</value></data>
+  <data name="Page.AiSettings.Preset.Image.openai.Hint" xml:space="preserve"><value>Модели изображений OpenAI (gpt-image-2.5, gpt-image-2.6) с вашим ключом.</value></data>
   <data name="Page.AiSettings.Preset.Image.openrouter.Hint" xml:space="preserve"><value>Любая модель изображений из списка OpenRouter, например google/gemini-2.5-flash-image или qwen/qwen-image-2.1-turbo. Использует ваш ключ OpenRouter.</value></data>
   <data name="Page.AiSettings.Preset.Image.custom" xml:space="preserve"><value>Свой сервер (API изображений OpenAI)</value></data>
   <data name="Page.AiSettings.Preset.Image.custom.Hint" xml:space="preserve"><value>Любой сервер, который поддерживает {0}, например LocalAI или мост к ComfyUI.</value></data>

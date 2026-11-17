@@ -24,6 +24,9 @@ public sealed class AppFixture : IAsyncLifetime
     private IPlaywright? _playwright;
 
     public string BaseUrl { get; private set; } = string.Empty;
+
+    /// <summary>The OpenRouter the app under test is pointed at.</summary>
+    public FakeOpenRouter OpenRouter { get; } = new();
     public IBrowser Browser { get; private set; } = null!;
 
     private readonly Dictionary<string, IBrowser> _engines = new(StringComparer.Ordinal);
@@ -70,6 +73,8 @@ public sealed class AppFixture : IAsyncLifetime
         // TestSeeding.cs) rather than a second process writing straight to RavenDB - see the type
         // doc comment above for why.
         psi.Environment["Codex__EnableTestSeedEndpoint"] = "true";
+        // The settings page's model picker asks OpenRouter for its models; here that is a fake, so no test needs the internet.
+        psi.Environment["Codex__OpenRouterModelsUrl"] = OpenRouter.Url;
         // On a CI runner Chromium cannot start its own sandbox (see BookPdfTests.NoSandbox), and the book's PDF route prints with it.
         if (BookPdfTests.NoSandbox == true) psi.Environment["Codex__Book__Pdf__NoSandbox"] = "true";
 
@@ -198,6 +203,7 @@ public sealed class AppFixture : IAsyncLifetime
         }
 
         foreach (var engine in _engines.Values) await engine.CloseAsync();
+        await OpenRouter.DisposeAsync();
 
         _playwright?.Dispose();
         Http.Dispose();
