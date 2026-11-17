@@ -417,3 +417,25 @@ lowercase form is used elsewhere in the pack. Two things move to chapter 1 becau
   rebuilt from scratch with the real command (994 hashes) and so was the common-word file (4,751).
 - Pinned in `DegreesRulesPackTests`: 126 feats, the level distribution, the shape of every feat's level, traits and fields (and exactly one trait key with no glossary entry), the entry total (296) and the widened `source` pattern (`pc > Chapter 5: Feats`; a chapter's own number is not a page number).
 - `LEGAL.md` and the pack manifest say the pack now also holds the general and skill feats.
+
+## 13. Vocabulary step: the book's conditions and skills
+
+**Built (decisions in section 8, Q3; section 3 row 4), and what differs from section 3:**
+- Hand modelling, not import output. `conditions:` in four-degrees `system.yaml` is the 42 names of the `rules-core` condition entries, in their capitalization; Shaken, Wobbly and Pinned are retired. `Heartened` stays as the one spell effect.
+- `conditionEffects` holds what the engine can express, read from each entry's text and nothing else. Valued: Clumsy, Doomed, Drained, Dying, Enfeebled, Frightened, Sickened, Slowed, Stunned, Stupefied, Wounded. Only Dying has a maximum (4, the value at which the creature dies;
+  the entry lowers that by Doomed, which the plain 4 does not follow). Frightened drops by 1 at turn end; Doomed and Drained drop by 1 at the `dailyPrep` moment, the table's night's rest. Drained also lowers `HP_Max` by its value times the level (at least 1). Penalties: Clumsy, Drained, Enfeebled and Stupefied on the rolls of one attribute (`check.<attr>`, `save.<attr>`, armor class, ranged attacks, perception and the sense DC where the attribute is Wisdom),
+  Frightened and Sickened on every check and DC (including armor class), Fatigued, Fascinated, Off-guard, Prone, Unconscious and Encumbered's speed. `implies`: Confused, Paralyzed, Grabbed, Restrained, Prone (Off-guard); Dying (Unconscious);
+  Unconscious (Blinded, Off-guard, and Prone that stays); Encumbered (Clumsy 1); Invisible and Unnoticed (Undetected). Grabbed and Restrained also bring Immobilized.
+- Not modelled, and carried by the entry text alone: the hit points Drained takes away at once (only the lower maximum is modelled), Dying's maximum following Doomed, the floor under a speed penalty, one condition overriding another (Blinded over
+  Dazzled, Restrained over Grabbed, Stunned over Slowed), conditions that depend on a sense or on who is looking (Blinded, Deafened, Concealed, Hidden, Undetected), Enfeebled's Strength-based melee attacks (a target cannot tell which melee attack
+  uses Strength), actions lost to Slowed, Stunned and Quickened, the attitudes, Persistent Damage, Petrified, Broken, Controlled, Fleeing, and the death rules of Dying, Wounded and Doomed.
+- Skills: the book's 16 skills with their key attributes (Acrobatics, Arcana, Athletics, Crafting, Deception, Diplomacy, Intimidation, Medicine, Nature, Occultism, Performance, Religion, Society, Stealth, Survival, Thievery) replace the six invented ones.
+  The key `craft` became `crafting`. Lore, the open-ended skill (each subject counts as a skill of its own, on Intelligence), is not in the list: the sheet's skill list is fixed, and what a Lore subject is stays a decision for chapter 4.
+- Homebrew pack: references moved to the closest book equivalent by effect, numbers and `homebrew` tags unchanged. Shaken became Frightened, Wobbly Clumsy (the class feature's two values), Pinned Grabbed; the hazards and background say Crafting.
+- Translations (`system.ru.yaml`, `system.he.yaml`): all 42 condition names and the 16 skills, in plain game terms. They need a native review.
+- Allowlist: `craft` joined the importer's game terms, because the old skill label `Craft` used to supply it and the book's activity of that name is capitalized in the feats.
+- Tests moved: the four-degrees smoke test (a held condition now comes from Encumbered, a printed creature reads Frightened and Clumsy), the hazard test (crafting), the redaction fixture. New smoke tests show Clumsy alone (Dexterity save, ranged Strike, armor class, not the melee Strike),
+  Drained's lower maximum hit points and Constitution save, and the Dying maximum and the `dailyPrep` drops. The inline-system tests (checks, implies, printed numbers, condition values) named the invented Shaken for a generic valued condition on other systems; it is now Frightened
+  (Unnerved in the one check test whose fixture already has a valued Frightened), with their own effects, and nothing in them reads the four-degrees file.
+- Not done: Stupefied's spell attacks and spell DCs (with the spells chapter), a Lore decision before chapter 7 (backgrounds grant Lore subjects), and no migration for local dev data that holds `craft` or the retired condition names (four-degrees has not shipped).
+- Left: the ashfall fixture keeps its own Shaken, and generic examples in the docs and the code comments (Dread, Shaken) are not four-degrees.
