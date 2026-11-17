@@ -4,10 +4,11 @@ namespace Codex.ContentImport.Degrees;
 /// <param name="Own">The range is a section's own text before its first child (<see cref="TakeRow.Own"/>); <paramref name="PathNumber"/> then counts on after the row's <see cref="TakeRow.Paths"/>.</param>
 /// <param name="Extra">Indexes of blocks outside <c>[Start, End)</c> that belong to the range too: the top of the page a row says its section spills onto (<see cref="TakeRow.SpillsOnto"/>).</param>
 /// <param name="LeadStart">For a row that starts at its first entry header: the index of the first block after the section's title, which the row reads past (an introduction and overview tables). Negative when there is no such lead.</param>
-public sealed record TakenRange(TakeRow Row, int PathNumber, SpineNode Node, int Start, int End, int RowNumber = 0, bool Own = false, IReadOnlyList<int>? Extra = null, int LeadStart = -1)
+/// <param name="TailEnd">For a row that ends at its first block-header heading (<see cref="TakeRow.TailFromHeader"/>): the end of the section. The blocks from <c>End</c> to there are read past.</param>
+public sealed record TakenRange(TakeRow Row, int PathNumber, SpineNode Node, int Start, int End, int RowNumber = 0, bool Own = false, IReadOnlyList<int>? Extra = null, int LeadStart = -1, int TailEnd = -1)
 {
-    /// <summary>True for a block of the lead: read past, not an entry's text, and not setting material either (it sits in the taken section).</summary>
-    public bool InLead(int index) => LeadStart >= 0 && index >= LeadStart && index < Start;
+    /// <summary>True for a block of the lead or the tail: read past, not an entry's text, and not setting material either (it sits in the taken section).</summary>
+    public bool InLead(int index) => (LeadStart >= 0 && index >= LeadStart && index < Start) || (TailEnd >= 0 && index >= End && index < TailEnd);
 
     /// <summary>The indexes of every block of the range, in order.</summary>
     public IEnumerable<int> Indexes => Enumerable.Range(Start, End - Start).Concat(Extra ?? Array.Empty<int>());
@@ -31,6 +32,8 @@ public static class TakeStage
         ["entries"] = new[] { "entry-header", "rules", "body", "tag", "icon", "table" },
         ["rules"] = new[] { "rules", "body", "tag", "icon", "table" },
         ["glossary"] = new[] { "body" },
+        // A skill's heading (section), a general action's or subsection's title (entry-header), an action's or table caption's heading (block-header) and its text.
+        ["actions"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon", "table" },
     };
 
     private static readonly string[] Claimable = { "entry-header", "rules", "body", "tag", "table" };
@@ -129,6 +132,13 @@ public static class TakeStage
     private static TakenRange Range(IReadOnlyList<SpineNode> spine, BlocksResult blocks, TakeRow row, int pathNumber, SpineNode node)
     {
         var taken = RangeFromTitle(spine, blocks, row, pathNumber, node);
+        if (row.TailFromHeader)
+        {
+            var caption = Enumerable.Range(taken.Start, Math.Max(0, taken.End - taken.Start)).Where(i => blocks.Blocks[i].Role == "block-header").Cast<int?>().FirstOrDefault();
+            // A row that reads a tail past must find where it starts: a range with no heading in it would silently be taken whole.
+            return caption is { } at ? taken with { End = at, TailEnd = taken.End } : throw new DegreesException($"Chapter {row.Chapter}, path {pathNumber}: the row reads the tail of its section past, but no heading in the block-header font starts one.");
+        }
+
         if (row.LevelWord == null)
         {
             return taken;
@@ -143,10 +153,12 @@ public static class TakeStage
     {
         var where = $"Chapter {row.Chapter}, path {pathNumber}";
         var title = FindTitle(blocks.Blocks, node, 0) ?? throw new DegreesException($"{where}: no block on page {node.PageStart} has the bookmark's title.");
-        var start = blocks.Blocks[title].Role == (row.HeaderRole ?? "entry-header") ? title : title + 1;
+        // An entry keeps its own header block; any other section (a rule's, an actions section's) starts after its title.
+        var start = row.Parser == "entries" && blocks.Blocks[title].Role == (row.HeaderRole ?? "entry-header") ? title : title + 1;
 
         var index = IndexOf(spine, node);
-        var after = spine.Skip(index + 1).FirstOrDefault(n => n.Depth <= node.Depth);
+        // A sidebar bookmark does not end a section: the sidebar is split out of the blocks, so its title is not one, and the section goes on past it.
+        var after = spine.Skip(index + 1).FirstOrDefault(n => n.Depth <= node.Depth && !n.Sidebar);
         if (row.SpillsOnto != null && after?.PageStart != row.SpillsOnto)
         {
             throw new DegreesException($"{where}: the row says the section spills onto page {row.SpillsOnto}, but the next section does not start on page {row.SpillsOnto}.");

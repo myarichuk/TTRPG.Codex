@@ -69,3 +69,25 @@ max
 morningstar
 # Third pass: an ordinary word of a list of examples whose redaction row names it as a redacted-span word.
 ballet
+# Chapter 4 review (skills): each word is the name of an action or a subsection, a gerund or past tense of one, or an ordinary word, not a name of a place, person or creature.
+repositioned
+feint
+recalling
+arrest
+npc
+orate
+borrow
+motive
+staging
+tumble
+unobtrusive
+fix
+exceeding
+assisted
+alterations
+circus
+remedy
+lowered
+disabling
+locks
+investigating

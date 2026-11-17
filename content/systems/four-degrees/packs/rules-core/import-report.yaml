@@ -70,6 +70,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
+  readPastBlocks: 17
   redactionRows: [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34]
   ids:
     - "additional-lore"
@@ -332,3 +333,161 @@
     - "witch"
     - "wizard"
     - "wood"
+- chapter: "skills"
+  parser: "actions"
+  target: "action"
+  entries: 6
+  droppedSidebarBlocks: 20
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 5
+  redactionRows: [39, 41, 44, 61, 62]
+  ids:
+    - "decipher-writing"
+    - "earn-income"
+    - "identify-magic"
+    - "learn-a-spell"
+    - "recall-knowledge"
+    - "subsist"
+- chapter: "skills"
+  parser: "actions"
+  target: "action"
+  entries: 44
+  droppedSidebarBlocks: 31
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 11
+  redactionRows: [35, 36, 37, 38, 40, 42, 43, 45, 46, 47, 48, 49, 50, 53, 54, 55, 60, 63]
+  ids:
+    - "administer-first-aid"
+    - "balance"
+    - "borrow-an-arcane-spell"
+    - "climb"
+    - "coerce"
+    - "command-an-animal"
+    - "conceal-an-object"
+    - "cover-tracks"
+    - "craft"
+    - "create-a-diversion"
+    - "create-forgery"
+    - "demoralize"
+    - "disable-a-device"
+    - "disarm"
+    - "feint"
+    - "force-open"
+    - "gather-information"
+    - "grapple"
+    - "hide"
+    - "high-jump"
+    - "identify-alchemy"
+    - "impersonate"
+    - "lie"
+    - "long-jump"
+    - "make-an-impression"
+    - "maneuver-in-flight"
+    - "palm-an-object"
+    - "perform"
+    - "pick-a-lock"
+    - "repair"
+    - "reposition"
+    - "request"
+    - "sense-direction"
+    - "shove"
+    - "sneak"
+    - "squeeze"
+    - "steal"
+    - "swim"
+    - "track"
+    - "treat-disease"
+    - "treat-poison"
+    - "treat-wounds"
+    - "trip"
+    - "tumble-through"
+- chapter: "skills"
+  parser: "actions"
+  target: "rule"
+  entries: 5
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "crafting-goods-for-the-market"
+    - "income-earned"
+    - "learned-spells"
+    - "practicing-a-trade"
+    - "staging-a-performance"
+- chapter: "skills"
+  parser: "actions"
+  target: "rule"
+  entries: 21
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "acrobatics"
+    - "alchemical-and-magical-items"
+    - "arcana"
+    - "athletics"
+    - "basic-competence"
+    - "crafting"
+    - "deception"
+    - "diplomacy"
+    - "intimidation"
+    - "lore"
+    - "medicine"
+    - "nature"
+    - "occultism"
+    - "performance"
+    - "performance-traits"
+    - "religion"
+    - "skill-descriptions"
+    - "society"
+    - "stealth"
+    - "survival"
+    - "thievery"
+- chapter: "skills"
+  parser: "rules"
+  target: "rule"
+  entries: 1
+  droppedSidebarBlocks: 6
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "skills"
+- chapter: "skills"
+  parser: "rules"
+  target: "rule"
+  entries: 1
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: [58, 59]
+  ids:
+    - "skill-checks-and-dcs"
+- chapter: "skills"
+  parser: "rules"
+  target: "rule"
+  entries: 4
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: [51, 52, 56, 57]
+  ids:
+    - "armor-and-skills"
+    - "key-attribute"
+    - "secret-checks"
+    - "skill-actions"
+- chapter: "skills"
+  parser: "rules"
+  target: "rule"
+  entries: 1
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  readPastBlocks: 19
+  redactionRows: []
+  ids:
+    - "exploration-and-downtime-activities"

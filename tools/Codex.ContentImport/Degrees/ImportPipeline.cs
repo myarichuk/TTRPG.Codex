@@ -34,7 +34,20 @@ public static partial class ImportPipeline
 
         var sidebars = spine.Where(n => n.Sidebar).SelectMany(n => Enumerable.Range(n.PageStart, n.PageEnd - n.PageStart + 1)).ToHashSet();
         var starts = spine.Where(n => n.Sidebar).GroupBy(n => n.PageStart).ToDictionary(g => g.Key, g => g.Count());
-        return new BlocksOptions { MaxColumns = page => columns.GetValueOrDefault(page, 2), SidebarPages = sidebars, SidebarStarts = starts };
+        var titles = spine.Where(n => n.Sidebar).GroupBy(n => n.PageStart)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)g.SelectMany(n => SidebarTitles(n.Title)).ToList());
+        return new BlocksOptions { MaxColumns = page => columns.GetValueOrDefault(page, 2), SidebarPages = sidebars, SidebarStarts = starts, SidebarTitles = titles };
+    }
+
+    /// <summary>
+    /// The sidebars one sidebar bookmark names: "Sidebar: X" is one, "Sidebars: X &amp; Y" is two. A single sidebar whose own title holds an ampersand would be read as two, and
+    /// its page would be flagged (loud, so left as it is).
+    /// </summary>
+    public static IEnumerable<string> SidebarTitles(string bookmarkTitle)
+    {
+        var colon = bookmarkTitle.IndexOf(':', StringComparison.Ordinal);
+        var rest = colon >= 0 ? bookmarkTitle[(colon + 1)..] : bookmarkTitle;
+        return rest.Split(" & ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 
     public static PipelineOutput Run(BlocksResult blocks, IReadOnlyList<SpineNode> spine, IReadOnlyList<TakeRow> rows, RedactionTable redactions, string book)
@@ -44,6 +57,7 @@ public static partial class ImportPipeline
         CheckGlossaryCounts(blocks, ranges);
         CheckLevelCounts(blocks, ranges);
         var parsed = EntriesStage.Run(blocks, ranges, book);
+        CheckActionCounts(spine, blocks, ranges, parsed);
 
         // Only this book's rows apply, so one book's rows are never "unmatched" in the other's run.
         var scoped = new RedactionTable { Normalization = redactions.Normalization, Rows = redactions.Rows.Where(r => r.Book == null || r.Book == book).ToList() };
@@ -65,10 +79,12 @@ public static partial class ImportPipeline
             Level = e.Level,
             Actions = e.Actions,
             Traits = e.Traits.ToList(),
+            Skill = e.Skill,
+            Proficiency = e.Proficiency,
             Extracted = e.Extracted.Select(x => new LabelledText(x.Label, kept[e.Id].Fields[x.Label])).ToList(),
         }).ToList();
 
-        return new PipelineOutput(ranges, parsed, final, report, ReportRows(blocks, spine, rows, redactions, book, parsed, final));
+        return new PipelineOutput(ranges, parsed, final, report, ReportRows(blocks, spine, rows, redactions, book, parsed, final, ranges));
     }
 
     /// <summary>
@@ -153,6 +169,143 @@ public static partial class ImportPipeline
         return compared;
     }
 
+/// <summary>What <see cref="CheckActionCounts"/> counted for the <c>actions</c> rows together.</summary>
+/// <param name="Children">Non-sidebar bookmark children of the taken sections (the general actions; the skills).</param>
+/// <param name="Units">What those children stand for in the blocks: the action headings of a section with none of its own, the skill headings of one that has them.</param>
+/// <param name="Headers">Block-header headings of an action's shape (an icon in the line, or a trait line right below).</param>
+/// <param name="TraitLines">Headings that have a trait line right below.</param>
+/// <param name="Icons">Headings that have an action icon in the line.</param>
+/// <param name="TableNames">Distinct (name, proficiency) pairs of the overview table of actions, or -1 when the book has none in a tail the take-list reads past.</param>
+public sealed record ActionCounts(int Children, int Units, int Headers, int TraitLines, int Icons, int TableNames);
+
+private static readonly HashSet<string> DegreeLabels = new(StringComparer.Ordinal) { "critical success", "success", "failure", "critical failure" };
+
+private static readonly Regex ActionIconToken = new(@"\[(?:(?:one|two|three|free)-actions?|reaction)\]", RegexOptions.CultureInvariant);
+
+/// <summary>
+/// Counts the actions of every <c>actions</c> row three ways from the document and one more way from the overview table, none of which the action parser decides.
+/// <list type="bullet">
+/// <item>The bookmark children of a taken section (the general actions; the skills, with their sidebar bookmarks left out) against what the blocks hold for each child: action
+/// headings, or skill headings. They must agree, or the row says why in <see cref="TakeRow.CountsDiffer"/>.</item>
+/// <item>The action headings against the trait lines below them against the action icons in them. Some actions have no trait line and some have no icon, so the three differ
+/// and the row says why; every heading has at least one of the two.</item>
+/// <item>The overview table of actions by skill, which a rules row reads past in its tail: it has two columns (untrained actions, trained actions) and names every action with no
+/// skill column, so its distinct (name, proficiency) pairs must be exactly the parsed actions' pairs. This one fails the run whatever the row says.</item>
+/// </list>
+/// </summary>
+public static ActionCounts CheckActionCounts(IReadOnlyList<SpineNode> spine, BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<ParsedEntry> parsed)
+{
+    int children = 0, units = 0, headers = 0, tags = 0, icons = 0;
+    foreach (var range in ranges.Where(r => !r.Own && r.Row.Parser == "actions"))
+    {
+        var slice = range.BlocksIn(blocks);
+        var heads = Enumerable.Range(0, slice.Count).Where(i => BlocksStage.IsActionHeader(slice, i)).ToList();
+        var tagged = heads.Count(i => i + 1 < slice.Count && slice[i + 1].Role == "tag");
+        var iconed = heads.Count(i => slice[i].Lines.Any(l => ActionIconToken.IsMatch(l)));
+        var kids = spine.Count(n => n.Depth == range.Node.Depth + 1 && n.Path.Length == range.Node.Path.Length + 1 && n.Path.Take(range.Node.Path.Length).SequenceEqual(range.Node.Path) && !n.Sidebar);
+        var sections = slice.Count(b => b.Role == "section");
+        var unit = sections > 0 ? sections : heads.Count;
+        headers += heads.Count;
+        tags += tagged;
+        icons += iconed;
+        if (kids > 0)
+        {
+            children += kids;
+            units += unit;
+            if (kids != unit)
+            {
+                throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: the taken section has {kids} bookmark children (sidebars left out) but {unit} {(sections > 0 ? "skill headings" : "action headings")} in its range, and the book has no section whose children differ from its headings, so no reason is accepted.");
+            }
+        }
+
+        if ((heads.Count != tagged || heads.Count != iconed) && string.IsNullOrWhiteSpace(range.Row.CountsDiffer))
+        {
+            throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: the range has {heads.Count} action headings, {tagged} trait lines below them and {iconed} action icons in them, and the row gives no countsDiffer reason.");
+        }
+    }
+
+    // Degrees of success, counted from the blocks: the bold degree labels that open a line of the range's text, against the degree sections the parser made. A sidebar that took
+    // some of an action's text with it (and its degrees) lowers the parsed count; a dropped sidebar block on a taken page that holds such a line says so directly.
+    var actionRanges = ranges.Where(r => !r.Own && r.Row.Parser == "actions").ToList();
+    var labels = actionRanges.SelectMany(r => r.BlocksIn(blocks)).Where(b => b.Info != null).SelectMany(b => b.Info!)
+        .Count(i => DegreeLabels.Contains(SpanText.Normalize(i.Label).Trim().ToLowerInvariant()));
+    var degrees = parsed.Where(e => actionRanges.Any(r => r.RowNumber == e.RowNumber)).Sum(e => e.Degrees.Count);
+    if (labels != degrees)
+    {
+        throw new DegreesException($"The ranges of the actions rows have {labels} degree labels at line starts but the parser made {degrees} degree sections.");
+    }
+
+    var pages = actionRanges.SelectMany(r => r.Indexes).Select(i => blocks.Blocks[i].Page).ToHashSet();
+    var lost = (blocks.Dropped ?? new List<Block>()).Where(b => pages.Contains(b.Page) && b.Info != null && b.Info.Any(i => DegreeLabels.Contains(SpanText.Normalize(i.Label).Trim().ToLowerInvariant()))).ToList();
+    if (lost.Count > 0)
+    {
+        throw new DegreesException($"{lost.Count} dropped sidebar block(s) on the pages of an actions row hold a degree label at a line start, so an action's text may have gone with a sidebar (pages {string.Join(",", lost.Select(b => b.Page).Distinct())}).");
+    }
+
+    var table = OverviewTableActions(blocks, ranges);
+    if (ranges.Any(r => r.TailEnd >= 0 && r.Row.Parser == "rules") && table == null && actionRanges.Count > 0)
+    {
+        throw new DegreesException("An actions row is taken and a rules row reads its tail past, but no tail holds the overview table of actions, so the actions cannot be counted against it.");
+    }
+
+    var names = parsed.Where(e => e.Type == "action").Select(e => (e.Name.ToLowerInvariant(), e.Proficiency ?? string.Empty)).ToHashSet();
+    if (table != null && !table.SetEquals(names))
+    {
+        throw new DegreesException($"The overview table of actions lists {table.Count} (name, proficiency) pairs, of which {table.Except(names).Count()} are not among the {names.Count} parsed actions' ({names.Except(table).Count()} parsed pairs are not in the table).");
+    }
+
+    return new ActionCounts(children, units, headers, tags, icons, table?.Count ?? -1);
+}
+
+/// <summary>
+/// The (lowercase name, proficiency) pairs of the overview table in the tail of a range (see <see cref="TakeRow.TailFromHeader"/>), or null when no tail holds one. The table is a body
+/// block whose first line has two cells; a cell in the left column is an untrained action and one in the right column a trained one. A cell that only holds a page pointer joins the cell
+/// before it, one that only holds the markers of its trait (a letter, or letters set apart by commas) is dropped, and an icon or a page pointer is cut from a name.
+/// </summary>
+private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(BlocksResult blocks, IReadOnlyList<TakenRange> ranges)
+{
+    foreach (var range in ranges.Where(r => r.TailEnd >= 0))
+    {
+        for (var i = range.End; i < range.TailEnd; i++)
+        {
+            var block = blocks.Blocks[i];
+            if (block.Role != "body" || block.Info is not { Count: > 2 } info || info[0].Cells is not { Count: 2 } head)
+            {
+                continue;
+            }
+
+            var split = (head[0].Left + head[1].Left) / 2;
+            var pairs = new HashSet<(string, string)>();
+            for (var k = 1; k < info.Count; k++)
+            {
+                var cells = info[k].Cells ?? new List<LineCell> { new(info[k].Left, block.Lines[k]) };
+                var merged = new List<LineCell>();
+                foreach (var cell in cells)
+                {
+                    if (merged.Count > 0 && cell.Text.StartsWith('('))
+                    {
+                        merged[^1] = merged[^1] with { Text = merged[^1].Text + " " + cell.Text };
+                    }
+                    else
+                    {
+                        merged.Add(cell);
+                    }
+                }
+
+                foreach (var cell in merged.Where(c => !Regex.IsMatch(c.Text, @"^[A-Z](?:, [A-Z])*$")))
+                {
+                    var name = Regex.Replace(Regex.Replace(SpanText.Normalize(cell.Text), @"\s*\[[^\]]+\]", string.Empty), @"\s*\((?:see )?pages? [^)]*\)", string.Empty).Trim();
+                    pairs.Add((name.ToLowerInvariant(), cell.Left < split ? "untrained" : "trained"));
+                }
+            }
+
+            return pairs;
+        }
+    }
+
+    return null;
+}
+
     /// <summary>(name in title case, level) of a header block.</summary>
     private static (string Name, int Level) HeaderPair(Block header, TakeRow row)
     {
@@ -196,7 +349,7 @@ public static partial class ImportPipeline
         return rows;
     }
 
-    private static List<ReportRow> ReportRows(BlocksResult blocks, IReadOnlyList<SpineNode> spine, IReadOnlyList<TakeRow> rows, RedactionTable redactions, string book, List<ParsedEntry> parsed, List<FinalEntry> final)
+    private static List<ReportRow> ReportRows(BlocksResult blocks, IReadOnlyList<SpineNode> spine, IReadOnlyList<TakeRow> rows, RedactionTable redactions, string book, List<ParsedEntry> parsed, List<FinalEntry> final, IReadOnlyList<TakenRange> ranges)
     {
         var result = new List<ReportRow>();
         var counted = new HashSet<int>();
@@ -215,16 +368,34 @@ public static partial class ImportPipeline
             // Redaction rows are listed by the entries the row parsed, so a row that dropped its entry still shows.
             var ids = parsed.Where(e => e.RowNumber == i + 1).Select(e => e.Id).ToHashSet(StringComparer.Ordinal);
             var dropped = (blocks.Dropped ?? new List<Block>()).Where(b => pages.Contains(b.Page)).ToList();
-            result.Add(new ReportRow(
-                row.Chapter,
-                row.Parser,
-                row.Target,
-                mine.Count,
-                mine.Select(e => e.Id).ToList(),
-                dropped.Count(b => b.Role != "opener"),
-                dropped.Count(b => b.Role == "opener"),
-                redactions.Rows.Select((r, n) => (r, n)).Where(x => (x.r.Book == null || x.r.Book == book) && ids.Any(x.r.Names)).Select(x => x.n + 1).ToList(),
-                mine.Count(e => PageReference().IsMatch(e.Description) || e.Extracted.Any(x => PageReference().IsMatch(x.Text)))));
+
+            // Text a taken range reads past: its lead and tail (tables), and the boxes of examples. Counted, never listed.
+            var mineRanges = ranges.Where(r => r.RowNumber == i + 1).ToList();
+            var readPast = mineRanges.Sum(r => (r.LeadStart >= 0 ? r.Start - r.LeadStart : 0) + (r.TailEnd >= 0 ? r.TailEnd - r.End : 0))
+                + mineRanges.Where(r => r.Row.Parser == "actions").Sum(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks)).Count);
+
+            // One report row for each type the row wrote (an actions row also writes rules), the row's own target first. The row's counts of dropped blocks go on the first.
+            var types = mine.Select(e => e.Type).Distinct().OrderBy(t => t == row.Target ? 0 : 1).ThenBy(t => t, StringComparer.Ordinal).ToList();
+            if (types.Count == 0)
+            {
+                types.Add(row.Target);
+            }
+
+            for (var t = 0; t < types.Count; t++)
+            {
+                var ofType = mine.Where(e => e.Type == types[t]).ToList();
+                result.Add(new ReportRow(
+                    row.Chapter,
+                    row.Parser,
+                    types[t],
+                    ofType.Count,
+                    ofType.Select(e => e.Id).ToList(),
+                    t == 0 ? dropped.Count(b => b.Role != "opener") : 0,
+                    t == 0 ? dropped.Count(b => b.Role == "opener") : 0,
+                    t == 0 ? redactions.Rows.Select((r, n) => (r, n)).Where(x => (x.r.Book == null || x.r.Book == book) && ids.Any(x.r.Names)).Select(x => x.n + 1).ToList() : new List<int>(),
+                    ofType.Count(e => PageReference().IsMatch(e.Description) || e.Extracted.Any(x => PageReference().IsMatch(x.Text))),
+                    t == 0 ? readPast : 0));
+            }
         }
 
         return result;
@@ -366,7 +537,13 @@ public static partial class ImportPipeline
 
         // A glossary range is taken only for its trait definitions: the rest of the list (the index, the other entries, the pointer-only trait lines) is left out.
         var glossaryLeftOut = ranges.Where(r => r.Row.Parser == "glossary").SelectMany(r => EntriesStage.ScanGlossary(r.BlocksIn(blocks), new HashSet<string>(StringComparer.Ordinal)).Dropped);
-        var candidates = leftOut.SelectMany(b => b.Lines).Concat(glossaryLeftOut).SelectMany(PackWordCheck.Words).Where(w => w.Length > 1 && char.IsUpper(w[0]))
+        // The boxes of examples an actions range reads past are text no entry holds, and names turn up in them: their words are left out too.
+        // What the old sidebar rule dropped from pages that no row takes is left out text too, though the split by titles keeps it as the page's own.
+        var takenPages = ranges.SelectMany(r => r.Indexes.Concat(r.LeadStart >= 0 ? Enumerable.Range(r.LeadStart, r.Start - r.LeadStart) : Enumerable.Empty<int>())
+            .Concat(r.TailEnd >= 0 ? Enumerable.Range(r.End, r.TailEnd - r.End) : Enumerable.Empty<int>())).Select(i => blocks.Blocks[i].Page).ToHashSet();
+        var legacy = (blocks.LegacyDropped ?? new List<Block>()).Where(b => !takenPages.Contains(b.Page)).SelectMany(b => b.Lines);
+        var boxes = legacy.Concat(ranges.Where(r => r.Row.Parser == "actions").SelectMany(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks))).SelectMany(b => b.Lines));
+        var candidates = leftOut.SelectMany(b => b.Lines).Concat(glossaryLeftOut).Concat(boxes).SelectMany(PackWordCheck.Words).Where(w => w.Length > 1 && char.IsUpper(w[0]))
             .Select(w => w.ToLowerInvariant()).Concat(redacted?.SpanWords ?? Array.Empty<string>()).Distinct(StringComparer.Ordinal).ToList();
         var words = candidates.Where(w => !exclude.Contains(w)).ToList();
 

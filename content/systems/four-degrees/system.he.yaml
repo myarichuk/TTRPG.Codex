@@ -111,6 +111,12 @@ entityTypes:
       vows: { label: נדרים }
       taboos: { label: איסורים }
   feat: { label: כשרון, pluralLabel: כשרונות }
+  action:
+    label: פעולה
+    pluralLabel: פעולות
+    fields:
+      skill: { label: מיומנות }
+      proficiency: { label: דרגת מיומנות }
   armor:
     label: שריון
     pluralLabel: שריונות

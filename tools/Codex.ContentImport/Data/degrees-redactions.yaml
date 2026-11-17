@@ -252,3 +252,200 @@ rows:
     action: replace
     text: "You can either select a basic action the animal already knows how to do (typically those listed in the Command an Animal action) or attempt to teach the animal a new basic action."
     reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: coerce
+    field: description
+    span: { sha256: "6f9a7d73b52faa97abc2adf0dbe5e5601bbe9a056e11382804dfabed6c18f647", length: 180 }
+    action: cut
+    reason: "A sentence that only pointed to a page, a sidebar or another book."
+  - book: pc
+    entry: cover-tracks
+    field: description
+    span: { sha256: "efb54b0a925f8d6050708d703910e4e33ad1a51c89eee6c9b37053a65d1f8a69", length: 88 }
+    action: replace
+    text: "You cover your tracks, moving up to half your travel Speed."
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: create-a-diversion
+    field: description
+    span: { sha256: "d9d85b1f79cf5038ced779c2a1e36b7aa67e8dce6cf144aaa0c9ba5d0dd8dec9", length: 74 }
+    action: replace
+    text: "(The hidden condition allows you to Sneak away.)"
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: create-forgery
+    field: description
+    span: { sha256: "d8cad46e33ac9afc33386dcde5a46e9e80f23ef6aba8410fa8028deb560b9ad8", length: 126 }
+    action: replace
+    text: "**Success.** The forgery is of good enough quality that passive observers can't notice the fake."
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: identify-magic
+    field: description
+    span: { sha256: "aa7d5444bc633d6db467a8ecdf1dbbdff42b6f1805843c1bb63fad2fcfb42214", length: 185 }
+    action: replace
+    text: "Using the skill related to the appropriate tradition, you can attempt to identify a magical item, location, or ongoing effect."
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: impersonate
+    field: description
+    span: { sha256: "be8a9cd133ba43a71cfb32d5243e1561e901381be9228e36e374f6317b754f4e", length: 226 }
+    action: replace
+    text: "Assembling a convincing disguise takes 10 minutes and requires a disguise kit, but a simpler, quicker disguise might do the job if you're not trying to imitate a specific individual, at the GM's discretion."
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: learn-a-spell
+    field: description
+    span: { sha256: "18c81f0bb908ede8ca52fbad702f0a8ce8e802560e9a428a73c2a7bd772f9463", length: 97 }
+    action: replace
+    text: "Uncommon or rare spells have higher DCs."
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: make-an-impression
+    field: description
+    span: { sha256: "91f2cb194fbd32a976c7783ee664b12c9e8f566228725c19e942bc61d8e41c0d", length: 76 }
+    action: cut
+    reason: "A sentence that only pointed to a page, a sidebar or another book."
+  - book: pc
+    entry: pick-a-lock
+    field: description
+    span: { sha256: "9cd14ea5f0c83a2908f13bcb43fc2617a4b614af7682f8855d23b239e1de669a", length: 224 }
+    action: replace
+    text: "Opening a lock without a key is very similar to Disabling a Device, but the DC of the check is determined by the complexity and construction of the lock you are attempting to pick."
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: subsist
+    field: description
+    span: { sha256: "702334750ff127cfc2f866554b44bd6ed63afae34af83791a028be415f8c0959", length: 127 }
+    action: replace
+    text: "You try to provide food and shelter for yourself, and possibly others as well."
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: track
+    field: description
+    span: { sha256: "63fcfabdd7a7f38db3bcb2f7a0fb4bf0f4d1e933fc4563415a428ae4314b17f9", length: 87 }
+    action: replace
+    text: "You follow tracks, moving at up to half your travel Speed."
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: alchemical-and-magical-items
+    field: description
+    span: { sha256: "9f4c437ff690b90be9ee21f6e8292d420b77cc05f5047064b2a50c6bc5746539", length: 82 }
+    action: replace
+    text: "Stat blocks and details of these items are not given here, so consult with your GM."
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: arcana
+    field: description
+    span: { sha256: "20e28eb1e1e73ae68e32804375b76a2335ce461a1baca9f0482d3d988e0b412e", length: 196 }
+    action: replace
+    text: "• Recall Knowledge about arcane theories; magic traditions; creatures of arcane significance (like constructs, beasts, and elementals); and the planes tied to arcane magic."
+    reason: "A sentence that named places of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: nature
+    field: description
+    span: { sha256: "ebd6f56e45246c23857c206ff396ef6227dc2983823a106199f0cfc2f763baca", length: 187 }
+    action: replace
+    text: "• Recall Knowledge about fauna, flora, geography, weather, the environment, creatures of natural origin (like animals, beasts, fey, and plants), and the planes tied to the natural world."
+    reason: "A sentence that named places of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: occultism
+    field: description
+    span: { sha256: "d2fd5cf30cc62d867dc358b4ac9c5249fbcf57ac03d7a9134320847ce4a1fc3d", length: 250 }
+    action: replace
+    text: "• Recall Knowledge about ancient mysteries; obscure philosophies; creatures of occult significance (like aberrations, spirits, and oozes); and esoteric planes."
+    reason: "A sentence that named places of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: religion
+    field: description
+    span: { sha256: "9939a523650366c083e9e84a2459a1d36f34753ff892c6140fbf1be67b89205f", length: 231 }
+    action: replace
+    text: "• Recall Knowledge about divine agents, the finer points of theology, obscure myths regarding a faith, creatures of religious significance (like celestials, fiends, and undead), and the planes tied to religion."
+    reason: "A sentence that named places of the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: armor-and-skills
+    field: description
+    span: { sha256: "ac9b614c3aad0ae67a7ca9b950f7bde4a88d09effea65a3c0d62cf5fedf8c6b8", length: 76 }
+    action: cut
+    reason: "A sentence that only pointed to a table or a chapter of the book."
+  - book: pc
+    entry: key-attribute
+    field: description
+    span: { sha256: "0e6690631fcf59732a8258f5da28fbd14cb2e12a719cf0195665bae6180d394c", length: 206 }
+    action: cut
+    reason: "A sentence that only pointed to a table or a chapter of the book."
+  - book: pc
+    entry: lore
+    field: description
+    span: { sha256: "0bfcbdda2f9f002ea24e23da4b78adb283fc810809555a3213637d7f21dc22d4", length: 98 }
+    action: replace
+    text: "You might have a Lore skill for any similar narrow subcategory of the skill."
+    reason: "A sentence that listed example Lore subjects, and Lore subjects stay out of the pack; the mechanic is kept in plain words."
+  - book: pc
+    entry: lore
+    field: description
+    span: { sha256: "710064e42800eb97838816456370349ff51f04bab865d1057cf43dfbd56ae880", length: 152 }
+    action: replace
+    text: "Each subcategory counts as its own skill, so applying a skill increase to one Lore subcategory wouldn't increase your proficiency with another, for example."
+    reason: "A sentence that listed example Lore subjects, and Lore subjects stay out of the pack; the mechanic is kept in plain words."
+  - book: pc
+    entry: lore
+    field: description
+    span: { sha256: "9b16c24dbd01416f18bd97c5fd75cf94cdd56a36b51dc583d7927bff56359c62", length: 341 }
+    action: replace
+    text: "For instance, you couldn't choose a Lore so broad that it covers the knowledge spread across several other skills."
+    reason: "A sentence that listed example Lore subjects, and Lore subjects stay out of the pack; the mechanic is kept in plain words."
+  - book: pc
+    entry: skill-actions
+    field: description
+    span: { sha256: "392b37d61071ebcb5c8299ddac47cab3f417c74fbed5e8461f203ad214a8b8b3", length: 204 }
+    action: replace
+    text: "The actions you can perform with a given skill are sorted into those you can use untrained and those that require you to be trained in the skill."
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: skill-actions
+    field: description
+    span: { sha256: "81a75e7628b50babb2df947b0fe01bc73cb94b00d87060b823e3dc32ae9dce8e", length: 245 }
+    action: replace
+    text: "A circumstance, condition, or effect might bar you from a skill action regardless of your proficiency rank, and sometimes using a skill in a specific situation might require you to have a higher proficiency rank than the action usually does."
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: skill-checks-and-dcs
+    field: description
+    span: { sha256: "d31ed68407fb13042d9b94de647a4e40ff00fe9faef05dbd934b6f9325c2adc3", length: 80 }
+    action: replace
+    text: "The GM sets the DC of a skill check."
+    reason: "A sentence that sent the reader to a page, a table or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: skill-checks-and-dcs
+    field: description
+    span: { sha256: "9d6e4ec79e99af101b53afa4eef51976a556785163a9be7e136fa20b5d19e1d1", length: 105 }
+    action: cut
+    reason: "A sentence that only pointed to a page, a sidebar or another book."
+  - book: pc
+    entry: performance-traits
+    field: description
+    span: { sha256: "278e736bfaf6109b5d3986f1c345263293937151a8a2a744f06e4f61ea976ef0", length: 119 }
+    action: replace
+    text: "The GM might change these depending on the circumstances, but the most common performance-based traits are listed below."
+    reason: "A word lost its hyphen at a line end in the extraction; the sentence is restored."
+  - book: pc
+    entry: recall-knowledge
+    field: description
+    span: { sha256: "d652132927c3de69dbd52b001c8fc0cc6d33a21b80ee404e1fbe35130fded23b", length: 129 }
+    action: replace
+    text: "The GM answers your question truthfully and either tells you additional information or context, or answers one follow-up question."
+    reason: "A word lost its hyphen at a line end in the extraction; the sentence is restored."
+  - book: pc
+    entry: practicing-a-trade
+    field: description
+    span: { sha256: "97774a2adb43504d326fd1c589d9fe425d499c75b2afcb5e95eacafef047ea18", length: 117 }
+    action: replace
+    text: "This is most effective for Lore specialties where there's high demand for workers."
+    reason: "A sentence that listed example Lore subjects, and Lore subjects stay out of the pack; the mechanic is kept in plain words."
+  - book: pc
+    entry: craft
+    field: description
+    span: { sha256: "198698a2660654828bf41d9fb21916cea66da075b253de6bd24a1d2257f99c94", length: 52 }
+    action: cut
+    reason: "A sentence that only pointed to an example box that the pack leaves out."

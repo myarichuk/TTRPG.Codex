@@ -61,6 +61,24 @@ public sealed class TakeRow
     /// </summary>
     public string? LevelWord { get; set; }
 
+    /// <summary>
+    /// For the <c>actions</c> parser: the name, in our own words, of the one rule entry made from the section's own prose, the text between the start of the range and its first
+    /// skill or subsection heading. Without it that text must be a table (the proficiency table of the general skill actions), which is read past.
+    /// </summary>
+    public string? LeadName { get; set; }
+
+    /// <summary>
+    /// For a <c>rules</c> row: the range ends at the first heading in the block-header font (the caption of a table). The blocks from there to the end of the section (the page's
+    /// overview tables) are read past, and are not counted as left out text because they sit in a taken section.
+    /// </summary>
+    public bool TailFromHeader { get; set; }
+
+    /// <summary>
+    /// A block that opens with a line that is only a bold label (a table's title row) is a small table, one row to a line, as it is for a row with a level word.
+    /// For a row that has none (the skills chapter's tables of difficulty classes and income).
+    /// </summary>
+    public bool TableRows { get; set; }
+
     /// <summary>True when <paramref name="block"/> is an entry header of this row.</summary>
     public bool IsHeader(Block block) =>
         block.Role == (HeaderRole ?? "entry-header")
@@ -85,10 +103,10 @@ public sealed class PlannedRow
 
 public sealed partial class TakeList
 {
-    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules" };
+    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions" };
 
     /// <summary>The parsers that exist. Any other parser in the list fails the run, so a row cannot silently take nothing.</summary>
-    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary" };
+    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions" };
 
     public List<TakeRow> Rows { get; set; } = new();
 
@@ -153,6 +171,13 @@ public sealed partial class TakeList
             {
                 throw new DegreesException($"Take-list row {i + 1}: the pack folder is not the target type's folder in the system.");
             }
+
+            // The actions parser also writes the rules text between its actions as rule entries, so the system must declare that type, in its default folder.
+            var ruleType = system.EntityTypes.FirstOrDefault(t => t.Type == "rule");
+            if (Rows[i].Parser == "actions" && (ruleType == null || (ruleType.Folder ?? ruleType.Type) != "rules"))
+            {
+                throw new DegreesException($"Take-list row {i + 1}: the actions parser also writes rule entries, and the system declares no rule type with the folder rules.");
+            }
         }
     }
 
@@ -191,9 +216,9 @@ public sealed partial class TakeList
                 throw new DegreesException($"Take-list row {n}: columns must be 1 to 4.");
             }
 
-            if (r.Paths.Count == 0 || r.Paths.Any(p => p.Count == 0 || p.Any(string.IsNullOrWhiteSpace)))
+            if ((r.Paths.Count == 0 && r.Own.Count == 0) || r.Paths.Any(p => p.Count == 0 || p.Any(string.IsNullOrWhiteSpace)))
             {
-                throw new DegreesException($"Take-list row {n}: it needs at least one bookmark path, and no empty title.");
+                throw new DegreesException($"Take-list row {n}: it needs at least one bookmark path (or an own-text path), and no empty title.");
             }
 
             foreach (var path in r.Paths)
@@ -222,6 +247,11 @@ public sealed partial class TakeList
             if (r.Own.Any(p => p.Count == 0 || p.Any(string.IsNullOrWhiteSpace)) || (r.Own.Count > 0 && string.IsNullOrWhiteSpace(r.OwnName)))
             {
                 throw new DegreesException($"Take-list row {n}: an own-text path needs titles and the row needs an ownName.");
+            }
+
+            if ((r.LeadName != null && r.Parser != "actions") || (r.TailFromHeader && r.Parser != "rules") || (r.TableRows && r.Parser == "glossary"))
+            {
+                throw new DegreesException($"Take-list row {n}: leadName belongs to the actions parser, tailFromHeader to the rules parser, and tableRows to a parser that reads blocks into paragraphs.");
             }
 
             foreach (var path in r.Own)
