@@ -342,7 +342,8 @@ at full health. `perLevelBonus` adds a number from a chosen entry to every level
 
 **Armor class.** With a body armor equipped (an item whose `armorBase` is a number): `armorBase` plus the
 Dexterity modifier, limited by `armorDexCap` (absent: no limit; 0: Dexterity does not count, in either
-direction). With none: the highest of the `unarmored` formula and every class's `unarmoredDefense` formula
+direction, unless `dexCapLimitsOnlyBonus` is true: then the cap limits only a bonus, and a negative modifier
+still counts). With none: the highest of the `unarmored` formula and every class's `unarmoredDefense` formula
 (a class whose `unarmoredDefenseShield` is false loses its formula while a shield is carried). Then it
 adds `armorClassBonus` of every equipped item (a shield is an item with `armorType: shield` and a bonus),
 of picks in `bonusLists` (skipped when `armorClassRequiresArmor` is true and no body armor is worn), and

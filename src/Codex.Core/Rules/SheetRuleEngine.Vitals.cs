@@ -262,7 +262,9 @@ public sealed partial class SheetRuleEngine
         {
             var baseValue = (int)ToDouble(Property(body, rules.BaseProperty))!.Value;
             var cap = ToDouble(Property(body, rules.DexCapProperty));
-            var dexPart = cap.HasValue ? (cap.Value <= 0 ? 0 : Math.Min(dex, (int)cap.Value)) : dex;
+            var dexPart = !cap.HasValue ? dex
+                : rules.DexCapLimitsOnlyBonus ? Math.Min(dex, (int)Math.Max(0, cap.Value)) // a maximum of the bonus: a negative modifier still counts
+                : cap.Value <= 0 ? 0 : Math.Min(dex, (int)cap.Value);
             candidates.Add((BaseType, baseValue, new ArmorClassLine("body", body.Name, baseValue, body)));
             // Shown at +0 while uncapped, so a reader sees Dexterity was counted; left out when the armor allows none.
             if (dexPart != 0 || !cap.HasValue)
