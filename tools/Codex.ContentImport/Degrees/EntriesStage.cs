@@ -168,6 +168,7 @@ public static partial class EntriesStage
             entries.AddRange(range.Row.Parser switch
             {
                 "rules" => ParseRule(range, slice, book, compounds),
+                "items" when range.Row.ItemKind == "gear" => ParseGear(range, ranges.Where(r => r.RowNumber == range.RowNumber).ToList(), blocks, spine ?? throw new DegreesException("The items parser needs the book's bookmarks."), book, compounds),
                 "items" => ParseItems(range, slice, blocks, spine ?? throw new DegreesException("The items parser needs the book's bookmarks."), book, compounds),
                 "glossary" => ParseGlossary(range, slice, book, compounds),
                 "actions" => ParseActions(range, slice, book, compounds),
@@ -175,6 +176,10 @@ public static partial class EntriesStage
                 "spelllists" => new List<ParsedEntry>(),
                 _ => ParseEntries(range, slice, book, compounds),
             });
+            if (range.Row.Sidebars.Count > 0 && range.PathNumber == 1)
+            {
+                entries.AddRange(ParseSidebars(range, blocks, spine ?? throw new DegreesException("A row that takes a sidebar needs the book's bookmarks."), book, compounds));
+            }
         }
 
         // An action's id is its name's slug, so it can equal a feat's, a condition's or a rule's. The redaction rows name an entry by id alone, so an id may not repeat across
@@ -203,7 +208,7 @@ public static partial class EntriesStage
         var duplicate = entries.GroupBy(e => e.Id, StringComparer.Ordinal).FirstOrDefault(g => g.Count() > 1);
         if (duplicate != null)
         {
-            throw new DegreesException($"{duplicate.Count()} entries ({string.Join(", ", duplicate.Select(e => e.Type).Distinct())}) share one id; ids come from names, so a name is repeated.");
+            throw new DegreesException($"{duplicate.Count()} entries ({string.Join(", ", duplicate.Select(e => e.Type).Distinct())}) share one id ({duplicate.Key}); ids come from names, so a name is repeated.");
         }
 
         return entries.OrderBy(e => e.Type, StringComparer.Ordinal).ThenBy(e => e.Id, StringComparer.Ordinal).ToList();
@@ -212,6 +217,11 @@ public static partial class EntriesStage
     private static List<ParsedEntry> ParseRule(TakenRange range, List<Block> slice, string book, HashSet<string> compounds)
     {
         var name = range.Own ? range.Row.OwnName ?? range.Row.PathOf(range)[^1] : range.Row.PathOf(range)[^1];
+        if (range.Row.EntryNames.TryGetValue(range.Row.PathOf(range)[^1], out var renamed))
+        {
+            name = renamed;
+        }
+
         var entry = NewEntry(range, book, Clean(name), compounds);
         if (range.Row.ReadPast)
         {

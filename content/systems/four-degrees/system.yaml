@@ -188,6 +188,22 @@ entityTypes:
       - { key: price,          label: Price, type: Text, description: "The price as printed, with its coin." }
       - { key: level,          label: Level, type: Number, description: "The item level, where the book prints one. Empty: level 0." }
       - { key: ammunition,     label: Ammunition, type: Text, description: "For a ranged weapon: the ammunition it uses, with the quantity, price and Bulk as the book prints them." }
+  # Gear is the carried equipment that is neither armor nor a weapon: the adventuring gear, the alchemical items (bombs, elixirs and tools), the assistive items and barding. A character carries it through the inventory, which lists this type.
+  # The sheet reads no Bulk, so `bulk` is the text the book prints, as the weapon's is.
+  - type: gear
+    label: Gear
+    pluralLabel: Gear
+    folder: gear
+    summaryFields: [kind, price]
+    filterFields: [kind]
+    fields:
+      - { key: kind,      label: Kind,   type: Dropdown, options: [gear, bomb, elixir, alchemical-tool, assistive, barding], valueLabels: { gear: { label: Gear, pluralLabel: Gear }, bomb: { label: Bomb, pluralLabel: Bombs }, elixir: { label: Elixir, pluralLabel: Elixirs }, alchemical-tool: { label: Alchemical tool, pluralLabel: Alchemical tools }, assistive: { label: Assistive item, pluralLabel: Assistive items }, barding: { label: Barding, pluralLabel: Barding } }, description: "Gear: the adventuring gear table. Bomb, elixir and alchemical tool: the three alchemical tables. Assistive: the assistive items. Barding: armor for an animal (its statistics are in the text)." }
+      - { key: traits,    label: Traits, type: TagList, description: "Trait keys, as the Library's trait entries name them. The alchemical items also carry alchemical and consumable, which their table says all of them have." }
+      - { key: price,     label: Price,  type: Text, description: "The price as printed, with its coin. For an item sold in a quantity, the price of the whole quantity." }
+      - { key: bulk,      label: Bulk,   type: Text, description: "The Bulk as printed: a number, or L for light. Empty: none. For an item sold in a quantity, the Bulk of one." }
+      - { key: hands,     label: Hands,  type: Text, description: "The hands needed to use it, as printed: 1, 2, 1 or 2, or see text." }
+      - { key: level,     label: Level,  type: Number, description: "The item level, where the book prints one. Empty: level 0." }
+      - { key: variantOf, label: Listed under, type: Text, description: "The item or heading the table lists it under, for a version of another item (an expanded or a superior one, or a size or a material)." }
   - type: trinket
     label: Trinket
     pluralLabel: Trinkets
@@ -535,7 +551,7 @@ sheetRules:
   inventory:
     key: inventory
     label: Gear
-    types: [armor, weapon, magic-item]
+    types: [armor, weapon, gear, magic-item]
     runeType: rune
 
   # Armor: its base and Dexterity up to its cap, then the rank in what is worn (the armor list below).

@@ -36,7 +36,8 @@ public sealed record BlocksResult(
     int Tables = 0,
     List<int>? SidebarProblems = null,
     int RejectedTableHeaders = 0,
-    List<Block>? LegacyDropped = null);
+    List<Block>? LegacyDropped = null,
+    Dictionary<string, List<Block>>? TakenSidebars = null);
 
 /// <summary>What the take-list and the spine tell the blocks stage about pages. Defaults: two columns everywhere and no sidebar pages.</summary>
 public sealed class BlocksOptions
@@ -62,7 +63,16 @@ public sealed class BlocksOptions
     /// Only the pages a take-list row names: every other page is read as before.
     /// </summary>
     public IReadOnlyDictionary<int, IReadOnlyList<IReadOnlyList<string>>> StatTablePages { get; init; } = new Dictionary<int, IReadOnlyList<IReadOnlyList<string>>>();
+
+    /// <summary>By page, the keys (see <see cref="SidebarTitleSet.Key"/>) of the titles of sidebars the take-list takes as rules, only on the pages of the bookmark it names (a sidebar of the same title elsewhere is not taken): their blocks are kept apart (<see cref="BlocksResult.TakenSidebars"/>) and not dropped.</summary>
+    public IReadOnlyDictionary<int, IReadOnlySet<string>> TakenSidebarKeys { get; init; } = new Dictionary<int, IReadOnlySet<string>>();
+
+    /// <summary>The pages whose gear tables are carved out (see <see cref="GearTables"/>), with the column label lists a header row there may carry and whether the table is set in two panels.</summary>
+    public IReadOnlyDictionary<int, GearPage> GearTablePages { get; init; } = new Dictionary<int, GearPage>();
 }
+
+/// <summary>A page an items row of kind gear names for its tables: the label lists a header may carry, and whether its table is set in two panels side by side.</summary>
+public sealed record GearPage(IReadOnlyList<IReadOnlyList<string>> Sets, bool TwoUp);
 
 /// <summary>
 /// Stage 3: the words of each page without its furniture and openers, split into columns by the gap between them, cut into lines by baseline,
@@ -198,6 +208,7 @@ public static class BlocksStage
         options ??= new BlocksOptions();
         var blocks = new List<Block>();
         var dropped = new List<Block>();
+        var takenSidebars = new Dictionary<string, List<Block>>(StringComparer.Ordinal);
         var legacy = new List<Block>();
         var oneNumbers = new List<int>();
         int one = 0, multi = 0, three = 0, furniture = 0, openerWords = 0, sidebarBlocks = 0;
@@ -215,7 +226,14 @@ public static class BlocksStage
                 dropped.AddRange(ColumnBlocks(page.Number, 0, openers, rejected));
             }
 
-            if (options.StatTablePages.TryGetValue(page.Number, out var labelSets))
+            if (options.GearTablePages.TryGetValue(page.Number, out var gearPage))
+            {
+                // The gear tables: carved the same way, by a reader that knows panels, headings and indented versions.
+                var gear = GearTables.Carve(page.Number, page.Width, body, gearPage.Sets, gearPage.TwoUp);
+                blocks.AddRange(gear.Tables);
+                body = gear.Words;
+            }
+            else if (options.StatTablePages.TryGetValue(page.Number, out var labelSets))
             {
                 // A page a row names for its stat tables: they are carved out first, before the gutter is looked for (a table spans both columns).
                 var carved = StatTables.Carve(page.Number, body, labelSets);
@@ -257,16 +275,17 @@ public static class BlocksStage
             var pageColumns = columns.Select((words, c) => ColumnBlocks(page.Number, c, words, rejected).ToList()).ToList();
 
             // The split of the page's columns, by the sidebars' titles when the page has them, or by the old rule (every heading in the block-header font starts one).
-            (List<Block> Kept, List<Block> Dropped, int Runs, bool BodyAfter) SplitPage(SidebarTitleSet? by)
+            (List<Block> Kept, List<Block> Dropped, int Runs, bool BodyAfter, List<(string Key, Block Block)> Taken) SplitPage(SidebarTitleSet? by)
             {
                 var kept = new List<Block>();
                 var gone = new List<Block>();
+                var takenHere = new List<(string Key, Block Block)>();
                 var runs = 0;
                 var bodyAfter = false;
                 var endedInside = false;
                 foreach (var found in pageColumns)
                 {
-                    var split = SplitSidebars(found, endedInside, by);
+                    var split = SplitSidebars(found, endedInside, by, options.TakenSidebarKeys.GetValueOrDefault(page.Number), takenHere);
                     endedInside = split.EndsInside;
                     gone.AddRange(split.Dropped);
                     runs += split.Runs;
@@ -274,7 +293,7 @@ public static class BlocksStage
                     kept.AddRange(split.Kept);
                 }
 
-                return (kept, gone, runs, bodyAfter);
+                return (kept, gone, runs, bodyAfter, takenHere);
             }
 
             if (!sidebarPage)
@@ -301,6 +320,14 @@ public static class BlocksStage
             blocks.AddRange(result.Kept);
             dropped.AddRange(result.Dropped);
             sidebarBlocks += result.Dropped.Count;
+            foreach (var group in result.Taken.GroupBy(t => t.Key, StringComparer.Ordinal))
+            {
+                // One sidebar, once: a second set of blocks under one key (the sidebar is split over two pages, or the bookmark's pages hold two of that title) fails instead of replacing the first.
+                if (!takenSidebars.TryAdd(group.Key, group.Select(t => t.Block).ToList()))
+                {
+                    throw new DegreesException("A sidebar the take-list takes was found twice (on page " + page.Number + "), so it is not known which is meant.");
+                }
+            }
 
             // Every sidebar bookmark that starts on this page must have found a heading, and body text must not run straight on from one.
             if (flagged)
@@ -310,7 +337,7 @@ public static class BlocksStage
         }
 
         var byRole = blocks.GroupBy(b => b.Role).ToDictionary(g => g.Key, g => g.Count());
-        return new BlocksResult(blocks, one, multi, furniture, byRole, suspect, dropped, oneNumbers, three, sidebarBlocks, openerWords, blocks.Count(b => b.Role == "table"), problems, rejected[0], legacy);
+        return new BlocksResult(blocks, one, multi, furniture, byRole, suspect, dropped, oneNumbers, three, sidebarBlocks, openerWords, blocks.Count(b => b.Role == "table"), problems, rejected[0], legacy, takenSidebars);
     }
 
     /// <summary>
@@ -639,7 +666,8 @@ public static class BlocksStage
     /// A sidebar starts at a heading in the block-header font and runs through the structured-text blocks after it, up to the first block of any other role.
     /// It is only looked for on pages a "Sidebar" bookmark covers.
     /// </summary>
-    private static (List<Block> Kept, List<Block> Dropped, int Runs, bool BodyAfter, bool EndsInside) SplitSidebars(List<Block> blocks, bool previousColumnEndedInside, SidebarTitleSet? titles)
+    private static (List<Block> Kept, List<Block> Dropped, int Runs, bool BodyAfter, bool EndsInside) SplitSidebars(List<Block> blocks, bool previousColumnEndedInside, SidebarTitleSet? titles,
+        IReadOnlySet<string>? takenKeys = null, List<(string Key, Block Block)>? taken = null)
     {
         var kept = new List<Block>();
         var gone = new List<Block>();
@@ -647,6 +675,20 @@ public static class BlocksStage
         var left = double.NaN;
 
         var inside = false;
+
+        // A sidebar the take-list takes (see TakeRow.Sidebars) is not dropped: its blocks, its title among them, are kept apart under the title's key.
+        string? takingKey = null;
+        void Drop(Block dropped)
+        {
+            if (takingKey != null && taken != null)
+            {
+                taken.Add((takingKey, dropped));
+            }
+            else
+            {
+                gone.Add(dropped);
+            }
+        }
 
         // A column that opens with body text straight after a column that ended inside a sidebar is that sidebar's continuation, which has no heading to find.
         var bodyAfter = previousColumnEndedInside && blocks.Count > 0 && blocks[0].Role == "body";
@@ -690,14 +732,16 @@ public static class BlocksStage
                 {
                     inside = true;
                     left = double.NaN;
-                    gone.Add(b);
+                    var key = SidebarTitleSet.Key(string.Join(' ', b.Lines));
+                    takingKey = takenKeys != null && takenKeys.Contains(key) ? key : null;
+                    Drop(b);
                     continue;
                 }
 
                 // A sidebar's subheadings are set in title case; the page's own headings (an action's, a table's caption) and the sidebars' titles are set in capitals.
                 if (inside && !IsActionHeader(blocks, i) && b.Lines.Any(l => l.Any(char.IsLower)) && next is "body" or "block-header" or "")
                 {
-                    gone.Add(b); // a subheading of the sidebar
+                    Drop(b); // a subheading of the sidebar
                     continue;
                 }
 
@@ -718,7 +762,7 @@ public static class BlocksStage
                     if (at > 0)
                     {
                         var (head, tail) = CutBlock(b, at);
-                        gone.Add(head);
+                        Drop(head);
                         kept.Add(tail);
                     }
                     else
@@ -746,7 +790,7 @@ public static class BlocksStage
                     continue;
                 }
 
-                gone.Add(b);
+                Drop(b);
                 continue;
             }
 

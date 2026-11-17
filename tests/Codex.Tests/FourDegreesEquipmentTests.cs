@@ -226,5 +226,34 @@ public class FourDegreesEquipmentTests : IAsyncLifetime
         Assert.Equal(16, Engine().Recompute(Warden(18, "full-plate|equipped:1")).ArmorClass!.Total); // +4 is capped to 0
     }
 
+    /// <summary>
+    /// The gear of chapter 6b is carried through the sheet's inventory like armor and weapons: a pick of a `gear` entry resolves, raises no violation or warning (a bomb has no weapon `use` map, so it makes no Strike), and
+    /// changes no number the armor and weapons set. The sheet sums only a numeric weight property (`weightProperty`), and four-degrees names none: the Bulk of the gear is the text the book prints (`L` is light, ten of
+    /// which are 1 Bulk), so the sheet shows the item and its printed Bulk and adds nothing up (no number of the sheet depends on it, so none is asserted: the checks are what the sheet does compute, the inventory, its quantities, the Strikes and the armor class).
+    /// </summary>
+    [Fact]
+    public void AGearItemIsCarriedOnTheSheet_WithItsPrintedBulk_AndTheSheetSumsNoBulk()
+    {
+        var gear = Entries("gear").ToDictionary(e => e.Id);
+        Assert.Contains("gear", _system.SheetRules!.Inventory!.Types);
+        Assert.Null(_system.SheetRules.Inventory.Capacity);
+        var picks = new[] { "backpack|equipped:1", "wheelchair", "rope-50-feet", "lesser-acid-flask|qty:3", "clothing-explorer-s" };
+
+        var carrying = Engine().Recompute(Warden(14, picks.Append("breastplate|equipped:1").ToArray()));
+        var bare = Engine().Recompute(Warden(14, "breastplate|equipped:1"));
+
+        Assert.Empty(Problems(carrying));
+        Assert.Equal(new[] { "backpack", "wheelchair", "rope-50-feet", "lesser-acid-flask", "clothing-explorer-s", "breastplate" }, carrying.Inventory.Select(i => i.Entry.Id));
+        Assert.All(carrying.Inventory.Take(5), i => Assert.Equal("gear", i.Entry.Type));
+        Assert.Equal(3, carrying.Inventory.Single(i => i.Entry.Id == "lesser-acid-flask").Quantity);
+        // The printed Bulk is on the entry as the book writes it (a wheelchair 2, a bomb L, a backpack none), and the sheet adds none of it.
+        Assert.Equal("2", gear["wheelchair"].Properties["bulk"].ToString());
+        Assert.Equal("L", gear["lesser-acid-flask"].Properties["bulk"]);
+        Assert.False(gear["backpack"].Properties.ContainsKey("bulk"));
+        // No Strike for a bomb (it has no weapon `use` map), and the armor class is the armor's alone.
+        Assert.DoesNotContain(carrying.Actions, a => a.Entry.Id == "lesser-acid-flask");
+        Assert.Equal(bare.ArmorClass!.Total, carrying.ArmorClass!.Total);
+    }
+
     private IEnumerable<ContentEntry> Entries(string type) => _registry.GetEntries(SystemId, type, new HashSet<string> { "four-degrees-rules" });
 }

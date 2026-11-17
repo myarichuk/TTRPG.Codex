@@ -11,6 +11,53 @@
   description: "If you want to Craft alchemical items or magic items, you need to select the skill feat for Alchemical Crafting or Magical Crafting in addition to being trained. Stat blocks and details of these items are not given here, so consult with your GM."
   properties:
     category: "Skills"
+- id: "alchemical-bombs"
+  name: "Alchemical Bombs"
+  source: "pc > Chapter 6: Equipment > Gear > Alchemical Gear > Alchemical Bombs"
+  description: |-
+    Alchemical bombs are consumable weapons that deal damage or produce special effects, and they sometimes deal splash damage. A bomb is a martial thrown weapon with a range increment of 20 feet. It can't benefit from runes, and it doesn't add your Strength modifier to damage despite being a thrown weapon.
+    A bomb deals any listed splash damage to the target on a failure, success, or critical success, and to all other creatures within 5 feet of the target on a success or critical success. On a critical failure, the bomb misses entirely, dealing no damage. Add the damage together before applying resistance or weakness, and don't multiply splash damage on a critical hit.
+  properties:
+    category: "Equipment"
+- id: "alchemical-gear"
+  name: "Alchemical Gear"
+  source: "pc > Chapter 6: Equipment > Gear > Alchemical Gear"
+  description: "The items listed on the Alchemical Gear table are the most widely available alchemical items, which a 1st-level character could likely access. Each item's full entry appears in another book. Your GM might allow you to start with other alchemical items from there on a case-by-case basis."
+  properties:
+    category: "Equipment"
+- id: "alchemical-tools"
+  name: "Alchemical Tools"
+  source: "pc > Chapter 6: Equipment > Gear > Alchemical Gear > Alchemical Tools"
+  description: "Alchemical tools are a type of alchemical item you use, rather than drink or throw. They all have the alchemical and consumable traits."
+  properties:
+    category: "Equipment"
+- id: "animals"
+  name: "Animals"
+  source: "pc > Chapter 6: Equipment > Gear > Animals"
+  description: |-
+    The Prices for animals are listed both for renting and for purchasing them outright. You usually need to pay for animal rentals up front, and if the vendor believes the animal might be put in danger, they typically require a deposit equal to the purchase Price.
+    Most animals panic in battle unless specifically trained otherwise. When combat begins, they become frightened 4 and fleeing as long as they're frightened. If you successfully Command your Animal using Nature, you can keep it from fleeing, though this doesn't remove its frightened condition. If the animal is attacked or damaged, it returns to frightened 4 and fleeing, with the same exceptions.
+    Warhorses and warponies are combat trained. They don't become frightened or fleeing during encounters in this way.
+    Animals
+    Rental Price* Purchase
+    Animal (per day) Price
+    Bird
+    Messenger raven 8 cp per day 4 gp
+    Hunting eagle 8 sp per day 8 gp
+    Dog
+    Guard dog 1 cp per day 2 sp
+    Service dog 6 cp per day 4 gp
+    Riding dog 6 cp per day 4 gp
+    Horse
+    Riding horse 1 sp per day 8 gp
+    Warhorse 1 gp per day 30 gp (level 2)
+    Pack animal 2 cp per day 2 gp
+    Pony
+    Riding pony 8 cp per day 7 gp
+    Warpony 8 sp per day 24 gp (level 2)
+    * Might require a deposit equal to the purchase Price.
+  properties:
+    category: "Equipment"
 - id: "arcana"
   name: "Arcana"
   source: "pc > Chapter 4: Skills > Skills > Arcana"
@@ -85,6 +132,12 @@
     Noisy: This armor is loud and likely to alert others to your presence. The armor's check penalty applies to Stealth checks even if you have the required Strength modifier.
   properties:
     category: "Equipment"
+- id: "assistive-items"
+  name: "Assistive Items"
+  source: "pc > Chapter 6: Equipment > Gear > Assistive Items"
+  description: "Included in this section are assistive items for a variety of disabilities. If a character has been disabled from birth or for a significant period of time before setting out on their adventure, they should begin with any basic assistive items they require as part of their backstory. These items don't count against their starting money, and any item granted in this way likewise has no value when sold."
+  properties:
+    category: "Equipment"
 - id: "athletics"
   name: "Athletics"
   source: "pc > Chapter 4: Skills > Skills > Athletics"
@@ -106,6 +159,12 @@
   name: "Attacking With a Shield"
   source: "pc > Chapter 6: Equipment > Shields > Attacking With a Shield"
   description: "A shield can be used as a martial weapon for attacks, using the statistics listed for a shield bash on the Martial Melee Weapons table. The shield bash is an option only for shields that weren't designed to be used as weapons. A shield can't have runes added to it. You can also buy and attach a shield boss or shield spikes to a shield to make it a more practical weapon. These can also be found on the Martial Melee Weapons table. These work like other weapons and can even be etched with runes."
+  properties:
+    category: "Equipment"
+- id: "barding"
+  name: "Barding"
+  source: "pc > Chapter 6: Equipment > Gear > Animals > Barding"
+  description: "You can purchase special armor for animals, called barding (shown on the Barding table). All animals have a trained proficiency rank in light barding, and combat-trained animals are trained in heavy barding. Barding uses the same rules as armor except for the following. The Price and Bulk of barding depend on the animal's size (use the statistics for Small barding for creatures below Small size). Barding can't be etched with magic runes, though special magical barding might be available."
   properties:
     category: "Equipment"
 - id: "basic-competence"
@@ -272,6 +331,21 @@
   description: "A ritual's Cost entry lists valuable components required to cast the ritual. If a ritual doesn't have any such components, it won't have a Cost entry. The cost is consumed when you attempt the primary skill check. Costs are often presented as a base cost multiplied by the target's level and sometimes the spell's rank. If the target's level is lower than 1, multiply the cost by 1 instead. Heightened versions that increase the base cost multiply it by the target's level or another value as appropriate. Most rituals that create permanent creatures, such as create undead, use costs based on the level of the creature, as presented in Creature Creation Rituals."
   properties:
     category: "Spells"
+- id: "cost-of-living"
+  name: "Cost of Living"
+  source: "pc > Chapter 6: Equipment > Gear > Cost of Living"
+  description: |-
+    Cost of living provides a total cost to covers room and board, dues, taxes, and other fees. You typically need to track and pay for your cost of living only during downtime.
+    Cost of Living
+    Standard of Living Week Month Year
+    Subsistence* 4 sp 2 gp 24 gp
+    Comfortable 1 gp 4 gp 52 gp
+    Fine 30 gp 130 gp 1,600 gp
+    Extravagant 100 gp 430 gp 5,200 gp
+    * You can attempt to Subsist using Society or Survival
+    for free.
+  properties:
+    category: "Equipment"
 - id: "costs-and-loci"
   name: "Costs and Loci"
   source: "pc > Chapter 7: Spells > Casting Spells > Costs and Loci"
@@ -446,6 +520,12 @@
   description: "A ritual's effect depends on the result of the primary check. If an effect lists a save DC, use your spell DC for the ritual's magic tradition (or 12 + your level + your highest mental attribute modifier, if you don't have a spell DC)."
   properties:
     category: "Spells"
+- id: "elixirs"
+  name: "Elixirs"
+  source: "pc > Chapter 6: Equipment > Gear > Alchemical Gear > Elixirs"
+  description: "Elixirs are alchemical items you drink with a single action that has the manipulate trait, gaining the listed benefit."
+  properties:
+    category: "Equipment"
 - id: "equipment"
   name: "Equipment"
   source: "pc > Chapter 6: Equipment"
@@ -488,6 +568,42 @@
     You spend 10 minutes performing deeds to restore your magical connection. This restores 1 Focus Point to your focus pool. The deeds you need to perform are specified in the class or ability that gives you your focus spells. These deeds can usually overlap with other tasks that relate to the source of your focus spells. For instance, a cleric with focus spells from a holy deity can usually Refocus while tending the wounds of their allies.
   properties:
     category: "Spells"
+- id: "formulas"
+  name: "Formulas"
+  source: "pc > Chapter 6: Equipment > Gear > Formulas"
+  description: |-
+    Formulas are formalized instructions for making items. Their primary purpose is to reduce the time it takes you to start the Craft activity, which is helpful for items you'll make frequently. You can usually read a formula as long as you can read the language it's written in, even if you lack the skill to Craft the item. Often, alchemists and crafting guilds use obscure languages or create codes to protect their formulas. If you obtain a formula for an uncommon or rarer item, you have access to that item so you can Craft it. These formulas can be significantly more valuable—if you can find them at all!
+    For the Price listed on the table, you can buy a common formula or pay an NPC to let you copy their formula. A purchased formula is typically a schematic on rolled-up parchment of light Bulk. You can copy a formula into your formula book in 1 hour.
+    If you have a formula, you can Craft a copy of it using the Crafting skill. You can also Craft a formula by reverse-engineering it from an item you possess. Use the formula's Price and the item's Craft DC. You must meet any requirements to Craft the item, except you don't need to have access to the item or meet any special Craft Requirements listed in the item's stat block unless the GM determines otherwise.
+    Formulas
+    Item Level Formula Price Item Level Formula Price
+    0* 5 sp 11 70 gp
+    1 1 gp 12 100 gp
+    2 2 gp 13 150 gp
+    3 3 gp 14 225 gp
+    4 5 gp 15 325 gp
+    5 8 gp 16 500 gp
+    6 13 gp 17 750 gp
+    7 18 gp 18 1,200 gp
+    8 25 gp 19 2,000 gp
+    9 35 gp 20 3,500 gp
+    10 50 gp
+    * Formulas for all 0-level common items from this chapter
+    can be purchased collectively in a basic crafter's book.
+  properties:
+    category: "Equipment"
+- id: "gear-statistics"
+  name: "Gear Statistics"
+  source: "pc > Chapter 6: Equipment > Gear > Gear Statistics"
+  description: "The gear table lists Price and Bulk entries for a wide variety of gear. Any item with a number after it in parentheses indicates that the item's Price is for the indicated quantity, though the Bulk entry for such an item is the value for only one such item. All items in this chapter are level 0 unless the item name is followed by a higher item level in parentheses."
+  properties:
+    category: "Equipment"
+- id: "hands"
+  name: "Hands"
+  source: "pc > Chapter 6: Equipment > Gear > Gear Statistics > Hands"
+  description: "This lists how many hands it takes to use the item effectively. Most items that require two hands can be carried in only one hand, but you must spend an Interact action to change your grip in order to use the item. The GM may determine that an item is too big to carry in one hand (or even two hands, for particularly large items)."
+  properties:
+    category: "Equipment"
 - id: "heightened-spells"
   name: "Heightened Spells"
   source: "pc > Chapter 7: Spells > Spell Slots > Heightened Spells"
@@ -844,6 +960,37 @@
   description: "Sometimes you won't know whether you have succeeded at a skill check. If an action has the secret trait, the GM rolls the check for you and informs you of the effect without revealing the result of the roll or the degree of success. The GM rolls secret checks when your knowledge about the outcome is imperfect, like when you're searching for a hidden creature or object, attempting to deceive someone, translating a tricky bit of ancient text, or remembering some piece of lore. This way, you as the player don't know things that your character wouldn't. This rule is the default for actions with the secret trait, but the GM can choose not to use secret checks if they would rather some or all rolls be public."
   properties:
     category: "Skills"
+- id: "services"
+  name: "Services"
+  source: "pc > Chapter 6: Equipment > Gear > Services"
+  description: |-
+    The services listed on Basic Services and Cuisine describe expenditures that can come up during travels and time spent in settlements.
+    Basic Services and Cuisine
+    Item Price Bulk Hands
+    Beverages
+    Mug of ale 1 cp L 1
+    Keg of ale 2 sp 2 2
+    Pot of coffee or tea 2 cp L 1
+    Bottle of wine 1 sp L 1
+    Bottle of fine wine 1 gp L 1
+    Lodging (1 day)
+    Floor space 3 cp
+    Bed (for 1) 1 sp
+    Private room (for 2) 8 sp
+    Extravagant suite (for 6) 10 gp
+    Meals
+    Poor meal 1 cp L 2
+    Square meal 3 cp L 2
+    Fine dining 1 gp L 2
+    Stabling (1 day) 2 cp
+    Toll at least 1 cp
+    Transportation (per 5 miles)
+    Caravan 3 cp
+    Carriage 2 sp
+    Ferry or riverboat 4 cp
+    Ship 6 cp
+  properties:
+    category: "Equipment"
 - id: "setting-triggers"
   name: "Setting Triggers"
   source: "pc > Chapter 7: Spells > Setting Triggers"
@@ -960,6 +1107,21 @@
   description: "With special gestures and utterances, a spellcaster can call forth mystic energies, warp the mind, protect themself against danger, or even create something from nothing. Each class has its own method of learning, preparing, and casting spells, and every individual spell produces a specific effect, so learning new spells gives a spellcaster an increasing array of options to accomplish their goals."
   properties:
     category: "Spells"
+- id: "spellcasting-services"
+  name: "Spellcasting Services"
+  source: "pc > Chapter 6: Equipment > Gear > Services > Spellcasting"
+  description: |-
+    Spellcasting services are uncommon. Having a spell cast for you requires finding a spellcaster who knows and is willing to cast it. It's hard to find someone who can cast higher-rank spells, and uncommon spells typically cost at least 100% more, if you can find someone who knows them at all. Spells that take a long time to cast (over 1 minute) usually cost 25% more. You must pay any cost listed in the spell in addition to the Price on the table.
+    Spellcasting Services
+    Spell Rank Price* Spell Rank Price*
+    1st 3 gp 6th 160 gp
+    2nd 7 gp 7th 360 gp
+    3rd 18 gp 8th 720 gp
+    4th 40 gp 9th 1,800 gp
+    5th 80 gp
+    * Plus any cost required to cast the specific spell.
+  properties:
+    category: "Equipment"
 - id: "spontaneous-spells"
   name: "Spontaneous Spells"
   source: "pc > Chapter 7: Spells > Spell Slots > Spontaneous Spells"
@@ -1033,6 +1195,12 @@
   description: "A spell with a touch range requires you to physically touch the target. You use your unarmed reach to determine whether you can touch the creature. You can usually touch them automatically, though the spell might specify that they can attempt a saving throw or that you must attempt a spell attack roll. If an ability increases the range of a touch spell, start at 0 feet and increase from there."
   properties:
     category: "Spells"
+- id: "transportation"
+  name: "Transportation"
+  source: "pc > Chapter 6: Equipment > Gear > Services > Transportation"
+  description: "The cost to hire transportation includes standard travel with no amenities. Most transit services provide basic sleeping arrangements, and some provide meals at the rates listed on the table. Arranging transportation into dangerous lands can be more expensive or impossible."
+  properties:
+    category: "Equipment"
 - id: "unarmed-attacks"
   name: "Unarmed Attacks"
   source: "pc > Chapter 6: Equipment > Weapons > Unarmed Attacks"
@@ -1114,6 +1282,25 @@
     Unarmed: An unarmed attack uses your body rather than a manufactured weapon. An unarmed attack isn't a weapon, though has a weapon group and might have weapon traits. An unarmed attack can't be Disarmed. It also doesn't take up a hand, though a fist or other grasping appendage generally works like a free-hand weapon.
     Versatile: A versatile weapon can be used to deal a different type of damage than its listed type. This trait indicates the alternate damage type. For instance, a piercing weapon with versatile S can deal piercing or slashing damage. You choose the damage type each time you attack.
     Volley: This ranged weapon is less effective at close distances. Your attacks against targets that are at a distance within the range listed take a -2 penalty.
+  properties:
+    category: "Equipment"
+- id: "wearing-toolkits"
+  name: "Wearing Toolkits"
+  source: "pc > Chapter 6: Equipment > Gear > Gear Statistics > Wearing Toolkits"
+  description: "You can make a toolkit (such as an alchemist's toolkit or healer's toolkit) easier to use by wearing it. This easy access allows you to draw and replace the tools within as part of the action that uses them, rather than needing to Interact to draw them. You can wear up to 2 Bulk of toolkits in this manner; any beyond this limit must be stowed or drawn with an Interact action to use."
+  properties:
+    category: "Equipment"
+- id: "wheelchair-rules"
+  name: "Wheelchair Rules"
+  source: "pc > Chapter 6: Equipment > Gear > Sidebar: Wheelchair Rules"
+  description: |-
+    Each wheelchair operates in the following ways.
+    Adjustable Seat Belts: These belts strap around your waist, knees, and shins to keep you in the chair if it's thrown, knocked, or handled roughly. You can open and release your belts with an Interact action.
+    Bulk Limit: A wheelchair is strong enough to support you and any amount of Bulk you could typically hold or carry. Your total carried Bulk includes all the items you are wearing, carrying, and stowing on your wheelchair. You take the usual effects when there's too much Bulk on you and your wheelchair: if you're carrying an amount of Bulk equal to 5 + your Strength modifier, you're encumbered, and you and your wheelchair can't hold or carry more than 10 + your Strength modifier. The wheelchair's own Bulk doesn't count against your Bulk limit while riding in the wheelchair; it's listed in case you need to carry the wheelchair separately.
+    Frame: A wheelchair is typically made from common materials like wood, but they can also be made from steel, other metals, or even rarer materials like dawnsilver. The wheelchairs presented here are made from durable wood.
+    Magic: The wheelchair is considered an extension of yourself. Spells or abilities that change your bodily form also apply to the chair, and it transforms with you so long as you're using it. You can choose what appearance this has.
+    Movement: While using a wheelchair, you Stride at your normal Speed (listed in your ancestry, with any additional bonuses, penalties, and adjustments applied). You propel a wheelchair by using the hand rims. You can propel the wheelchair even while holding something in your hands, but not if you're restrained or otherwise unable to move your hands freely. You're still affected by difficult terrain and other terrain features. Any effect that would immobilize you, give a penalty to your Speeds, or similar by entangling or hindering your legs applies to the chair as well. You can use all of your actions while in a wheelchair.
+    Quick-Righting: If the chair is tipped or you're knocked prone while in the chair, you can right yourself using the Stand action, though in this case you are righting the wheelchair instead. An ally can use an Interact action to help right you, allowing you to Stand as a free action triggered by their Interact action.
   properties:
     category: "Equipment"
 - id: "wielding-items"

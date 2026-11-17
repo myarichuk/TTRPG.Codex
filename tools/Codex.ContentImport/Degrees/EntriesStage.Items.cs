@@ -19,7 +19,17 @@ public static partial class EntriesStage
     /// </summary>
     internal static (List<ItemDescription> Descriptions, int ArtLabels, int LeadLines) ReadDescriptions(List<Block> slice, TakeRow row, HashSet<string> compounds)
     {
+        var read = ReadDescriptionsAndLead(slice, row, compounds);
+        return (read.Descriptions, read.ArtLabels, read.LeadLines);
+    }
+
+    /// <summary>
+    /// <see cref="ReadDescriptions"/>, and the lead as paragraphs too: the text before the first description, which a gear row may make a rule of (<see cref="TakeRow.LeadRules"/>).
+    /// </summary>
+    internal static (List<ItemDescription> Descriptions, int ArtLabels, int LeadLines, List<string> LeadParagraphs) ReadDescriptionsAndLead(List<Block> slice, TakeRow row, HashSet<string> compounds)
+    {
         var found = new List<(string Name, List<StringBuilder> Paragraphs)>();
+        var leadText = new List<StringBuilder> { new() };
         int art = 0, lead = 0;
         var previousShort = true;
         foreach (var block in slice)
@@ -55,6 +65,13 @@ public static partial class EntriesStage
                 else if (found.Count == 0)
                 {
                     lead++;
+                    if (previousShort && info.Left - block.Left > Indent && leadText[^1].Length > 0)
+                    {
+                        leadText.Add(new StringBuilder());
+                    }
+
+                    JoinLine(leadText[^1], text, compounds);
+                    previousShort = info.Right < block.Right - ShortLine;
                     continue;
                 }
                 else if (previousShort && info.Left - block.Left > Indent && found[^1].Paragraphs[^1].Length > 0)
@@ -67,7 +84,8 @@ public static partial class EntriesStage
             }
         }
 
-        return (found.Select(f => new ItemDescription(f.Name, f.Paragraphs.Select(p => Clean(p.ToString())).Where(p => p.Length > 0).ToList())).ToList(), art, lead);
+        return (found.Select(f => new ItemDescription(f.Name, f.Paragraphs.Select(p => Clean(p.ToString())).Where(p => p.Length > 0).ToList())).ToList(), art, lead,
+            leadText.Select(p => Clean(p.ToString())).Where(p => p.Length > 0).ToList());
     }
 
     /// <summary>

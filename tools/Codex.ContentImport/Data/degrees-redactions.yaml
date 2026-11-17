@@ -926,3 +926,137 @@ rows:
     action: replace
     text: "These measure how much damage the shield can take before it's destroyed (its total HP) and how much it can take before being broken and unusable (its BT)."
     reason: "A misprint in the book's sentence (the opening bracket of a parenthesis is missing), corrected."
+  - book: pc
+    entry: services
+    field: description
+    span: { sha256: "53ff6f4d92fc8cb25d57d3166808be282aa33eff3601c84a35d6965d32707a2a", length: 17 }
+    action: replace
+    text: "Ship 6 cp"
+    reason: "A table row whose first word a redacted sentence elsewhere also says, so the word cannot be waived; the price is kept and the row is named in plain words."
+  - book: pc
+    entry: gear-statistics
+    field: description
+    span: { sha256: "6bf1f564ed367b0660aa708572f0de5ab96406ef5e340e11e2be876a7d913408", length: 78 }
+    action: replace
+    text: "The gear table lists Price and Bulk entries for a wide variety of gear."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: alchemical-gear
+    field: description
+    span: { sha256: "535ff4235477deaae93df82017a6a6429b677e99eda517e55dc0ef811094dabd", length: 154 }
+    action: replace
+    text: "The items listed on the Alchemical Gear table are the most widely available alchemical items, which a 1st-level character could likely access."
+    reason: "A sentence that named the setting; the mechanic is kept in plain words."
+  - book: pc
+    entry: alchemical-gear
+    field: description
+    span: { sha256: "b857016ddfd2f390ebfcb85ae56e703b4ece3e7f500dfc7b3cac58ccf4301761", length: 64 }
+    action: replace
+    text: "Each item's full entry appears in another book."
+    reason: "A sentence that sent the reader to a page of another book; the pointer is made generic."
+  - book: pc
+    entry: animals
+    field: description
+    span: { sha256: "1d2d9928e01192910e40b51692eb814f37a1ef6c271b8c5269503157e5c49660", length: 50 }
+    action: cut
+    reason: "A sentence that sent the reader to another book for the animals' statistics."
+  - book: pc
+    entry: barding
+    field: description
+    span: { sha256: "199d60d01c18247a4df1f3a5a346c3f5ae0d9d10c405c359507f3328135b5636", length: 117 }
+    action: replace
+    text: "All animals have a trained proficiency rank in light barding, and combat-trained animals are trained in heavy barding."
+    reason: "A compound the extraction joined across a line end, put back with its hyphen."
+  - book: pc
+    entry: formula-book-blank
+    field: description
+    span: { sha256: "a72090f5f42283501ad1697cb3a297fa19c2d8913f3c7d2d370234ccaa06d87a", length: 186 }
+    action: replace
+    text: "A formula book holds the formulas necessary to make items other than the common equipment from this chapter; characters of the alchemist class typically get one for free."
+    reason: "A sentence that sent the reader to another book for the class; the mechanic is kept."
+  - book: pc
+    entry: clothing-cold-weather
+    field: description
+    span: { sha256: "2e0329253be02c58a3e6208bed9585e3a49c9fa6f6c6eab326d71d94acb32751", length: 63 }
+    action: cut
+    reason: "A sentence that sent the reader to pages of the book."
+  - book: pc
+    entry: clothing-explorer-s
+    field: description
+    span: { sha256: "2e0329253be02c58a3e6208bed9585e3a49c9fa6f6c6eab326d71d94acb32751", length: 63 }
+    action: cut
+    reason: "A sentence that sent the reader to pages of the book."
+  - book: pc
+    entry: clothing-fine
+    field: description
+    span: { sha256: "2e0329253be02c58a3e6208bed9585e3a49c9fa6f6c6eab326d71d94acb32751", length: 63 }
+    action: cut
+    reason: "A sentence that sent the reader to pages of the book."
+  - book: pc
+    entry: clothing-high-fashion-fine
+    field: description
+    span: { sha256: "2e0329253be02c58a3e6208bed9585e3a49c9fa6f6c6eab326d71d94acb32751", length: 63 }
+    action: cut
+    reason: "A sentence that sent the reader to pages of the book."
+  - book: pc
+    entry: clothing-ordinary
+    field: description
+    span: { sha256: "2e0329253be02c58a3e6208bed9585e3a49c9fa6f6c6eab326d71d94acb32751", length: 63 }
+    action: cut
+    reason: "A sentence that sent the reader to pages of the book."
+  - book: pc
+    entry: alchemist-s-toolkit
+    field: description
+    span: { sha256: "96ed53a60749251ebd5d333c06d44fb72fd82ba3ee79dda11a8128e45b1da434", length: 25 }
+    action: replace
+    text: "See Wearing Toolkits for details."
+    reason: "A sentence that sent the reader to a page of the book; the pointer by title stays, as the rule is in the pack."
+  - book: pc
+    entry: artisan-s-toolkit
+    field: description
+    span: { sha256: "96ed53a60749251ebd5d333c06d44fb72fd82ba3ee79dda11a8128e45b1da434", length: 25 }
+    action: replace
+    text: "See Wearing Toolkits for details."
+    reason: "A sentence that sent the reader to a page of the book; the pointer by title stays, as the rule is in the pack."
+  - book: pc
+    entry: detective-s-kit
+    field: description
+    span: { sha256: "96ed53a60749251ebd5d333c06d44fb72fd82ba3ee79dda11a8128e45b1da434", length: 25 }
+    action: replace
+    text: "See Wearing Toolkits for details."
+    reason: "A sentence that sent the reader to a page of the book; the pointer by title stays, as the rule is in the pack."
+  - book: pc
+    entry: expanded-healer-s-toolkit
+    field: description
+    span: { sha256: "96ed53a60749251ebd5d333c06d44fb72fd82ba3ee79dda11a8128e45b1da434", length: 25 }
+    action: replace
+    text: "See Wearing Toolkits for details."
+    reason: "A sentence that sent the reader to a page of the book; the pointer by title stays, as the rule is in the pack."
+  - book: pc
+    entry: healer-s-toolkit
+    field: description
+    span: { sha256: "96ed53a60749251ebd5d333c06d44fb72fd82ba3ee79dda11a8128e45b1da434", length: 25 }
+    action: replace
+    text: "See Wearing Toolkits for details."
+    reason: "A sentence that sent the reader to a page of the book; the pointer by title stays, as the rule is in the pack."
+  - book: pc
+    entry: infiltrator-thieves-toolkit
+    field: description
+    span: { sha256: "96ed53a60749251ebd5d333c06d44fb72fd82ba3ee79dda11a8128e45b1da434", length: 25 }
+    action: replace
+    text: "See Wearing Toolkits for details."
+    reason: "A sentence that sent the reader to a page of the book; the pointer by title stays, as the rule is in the pack."
+  - book: pc
+    entry: sterling-artisan-s-toolkit
+    field: description
+    span: { sha256: "96ed53a60749251ebd5d333c06d44fb72fd82ba3ee79dda11a8128e45b1da434", length: 25 }
+    action: replace
+    text: "See Wearing Toolkits for details."
+    reason: "A sentence that sent the reader to a page of the book; the pointer by title stays, as the rule is in the pack."
+  - book: pc
+    entry: thieves-toolkit
+    field: description
+    span: { sha256: "96ed53a60749251ebd5d333c06d44fb72fd82ba3ee79dda11a8128e45b1da434", length: 25 }
+    action: replace
+    text: "See Wearing Toolkits for details."
+    reason: "A sentence that sent the reader to a page of the book; the pointer by title stays, as the rule is in the pack."

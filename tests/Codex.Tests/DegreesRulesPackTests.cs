@@ -53,7 +53,8 @@ public class DegreesRulesPackTests : IAsyncLifetime
 
     [Theory]
     [InlineData("condition", 42)] // 46 bookmark children minus 4 sidebars, and 42 entry headers in the taken range
-    [InlineData("rule", 116)]     // chapter 6a adds 38 (see EveryArmorShieldAndWeaponCarriesItsStatisticsAndTheCountsAreThePinnedOnes): the chapter's own text, 7 more sections' own text (5 with children, Shields and Attack Rolls), 12 of their
+    [InlineData("gear", 124)]     // chapter 6b: 124 rows of the gear tables (counted again in EveryGearEntryCarriesItsStatisticsAndTheCountsAreThePinnedOnes)
+    [InlineData("rule", 132)]     // chapter 6b adds 16 (the gear's section texts, price tables and the one sidebar the take-list names: 15 sections and the wheelchair rules); chapter 6a adds 38 (see EveryArmorShieldAndWeaponCarriesItsStatisticsAndTheCountsAreThePinnedOnes): the chapter's own text, 7 more sections' own text (5 with children, Shields and Attack Rolls), 12 of their
                                   // children, Price, Item Level and Shoddy Items, 3 armor rules, the 3 statistics sections (their children are paragraphs), 6 of the weapon rules, the weapon traits and the kinds of ammunition. Before that: chapter 1: the appendix's own intro rule, condition values, overriding conditions (3); chapter 4: the chapter's own introduction, the checks' own text, 4 sections of the checks,
                                   // 17 skills' descriptions, the lead of the skills, 2 subsections of Performance, 4 of the general actions, one of Crafting and the income table (33); chapter 7: the chapter's
                                   // own introduction, the 15 spellcasting sections (6 of them with their own text before their children), their 17 children, and two boxes among the spells (35); and the
@@ -446,17 +447,100 @@ public class DegreesRulesPackTests : IAsyncLifetime
         Assert.All(keys.Where(k => !shippedTraits.Contains(k) && k != "uncommon"), k =>
             Assert.Contains(definitions, d => Regex.IsMatch(d, "(?im)^" + k.Replace("-", "[- ]") + ":")));
 
-        // The rules sections of the chapter (the first step takes the gear chapter out): 38 rules of the category Equipment, and the one that holds the kinds of ammunition.
+        // The rules sections of the chapter: 38 of the category Equipment from the first half (the armor, shields and weapons, and the one that holds the kinds of ammunition) and 16 from the gear (54 in all).
         var rules = Entries("rule", PackId).Where(r => (string)r.Properties["category"] == "Equipment").ToList();
-        Assert.Equal(38, rules.Count);
+        Assert.Equal(54, rules.Count);
         Assert.Equal(new[] { "arrow", "blowgun dart", "bolt", "sling bullet" }, new[] { "Arrow", "Blowgun Dart", "Bolt", "Sling Bullet" }.Where(n => rules.Single(r => r.Id == "kinds-of-ammunition").Description!.Contains($"**{n}.**", StringComparison.Ordinal)).Select(n => n.ToLowerInvariant()));
-        Assert.Equal(new[] { "armor-statistics", "shield-statistics", "weapon-statistics" }, rules.Where(r => r.Id.EndsWith("-statistics", StringComparison.Ordinal)).Select(r => r.Id).Order());
+        Assert.Equal(new[] { "armor-statistics", "gear-statistics", "shield-statistics", "weapon-statistics" }, rules.Where(r => r.Id.EndsWith("-statistics", StringComparison.Ordinal)).Select(r => r.Id).Order());
+    }
+
+    /// <summary>
+    /// Chapter 6b: the gear. 124 rows of the gear tables (the adventuring gear in two panels with its uncommon half, the three alchemical tables, the assistive items and the barding), counted from the document two ways: the rows by
+    /// position (124) and the descriptions by their bold names (65: 58 of rows and 7 of the headings the rows sit under), of which 46 rows read a heading's or a row's description, and 20 have none (18 names, two sizes of barding each).
+    /// Each is one `gear` entry; 16 `rule` entries of the category Equipment come with them (the section texts, the price tables as text rows, and the one sidebar the take-list names).
+    /// </summary>
+    [Fact]
+    public void EveryGearEntryCarriesItsStatistics_AndTheCountsAreThePinnedOnes()
+    {
+        var gear = Entries("gear", PackId).ToList();
+        Assert.Equal(124, gear.Count);
+
+        // The loader reads a quoted number (a Bulk of "1", a price of "0") as a number, so the values are compared as the text they print.
+        string? Text(ContentEntry e, string key) => e.Properties.GetValueOrDefault(key)?.ToString();
+        string Counts(IEnumerable<string?> values) => string.Join(' ', values.GroupBy(v => v ?? "-").OrderBy(g => g.Key, StringComparer.Ordinal).Select(g => $"{g.Key}:{g.Count()}"));
+        IEnumerable<string> TraitsOf(ContentEntry e) => ((IEnumerable<object>?)e.Properties.GetValueOrDefault("traits") ?? Array.Empty<object>()).Select(t => (string)t);
+
+        Assert.All(gear, g =>
+        {
+            Assert.StartsWith("pc > Chapter 6: Equipment > Gear > ", g.Source);
+            Assert.False(string.IsNullOrWhiteSpace(Text(g, "price")), g.Id);
+            Assert.Contains(Text(g, "kind"), new[] { "gear", "bomb", "elixir", "alchemical-tool", "assistive", "barding" });
+            // A gear entry is an item to carry: no weapon `use` map and no `weapons` tag (the sheet's Strike reads one dice expression; a bomb has three kinds of damage).
+            Assert.DoesNotContain("weapons", g.Tags);
+            Assert.False(g.Properties.ContainsKey("use"), g.Id);
+        });
+
+        // By table: the adventuring gear (99 and the 4 of the uncommon half), the assistive items, the barding and the three alchemical tables.
+        Assert.Equal("alchemical-tool:3 assistive:9 barding:4 bomb:2 elixir:3 gear:103", Counts(gear.Select(g => Text(g, "kind"))));
+        Assert.Equal(new[] { "survey-map", "survey-map-atlas", "scholarly-journal", "scholarly-journal-compendium" }.Order(), gear.Where(g => TraitsOf(g).Contains("uncommon")).Select(g => g.Id).Order());
+
+        // The item levels the tables print (a level in brackets after the name): 37 rows, the others are level 0 by the chapter's own rule.
+        Assert.Equal("-:87 0:2 1:3 17:2 2:3 3:24 4:1 9:2", Counts(gear.Select(g => g.Properties.TryGetValue("level", out var l) ? l.ToString() : null)));
+        Assert.Equal("-:32 1:33 1 or 2:9 2:48 see text:2", Counts(gear.Select(g => Text(g, "hands"))));
+        Assert.Equal("-:38 1:20 12:1 16:2 2:6 3:2 4:2 6:2 8:1 L:50", Counts(gear.Select(g => Text(g, "bulk"))));
+        Assert.Equal(49, gear.Count(g => g.Properties.ContainsKey("variantOf"))); // an indented row: a version of the row above it, or a row of a heading
+        Assert.Equal("Lock", Text(gear.Single(g => g.Id == "superior-lock"), "variantOf"));
+        Assert.Equal("Wheelchair", Text(gear.Single(g => g.Id == "chair-storage"), "variantOf"));
+        Assert.Equal("Clothing, Explorer's", gear.Single(g => g.Id == "clothing-explorer-s").Name); // a heading and its row name one entry
+
+        // The alchemical items carry the two traits their table's note says all of them have, and the note.
+        var alchemical = gear.Where(g => Text(g, "kind") is "bomb" or "elixir" or "alchemical-tool").ToList();
+        Assert.Equal(8, alchemical.Count);
+        Assert.All(alchemical, g =>
+        {
+            Assert.Contains("alchemical", TraitsOf(g));
+            Assert.Contains("consumable", TraitsOf(g));
+            Assert.Contains("**Note.** All these items", g.Description);
+        });
+        Assert.Equal(new[] { "acid", "bomb", "splash", "alchemical", "consumable" }, TraitsOf(gear.Single(g => g.Id == "lesser-acid-flask")));
+
+        // The toolkits' hands (1 or 2) carry the note under the table (its page pointer is redacted to a pointer by title).
+        Assert.Equal(16, gear.Count(g => g.Description!.Contains("**Note.**", StringComparison.Ordinal)));
+        Assert.Equal(8, gear.Count(g => g.Description!.Contains("See Wearing Toolkits for details.", StringComparison.Ordinal)));
+        Assert.Equal(9, gear.Count(g => Text(g, "hands") == "1 or 2"));
+        Assert.Equal(20, gear.Count(g => g.Description!.TrimStart().StartsWith("**", StringComparison.Ordinal))); // 20 rows have no paragraph: their text is their statistics
+        Assert.Equal("barding", Text(gear.Single(g => g.Id == "heavy-barding-small-or-medium"), "kind"));
+        Assert.Equal(2, ((long)gear.Single(g => g.Id == "heavy-barding-small-or-medium").Properties["level"]));
+        Assert.Contains("**AC Bonus.** +3", gear.Single(g => g.Id == "heavy-barding-large").Description);
+
+        // The gear rules: the sections, the price tables as text rows, and the sidebar the take-list names.
+        var rules = Entries("rule", PackId).Where(r => r.Source!.StartsWith("pc > Chapter 6: Equipment > Gear", StringComparison.Ordinal)).ToList();
+        Assert.Equal(16, rules.Count);
+        Assert.Equal(
+            new[] { "alchemical-bombs", "alchemical-gear", "alchemical-tools", "animals", "assistive-items", "barding", "cost-of-living", "elixirs", "formulas", "gear-statistics", "hands", "services", "spellcasting-services", "transportation", "wearing-toolkits", "wheelchair-rules" },
+            rules.Select(r => r.Id).Order());
+        Assert.All(rules, r => Assert.Equal("Equipment", r.Properties["category"]));
+        Assert.Contains("Adjustable Seat Belts: ", rules.Single(r => r.Id == "wheelchair-rules").Description);
+        Assert.Equal("pc > Chapter 6: Equipment > Gear > Sidebar: Wheelchair Rules", rules.Single(r => r.Id == "wheelchair-rules").Source); // the bookmark path, prefix and all
+
+        // Each gear entry says the section its table and paragraph are in, not the first section of the row.
+        const string Gear = "pc > Chapter 6: Equipment > Gear > ";
+        Assert.Equal(new[] { Gear + "Adventuring Gear" }, gear.Where(g => Text(g, "kind") == "gear").Select(g => g.Source!).Distinct());
+        Assert.Equal(Gear + "Alchemical Gear > Alchemical Bombs", gear.Single(g => g.Id == "lesser-acid-flask").Source);
+        Assert.Equal(Gear + "Alchemical Gear > Elixirs", gear.Single(g => g.Id == "minor-elixir-of-life").Source);
+        Assert.Equal(Gear + "Alchemical Gear > Alchemical Tools", gear.Single(g => g.Id == "glow-rod").Source);
+        Assert.Equal(new[] { Gear + "Assistive Items" }, gear.Where(g => Text(g, "kind") == "assistive").Select(g => g.Source!).Distinct());
+        Assert.Equal(new[] { Gear + "Animals > Barding" }, gear.Where(g => Text(g, "kind") == "barding").Select(g => g.Source!).Distinct());
+        Assert.Contains("Item Level Formula Price", rules.Single(r => r.Id == "formulas").Description);
+        Assert.Contains("1st 3 gp 6th 160 gp", rules.Single(r => r.Id == "spellcasting-services").Description);
+        Assert.Contains("Ship 6 cp", rules.Single(r => r.Id == "services").Description); // a row named in plain words (its first word is on a redaction row elsewhere)
+        Assert.DoesNotContain("Golarion", string.Join(' ', rules.Select(r => r.Description)));
     }
 
     [Fact]
     public void ThePackHoldsNothingElse_AndTheReportAgrees()
     {
-        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83;
+        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83 + 16 + 124; // the last two: the gear's 16 rules and 124 gear entries (chapter 6b)
         Assert.Equal(total, AllEntries(PackId).Count());
 
         // import-report.yaml holds counts and ids only; its totals are the importer's own and must match what loaded.
@@ -471,7 +555,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     {
         Assert.All(AllEntries(PackId), e =>
         {
-            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9: ]+( > [A-Za-z ,'-]+){0,4})$", e.Source!); // chapters 1 to 6a (the chapter title is the book's, with its number, then up to a section and a skill or a child section, and the rituals' rules are four deep; a title may have a comma or a hyphen); a later chapter widens this
+            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9: ]+( > [A-Za-z: ,'-]+){0,4})$", e.Source!); // chapters 1 to 6a (the chapter title is the book's, with its number, then up to a section and a skill or a child section, and the rituals' rules are four deep; a title may have a comma or a hyphen); a later chapter widens this
             Assert.DoesNotContain("homebrew", e.Tags);
             Assert.DoesNotMatch(@"(?<!Chapter )\d", e.Source!); // no page numbers (a chapter's own number is not one)
         });

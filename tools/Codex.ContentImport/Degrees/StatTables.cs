@@ -20,24 +20,24 @@ public static class StatTables
     public const string Role = "stat-table";
 
     /// <summary>A word set in a type smaller than this is a footnote mark.</summary>
-    private const double MarkSize = 7;
+    internal const double MarkSize = 7;
 
-    private const double LineTolerance = 2.5;
+    internal const double LineTolerance = 2.5;
 
     /// <summary>The most a line may sit below the one above it and still belong to the table.</summary>
-    private const double RowGap = 14.5;
+    internal const double RowGap = 14.5;
 
     /// <summary>Two words on a line further apart than this are in different cells.</summary>
-    private const double CellGap = 5;
+    internal const double CellGap = 5;
 
     /// <summary>A cell goes to a column when it comes this close to the column's label.</summary>
     private const double Slack = 4;
 
-    private sealed record StLine(List<LayoutWord> Words, double Bottom, double Top, bool IsNote = false);
+    internal sealed record StLine(List<LayoutWord> Words, double Bottom, double Top, bool IsNote = false);
 
-    private sealed record Cell(double Left, double Right, string Text);
+    internal sealed record Cell(double Left, double Right, string Text);
 
-    private sealed class Geometry
+    internal sealed class Geometry
     {
         public List<(double Left, double Right)> Columns { get; } = new();
 
@@ -45,7 +45,7 @@ public static class StatTables
         public List<string> Labels { get; } = new() { string.Empty };
     }
 
-    private static List<StLine> Group(IEnumerable<LayoutWord> words)
+    internal static List<StLine> Group(IEnumerable<LayoutWord> words)
     {
         var rows = new List<List<LayoutWord>>();
         foreach (var w in words.OrderByDescending(w => w.Bottom))
@@ -69,7 +69,7 @@ public static class StatTables
     /// <summary>
     /// The header's column spans when the line is a header row of one of the label lists: the name column first, then one span per label. Null when the line is not one.
     /// </summary>
-    private static Geometry? HeaderOf(StLine line, IReadOnlyList<IReadOnlyList<string>> sets)
+    internal static Geometry? HeaderOf(StLine line, IReadOnlyList<IReadOnlyList<string>> sets)
     {
         for (var p = 1; p < line.Words.Count; p++)
         {
@@ -105,7 +105,7 @@ public static class StatTables
         return null;
     }
 
-    private static List<Cell> Cells(IEnumerable<LayoutWord> words)
+    internal static List<Cell> Cells(IEnumerable<LayoutWord> words)
     {
         var cells = new List<(double Left, double Right, List<string> Words)>();
         LayoutWord? before = null;
@@ -126,7 +126,7 @@ public static class StatTables
     }
 
     /// <summary>The column a cell belongs to: the one whose label it overlaps most (a column's span is widened by a few points). A cell that touches none, or two equally, fails the run.</summary>
-    private static int ColumnOf(Cell cell, Geometry geometry, int page)
+    internal static int ColumnOf(Cell cell, Geometry geometry, int page)
     {
         var best = -1;
         var bestOverlap = 0.0;
@@ -160,7 +160,7 @@ public static class StatTables
         return best;
     }
 
-    private static bool IsCaption(StLine line) => line.Words.All(w => w.Role == "block-header");
+    internal static bool IsCaption(StLine line) => line.Words.All(w => w.Role == "block-header");
 
     /// <summary>
     /// Carves the stat tables out of one page's words. <paramref name="labelSets"/> are the column label lists a header row may carry. Returns the table blocks and the words that are left (the page's text).
