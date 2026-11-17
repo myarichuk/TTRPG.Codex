@@ -109,7 +109,9 @@ public class BookPdfTests
     internal static bool? NoSandbox => string.Equals(Environment.GetEnvironmentVariable("CI"), "true", StringComparison.OrdinalIgnoreCase) ? true : null;
 
     private static BookPdf Printer(int timeoutSeconds = 90, int maxWaiting = 2, string? profileRoot = null) =>
-        new(Options.Create(new BookPdfOptions { TimeoutSeconds = timeoutSeconds, MaxWaiting = maxWaiting, ProfileRoot = profileRoot, NoSandbox = NoSandbox }), NullLogger<BookPdf>.Instance);
+        Printer(new BookPdfOptions { TimeoutSeconds = timeoutSeconds, MaxWaiting = maxWaiting, ProfileRoot = profileRoot, NoSandbox = NoSandbox });
+
+    private static BookPdf Printer(BookPdfOptions options) => new(Options.Create(options), NullLogger<BookPdf>.Instance);
 
     private static Task<BookPdfResult> Print(BookPdf printer, string html, CancellationToken cancel = default, string owner = "dm")
     {
@@ -154,10 +156,13 @@ public class BookPdfTests
     {
         // A page far too big to lay out in the time allowed (the minimum limit is five seconds).
         var huge = "<!doctype html><html><body>" + string.Concat(Enumerable.Repeat("<table><tr><td>" + string.Concat(Enumerable.Repeat("<div>word </div>", 200)) + "</td></tr></table>", 4000)) + "</body></html>";
-        var printer = Printer(timeoutSeconds: 5);
+        var options = new BookPdfOptions { TimeoutSeconds = 5, MaxWaiting = 2, NoSandbox = NoSandbox };
+        var printer = Printer(options);
         await Assert.ThrowsAsync<BookPdfTimeoutException>(() => Print(printer, huge));
 
         // The same instance: the line was let go, so the next job runs.
+        // The five seconds were only to stop the huge page; a cold browser start on a slow runner needs more.
+        options.TimeoutSeconds = 90;
         var after = await Print(printer, "<!doctype html><p>still fine</p>");
         using var pdf = PdfDocument.Open(after.Pdf);
         // NFKC: a host's font may set "fi" as one ligature glyph (macOS Chrome does), which the PDF's text then holds as U+FB01.

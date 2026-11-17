@@ -7,6 +7,7 @@
 @inject ISystemCatalog Catalog
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@implements IDisposable
 
 @* The content browser: type chips, a search box, a result list and a detail pane. Works for a
    campaign (packs the campaign enabled + homebrew) and for the global, read-only Library (/library)
@@ -266,6 +267,8 @@
         debounce?.Cancel();
         debounce = new CancellationTokenSource();
         var token = debounce.Token;
+        // The page the keystroke was typed on. If the user has gone elsewhere by the time the search is done (a click on an entry, another section), the query is not written onto that page.
+        var startPath = new Uri(Nav.Uri).AbsolutePath;
         try
         {
             await Task.Delay(150, token);
@@ -276,8 +279,22 @@
         }
 
         await SearchAsync();
-        Nav.NavigateTo(WithQuery(new Uri(Nav.Uri).AbsolutePath), replace: true);
+        if (token.IsCancellationRequested || disposed || new Uri(Nav.Uri).AbsolutePath != startPath)
+        {
+            return;
+        }
+
+        Nav.NavigateTo(WithQuery(startPath), replace: true);
         StateHasChanged();
+    }
+
+    private bool disposed;
+
+    public void Dispose()
+    {
+        disposed = true;
+        debounce?.Cancel();
+        debounce?.Dispose();
     }
 
     private async Task SelectTypeAsync(string? type)

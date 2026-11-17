@@ -22,12 +22,23 @@ public sealed class RedactionRow
     /// <summary>The book (pc or mc) the row belongs to. Empty means every book; committed rows should name theirs.</summary>
     public string? Book { get; set; }
 
+    /// <summary>The id of the entry the row applies to. A row for an entry whose own name is reserved gives <see cref="EntryHash"/> instead, so the file never holds the name.</summary>
     public string Entry { get; set; } = string.Empty;
+
+    /// <summary>The lowercase hex SHA-256 of the entry's id, in place of <see cref="Entry"/>. Exactly one of the two is given.</summary>
+    public string? EntryHash { get; set; }
+
     public string Field { get; set; } = string.Empty;
     public RedactionSpan Span { get; set; } = new();
     public string Action { get; set; } = string.Empty;
     public string? Text { get; set; }
     public string Reason { get; set; } = string.Empty;
+
+    /// <summary>True when the row names the entry with this id, by id or by the hash of it.</summary>
+    public bool Names(string id) => string.IsNullOrEmpty(EntryHash) ? Entry == id : EntryHash == SpanText.Sha256(id);
+
+    /// <summary>The row's entry as a key for duplicate checks: the id, or the hash.</summary>
+    public string EntryKey => string.IsNullOrEmpty(EntryHash) ? Entry : "#" + EntryHash;
 }
 
 /// <summary>
@@ -71,9 +82,14 @@ public sealed partial class RedactionTable
         {
             var row = Rows[i];
             var n = i + 1;
-            if (string.IsNullOrWhiteSpace(row.Entry) || string.IsNullOrWhiteSpace(row.Field))
+            if ((string.IsNullOrWhiteSpace(row.Entry) == string.IsNullOrWhiteSpace(row.EntryHash)) || string.IsNullOrWhiteSpace(row.Field))
             {
-                throw new DegreesException($"Redaction row {n}: entry and field are required.");
+                throw new DegreesException($"Redaction row {n}: field and exactly one of entry and entryHash are required.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(row.EntryHash) && !Sha256Hex().IsMatch(row.EntryHash))
+            {
+                throw new DegreesException($"Redaction row {n}: entryHash needs a lowercase 64-digit sha256.");
             }
 
             if (row.Book != null && !DegreesOptions.Books.Contains(row.Book))
@@ -108,7 +124,7 @@ public sealed partial class RedactionTable
                 throw new DegreesException($"Redaction row {n}: only a replace row has text.");
             }
 
-            if (!seen.Add((row.Entry, row.Field, row.Span.Sha256, row.Span.Length)))
+            if (!seen.Add((row.EntryKey, row.Field, row.Span.Sha256, row.Span.Length)))
             {
                 throw new DegreesException($"Redaction row {n}: another row already covers the same span.");
             }
@@ -182,7 +198,8 @@ public static class RedactionStage
         for (var i = 0; i < table.Rows.Count; i++)
         {
             var row = table.Rows[i];
-            if (!texts.TryGetValue((row.Entry, row.Field), out var text))
+            var id = byId.Keys.FirstOrDefault(row.Names);
+            if (id == null || !texts.TryGetValue((id, row.Field), out var text))
             {
                 unmatched.Add(i + 1);
                 continue;
@@ -197,13 +214,13 @@ public static class RedactionStage
 
             if (row.Action == RedactionRow.DropEntry)
             {
-                dropped.Add(row.Entry);
+                dropped.Add(id);
                 continue;
             }
 
-            if (!edits.TryGetValue((row.Entry, row.Field), out var list))
+            if (!edits.TryGetValue((id, row.Field), out var list))
             {
-                edits[(row.Entry, row.Field)] = list = new List<Edit>();
+                edits[(id, row.Field)] = list = new List<Edit>();
             }
 
             var isCut = row.Action == RedactionRow.Cut;
@@ -293,6 +310,29 @@ public static class RedactionStage
         }
 
         return fixes;
+    }
+
+    /// <summary>The normalized text of every span a row matches, before any edit, with the row and the entry id. Used by the denylist step: redacted text is left-out text.</summary>
+    public static List<(RedactionRow Row, string Id, string Text)> SourceSpans(IEnumerable<RedactionEntry> entries, RedactionTable table)
+    {
+        var list = entries.ToList();
+        var result = new List<(RedactionRow, string, string)>();
+        foreach (var row in table.Rows)
+        {
+            var entry = list.FirstOrDefault(e => row.Names(e.Id));
+            if (entry == null || !entry.Fields.TryGetValue(row.Field, out var raw))
+            {
+                continue;
+            }
+
+            var text = SpanText.Normalize(raw);
+            foreach (var piece in Pieces(text).Where(p => p.Length == row.Span.Length && SpanText.Sha256(text.Substring(p.Start, p.Length)) == row.Span.Sha256))
+            {
+                result.Add((row, entry.Id, text.Substring(piece.Start, piece.Length)));
+            }
+        }
+
+        return result;
     }
 
     /// <summary>The sentences of a text and the clauses of those sentences that have more than one.</summary>

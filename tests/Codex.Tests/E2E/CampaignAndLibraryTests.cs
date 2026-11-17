@@ -51,7 +51,10 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         // ---- 2. Library: spells chip, search, detail with attribution. ----
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "library");
         await dm.GetByTestId("library-type-spell").ClickAsync();
+        await dm.WaitForURLAsync(url => new Uri(url).AbsolutePath.EndsWith("/library/spell"));
         await dm.GetByTestId("library-search").FillAsync("Fireball");
+        // The debounced search ends by writing ?q= to the address; once it has, nothing is left to overwrite the click's navigation.
+        await dm.WaitForURLAsync(url => new Uri(url).Query.Contains("q=Fireball"));
         // Exact name, not a substring: before the debounced search lands, the unfiltered list already
         // contains "Delayed Blast Fireball", and a contains-match would click that on a slow runner.
         var fireball = dm.GetByRole(AriaRole.Link, new() { Name = "Fireball", Exact = true });

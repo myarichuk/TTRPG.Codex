@@ -106,6 +106,7 @@ public static class PackWordCheck
 
     private sealed record PackFile(string Name, List<EntryItems> Entries);
 
+    /// <param name="common">The words a sentence may open with: the book's common lowercase words, and the words it capitalizes only at the start of a sentence (see <see cref="ImportPipeline.OpenerWords"/>).</param>
     public static List<PackFinding> CheckAllowlist(string packDir, IReadOnlySet<string> gameTerms, Denylist denylist, Denylist? common = null)
     {
         var files = Load(packDir, denylist);
@@ -126,10 +127,10 @@ public static class PackWordCheck
                 var seen = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var item in entry.Items.Where(i => !i.Structural))
                 {
-                    foreach (var word in CapitalsToCheck(item, lowerUsed, common))
+                    foreach (var word in CapitalsToCheck(item, lowerUsed, common, denylist))
                     {
                         var key = word.ToLowerInvariant();
-                        if (!gameTerms.Contains(key) && seen.Add(key))
+                        if (!IsTerm(key, gameTerms) && seen.Add(key))
                         {
                             findings.Add(new PackFinding(file.Name, entry.Number, item.Path, "capitalized word not in the allowlist", Safe(word, denylist)));
                         }
@@ -139,6 +140,49 @@ public static class PackWordCheck
         }
 
         return findings;
+    }
+
+    /// <summary>A game term, or the plural of one (a trait or a basic action written in the plural): the word, or the word without a final "s" or "es", is a term.</summary>
+    private static bool IsTerm(string lowerWord, IReadOnlySet<string> gameTerms) =>
+        gameTerms.Contains(lowerWord)
+        || (lowerWord.Length > 3 && lowerWord.EndsWith('s') && (gameTerms.Contains(lowerWord[..^1]) || (lowerWord.EndsWith("es", StringComparison.Ordinal) && gameTerms.Contains(lowerWord[..^2]))));
+
+    /// <summary>
+    /// The trait keys of the shipped packs as game terms: the words of the id and the name of every entry in a pack's trait folder (the system's `trait` type), lowercase.
+    /// A pack with no such folder adds nothing, so the gate is unchanged until chapter 2 generates trait entries.
+    /// </summary>
+    public static HashSet<string> TraitTerms(IEnumerable<string> packDirs, string traitFolder)
+    {
+        var terms = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var packDir in packDirs)
+        {
+            var folder = Path.Combine(packDir, traitFolder);
+            if (!Directory.Exists(folder))
+            {
+                continue;
+            }
+
+            foreach (var path in Directory.EnumerateFiles(folder, "*.yaml", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
+            {
+                if (BooksConfig.Deserializer.Deserialize<object>(File.ReadAllText(path)) is not List<object> list)
+                {
+                    throw new DegreesException($"Trait file {Path.GetFileName(path)} is not a list of entries.");
+                }
+
+                foreach (var map in list.OfType<IDictionary<object, object>>())
+                {
+                    foreach (var key in new[] { "id", "name" })
+                    {
+                        if (map.TryGetValue(key, out var value) && value is string text)
+                        {
+                            terms.UnionWith(Words(text).Select(w => w.ToLowerInvariant()));
+                        }
+                    }
+                }
+            }
+        }
+
+        return terms;
     }
 
     public static List<PackFinding> CheckDenylist(string packDir, Denylist denylist)
@@ -210,7 +254,7 @@ public static class PackWordCheck
         return Rune.IsUpper(first) || Rune.GetUnicodeCategory(first) == UnicodeCategory.TitlecaseLetter;
     }
 
-    private static IEnumerable<string> CapitalsToCheck(Item item, HashSet<string> lowerUsed, Denylist? common)
+    private static IEnumerable<string> CapitalsToCheck(Item item, HashSet<string> lowerUsed, Denylist? common, Denylist denylist)
     {
         if (item.IsLabel)
         {
@@ -236,8 +280,10 @@ public static class PackWordCheck
                 word.Clear();
 
                 // The first word of a sentence is exempt when its lowercase form is used in the pack, or is one of the book's common lowercase words (a hash list, so no
-                // text is kept): an ordinary opening word is not a name.
-                if (IsCapital(w) && !(first && (lowerUsed.Contains(w.ToLowerInvariant()) || (common?.Contains(Denylist.Hash(w)) ?? false))))
+                // text is kept): an ordinary opening word is not a name. A word on the denylist is never exempt through the common list, so a one-word name that is
+                // also an ordinary word is still caught.
+                if (IsCapital(w) && !(first && (lowerUsed.Contains(w.ToLowerInvariant())
+                    || ((common?.Contains(Denylist.Hash(w)) ?? false) && !denylist.Contains(Denylist.Hash(w))))))
                 {
                     result.Add(w);
                 }

@@ -92,8 +92,13 @@ public static partial class EntriesStage
         var entries = new List<ParsedEntry>();
         foreach (var range in ranges)
         {
-            var slice = blocks.Blocks.GetRange(range.Start, range.End - range.Start);
-            entries.AddRange(range.Row.Parser == "rules" ? ParseRule(range, slice, book, compounds) : ParseEntries(range, slice, book, compounds));
+            var slice = range.BlocksIn(blocks);
+            entries.AddRange(range.Row.Parser switch
+            {
+                "rules" => ParseRule(range, slice, book, compounds),
+                "glossary" => ParseGlossary(range, slice, book, compounds),
+                _ => ParseEntries(range, slice, book, compounds),
+            });
         }
 
         // The redaction rows name an entry by id alone, so an id may not repeat even across types.
@@ -240,7 +245,7 @@ public static partial class EntriesStage
         var set = new HashSet<string>(StringComparer.Ordinal);
         foreach (var range in ranges)
         {
-            for (var i = range.Start; i < range.End; i++)
+            foreach (var i in range.Indexes)
             {
                 foreach (var line in blocks.Blocks[i].Lines)
                 {
@@ -335,57 +340,7 @@ public static partial class EntriesStage
 
         private void Append(string line)
         {
-            var sb = _parts[^1].Text;
-            var text = line.Trim();
-            if (text.Length == 0)
-            {
-                return;
-            }
-
-            if (sb.Length == 0)
-            {
-                sb.Append(text);
-                return;
-            }
-
-            // A dash at a line end (en or em) joins with no space: the word after it follows straight on.
-            if (sb[^1] is '–' or '—')
-            {
-                sb.Append(text);
-                return;
-            }
-
-            // A hyphen at a line end: a word the book also writes with its hyphen inside a line keeps it, any other is a break in the word and goes.
-            if (sb[^1] == '-' && sb.Length >= 2 && char.IsLetter(sb[^2]) && char.IsLower(text[0]))
-            {
-                if (!_compounds.Contains(Joined(sb, text)))
-                {
-                    sb.Length--;
-                }
-
-                sb.Append(text);
-                return;
-            }
-
-            sb.Append(' ').Append(text);
-        }
-
-        /// <summary>The hyphenated word a line break would split, written with its hyphen: the end of the text so far and the start of the next line.</summary>
-        private static string Joined(StringBuilder sb, string next)
-        {
-            var start = sb.Length - 1;
-            while (start > 0 && char.IsLetter(sb[start - 1]))
-            {
-                start--;
-            }
-
-            var end = 0;
-            while (end < next.Length && char.IsLetter(next[end]))
-            {
-                end++;
-            }
-
-            return (sb.ToString(start, sb.Length - start) + next[..end]).ToLowerInvariant();
+            JoinLine(_parts[^1].Text, line, _compounds);
         }
 
         public void Finish()

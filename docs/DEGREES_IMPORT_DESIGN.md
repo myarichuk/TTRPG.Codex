@@ -146,7 +146,8 @@ Pack YAML is staged only after the redaction stage reports zero unmatched rows a
 
 - **The redaction table stores no source text.** A row that held the exact source text would commit the very
   proper noun it removes. Each row in `Data/degrees-redactions.yaml` is:
-  - `entry` (id), `field`, and `span` (the SHA-256 and character length of the exact normalized source span, which is a
+  - `entry` (id) or `entryHash` (the SHA-256 of the id, for a row that drops an entry whose own name the notice reserves: the id is the name, so the file never holds
+    it), `field`, and `span` (the SHA-256 and character length of the exact normalized source span, which is a
     sentence or a clause);
   - `action`: `replace` (with our replacement text), `cut` or `drop-entry`;
   - `reason`, in our words, naming no names.
@@ -333,5 +334,51 @@ lowercase form is used elsewhere in the pack. Two things move to chapter 1 becau
   words would flag as untaken until its chapter lands. 17 reviewed game terms and ordinary words are in `degrees-denylist-waivers.txt`. A test runs the allowlist gate (with the common
   words) over every title in the take-list.
 - The CI gate test pins `rules-core` in `ExpectedGeneratedPacks`, and lists every flagged word (entry number, field path).
-- Not done: the report does not yet compute the bookmark-children and header counts itself (they are pinned in `DegreesRulesPackTests`); rules sidebars of the conditions list are dropped
+- Not done: rules sidebars of the conditions list are dropped
   with the other sidebars (a later `rules` row can take a named one); trailing and parenthesized page pointers are still removed by redaction rows, not by a parser rule.
+
+## 11. Chapter 2 (glossary traits): the prerequisite and the chapter 1 leftovers
+
+**Built (no chapter 2 run yet, and no new take-list row):**
+- The `trait` type is declared in four-degrees `system.yaml` (no fields, folder `traits`), like `condition`. `PackWordCheck.TraitTerms` reads the id and name words of every
+  entry in a pack's `traits` folder as game terms, and the CI gate test adds them to the allowlist. Until chapter 2 generates trait entries it adds nothing; a synthetic pack tests it.
+- The take-list title test lets only a title's first word through as a common word of the book (like the pack gate); the generic words of the chapter titles are now allowlisted.
+- A word on the denylist is never exempt as a sentence opener through the common list, so a one-word name that is also an ordinary word is still caught.
+- The importer computes the two counts itself (`ImportPipeline.CheckEntryCounts`): the non-sidebar bookmark children of a taken `entries` section and the entry-header blocks of its
+  range. A disagreement fails the run with both counts unless the row has a `countsDiffer` reason; a section with no child bookmarks is not compared. On chapter 1: 42 and 42.
+  The generated `rules-core` pack is byte-identical (`--check` passes).
+- Regenerating the denylist after planning the glossary needs the file deleted first, since `MergeDenylist` only adds hashes (R3 of the chapter 1 review; the rebuild belongs to the chapter 2 run).
+
+**Built (the chapter 2 run, `glossary-traits`), and what differs from the text above:**
+- `packs/rules-core/` now holds 125 traits beside the 42 conditions and 3 rules (170 entries; the conditions and rules are byte-identical to chapter 1). The `glossary` parser reads the
+  `Glossary & Index` section, which is one alphabetical list of the index and the glossary with no child bookmarks and no entry-header font. An entry starts at a line with a bold
+  term; a trait definition is one whose term is followed by the plain word "(trait)" and some text. The text runs to the next bold term or to a line that ends in a page list (the
+  unbolded sub-entries of the index follow such a line), and a trailing page list, with a short mark of another book before a page, is cut. Every other entry, the index, is read
+  past and not kept. A name is written with a capital first letter; the id is the same slug as everywhere. The entry has no fields, only the description.
+- Two counts, as section 6 asks, for a section with no bookmark children and no header font: the 129 definitions plus the 24 trait lines that only point to a page or another
+  book (153) against the 153 occurrences of the trait mark in the range. `ImportPipeline.CheckGlossaryCounts` fails the run if they differ and the row has no `countsDiffer` reason;
+  they agree. Four of the 129 are dropped by redaction rows (see below), so the pack holds 125.
+- The bookmarks end the glossary a page early: its last lines are at the top of the page the backmatter starts on, and the backmatter's title is not a block. A row may say
+  `spillsOnto: <page>`; the range then also takes the first block of each column of that page when it starts at the page's top edge (within three points of the highest block of the page
+  before). A column that starts lower holds none of the section. A taken range keeps a list of such extra blocks (`TakenRange.Extra`), which the take stage, the parser and the
+  denylist generator all read.
+- The index is not taken, so it is left out for the denylist: the parser returns the lines it read past (`GlossaryScan.Dropped`: the index, the other entries, the pointer-only
+  trait lines) and the denylist generator hashes their capitalized words with the other left-out text. The words of the take-list's own titles are left off the denylist in code,
+  like the book keys, since they are in every `source:` line.
+- Redaction: 14 `replace` rows, each naming a hash and a length. They turn a sentence that names a place of the setting (the afterlife and outer realms, a plane, a creation myth)
+  into a plain statement of the same meaning (two rows now give the trait a short description of its own, so it is not defined by a circle or by nothing). Four rows are
+  `drop-entry`, for traits whose names the setting invented for a kind of being; the notice reserves proper nouns and the descriptive terms derived from them. Those four name their
+  entry by `entryHash`, so the table holds no name. The denylist step hashes the capitalized words of every redacted span (not the first word of the span) and the name of every dropped
+  entry, with its plural, whatever the case and however often the book writes it in lowercase: redacted text is left-out text although it sits in a taken range, and a coined name
+  the book writes in lowercase would otherwise pass both gates (the name of a kept trait is a game term through `TraitTerms`). The folklore-derived kind names (an angel, a demon, a devil, a changeling and the like) stay, and the reviewer should read that line again.
+  No page pointer needs a row: the page-list rule is in the parser.
+- Gate changes, in place of rewording: a plural of a game term (an action or a trait written with a final s or es) is a game term; and a word the book capitalizes at the start of a
+  sentence and nowhere else, and also writes in lowercase somewhere, is an ordinary opening word (`ImportPipeline.OpenerWords`), unless the denylist has it. The lowercase use is required
+  because a name that only ever opens a sentence (the first of a list of sample names, say) has none. These words, and the waived words, are hashed into `degrees-common.sha256` beside the
+  common lowercase words (the file has no other consumer than the opener check), but only the lowercase-three-times kind is left off the denylist. One pack sentence opens on a word with
+  no lowercase use; it is a reviewed waiver. Trait names count as game terms through
+  `TraitTerms`, so no trait word was added to the allowlist; two generic words of the section title were.
+- The denylist was deleted and regenerated with `degrees denylist` (1,030 hashes), and so was the common-word file (4,711 hashes). The waiver file kept 16 of the 17 chapter 1 words
+  (each still needed: the words are capitalized in sections the take-list leaves out; one, a word of a taken title, is now left off the denylist in code) and gained 3 (the plural of
+  a trait, and two ordinary words that open a sentence in a trait's rules). A row's `spillsOnto` that is not the page the next section starts on now fails the run.
+- `LEGAL.md` and the pack manifest say the pack now holds the glossary's trait definitions.

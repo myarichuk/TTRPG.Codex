@@ -170,6 +170,15 @@ entityTypes:
     icon: skull
     fields: []
 
+  # A trait's definition for the Library: what the word means wherever a feat, weapon or creature carries it. The entry's id is the trait's key, and
+  # the importer's allowlist gate reads these keys and names as game terms.
+  - type: trait
+    label: Trait
+    pluralLabel: Traits
+    folder: traits
+    icon: tag
+    fields: []
+
   # A rules section that is not a game object: a procedure, a definition, a table's explanation. `category` groups it in the Library.
   - type: rule
     label: Rule

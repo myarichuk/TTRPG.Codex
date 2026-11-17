@@ -11,6 +11,8 @@ namespace Codex.Tests;
 /// importer's output, so none of its text is pinned here; the counts come from the document, not from the importer, two ways: the bookmark
 /// children of the taken section (46, of which 4 are sidebars) and the entry-header-font count in the taken range (42) agree on the 42 conditions,
 ///. The rules are the appendix's own intro rule (taken by an `own` path, never dropped) and its two rule sections: 3.
+/// The 125 traits (chapter 2) are the glossary's trait definitions. The glossary has no child bookmarks and no entry-header font, so its two counts are the 129 definitions
+/// plus the trait lines that only point elsewhere (24), and the occurrences of the trait mark in the range (153); they agree. Four definitions are dropped by redaction rows.
 /// </summary>
 public class DegreesRulesPackTests : IAsyncLifetime
 {
@@ -52,6 +54,9 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Theory]
     [InlineData("condition", 42)] // 46 bookmark children minus 4 sidebars, and 42 entry headers in the taken range
     [InlineData("rule", 3)]       // the appendix's own intro rule, condition values, overriding conditions
+    [InlineData("trait", 125)]    // chapter 2: the glossary's trait definitions. The importer finds 129 definitions and 24 trait lines that only point to a page or another book
+                                  // (153), and reads 153 occurrences of the trait mark in the range: the two counts agree, so no countsDiffer reason is needed.
+                                  // Four definitions are dropped by redaction rows (names the setting invented), so the pack holds 125.
     public void ThePackHasItsCounts_AndRequiredFields(string type, int expected)
     {
         var entries = Entries(type, PackId).ToList();
@@ -69,12 +74,12 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Fact]
     public void ThePackHoldsNothingElse_AndTheReportAgrees()
     {
-        Assert.Equal(45, AllEntries(PackId).Count());
+        Assert.Equal(45 + 125, AllEntries(PackId).Count());
 
         // import-report.yaml holds counts and ids only; its totals are the importer's own and must match what loaded.
         var report = File.ReadAllText(Path.Combine(PackFolder, "import-report.yaml"));
         var reported = Regex.Matches(report, @"^  entries: (\d+)$", RegexOptions.Multiline).Sum(m => int.Parse(m.Groups[1].Value));
-        Assert.Equal(45, reported);
+        Assert.Equal(45 + 125, reported);
         Assert.DoesNotMatch(@"(?m)^  pageReferencesLeft: [1-9]", report);
     }
 
@@ -83,7 +88,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     {
         Assert.All(AllEntries(PackId), e =>
         {
-            Assert.Matches(@"^pc > Conditions Appendix( > [A-Za-z ]+)?$", e.Source!); // chapter 1 only; a later chapter widens this
+            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index)$", e.Source!); // chapters 1 and 2; a later chapter widens this
             Assert.DoesNotContain("homebrew", e.Tags);
             Assert.DoesNotMatch(@"\d", e.Source!); // no page numbers
         });
@@ -112,6 +117,19 @@ public class DegreesRulesPackTests : IAsyncLifetime
         Assert.Empty(rules.Intersect(homebrew));
         Assert.Empty(rules.Select(r => r.Id).Intersect(homebrew.Select(h => h.Id)));
         Assert.Equal(rules.Count, rules.Select(r => r.Id).Distinct().Count());
+    }
+
+    [Fact]
+    public void NoTraitIdClashesWithAnyOtherEntryOfTheFourDegreesPacks_OrWithAConditionOrSkillKey()
+    {
+        var traits = Entries("trait", PackId).Select(e => e.Id).ToList();
+        var others = _system.EntityTypes.Where(t => t.Type != "trait").SelectMany(t => Entries(t.Type, PackId, HomebrewId).Select(e => e.Id)).ToHashSet();
+        var keys = _system.Conditions.Concat(_system.SheetRules?.Skills?.List.Select(s => s.Key) ?? Enumerable.Empty<string>()).Select(k => k.ToLowerInvariant()).ToHashSet();
+
+        Assert.Equal(traits.Count, traits.Distinct().Count());
+        Assert.Empty(traits.Where(others.Contains));
+        Assert.Empty(traits.Where(keys.Contains));
+        Assert.Empty(Entries("trait", HomebrewId).Select(e => e.Id).Intersect(traits));
     }
 
     [Fact]

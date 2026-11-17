@@ -1,7 +1,8 @@
 # Denylist waivers of the local book importer: lowercase words a person has reviewed and decided the generated packs may say, although a section the
-# take-list leaves out also capitalizes them. Game terms only: no names of people, places, deities, creatures or products.
+# take-list leaves out also capitalizes them. Game terms and ordinary words only (the lines below say which): no names of people, places, deities, creatures or products.
 # Without a line here a word stays on the denylist, and the CI gate fails when a pack says it. Add one line per reviewed word, with the review in the commit message.
-# Chapter 1 review (each word is a defence, ability, skill, statistic or action name, or an ordinary word of a condition's rules, not a name):
+# Chapter 1 review (each word is a defence, ability, skill, statistic or action name, or an ordinary word of a condition's rules, not a name).
+# The chapter 2 run rebuilt the denylist from scratch and tried the pack without any waiver: all of these but one (overriding, now a word of a taken title) were still needed.
 ac
 dc
 dcs
@@ -16,6 +17,10 @@ hardness
 bulk
 speeds
 crawl
-overriding
 dislikes
 controller
+# Chapter 2 review: consumables is the plural of a trait; unlike is an ordinary word that opens a sentence in a trait's rules.
+consumables
+unlike
+# Chapter 2 review: fungal is an ordinary word that opens a trait's sentence; the book never writes it in lowercase, so the opener rule cannot pass it. A waived word may open a sentence.
+fungal
