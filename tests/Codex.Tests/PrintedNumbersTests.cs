@@ -8,7 +8,7 @@ namespace Codex.Tests;
 /// Runs on srd5e with a valued condition and <c>sheetRules.printed</c> added.</summary>
 public class PrintedNumbersTests
 {
-    private const string Shaken = "condition_shaken";
+    private const string Frightened = "condition_frightened";
     private const string Spooked = "condition_spooked";
 
     private sealed class Feats(params ContentEntry[] entries) : IEntryResolver
@@ -22,7 +22,7 @@ public class PrintedNumbersTests
     private static SystemDefinition System(Action<SheetRules>? more = null)
     {
         var system = SystemDefinitionLoader.Load(Path.Combine(TestPaths.ContentRoot, "systems", "srd5e", "system.yaml"));
-        system.ConditionEffects["Shaken"] = new ConditionEffectDefinition
+        system.ConditionEffects["Frightened"] = new ConditionEffectDefinition
         {
             Value = new ConditionValueDefinition { Max = "4" },
             Modifiers = { Mod("armorClass", "-value"), Mod("save", "-value"), Mod("initiative", "-value"), Mod("check.skill.stealth", "-value"), Mod("attack", "-value", "untyped") }
@@ -64,23 +64,23 @@ public class PrintedNumbersTests
         new SheetRuleEngine(system, resolver ?? NullEntryResolver.Instance).Printed(sheet);
 
     [Fact]
-    public void ArmorClass18_WithShaken2_Is16_AndRecomputeLeavesTheStoredNumberAlone()
+    public void ArmorClass18_WithFrightened2_Is16_AndRecomputeLeavesTheStoredNumberAlone()
     {
         var system = System();
-        var sheet = Creature((Shaken, 2L));
+        var sheet = Creature((Frightened, 2L));
 
         var ac = Read(system, sheet).Single(n => n.Target == "armorClass");
 
         Assert.Equal((18, 16), (ac.Printed, ac.Total));
-        Assert.Equal("Shaken", Assert.Single(ac.Bonuses).Source);
+        Assert.Equal("Frightened", Assert.Single(ac.Bonuses).Source);
         new SheetRuleEngine(system, NullEntryResolver.Instance).Recompute(sheet);
         Assert.Equal(18L, sheet["armorClass"]);
     }
 
     [Fact]
-    public void ASave7_WithShaken1_Is6_AndASkillAndADerivedNumberRead_TheirOwnTargets()
+    public void ASave7_WithFrightened1_Is6_AndASkillAndADerivedNumberRead_TheirOwnTargets()
     {
-        var read = Read(System(), Creature((Shaken, 1L)));
+        var read = Read(System(), Creature((Frightened, 1L)));
 
         Assert.Equal(6, read.Single(n => n.Target == "save.con").Total);
         Assert.Equal(4, read.Single(n => n.Target == "check.skill.stealth").Total);
@@ -119,16 +119,16 @@ public class PrintedNumbersTests
     [Fact]
     public void ASheetWhoseMethodIsNotPrinted_GivesNothing_AndSoDoesASystemWithoutPrinted()
     {
-        var sheet = Creature((Shaken, 2L));
+        var sheet = Creature((Frightened, 2L));
         sheet[SheetRuleEngine.MethodKey] = SheetRuleEngine.ManualMethod;
         Assert.Empty(Read(System(), sheet));
-        Assert.Empty(Read(System(rules => rules.Printed.Clear()), Creature((Shaken, 2L))));
+        Assert.Empty(Read(System(rules => rules.Printed.Clear()), Creature((Frightened, 2L))));
     }
 
     [Fact]
     public void ANumberTheSheetDoesNotHold_GivesNoEntry()
     {
-        var sheet = Creature((Shaken, 2L));
+        var sheet = Creature((Frightened, 2L));
         sheet.Remove("conSave");
 
         Assert.DoesNotContain(Read(System(), sheet), n => n.Target == "save.con");

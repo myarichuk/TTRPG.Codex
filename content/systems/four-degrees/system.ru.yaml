@@ -39,9 +39,48 @@ categories:
   Ability scores: Характеристики
 
 conditions:
-  Shaken: Потрясённый
-  Wobbly: Пошатнувшийся
-  Pinned: Прижатый
+  Blinded: Слеп
+  Broken: Сломан
+  Clumsy: Неуклюжий
+  Concealed: Нечётко виден
+  Confused: Спутан
+  Controlled: Под контролем
+  Dazzled: Ослеплён
+  Deafened: Глух
+  Doomed: Обречён
+  Drained: Истощён
+  Dying: Умирает
+  Encumbered: Перегружен
+  Enfeebled: Ослаблен
+  Fascinated: Зачарован
+  Fatigued: Утомлён
+  Fleeing: Бежит
+  Friendly: Дружелюбен
+  Frightened: Напуган
+  Grabbed: Схвачен
+  Helpful: Услужлив
+  Hidden: Спрятан
+  Hostile: Враждебен
+  Immobilized: Обездвижен
+  Indifferent: Равнодушен
+  Invisible: Невидим
+  Observed: Виден
+  Off-guard: Застигнут врасплох
+  Paralyzed: Парализован
+  Persistent Damage: Постоянный урон
+  Petrified: Окаменел
+  Prone: Лежит
+  Quickened: Ускорен
+  Restrained: Скован
+  Sickened: Тошнит
+  Slowed: Замедлен
+  Stunned: Ошеломлён
+  Stupefied: Одурманен
+  Unconscious: Без сознания
+  Undetected: Не обнаружен
+  Unfriendly: Недружелюбен
+  Unnoticed: Не замечен
+  Wounded: Ранен
   Heartened: Воодушевлённый
 
 moments:
@@ -165,12 +204,22 @@ sheetRules:
   lists:
     feats: Черты
   skills:
-    athletics: Атлетика
+    acrobatics: Акробатика
     arcana: Магия
-    craft: Ремесло
+    athletics: Атлетика
+    crafting: Ремесло
+    deception: Обман
     diplomacy: Дипломатия
+    intimidation: Запугивание
+    medicine: Медицина
+    nature: Природа
+    occultism: Оккультизм
+    performance: Выступление
+    religion: Религия
+    society: Общество
     stealth: Скрытность
     survival: Выживание
+    thievery: Воровство
   ranks:
     trained: Обучен
     expert: Эксперт

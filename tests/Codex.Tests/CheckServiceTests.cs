@@ -455,19 +455,19 @@ public class CheckServiceTests : IClassFixture<RavenDbFixture>, IDisposable
     [Fact]
     public async Task TheLiveArmorClass_NotTheStoredOne_IsRead_WhenATableStatusChangesIt_Async()
     {
-        // Shaken is a status the table put on the hero, never on the stored sheet: worked out from the stored sheet the armor class is 13, at the table it is 11.
-        var system = System(s => s.ConditionEffects["Shaken"] = new ConditionEffectDefinition
+        // Unnerved is a status the table put on the hero, never on the stored sheet: worked out from the stored sheet the armor class is 13, at the table it is 11.
+        var system = System(s => s.ConditionEffects["Unnerved"] = new ConditionEffectDefinition
         {
             Modifiers = { new ModifierDefinition { Target = "armorClass", Amount = "-2" } }
         });
         var table = await TableAsync(system);
         await using var _ = table.Runtime;
         var stored = table.Runtime.Checks.ArmorClassOf(table.Hero.Id);
-        await table.Runtime.EnqueueAsync(new AddStatusEffectCommand(table.Hero.Id, "Shaken", "dm", 10, EffectExpiry.EndOfTurn, table.Hero.Id));
+        await table.Runtime.EnqueueAsync(new AddStatusEffectCommand(table.Hero.Id, "Unnerved", "dm", 10, EffectExpiry.EndOfTurn, table.Hero.Id));
 
         var live = table.Runtime.Checks.ArmorClassOf(table.Hero.Id);
 
-        Assert.DoesNotContain("Shaken", SheetRuleEngine.RawList(table.Runtime.GetActorDocument(table.Hero.Id)!.Sheet, "conditions"));
+        Assert.DoesNotContain("Unnerved", SheetRuleEngine.RawList(table.Runtime.GetActorDocument(table.Hero.Id)!.Sheet, "conditions"));
         Assert.Equal((13, 11), (stored.Total, live.Total));
     }
 

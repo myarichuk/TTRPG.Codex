@@ -27,7 +27,7 @@
       - id: cut
         name: Cut both ends of the cord
         action: Action
-        check: Craft
+        check: Crafting
         dc: 16
         rank: trained
         successes: 2
@@ -62,7 +62,7 @@
       - id: wheel
         name: Find the bellows wheel
         action: Search
-        check: Craft
+        check: Crafting
         dc: 19
         rank: trained
         after: heat

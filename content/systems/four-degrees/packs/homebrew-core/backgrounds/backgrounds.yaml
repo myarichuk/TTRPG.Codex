@@ -10,4 +10,4 @@
   tags: [homebrew]
   description: You tended the signal lamps of a lonely road and learned to repair what the weather broke.
   properties:
-    adds: [{ to: skills, entries: [craft], rank: trained }]
+    adds: [{ to: skills, entries: [crafting], rank: trained }]

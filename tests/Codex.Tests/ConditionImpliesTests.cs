@@ -20,11 +20,11 @@ public class ConditionImpliesTests : IClassFixture<RavenDbFixture>, IDisposable
           Senseless:
             implies: [Dazzled, Rooted]
           Overwhelmed:
-            implies: [{ condition: Shaken, value: 2 }]
+            implies: [{ condition: Frightened, value: 2 }]
           Dread:
             value: { max: 4, decrease: { on: turnEnd, by: 1 } }
-            implies: [{ condition: Shaken, value: value }]
-          Shaken:
+            implies: [{ condition: Frightened, value: value }]
+          Frightened:
             value: { max: 4 }
             modifiers:
               - { target: attack, amount: "-value", type: status }
@@ -77,7 +77,7 @@ public class ConditionImpliesTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.All(senseless.Implies, i => Assert.Null(i.Value));
         Assert.Empty(senseless.Modifiers);
         var overwhelmed = Assert.Single(system.ConditionEffects["Overwhelmed"].Implies);
-        Assert.Equal(("Shaken", "2"), (overwhelmed.Condition, overwhelmed.Value));
+        Assert.Equal(("Frightened", "2"), (overwhelmed.Condition, overwhelmed.Value));
         Assert.Equal("value", system.ConditionEffects["Dread"].Implies[0].Value);
     }
 
@@ -145,33 +145,33 @@ public class ConditionImpliesTests : IClassFixture<RavenDbFixture>, IDisposable
     {
         var system = Parse(Dread);
         var key = SheetConditions.DefaultKey("Dread");
-        var shaken = SheetConditions.DefaultKey("Shaken");
+        var frightened = SheetConditions.DefaultKey("Frightened");
 
         var three = SheetConditions.Holding(system, Sheet((key, 3L)));
-        Assert.Equal(3, three.Single(h => h.Name == "Shaken").Value);
-        Assert.False(three.Single(h => h.Name == "Shaken").Listed);
+        Assert.Equal(3, three.Single(h => h.Name == "Frightened").Value);
+        Assert.False(three.Single(h => h.Name == "Frightened").Listed);
 
-        // Shaken stored at 1 with Dread 3 is held at 3, once.
-        var both = SheetConditions.Holding(system, Sheet((key, 3L), (shaken, 1L)));
-        var held = Assert.Single(both, h => h.Name == "Shaken");
+        // Frightened stored at 1 with Dread 3 is held at 3, once.
+        var both = SheetConditions.Holding(system, Sheet((key, 3L), (frightened, 1L)));
+        var held = Assert.Single(both, h => h.Name == "Frightened");
         Assert.Equal(3, held.Value);
         Assert.True(held.Listed);
         Assert.Equal(new[] { "Dread" }, held.From);
 
-        // A higher stored value wins; Dread dropping to 1 leaves Shaken at 1; Dread at 0 ends it.
-        Assert.Equal(4, SheetConditions.Holding(system, Sheet((key, 3L), (shaken, 4L))).Single(h => h.Name == "Shaken").Value);
-        Assert.Equal(1, SheetConditions.Holding(system, Sheet((key, 1L))).Single(h => h.Name == "Shaken").Value);
-        Assert.DoesNotContain("Shaken", SheetConditions.Of(system, Sheet((key, 0L))));
+        // A higher stored value wins; Dread dropping to 1 leaves Frightened at 1; Dread at 0 ends it.
+        Assert.Equal(4, SheetConditions.Holding(system, Sheet((key, 3L), (frightened, 4L))).Single(h => h.Name == "Frightened").Value);
+        Assert.Equal(1, SheetConditions.Holding(system, Sheet((key, 1L))).Single(h => h.Name == "Frightened").Value);
+        Assert.DoesNotContain("Frightened", SheetConditions.Of(system, Sheet((key, 0L))));
     }
 
     [Fact]
     public void AFixedValue_AFormulaClampedToTheMaximum_AndATwoStepChain_Work()
     {
         var system = Parse(Dread);
-        Assert.Equal(2, SheetConditions.Holding(system, Sheet((SheetModel.ConditionsKey, new List<object> { "Overwhelmed" }))).Single(h => h.Name == "Shaken").Value);
+        Assert.Equal(2, SheetConditions.Holding(system, Sheet((SheetModel.ConditionsKey, new List<object> { "Overwhelmed" }))).Single(h => h.Name == "Frightened").Value);
 
         var clamped = Parse(Dread.Replace("max: 4, decrease", "max: 6, decrease"));
-        Assert.Equal(4, SheetConditions.Holding(clamped, Sheet((SheetConditions.DefaultKey("Dread"), 6L))).Single(h => h.Name == "Shaken").Value);
+        Assert.Equal(4, SheetConditions.Holding(clamped, Sheet((SheetConditions.DefaultKey("Dread"), 6L))).Single(h => h.Name == "Frightened").Value);
 
         var chain = SheetConditions.Of(system, Sheet((SheetModel.ConditionsKey, new List<object> { "Chain" })));
         Assert.Equal(new[] { "Chain", "Senseless", "Dazzled", "Rooted" }, chain);
@@ -189,8 +189,8 @@ public class ConditionImpliesTests : IClassFixture<RavenDbFixture>, IDisposable
             conditionEffects:
               Dread:
                 value: { max: 4 }
-                implies: [{ condition: Shaken, value: value }]
-              Shaken:
+                implies: [{ condition: Frightened, value: value }]
+              Frightened:
                 value: { max: 4 }
                 modifiers:
                   - { target: attack, amount: "-value" }
@@ -199,7 +199,7 @@ public class ConditionImpliesTests : IClassFixture<RavenDbFixture>, IDisposable
 
         var result = new SheetModel(system, NullEntryResolver.Instance, sheet).Evaluate();
 
-        Assert.Contains("Shaken", result.Conditions);
+        Assert.Contains("Frightened", result.Conditions);
         Assert.Equal(7d, result.Values["strike"]);
     }
 
@@ -211,15 +211,15 @@ public class ConditionImpliesTests : IClassFixture<RavenDbFixture>, IDisposable
             conditionEffects:
               Dread:
                 value: { max: 6 }
-                implies: [{ condition: Shaken, value: value }]
-              Shaken:
+                implies: [{ condition: Frightened, value: value }]
+              Frightened:
                 value: { max: level }
             """, "attributes: [{ key: level, default: 3 }]");
         var sheet = Sheet((SheetConditions.DefaultKey("Dread"), 6L));
 
-        Assert.Equal(3, SheetConditions.Holding(system, sheet).Single(h => h.Name == "Shaken").Value);
+        Assert.Equal(3, SheetConditions.Holding(system, sheet).Single(h => h.Name == "Frightened").Value);
         // The stepper's maximum is worked out on a model too, and reads what holds: that must stop as well.
-        Assert.Equal(3, ConditionLines.Valued(system, sheet).Single(v => v.Name == "Shaken").Max);
+        Assert.Equal(3, ConditionLines.Valued(system, sheet).Single(v => v.Name == "Frightened").Max);
         Assert.NotNull(new SheetModel(system, NullEntryResolver.Instance, sheet).Evaluate());
     }
 
@@ -268,10 +268,10 @@ public class ConditionImpliesTests : IClassFixture<RavenDbFixture>, IDisposable
         var system = Parse(Dread);
         var lines = ConditionLines.Holding(system, Sheet((SheetConditions.DefaultKey("Dread"), 3L)));
 
-        var shaken = Assert.Single(lines, l => l.Name == "Shaken");
-        Assert.False(shaken.Listed);
-        Assert.Equal(3, shaken.Value);
-        Assert.Equal(new[] { "Dread" }, shaken.From);
+        var frightened = Assert.Single(lines, l => l.Name == "Frightened");
+        Assert.False(frightened.Listed);
+        Assert.Equal(3, frightened.Value);
+        Assert.Equal(new[] { "Dread" }, frightened.From);
         Assert.True(Assert.Single(lines, l => l.Name == "Dread").Listed);
     }
 

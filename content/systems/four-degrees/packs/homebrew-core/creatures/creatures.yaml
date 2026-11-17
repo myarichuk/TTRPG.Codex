@@ -23,7 +23,7 @@
     strikes:
       - { name: Bite, bonus: 8, range: melee, damage: 1d8+1 }
     abilities:
-      - { name: Mud drag, description: "On a critical hit with its Bite, the target is Pinned until the start of the hound's next turn." }
+      - { name: Mud drag, description: "On a critical hit with its Bite, the target is Grabbed until the start of the hound's next turn." }
 - id: ash-sentry
   name: Ash sentry
   tags: [homebrew]
@@ -73,4 +73,4 @@
       - { name: Chilling touch, bonus: 9, range: melee, damage: 1d6+3 }
       - { name: Lure spark, bonus: 9, range: ranged, damage: 1d4+3 }
     abilities:
-      - { name: Lead astray, description: "A creature that fails a Wisdom save against the wisp's DC is Shaken 1 and walks toward the light." }
+      - { name: Lead astray, description: "A creature that fails a Wisdom save against the wisp's DC is Frightened 1 and walks toward the light." }

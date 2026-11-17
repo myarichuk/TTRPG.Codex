@@ -336,7 +336,7 @@ public class DegreesRedactionTests : IDisposable
         - id: ember-ring
           name: Ember Ring
           tags: [Fire]
-          description: The Ember Ring burns. It works with Stealth checks and the Wobbly condition, so use it with care.
+          description: The Ember Ring burns. It works with Stealth checks and the Frightened condition, so use it with care.
           properties:
             effect: Roll a Craft save; the other Ring answers.
             routes:
@@ -346,7 +346,7 @@ public class DegreesRedactionTests : IDisposable
           description: A stone. Heavy.
         """;
 
-    private static readonly HashSet<string> Terms = new() { "ember", "ring", "stealth", "wobbly", "craft", "plain", "stone", "roll", "quick", "heavy" };
+    private static readonly HashSet<string> Terms = new() { "ember", "ring", "stealth", "frightened", "craft", "plain", "stone", "roll", "quick", "heavy" };
 
     private static readonly Denylist NoDenylist = new(Array.Empty<string>());
 
