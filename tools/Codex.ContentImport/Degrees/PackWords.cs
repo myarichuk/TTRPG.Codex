@@ -126,7 +126,7 @@ public static class PackWordCheck
                 var seen = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var item in entry.Items.Where(i => !i.Structural))
                 {
-                    foreach (var word in CapitalsToCheck(item, lowerUsed, common))
+                    foreach (var word in CapitalsToCheck(item, lowerUsed, common, denylist))
                     {
                         var key = word.ToLowerInvariant();
                         if (!gameTerms.Contains(key) && seen.Add(key))
@@ -248,7 +248,7 @@ public static class PackWordCheck
         return Rune.IsUpper(first) || Rune.GetUnicodeCategory(first) == UnicodeCategory.TitlecaseLetter;
     }
 
-    private static IEnumerable<string> CapitalsToCheck(Item item, HashSet<string> lowerUsed, Denylist? common)
+    private static IEnumerable<string> CapitalsToCheck(Item item, HashSet<string> lowerUsed, Denylist? common, Denylist denylist)
     {
         if (item.IsLabel)
         {
@@ -274,8 +274,10 @@ public static class PackWordCheck
                 word.Clear();
 
                 // The first word of a sentence is exempt when its lowercase form is used in the pack, or is one of the book's common lowercase words (a hash list, so no
-                // text is kept): an ordinary opening word is not a name.
-                if (IsCapital(w) && !(first && (lowerUsed.Contains(w.ToLowerInvariant()) || (common?.Contains(Denylist.Hash(w)) ?? false))))
+                // text is kept): an ordinary opening word is not a name. A word on the denylist is never exempt through the common list, so a one-word name that is
+                // also an ordinary word is still caught.
+                if (IsCapital(w) && !(first && (lowerUsed.Contains(w.ToLowerInvariant())
+                    || ((common?.Contains(Denylist.Hash(w)) ?? false) && !denylist.Contains(Denylist.Hash(w))))))
                 {
                     result.Add(w);
                 }

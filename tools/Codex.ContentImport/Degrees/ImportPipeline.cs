@@ -40,6 +40,7 @@ public static partial class ImportPipeline
     public static PipelineOutput Run(BlocksResult blocks, IReadOnlyList<SpineNode> spine, IReadOnlyList<TakeRow> rows, RedactionTable redactions, string book)
     {
         var ranges = TakeStage.Resolve(spine, blocks, rows);
+        CheckEntryCounts(spine, blocks, ranges);
         var parsed = EntriesStage.Run(blocks, ranges, book);
 
         // Only this book's rows apply, so one book's rows are never "unmatched" in the other's run.
@@ -62,6 +63,34 @@ public static partial class ImportPipeline
         }).ToList();
 
         return new PipelineOutput(ranges, parsed, final, report, ReportRows(blocks, spine, rows, redactions, book, parsed, final));
+    }
+
+    /// <summary>
+    /// Counts the entries of every taken <c>entries</c> range two ways, from the document: the bookmark children of the taken section (minus the sidebar bookmarks) and the
+    /// blocks in the entry-header font in the range. They must agree, or the row says why in <see cref="TakeRow.CountsDiffer"/>; otherwise the run fails with both counts.
+    /// A section with no child bookmarks has nothing to compare (header font only). Returns the (bookmarks, headers) pairs for the ranges it compared.
+    /// </summary>
+    public static List<(int Bookmarks, int Headers)> CheckEntryCounts(IReadOnlyList<SpineNode> spine, BlocksResult blocks, IEnumerable<TakenRange> ranges)
+    {
+        var compared = new List<(int, int)>();
+        foreach (var range in ranges.Where(r => !r.Own && r.Row.Parser == "entries"))
+        {
+            var node = range.Node;
+            var children = spine.Where(n => n.Depth == node.Depth + 1 && n.Path.Length == node.Path.Length + 1 && n.Path.Take(node.Path.Length).SequenceEqual(node.Path) && !n.Sidebar).Count();
+            if (children == 0)
+            {
+                continue;
+            }
+
+            var headers = blocks.Blocks.Skip(range.Start).Take(range.End - range.Start).Count(b => b.Role == "entry-header");
+            compared.Add((children, headers));
+            if (children != headers && string.IsNullOrWhiteSpace(range.Row.CountsDiffer))
+            {
+                throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: the taken section has {children} bookmark children (sidebars left out) but {headers} entry-header blocks in its range, and the row gives no countsDiffer reason.");
+            }
+        }
+
+        return compared;
     }
 
     private static List<ReportRow> ReportRows(BlocksResult blocks, IReadOnlyList<SpineNode> spine, IReadOnlyList<TakeRow> rows, RedactionTable redactions, string book, List<ParsedEntry> parsed, List<FinalEntry> final)

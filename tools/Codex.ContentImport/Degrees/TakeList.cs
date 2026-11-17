@@ -40,6 +40,12 @@ public sealed class TakeRow
     /// <summary>The name, in our own words, of the entry made from an <see cref="Own"/> path (its title is not the entry's name). Defaults to the path's last title.</summary>
     public string? OwnName { get; set; }
 
+    /// <summary>
+    /// For an <c>entries</c> row: why the bookmark children of a taken section (minus the sidebar bookmarks) and the entry-header-font blocks of its range may disagree, in our
+    /// own words. Without it, a disagreement fails the run (see <see cref="ImportPipeline.CheckEntryCounts"/>). Empty when they agree.
+    /// </summary>
+    public string? CountsDiffer { get; set; }
+
     /// <summary>The bookmark path of a taken range, whichever list it came from.</summary>
     public List<string> PathOf(TakenRange range) => range.Own ? Own[range.PathNumber - Paths.Count - 1] : Paths[range.PathNumber - 1];
 

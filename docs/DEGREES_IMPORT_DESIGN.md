@@ -333,5 +333,17 @@ lowercase form is used elsewhere in the pack. Two things move to chapter 1 becau
   words would flag as untaken until its chapter lands. 17 reviewed game terms and ordinary words are in `degrees-denylist-waivers.txt`. A test runs the allowlist gate (with the common
   words) over every title in the take-list.
 - The CI gate test pins `rules-core` in `ExpectedGeneratedPacks`, and lists every flagged word (entry number, field path).
-- Not done: the report does not yet compute the bookmark-children and header counts itself (they are pinned in `DegreesRulesPackTests`); rules sidebars of the conditions list are dropped
+- Not done: rules sidebars of the conditions list are dropped
   with the other sidebars (a later `rules` row can take a named one); trailing and parenthesized page pointers are still removed by redaction rows, not by a parser rule.
+
+## 11. Chapter 2 (glossary traits): the prerequisite and the chapter 1 leftovers
+
+**Built (no chapter 2 run yet, and no new take-list row):**
+- The `trait` type is declared in four-degrees `system.yaml` (no fields, folder `traits`), like `condition`. `PackWordCheck.TraitTerms` reads the id and name words of every
+  entry in a pack's `traits` folder as game terms, and the CI gate test adds them to the allowlist. Until chapter 2 generates trait entries it adds nothing; a synthetic pack tests it.
+- The take-list title test lets only a title's first word through as a common word of the book (like the pack gate); the generic words of the chapter titles are now allowlisted.
+- A word on the denylist is never exempt as a sentence opener through the common list, so a one-word name that is also an ordinary word is still caught.
+- The importer computes the two counts itself (`ImportPipeline.CheckEntryCounts`): the non-sidebar bookmark children of a taken `entries` section and the entry-header blocks of its
+  range. A disagreement fails the run with both counts unless the row has a `countsDiffer` reason; a section with no child bookmarks is not compared. On chapter 1: 42 and 42.
+  The generated `rules-core` pack is byte-identical (`--check` passes).
+- Regenerating the denylist after planning the glossary needs the file deleted first, since `MergeDenylist` only adds hashes (R3 of the chapter 1 review; the rebuild belongs to the chapter 2 run).

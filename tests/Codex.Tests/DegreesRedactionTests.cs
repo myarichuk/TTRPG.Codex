@@ -434,6 +434,18 @@ public class DegreesRedactionTests : IDisposable
     }
 
     [Fact]
+    public void ADenylistedWordIsNotExemptAsAnOpenerEvenWhenItIsAlsoACommonWord()
+    {
+        var common = new Denylist(new[] { Denylist.Hash("then"), Denylist.Hash("grove") });
+        var deny = new Denylist(new[] { Denylist.Hash("grove") });
+        var pack = FixturePack("- id: one\n  name: Plain Stone\n  text: Roll twice. Then use it. Grove is near.\n");
+
+        Assert.Empty(PackWordCheck.CheckAllowlist(pack, Terms, NoDenylist, common));
+        var finding = Assert.Single(PackWordCheck.CheckAllowlist(pack, Terms, deny, common));
+        Assert.Contains("denylisted", finding.Detail);
+    }
+
+    [Fact]
     public void ACapitalAfterAnOpeningQuoteIsASentenceStart_ButAfterAClosingQuoteOrAWordItIsNot()
     {
         // One fixture folder is reused, so each text is checked before the next is written.
@@ -454,9 +466,10 @@ public class DegreesRedactionTests : IDisposable
             .ToList();
 
         Assert.NotEmpty(titles);
-        var flagged = titles.SelectMany(PackWordCheck.Words).Where(PackWordCheck.IsCapital)
-            .Where(w => !terms.Contains(w.ToLowerInvariant()) && !common.Contains(Denylist.Hash(w)))
-            .Distinct().ToList();
+        // Like the pack gate, only a title's first word may pass as a common word of the book; every other word must be an allowlisted game term.
+        var flagged = titles.SelectMany(t => PackWordCheck.Words(t).Select((w, i) => (Word: w, First: i == 0))).Where(x => PackWordCheck.IsCapital(x.Word))
+            .Where(x => !terms.Contains(x.Word.ToLowerInvariant()) && !(x.First && common.Contains(Denylist.Hash(x.Word))))
+            .Select(x => x.Word).Distinct().ToList();
         Assert.True(flagged.Count == 0, string.Join(", ", flagged));
     }
 

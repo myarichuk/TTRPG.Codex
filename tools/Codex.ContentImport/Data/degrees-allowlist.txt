@@ -105,3 +105,17 @@ flying
 swimming
 requests
 x
+# The generic words of the take-list's chapter titles (the take-list test lets only a title's first word through as a common word of the book).
+appendix
+introduction
+play
+playing
+game
+creation
+ancestries
+backgrounds
+classes
+skills
+feats
+equipment
+spells

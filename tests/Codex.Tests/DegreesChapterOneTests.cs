@@ -324,6 +324,52 @@ public class DegreesChapterOneTests : IDisposable
         Assert.Equal((1, 3), (range.Start, range.End));
     }
 
+    /// <summary>A root with <paramref name="children"/> bookmark children, <paramref name="sidebars"/> of them sidebars, and a range of <paramref name="headers"/> entry headers.</summary>
+    private static (List<SpineNode> Spine, BlocksResult Blocks, List<TakenRange> Ranges) CountFixture(int children, int sidebars, int headers, string? countsDiffer = null)
+    {
+        var spine = new List<SpineNode> { new(0, "Root", new[] { "Root" }, 1, 3, false) };
+        for (var i = 0; i < children; i++)
+        {
+            var sidebar = i < sidebars;
+            var title = sidebar ? $"Sidebar {i}" : $"Child {i}";
+            spine.Add(new SpineNode(1, title, new[] { "Root", title }, 1, 1, sidebar));
+        }
+
+        var blocks = Enumerable.Range(0, headers).Select(i => Blk(1, 0, "entry-header", $"E{i}")).ToList();
+        var row = RowFor("entries", "Root");
+        row.CountsDiffer = countsDiffer;
+        return (spine, Result(blocks), new List<TakenRange> { new(row, 1, spine[0], 0, headers) });
+    }
+
+    [Fact]
+    public void TheEntryCountsAgree_WhenBookmarkChildrenLessSidebarsEqualTheEntryHeaders_AsForTheFortyTwoConditions()
+    {
+        var (spine, blocks, ranges) = CountFixture(children: 46, sidebars: 4, headers: 42);
+
+        Assert.Equal(new[] { (42, 42) }, ImportPipeline.CheckEntryCounts(spine, blocks, ranges));
+    }
+
+    [Fact]
+    public void ADisagreementInTheEntryCountsFailsTheRunWithBothCounts_UnlessTheRowExplainsIt()
+    {
+        var (spine, blocks, ranges) = CountFixture(children: 46, sidebars: 4, headers: 41);
+
+        var ex = Assert.Throws<DegreesException>(() => ImportPipeline.CheckEntryCounts(spine, blocks, ranges));
+        Assert.Contains("42", ex.Message);
+        Assert.Contains("41", ex.Message);
+
+        var (spine2, blocks2, ranges2) = CountFixture(children: 46, sidebars: 4, headers: 41, countsDiffer: "One entry shares a header with the one above it.");
+        Assert.Equal(new[] { (42, 41) }, ImportPipeline.CheckEntryCounts(spine2, blocks2, ranges2));
+    }
+
+    [Fact]
+    public void ASectionWithNoChildBookmarksHasNothingToCompare()
+    {
+        var (spine, blocks, ranges) = CountFixture(children: 0, sidebars: 0, headers: 7);
+
+        Assert.Empty(ImportPipeline.CheckEntryCounts(spine, blocks, ranges));
+    }
+
     [Fact]
     public void AnEntryWhoseTitleIsItsOwnHeaderKeepsTheHeader()
     {
