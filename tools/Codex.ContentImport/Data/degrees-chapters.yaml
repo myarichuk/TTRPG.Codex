@@ -34,6 +34,10 @@
 #   ancestries (parser) one ancestry's whole range: its lore is read past (and hashed as left-out text), its statistics box (the book floats it at the top of the second column of one of its pages) becomes
 #             the `ancestry` entry's fields and special abilities, each heading in the entry-header font under its heritages section a `heritage` entry, and each feat under a level band a `feat` entry whose
 #             level must be the band's. The bookmark children, the level bands, the feat headers, the trait lines and the level markers are counted, and the table of contents' list of ancestries is compared as a set
+#   versatile (parser) a section of versatile heritages: the lore (and the sentence under each title) is read past; each heading that ends in "(Heritage)" is a `heritage` entry that names no ancestry, each feat
+#             under a "Lineages" heading (1st level, no band) or a level band is a `feat` entry whose trait line carries the heritage's key, and a part before the first heritage of a section of several is one `rule`
+#   backgrounds (parser) the section's text before its first heading is one `rule`; each heading that ends in the background word is a `background` entry whose story is read past, whose description is the rules
+#             sentences and whose boosts, trained skills, Lore subject and skill feat are fields
 #   planned   (below the rows) sections a later chapter takes: not read, only not counted as "left out" by the denylist generator
 # Dropped material is never named here: the setting, religion, example-of-play and map sections are simply absent.
 # A path that names anything but a game term does not belong in this file.
@@ -574,6 +578,74 @@ rows:
       - ["Chapter 2: Ancestries & Backgrounds", Human]
       - ["Chapter 2: Ancestries & Backgrounds", Leshy]
       - ["Chapter 2: Ancestries & Backgrounds", Orc]
+  # Chapter 7b: the versatile heritages' general rules (the section's own text and its two children; the overview "In This Book" is not taken, so its words are left-out text, and its three bookmark
+  # children are the independent count of the kinds below).
+  - chapter: versatile
+    book: pc
+    parser: rules
+    target: rule
+    category: Ancestries
+    approved: true
+    foldChildren: true
+    artLabels: true
+    countsDiffer: The section's children are not all rules (its overview and its three kinds of heritage are other rows), so its headings are not compared with its bookmark children here; the kinds are counted in the versatile row.
+    entryNames:
+      "Unlimited Possibilities!": Heritage Limits
+    own:
+      - ["Chapter 2: Ancestries & Backgrounds", Versatile Heritages]
+    ownName: Versatile Heritages
+    # The text of the second section goes on over the page break, above the overview's title.
+    runsToTitle:
+      - ["Chapter 2: Ancestries & Backgrounds", Versatile Heritages, Playing a Versatile Heritage]
+    paths:
+      - ["Chapter 2: Ancestries & Backgrounds", Versatile Heritages, Unlimited Possibilities!]
+      - ["Chapter 2: Ancestries & Backgrounds", Versatile Heritages, Playing a Versatile Heritage]
+  # The three kinds of versatile heritage, one range each: the lore is read past; the heritage, its lineage feats and its level-banded feats are the entries. The last page of the second kind's feats sets a feat
+  # around a piece of art, so its gutter is pinned. The third range holds two heritages; its own introduction is one rule.
+  - chapter: versatile
+    book: pc
+    parser: versatile
+    target: heritage
+    category: Ancestries
+    approved: true
+    countsDiffer: The book prints no list of its versatile heritages or their feats. The overview lists the kinds (one bookmark child for each range) and the heritages and feats are counted by bookmarks, headings, trait lines, level markers and level bands.
+    gutterAt:
+      82: 288
+    paths:
+      - ["Chapter 2: Ancestries & Backgrounds", Versatile Heritages, Changeling]
+      - ["Chapter 2: Ancestries & Backgrounds", Versatile Heritages, Nephilim]
+      - ["Chapter 2: Ancestries & Backgrounds", Versatile Heritages, Mixed Ancestry]
+  # The backgrounds: the introduction is one rule, each background is an entry whose story is read past.
+  - chapter: backgrounds
+    book: pc
+    parser: backgrounds
+    target: background
+    category: Backgrounds
+    approved: true
+    countsDiffer: The chapter prints no list of its backgrounds. They are counted by their headings, the sentences that open their rules and the sentences that grant their feat.
+    paths:
+      - ["Chapter 2: Ancestries & Backgrounds", Backgrounds]
+  # The languages: the rules of the section's own text (its two tables of languages are read past: they hold the book's language names, which are not entries) and the rules for sign language.
+  # The regional languages are left out.
+  - chapter: languages
+    book: pc
+    parser: rules
+    target: rule
+    category: Languages
+    approved: true
+    tailFromHeader: true
+    countsDiffer: The section's children are the regional languages (left out) and the sign language, so its headings are not compared with its bookmark children here.
+    own:
+      - ["Chapter 2: Ancestries & Backgrounds", Languages]
+    ownName: Languages
+  - chapter: languages
+    book: pc
+    parser: rules
+    target: rule
+    category: Languages
+    approved: true
+    paths:
+      - ["Chapter 2: Ancestries & Backgrounds", Languages, Sign Language]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
@@ -582,8 +654,5 @@ planned:
       - ["Chapter 1: Introduction", Basics of Play]
       - ["Chapter 1: Introduction", Playing the Game]
       - ["Chapter 1: Introduction", Character Creation]
-      - ["Chapter 2: Ancestries & Backgrounds", Versatile Heritages]
-      - ["Chapter 2: Ancestries & Backgrounds", Backgrounds]
-      - ["Chapter 2: Ancestries & Backgrounds", Languages]
       - ["Chapter 3: Classes"]
       - ["Chapter 8: Playing the Game"]

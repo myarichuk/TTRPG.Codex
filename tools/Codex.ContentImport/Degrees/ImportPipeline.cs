@@ -8,10 +8,35 @@ namespace Codex.ContentImport.Degrees;
 /// </summary>
 public static class Waivers
 {
+    private const string RetiredPrefix = "retired-pair ";
+
     public static HashSet<string> Parse(string text) =>
-        text.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith('#')).Select(l => l.ToLowerInvariant()).ToHashSet(StringComparer.Ordinal);
+        text.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith('#') && !l.StartsWith(RetiredPrefix, StringComparison.Ordinal)).Select(l => l.ToLowerInvariant()).ToHashSet(StringComparer.Ordinal);
 
     public static HashSet<string> Embedded() => Parse(BooksConfig.EmbeddedYaml("degrees-denylist-waivers.txt"));
+
+    /// <summary>
+    /// The pair hashes a person has retired (lines <c>retired-pair &lt;64 hex digits&gt; &lt;one-line reason&gt;</c>, no words): a hash that nothing produces any more (an artifact of an intermediate build), which
+    /// <c>denylist --fresh</c> may drop, saying so. Any other unexplained drop still stops the run.
+    /// </summary>
+    public static Dictionary<string, string> ParseRetired(string text)
+    {
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var line in text.Split('\n').Select(l => l.Trim()).Where(l => l.StartsWith(RetiredPrefix, StringComparison.Ordinal)))
+        {
+            var parts = line[RetiredPrefix.Length..].Split(' ', 2, StringSplitOptions.TrimEntries);
+            if (parts.Length != 2 || !System.Text.RegularExpressions.Regex.IsMatch(parts[0], "^[0-9a-f]{64}$") || parts[1].Length == 0)
+            {
+                throw new DegreesException("A retired-pair line of the waivers file is not a 64-digit hash and a reason.");
+            }
+
+            result[parts[0]] = parts[1];
+        }
+
+        return result;
+    }
+
+    public static Dictionary<string, string> EmbeddedRetired() => ParseRetired(BooksConfig.EmbeddedYaml("degrees-denylist-waivers.txt"));
 }
 
 /// <summary>What stages 3 to 5 made from one book's taken rows.</summary>
@@ -138,6 +163,8 @@ public static partial class ImportPipeline
         CheckItemCounts(spine, blocks, ranges, parsed);
         CheckAncestryCounts(spine, blocks, ranges, parsed);
         CheckAncestryList(blocks, parsed);
+        CheckVersatileCounts(spine, blocks, ranges, parsed);
+        CheckBackgroundCounts(blocks, ranges, parsed);
         CheckActionCounts(spine, blocks, ranges, parsed);
         CheckSpellCounts(blocks, ranges, parsed);
         CheckSpellDegrees(blocks, ranges, parsed);
@@ -167,13 +194,28 @@ public static partial class ImportPipeline
             Kind = e.Kind,
             Traditions = e.Traditions.ToList(),
             Actions = e.Actions,
-            Traits = e.Traits.ToList(),
+            // A feat of a versatile heritage carries the heritage's key in its trait line: the key of the heritage's final name (a heritage a redaction row renamed takes its feats' trait with it).
+            Traits = e.TraitOwner == null ? e.Traits.ToList()
+                : e.Traits.Select(t => t == EntriesStage.Slug(e.TraitOwner.Name) ? EntriesStage.Slug(kept[e.TraitOwner.Id].Fields["name"]) : t).ToList(),
             Skill = e.Skill,
             Proficiency = e.Proficiency,
             Extracted = e.Extracted.Select(x => new LabelledText(x.Label, kept[e.Id].Fields[x.Label])).ToList(),
             Tags = e.Tags.ToList(),
             Raw = e.Raw.ToList(),
         }).ToList();
+
+        // The traits a versatile heritage gives (a heritage that names no ancestry): the words of its "You gain the X trait" sentence, read from the description after redaction, so a renamed heritage says its new key.
+        foreach (var heritage in final.Where(e => e.Type == "heritage" && e.Raw.All(r => r.Label != "ancestry")))
+        {
+            var gain = Regex.Match(heritage.Description, @"You gain the (?<l>[a-z-]+ trait(?:,? (?:and )?(?:the )?[a-z-]+ trait)*)", RegexOptions.CultureInvariant);
+            var granted = gain.Success ? Regex.Matches(gain.Groups["l"].Value, @"(?<t>[a-z-]+) trait").Select(m => m.Groups["t"].Value).ToList() : new List<string>();
+            if (granted.Count == 0)
+            {
+                continue; // a printing whose heritage says it otherwise has no field; the pack's tests pin that every versatile heritage has one
+            }
+
+            heritage.Raw.Add(new LabelledText("grantsTraits", "[" + string.Join(", ", granted.Select(t => "\"" + t + "\"")) + "]"));
+        }
 
         if (final.GroupBy(e => e.Id, StringComparer.Ordinal).FirstOrDefault(g => g.Count() > 1) is { } repeated)
         {
@@ -182,7 +224,7 @@ public static partial class ImportPipeline
 
         // A heritage names its ancestry by the id the ancestry had when the stage ran: if a redaction row has renamed the ancestry since, the link would match nothing, with no error.
         var ancestryIds = final.Where(e => e.Type == "ancestry").Select(e => e.Id).ToHashSet(StringComparer.Ordinal);
-        if (final.Where(e => e.Type == "heritage").Any(h => !ancestryIds.Contains(h.Raw.Single(r => r.Label == "ancestry").Text.Trim('"'))))
+        if (final.Where(e => e.Type == "heritage" && e.Raw.Any(r => r.Label == "ancestry")).Any(h => !ancestryIds.Contains(h.Raw.Single(r => r.Label == "ancestry").Text.Trim('"'))))
         {
             throw new DegreesException("A heritage names an ancestry whose final id is another (a redaction row renamed the ancestry), so the link would match nothing.");
         }
@@ -731,7 +773,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
                 + mineRanges.Where(r => r.Row.Parser == "actions").Sum(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks)).Count)
                 + mineRanges.Where(r => r.Row.Parser == "entries").Sum(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks)).Count)
                 + mineRanges.Where(r => r.Row.Parser == "spelllists").Sum(r => r.Indexes.Count())
-                + mineRanges.Where(r => r.Row.Parser == "ancestries").Sum(r => EntriesStage.AncestryFlavor(r.BlocksIn(blocks)).Count);
+                + mineRanges.Sum(r => FlavorBlocks(r, blocks).Count);
 
             // One report row for each type the row wrote (an actions row also writes rules), the row's own target first. The row's counts of dropped blocks go on the first.
             var types = mine.Select(e => e.Type).Distinct().OrderBy(t => t == row.Target ? 0 : 1).ThenBy(t => t, StringComparer.Ordinal).ToList();
@@ -862,6 +904,9 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
             .Distinct(StringComparer.Ordinal).OrderBy(w => w, StringComparer.Ordinal).ToList();
         var names = spans.Where(s => s.Row.Action == RedactionRow.DropEntry)
             .SelectMany(s => PackWordCheck.Words(parsed.First(e => e.Id == s.Id).Name))
+            // The name a replace row takes out of an entry's name field is as reserved as a dropped entry's: the words of the old name that the new one does not say, with their plurals.
+            // A word the committed pack already says (an ordinary word of an earlier chapter's renamed name) is no coined word: the pack's own word gate would stop it.
+            .Concat(spans.Where(s => s.Row.Action == RedactionRow.Replace && s.Row.Field == "name").SelectMany(s => RemovedWords(s.Row, s.Text)).Where(w => !PackSays(w)))
             .Select(w => w.ToLowerInvariant()).Distinct(StringComparer.Ordinal).OrderBy(w => w, StringComparer.Ordinal).ToList();
         return (spanWords, names);
     }
@@ -883,6 +928,22 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
                 return PackWordCheck.CapitalPairs(s.Text).Where(p => !kept.Contains(p));
             })
             .Distinct().ToList();
+    }
+
+    private static HashSet<string>? _packWords;
+
+    /// <summary>Whether the committed rules pack (found beside the program, as <see cref="PackEmitter.CommittedPackDir"/> does) says the lowercase word anywhere, in any case. False when there is no pack.</summary>
+    private static bool PackSays(string word)
+    {
+        if (_packWords == null)
+        {
+            var dir = PackEmitter.CommittedPackDir();
+            _packWords = dir == null ? new HashSet<string>(StringComparer.Ordinal)
+                : Directory.EnumerateFiles(dir, "*.yaml", SearchOption.AllDirectories).SelectMany(f => PackWordCheck.Words(File.ReadAllText(f))).Select(w => w.ToLowerInvariant()).ToHashSet(StringComparer.Ordinal);
+        }
+
+        // The plural a name is reserved with (see the denylist step) counts too: a pack that says "giants" may not have the name "giant" reserved.
+        return _packWords.Contains(word) || _packWords.Contains(word + "s") || _packWords.Contains(word + "es");
     }
 
     /// <summary>The lowercase words of a redacted span that the row takes out: all of them for a cut or a drop, those not in the replacement text for a replace.</summary>
@@ -928,7 +989,26 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
             .Concat(ranges.Where(r => r.Row.Parser == "glossary").SelectMany(r => EntriesStage.ScanGlossary(r.BlocksIn(blocks), new HashSet<string>(StringComparer.Ordinal)).Dropped))
             .Concat(ranges.Where(r => r.Row.Parser == "actions").SelectMany(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks))).SelectMany(b => b.Lines))
             .Concat(ranges.Where(r => r.Row.Parser == "entries").SelectMany(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks))).SelectMany(b => b.Lines))
-            .Concat(ranges.Where(r => r.Row.Parser == "ancestries").SelectMany(r => EntriesStage.AncestryFlavor(r.BlocksIn(blocks))).SelectMany(b => b.Lines));
+            .Concat(ranges.SelectMany(r => FlavorBlocks(r, blocks).Concat(TailBlocks(r, blocks))).SelectMany(b => b.Lines));
+
+    /// <summary>
+    /// The blocks a <c>rules</c> range reads past at its end (<see cref="TakeRow.TailFromHeader"/>: a section's tables, from its first block-header heading on). They make no entry and no taken range holds them, so they are left-out
+    /// text: a name in them (a language the tables list) stays on the denylist, as a name in the lore does.
+    /// </summary>
+    public static List<Block> TailBlocks(TakenRange range, BlocksResult blocks) =>
+        range.Row.Parser == "rules" && range.TailEnd > range.End ? blocks.Blocks.Skip(range.End).Take(range.TailEnd - range.End).ToList() : new List<Block>();
+
+    /// <summary>
+    /// The blocks a range of the ancestry, versatile heritage or backgrounds parsers reads past inside the range (the lore, the sentences under a title, a background's story): they make no entry, so
+    /// they are left-out text, and are counted as read past.
+    /// </summary>
+    public static List<Block> FlavorBlocks(TakenRange range, BlocksResult blocks) => range.Row.Parser switch
+    {
+        "ancestries" => EntriesStage.AncestryFlavor(range.BlocksIn(blocks)),
+        "versatile" => EntriesStage.VersatileFlavor(range.BlocksIn(blocks)),
+        "backgrounds" => EntriesStage.BackgroundFlavor(range.BlocksIn(blocks)),
+        _ => new List<Block>(),
+    };
 
     /// <summary>
     /// The pair hashes a regeneration may drop without a waiver: the pairs in a take-list title (every `source:` line says them) and the pairs that have a word on the word denylist (the pair
@@ -950,7 +1030,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
     /// of the others may go (see <see cref="ExplainedPairs"/>); any other pair that would vanish fails the run, so a regeneration never silently removes a pair because a range has since been taken.
     /// The rest are counted as left-out text that was taken (or became common) since.
     /// </summary>
-    public static FreshReview ReviewFresh(string file, IReadOnlySet<string> existing, IReadOnlyCollection<string> fresh, IReadOnlyCollection<string> lifted, IReadOnlySet<string> neverDropped, IReadOnlySet<string>? explained)
+    public static FreshReview ReviewFresh(string file, IReadOnlySet<string> existing, IReadOnlyCollection<string> fresh, IReadOnlyCollection<string> lifted, IReadOnlySet<string> neverDropped, IReadOnlySet<string>? explained, IReadOnlyDictionary<string, string>? retired = null)
     {
         var next = fresh.ToHashSet(StringComparer.Ordinal);
         next.ExceptWith(lifted);
@@ -961,14 +1041,15 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         }
 
         var waived = gone.Where(lifted.Contains).ToList();
-        var rest = gone.Except(waived).ToList();
+        var retiredHere = retired == null ? new List<string>() : gone.Except(waived).Where(retired.ContainsKey).ToList();
+        var rest = gone.Except(waived).Except(retiredHere).ToList();
         var unexplained = explained == null ? new List<string>() : rest.Where(h => !explained.Contains(h)).ToList();
         if (unexplained.Count > 0)
         {
             throw new DegreesException($"{file}: --fresh would drop {unexplained.Count} pair(s) that no waiver, take-list title or denied word explains; a pair is never removed because a range has since been taken.");
         }
 
-        return new FreshReview(file, next.Count, next.Count(existing.Contains), next.Count(h => !existing.Contains(h)), waived.Count, explained == null ? rest.Count : 0, explained == null ? 0 : rest.Count);
+        return new FreshReview(file, next.Count, next.Count(existing.Contains), next.Count(h => !existing.Contains(h)), waived.Count, explained == null ? rest.Count : 0, explained == null ? 0 : rest.Count, retiredHere.Select(h => $"{h}: {retired![h]}").ToList());
     }
 
     /// <summary>--fresh writes the files from one book's run alone, so it refuses when the take-list has rows of another book too (that book's hashes would be dropped).</summary>
@@ -1028,7 +1109,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         var boxes = legacy.Concat(ranges.Where(r => r.Row.Parser == "actions").SelectMany(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks))).SelectMany(b => b.Lines))
             .Concat(ranges.Where(r => r.Row.Parser == "entries").SelectMany(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks))).SelectMany(b => b.Lines))
             // An ancestry's lore is read past inside a taken range, and so is the list of languages its box offers: both are left-out text.
-            .Concat(ranges.Where(r => r.Row.Parser == "ancestries").SelectMany(r => EntriesStage.AncestryFlavor(r.BlocksIn(blocks))).SelectMany(b => b.Lines));
+            .Concat(ranges.SelectMany(r => FlavorBlocks(r, blocks).Concat(TailBlocks(r, blocks))).SelectMany(b => b.Lines));
         var candidates = leftOut.SelectMany(b => b.Lines).Concat(glossaryLeftOut).Concat(boxes).SelectMany(PackWordCheck.Words).Where(w => w.Length > 1 && char.IsUpper(w[0]))
             .Select(w => w.ToLowerInvariant()).Concat(redacted?.SpanWords ?? Array.Empty<string>()).Distinct(StringComparer.Ordinal).ToList();
         var words = candidates.Where(w => !exclude.Contains(w)).ToList();

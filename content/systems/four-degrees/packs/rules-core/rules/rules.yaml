@@ -188,6 +188,15 @@
   description: "A shield can be used as a martial weapon for attacks, using the statistics listed for a shield bash on the Martial Melee Weapons table. The shield bash is an option only for shields that weren't designed to be used as weapons. A shield can't have runes added to it. You can also buy and attach a shield boss or shield spikes to a shield to make it a more practical weapon. These can also be found on the Martial Melee Weapons table. These work like other weapons and can even be etched with runes."
   properties:
     category: "Equipment"
+- id: "backgrounds"
+  name: "Backgrounds"
+  source: "pc > Chapter 2: Ancestries & Backgrounds > Backgrounds"
+  description: |-
+    At 1st level, when you create your character, you gain a background of your choice. This decision is permanent; you can't change it at later levels. Each background listed here grants two boosts, a skill feat, and the trained proficiency rank in two skills, one of which is a Lore skill. If you gain the trained proficiency rank in a skill from your background and would then gain the trained proficiency rank in the same skill from your class at 1st level, you instead become trained in another skill of your choice.
+    Lore skills represent deep knowledge of a specific subject. If a Lore skill involves a choice (for instance, a choice of terrain), explain your preference to the GM, who has the final say on whether it's acceptable or not.
+    Skill feats expand the functions of your skills.
+  properties:
+    category: "Backgrounds"
 - id: "barding"
   name: "Barding"
   source: "pc > Chapter 6: Equipment > Gear > Animals > Barding"
@@ -644,6 +653,12 @@
     As a spontaneous caster, you can also choose to cast a lower-rank spell using a higher-rank spell slot without heightening it or knowing it at a higher rank. This casts the spell at the rank you know the spell, not the rank of the higher slot. The spell doesn't have any heightened effects, so it's usually not a very efficient use of your magic outside of highly specific circumstances. For instance, if your party was having trouble with an invisible enemy, and you had revealing light in your repertoire but had already spent all of your 2nd-rank spell slots, it might be worth it to use a 3rd-rank spell slot to cast the spell, even though it'd have no heightened benefit.
   properties:
     category: "Spells"
+- id: "heritage-limits"
+  name: "Heritage Limits"
+  source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Unlimited Possibilities!"
+  description: "Though a character can have only one heritage and one lineage feat, the possible permutations of a character's background and family tree are virtually unlimited. A half-elf character might still have a changeling parent whose nature is visible in the coloration of their eyes even if they don't have access to changeling ancestry feats, and a dwarf with demon blood might very well have an ancestor with fey influences on their bloodline, reflected with a fey muse or patron gained through their class alongside their ancestral fiendishness."
+  properties:
+    category: "Ancestries"
 - id: "hostile-actions"
   name: "Hostile Actions"
   source: "pc > Chapter 7: Spells > Hostile Actions"
@@ -770,6 +785,16 @@
     **Sling Bullet.** These are small metal balls, typically either iron or lead, designed to be used as ammunition in slings.
   properties:
     category: "Equipment"
+- id: "languages"
+  name: "Languages"
+  source: "pc > Chapter 2: Ancestries & Backgrounds > Languages"
+  description: |-
+    Your ancestry entry states which languages you know at 1st level. Typically, this means you can both speak and read these languages. Having a positive Intelligence modifier grants a number of additional languages equal to your Intelligence modifier. You can choose these languages from those available from your region or ethnicity. Ask your GM if there's a language you want to select.
+    The languages presented here are grouped according to how common they are. Languages that are common are regularly encountered, even among those who aren't native speakers. Languages that are uncommon are most frequently spoken by native speakers, but they are also spoken by certain scholars and others interested in the associated cultures.
+    Many uncommon languages are spoken by natives of other planes who rarely appear unless summoned. Mortals learning these languages might spend a lifetime without meeting a native speaker.
+    It is possible for your character to learn languages later in their adventuring career. Selecting the Multilingual feat, for example, grants a character two new languages chosen from those listed below. If your Intelligence changes later on, you also adjust your number of languages accordingly. Other abilities and effects might grant access to common or uncommon languages, as detailed in their descriptions. Rare or secret languages can only be discovered through play.
+  properties:
+    category: "Languages"
 - id: "learned-spells"
   name: "Learned Spells"
   source: "pc > Chapter 4: Skills > General Skill Actions"
@@ -822,6 +847,14 @@
     • Recall Knowledge about diseases, injuries, poisons, and other ailments. You can use this to perform forensic examinations if you spend 10 minutes (or more, as determined by the GM) checking for evidence such as wound patterns. This is most useful when determining how a body was injured or killed.
   properties:
     category: "Skills"
+- id: "mixed-ancestry"
+  name: "Mixed Ancestry"
+  source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Mixed Ancestry"
+  description: |-
+    You can choose a mixed ancestry to represent having two ancestral lines for your character. This doesn't preclude having more than two ancestries in your genealogy, but you'll need to work with your GM if you want to have more than two reflected in the rules. The possible combinations of ancestries are immeasurable, though the half-elf and half-orc heritages below are the most common.
+    **Custom Mixed Heritage.** You can work with your GM to create a mixed heritage for an ancestry other than elf or orc. A custom mixed-ancestry heritage is an uncommon heritage. Choose an ancestry to tie to the heritage. You gain any traits of that ancestry and a new trait for your combined ancestry, similar to how the half-elf heritage below grants the "elf" and "half-elf" traits. You also gain low-light vision if the ancestry tied to the heritage has low-light vision or darkvision. The heritage lets you select ancestry feats for the chosen ancestry in addition to those from your base ancestry. The half-elf and half-orc heritages both have special feats, but a custom heritage will need you to work with your GM to create or adapt some.
+  properties:
+    category: "Ancestries"
 - id: "multiple-attack-penalty"
   name: "Multiple Attack Penalty"
   source: "pc > Chapter 6: Equipment > Weapons > Attack Rolls > Multiple Attack Penalty"
@@ -921,6 +954,18 @@
     **Speed.** fly 30 feet
   properties:
     category: "Spells"
+- id: "playing-a-versatile-heritage"
+  name: "Playing a Versatile Heritage"
+  source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Playing a Versatile Heritage"
+  description: |-
+    To play a character with a versatile heritage, first select your ancestry, just like you would for any character. You gain Hit Points, size, Speed, attribute boosts and attribute flaws, languages, traits, and other abilities from that ancestry. Then, instead of choosing a heritage from those normally available to that ancestry, apply your chosen versatile heritage. You gain all the features from your versatile heritage, some of which might modify or replace statistics, abilities, or traits from your ancestry.
+    Since a versatile heritage is a heritage, you can have only one, and you can't have any other heritage in addition to your versatile heritage.
+    Sometimes a versatile heritage might give you an ability that conflicts with an ability from your ancestry. In these cases, you choose which of the conflicting abilities your character has.
+    When selecting ancestry feats, you can choose from those available to your ancestry as well as those specific to your versatile heritage.
+    Lineage Feats
+    Some ancestry feats within a versatile heritage have the lineage trait. These feats specify a physiological lineage your character has—such as the type of hag that birthed a changeling character, or the type of extraplanar entity that influenced a nephilim's birth. You can have only one lineage feat; you can select such a feat only at 1st level, and you can't retrain into or out of this feat.
+  properties:
+    category: "Ancestries"
 - id: "practicing-a-trade"
   name: "Practicing a Trade"
   source: "pc > Chapter 4: Skills > General Skill Actions"
@@ -1056,6 +1101,12 @@
     Attacks and checks involving a shoddy item take a -2 item penalty. This penalty also applies to any DCs that a shoddy item applies to (such as the AC provided when wearing shoddy armor, or the DC to break out of shoddy manacles). A shoddy suit of armor also worsens the armor's check penalty by 2. A shoddy item's Hit Points and Broken Threshold are each half that of a normal item of its type.
   properties:
     category: "Equipment"
+- id: "sign-language-rule"
+  name: "Sign Language"
+  source: "pc > Chapter 2: Ancestries & Backgrounds > Languages > Sign Language"
+  description: "The language entry for most characters lists languages they use to communicate in spoken words. However, you might know the signed languages associated with the languages you know, or how to read lips. You can learn these by taking the Sign Language or Read Lips skill feats, or both. If you are creating a character who is deaf, hard of hearing, or unable to speak, discuss with your GM whether it makes sense for your character to know sign languages or lip reading. If so, your GM might allow you to select one of these feats for free (even if you don't meet the prerequisites) to represent your character concept."
+  properties:
+    category: "Languages"
 - id: "skill-actions"
   name: "Skill Actions"
   source: "pc > Chapter 4: Skills > Skill Actions"
@@ -1236,6 +1287,15 @@
     The Unarmed Attacks table lists the statistics for an unarmed attack with a fist, though you'll usually use the same statistics for attacks made with any other parts of your body. Certain ancestry feats, class features, and spells give access to special, more powerful unarmed attacks. For instance, a creature with sharp jaws can attack with them. While most unarmed attacks are melee, some, especially those from certain ancestries, might even be ranged, like the leshy's ability to launch hard seedpods. Details for those unarmed attacks are provided in the abilities that grant them.
   properties:
     category: "Equipment"
+- id: "versatile-heritages"
+  name: "Versatile Heritages"
+  source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages"
+  description: |-
+    The most common versatile heritages by far are the half-elf and half-orc ones, usually born to a human parent on one side and either an elf or orc parent on the other. Other individuals are born under far stranger circumstances, such as having a parent who was affected by monstrous, undead, or extraplanar energies. As these circumstances aren't unique to a single ancestry, these heritages—called versatile heritages—are likewise shared by many ancestries.
+    Many kinds of versatile heritage exist. Some are born to unusual creatures or arise through specific mundane or supernatural circumstances. Many, however, result from an infusion of extraplanar energy, whether through direct parentage, more distant ancestors, or simply direct exposure to the quintessence of that plane.
+    Because the circumstances that give rise to versatile heritages aren't limited to a single ancestry, a versatile heritage can be chosen by a character of nearly any ancestry. Some versatile heritages are more common among some ancestries than others, and some might list additional restrictions specific to that heritage. Your GM may place other restrictions on which ancestries can use a given versatile heritage based on the story and setting.
+  properties:
+    category: "Ancestries"
 - id: "walls"
   name: "Walls"
   source: "pc > Chapter 7: Spells > Walls"

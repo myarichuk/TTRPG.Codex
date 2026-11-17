@@ -158,6 +158,26 @@ public class DegreesGlossaryTests
     }
 
     [Fact]
+    public void TheOldNameAReplaceRowTakesOutOfANameField_IsReservedWithItsPlurals_WhateverHowOftenTheBookWritesItInLowercase()
+    {
+        var (blocks, ranges) = CountFixture(null, Gloss(1, 0, 700,
+            ("wisp (trait) Wisps drift. A wisp is a wisp is a wisp.", "wisp", 60)));
+        var table = RedactionTable.Parse(
+            "normalization: 2\nrows:\n" +
+            $"  - {{ book: pc, entry: wisp, field: name, span: {{ sha256: \"{SpanText.Sha256("Wisp")}\", length: 4 }}, action: replace, text: \"Drifter\", reason: \"A coined name.\" }}\n");
+
+        var redacted = ImportPipeline.RedactedWords(blocks, ranges, table, "pc");
+        var (words, _) = ImportPipeline.DenylistWords(blocks, ranges, new HashSet<string>(), 3, null, redacted);
+
+        // The name is written in lowercase three times in the text, so it is a common word, and would be left off; as a removed name it is reserved, with the plurals a trait is written in.
+        Assert.Contains("wisp", redacted.Names);
+        Assert.Contains("wisp", words);
+        Assert.Contains("wisps", words);
+        Assert.Contains("wispes", words);
+        Assert.DoesNotContain("drifter", words); // the new name is ours
+    }
+
+    [Fact]
     public void ThePairsOfARedactedSpanAreHashedToo_EvenWhenBothWordsAreCommon_ExceptThoseTheReplacementSaysAgain()
     {
         var (blocks, ranges) = CountFixture(null, Gloss(1, 0, 700,

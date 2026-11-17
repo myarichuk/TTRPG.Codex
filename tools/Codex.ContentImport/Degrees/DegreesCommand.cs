@@ -166,6 +166,9 @@ public static class DegreesCommand
         // The ids of the pack as committed: an id that has shipped keeps its entry when a later chapter brings another with the same name.
         var result = ImportPipeline.Run(blocks, spine, rows, redactions ?? RedactionTable.Embedded(), book, StableIds(packDir));
         Write(work, "entries.json", result.Parsed);
+        // A reviewer's aid in the work folder only (never in the pack): every piece a redaction row may name, with its hash and length, so a row is written from the real span.
+        Write(work, "spans.json", result.Parsed.SelectMany(e => e.RedactionFields().SelectMany(f => RedactionStage.Pieces(SpanText.Normalize(f.Value))
+            .Select((p, k) => new { entry = e.Id, field = f.Key, piece = k, sha256 = SpanText.Sha256(SpanText.Normalize(f.Value).Substring(p.Start, p.Length)), length = p.Length, text = SpanText.Normalize(f.Value).Substring(p.Start, p.Length) }))).ToList());
         Write(work, "redacted.json", result.Final);
         var files = PackEmitter.Files(result.Final.Where(e => e.Approved), result.Report);
         WriteText(work, PackEmitter.ReportFile, files[PackEmitter.ReportFile]);
@@ -183,6 +186,18 @@ public static class DegreesCommand
             var ancestries = ImportPipeline.CheckAncestryCounts(spine, blocks, result.Ranges, result.Parsed);
             output.WriteLine($"ancestries: {ancestries.Count} read, and the table of contents lists the same {ImportPipeline.CheckAncestryList(blocks, result.Parsed)}; per ancestry (lore headings, heritages, level bands, feats): " +
                 string.Join("; ", ancestries.Select(a => $"{a.LoreHeadings}, {a.Heritages}, {a.Bands}, {a.Feats}")) + $"; feat headers = trait lines = level markers in each ({ancestries.Sum(a => a.FeatHeaders)} in all)");
+        }
+
+        if (result.Ranges.Any(r => r.Row.Parser == "versatile"))
+        {
+            var versatile = ImportPipeline.CheckVersatileCounts(spine, blocks, result.Ranges, result.Parsed);
+            output.WriteLine($"versatile heritages: {versatile.Sum(v => v.Heritages)} heritages in {versatile.Count} ranges; per range (lore headings, heritages, lineage sections, level bands, feats): " +
+                string.Join("; ", versatile.Select(v => $"{v.LoreHeadings}, {v.Heritages}, {v.Lineages}, {v.Bands}, {v.Feats}")) + $"; feat headers = trait lines = level markers in each ({versatile.Sum(v => v.FeatHeaders)} in all); the overview lists one kind for each range");
+        }
+
+        if (ImportPipeline.CheckBackgroundCounts(blocks, result.Ranges, result.Parsed) is { } backgrounds)
+        {
+            output.WriteLine($"backgrounds: {backgrounds.Headers} headings = {backgrounds.BoostSentences} boost sentences = {backgrounds.FeatSentences} feat sentences = {backgrounds.Entries} entries (the chapter prints no list)");
         }
 
         if (packDir != null)
@@ -308,12 +323,17 @@ public static class DegreesCommand
             {
                 ImportPipeline.ReviewFresh("denylist", ReadHashes(path), words.Select(Denylist.Hash).ToList(), liftedWords, never, null),
                 ImportPipeline.ReviewFresh("pairs", ReadHashes(pairsFile), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, Waivers.Embedded(), redactedPairs), liftedPairs, new HashSet<string>(StringComparer.Ordinal),
-                    ImportPipeline.ExplainedPairs(blocks, ranges, planned, words)),
+                    ImportPipeline.ExplainedPairs(blocks, ranges, planned, words), Waivers.EmbeddedRetired()),
                 ImportPipeline.ReviewFresh("common", ReadHashes(commonFile), Denylist.Format(ImportPipeline.CommonWords(blocks).Concat(ImportPipeline.OpenerWords(blocks, ranges)).Concat(Waivers.Embedded())).Split('\n', StringSplitOptions.RemoveEmptyEntries), Array.Empty<string>(),
                     new HashSet<string>(StringComparer.Ordinal), null),
             };
             foreach (var r in reviews)
             {
+                foreach (var gone in r.Retired ?? Array.Empty<string>())
+                {
+                    output.WriteLine($"fresh {r.File}: drops the retired pair {gone}");
+                }
+
                 output.WriteLine($"fresh {r.File}: writes {r.Written} (kept {r.Kept}, new {r.New}); removes {r.Waived + r.Taken + r.Titles}: {r.Waived} waived, {r.Taken} of left-out text since taken or common, {r.Titles} pair(s) of a title or of a denied word");
             }
         }
