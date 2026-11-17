@@ -566,6 +566,7 @@ public sealed partial class SheetRuleEngine
             Gte = ToDouble(Cell(map, "gte")),
             Lte = ToDouble(Cell(map, "lte")),
             EqualsField = Text(map, "equalsField"),
+            OrEmpty = Cell(map, "orEmpty") is true or "true" or "True",
             ContainsNameOfField = Text(map, "containsNameOfField"),
             Contains = Text(map, "contains"),
             ContainsChoice = Text(map, "containsChoice"),

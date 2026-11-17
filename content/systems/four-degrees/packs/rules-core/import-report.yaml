@@ -235,6 +235,66 @@
   redactionRows: [161, 162, 163]
   ids:
     - "ancestry-entries"
+- chapter: "backgrounds"
+  parser: "backgrounds"
+  target: "background"
+  entries: 40
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 40
+  redactionRows: [232, 233, 234, 235, 236, 237, 238, 243, 244]
+  ids:
+    - "acolyte"
+    - "acrobat"
+    - "animal-whisperer"
+    - "artisan"
+    - "artist"
+    - "bandit"
+    - "barkeep"
+    - "barrister"
+    - "bounty-hunter"
+    - "charlatan"
+    - "cook"
+    - "criminal"
+    - "cultist"
+    - "detective"
+    - "emissary"
+    - "entertainer"
+    - "farmhand"
+    - "field-medic"
+    - "fortune-teller"
+    - "gambler"
+    - "gladiator"
+    - "guard"
+    - "herbalist"
+    - "hermit"
+    - "hunter"
+    - "laborer"
+    - "martial-disciple"
+    - "merchant"
+    - "miner"
+    - "noble"
+    - "nomad"
+    - "prisoner"
+    - "raised-by-belief"
+    - "sailor"
+    - "scholar"
+    - "scout"
+    - "street-urchin"
+    - "teacher"
+    - "tinker"
+    - "warrior"
+- chapter: "backgrounds"
+  parser: "backgrounds"
+  target: "rule"
+  entries: 1
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "backgrounds"
 - chapter: "conditions"
   parser: "entries"
   target: "condition"
@@ -962,6 +1022,27 @@
     - "witch"
     - "wizard"
     - "wood"
+- chapter: "languages"
+  parser: "rules"
+  target: "rule"
+  entries: 1
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 5
+  redactionRows: [239, 240, 241, 242, 246, 247]
+  ids:
+    - "languages"
+- chapter: "languages"
+  parser: "rules"
+  target: "rule"
+  entries: 1
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "sign-language-rule"
 - chapter: "skills"
   parser: "actions"
   target: "action"
@@ -1735,3 +1816,91 @@
   readPastBlocks: 128
   redactionRows: []
   ids:
+- chapter: "versatile"
+  parser: "rules"
+  target: "rule"
+  entries: 3
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  redactionRows: [208, 209, 210, 211]
+  ids:
+    - "heritage-limits"
+    - "playing-a-versatile-heritage"
+    - "versatile-heritages"
+- chapter: "versatile"
+  parser: "versatile"
+  target: "feat"
+  entries: 43
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "accursed-claws"
+    - "angel-blood"
+    - "bestial-manifestation"
+    - "blessed-blood"
+    - "called"
+    - "celestial-magic"
+    - "celestial-mercy"
+    - "changeling-lore"
+    - "cuckoo-hag-mother"
+    - "demon-blood"
+    - "devil-blood"
+    - "divine-countermeasures"
+    - "divine-declaration"
+    - "divine-wings"
+    - "earned-glory"
+    - "elf-atavism"
+    - "eternal-wings"
+    - "extraplanar-supplication"
+    - "fiendish-magic"
+    - "freedom-spirit-blood"
+    - "hag-claws"
+    - "hag-magic"
+    - "hag-s-sight"
+    - "halo"
+    - "inspire-imitation"
+    - "iron-hag-mother"
+    - "law-guardian-blood"
+    - "mist-child"
+    - "monstrous-peacemaker"
+    - "nephilim-eyes"
+    - "nephilim-lore"
+    - "nephilim-resistance"
+    - "nimble-hooves"
+    - "occult-resistance"
+    - "orc-sight"
+    - "scion-of-many-planes"
+    - "sea-hag-mother"
+    - "skillful-tail"
+    - "slip-sideways"
+    - "soul-eater-blood"
+    - "summon-nephilim-kin"
+    - "supernatural-charm"
+    - "sweet-hag-mother"
+- chapter: "versatile"
+  parser: "versatile"
+  target: "heritage"
+  entries: 4
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  readPastBlocks: 34
+  redactionRows: [187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 245]
+  ids:
+    - "changeling-heritage"
+    - "half-elf"
+    - "half-orc"
+    - "nephilim-heritage"
+- chapter: "versatile"
+  parser: "versatile"
+  target: "rule"
+  entries: 1
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "mixed-ancestry"

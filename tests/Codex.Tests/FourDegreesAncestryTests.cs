@@ -97,18 +97,68 @@ public class FourDegreesAncestryTests : IAsyncLifetime
     {
         var evaluation = Engine().Recompute(Character("dwarf-ancestry", "rock-dwarf"));
         var allowed = evaluation.AllowedOptions["heritage"].Select(e => e.Id).Order().ToArray();
-        var dwarfs = _registry.GetEntries(SystemId, "heritage", Packs).Where(h => (string)h.Properties["ancestry"] == "dwarf-ancestry").Select(h => h.Id).Order().ToArray();
+        var all = _registry.GetEntries(SystemId, "heritage", Packs).ToList();
+        var dwarfs = all.Where(h => h.Properties.TryGetValue("ancestry", out var a) && (string)a == "dwarf-ancestry").Select(h => h.Id).Order().ToArray();
+        // The versatile heritages (chapter 7b) name no ancestry: any ancestry may take one.
+        var versatile = all.Where(h => !h.Properties.ContainsKey("ancestry") && h.PackId == "four-degrees-rules").Select(h => h.Id).Order().ToArray();
 
         Assert.Equal(5, dwarfs.Length);
-        Assert.Equal(dwarfs, allowed);
+        Assert.Equal(4, versatile.Length);
+        Assert.Equal(dwarfs.Concat(versatile).Order(), allowed);
         Assert.DoesNotContain(Problems(evaluation), v => v.FieldKey == "heritage");
 
         // A heritage of another ancestry is a problem (the system's enforcement is `warn`, so the sheet says it as a warning), and the choice is the elf's six for an elf.
         var other = Engine().Recompute(Character("dwarf-ancestry", "arctic-elf"));
         Assert.Contains(Problems(other), v => v.FieldKey == "heritage");
         var elf = Engine().Recompute(Character("elf-ancestry", "arctic-elf"));
-        Assert.Equal(6, elf.AllowedOptions["heritage"].Count);
+        Assert.Equal(6 + 4, elf.AllowedOptions["heritage"].Count); // the elf's six and the four versatile heritages
         Assert.DoesNotContain(Problems(elf), v => v.FieldKey == "heritage");
+    }
+
+    /// <summary>
+    /// A 1st-level character with an imported ancestry, a versatile heritage and an imported background (chapter 7b): the heritage is allowed for the dwarf with no warning, and the boosts of the four sources (ancestry, background,
+    /// class, the four free ones of level 1) and the hit points are worked out from the property values the pack holds. The background's trained skills are the entry's `skills` field and its Lore subject is text: the sheet's skill
+    /// list has no Lore, and the importer writes no `adds` for a background (a hand-written one trains a skill through it, as the homebrew backgrounds do), so no skill rank is computed from the background here.
+    /// </summary>
+    [Fact]
+    public void ADwarfWithAVersatileHeritageAndABackground_HasTheBoostsOfAllFourSources_AndNoWarning()
+    {
+        var dwarf = Entry("ancestry", "dwarf-ancestry");
+        var acolyte = Entry("background", "acolyte");
+        var warden = Entry("class", "warden");
+        Assert.Equal(new[] { "int|wis", "free" }, Words(acolyte, "boosts"));
+        Assert.DoesNotContain("ancestry", Entry("heritage", "half-elf").Properties.Keys);
+
+        var sheet = Character("dwarf-ancestry", "half-elf");
+        sheet["background"] = "acolyte";
+        // The ancestry's one free boost; the background's two (the one of two it names, and a free one); the four free boosts that finish the 1st-level build, each to a different modifier.
+        sheet["boost__ancestry__dwarf-ancestry.b1"] = new List<object> { "dex" };
+        sheet["boost__background__acolyte.b1"] = new List<object> { "int" };
+        sheet["boost__background__acolyte.b2"] = new List<object> { "con" };
+        foreach (var (slot, key) in new[] { ("m1", "str"), ("m2", "dex"), ("m3", "wis"), ("m4", "cha") }) sheet[$"boost__lvl1__{slot}"] = new List<object> { key };
+
+        var evaluation = Engine().Recompute(sheet);
+
+        // No warning of any kind: the versatile heritage is allowed for an ancestry it names none of.
+        Assert.Empty(evaluation.Violations);
+        Assert.DoesNotContain(Problems(evaluation), v => v.FieldKey == "heritage");
+        Assert.Contains("half-elf", evaluation.AllowedOptions["heritage"].Select(e => e.Id));
+        // Constitution: the ancestry's fixed boost and the background's free one; Wisdom: the ancestry's fixed boost and a free one; Dexterity: the ancestry's free boost and a free one; Intelligence: the background's; Strength: the
+        // class's boost and a free one; Charisma: the ancestry's flaw and a free boost.
+        Assert.Equal(2L, sheet["con"]);
+        Assert.Equal(2L, sheet["wis"]);
+        Assert.Equal(2L, sheet["dex"]);
+        Assert.Equal(1L, sheet["int"]);
+        Assert.Equal(2L, sheet["str"]);
+        Assert.Equal(0L, sheet["cha"]);
+        // Hit points: the class's number a level, plus the Constitution modifier, plus the ancestry's number once.
+        var expected = Number(warden, "hp") + 2 + Number(dwarf, "hp");
+        Assert.Equal(expected, Convert.ToInt64(sheet["HP_Max"], CultureInfo.InvariantCulture));
+        Assert.Equal(21L, expected);
+
+        // The model of the sheet says nothing of the heritage either.
+        var model = new SheetModel(_system, new PackResolver(_registry), sheet).Evaluate();
+        Assert.DoesNotContain(model.Warnings, w => w.Message.Contains("belongs to another ancestry", StringComparison.Ordinal));
     }
 
     [Theory]

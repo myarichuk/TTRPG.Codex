@@ -43,6 +43,10 @@ public sealed class ParsedEntry
     [JsonIgnore]
     public ParsedEntry? Owner { get; set; }
 
+    /// <summary>For a feat of a versatile heritage: the heritage its trait line names. The trait key is the heritage's final name, so a heritage a redaction row renames takes its feats' trait with it.</summary>
+    [JsonIgnore]
+    public ParsedEntry? TraitOwner { get; set; }
+
     /// <summary>For a spell: the traditions its labelled line lists, in lowercase, in the book's order.</summary>
     public List<string> Traditions { get; set; } = new();
 
@@ -178,6 +182,8 @@ public static partial class EntriesStage
                 "glossary" => ParseGlossary(range, slice, book, compounds),
                 "actions" => ParseActions(range, slice, book, compounds),
                 "ancestries" => ParseAncestries(range, slice, book, compounds),
+                "versatile" => ParseVersatile(range, slice, book, compounds),
+                "backgrounds" => ParseBackgrounds(range, slice, book, compounds),
                 // The tradition lists make no entry: they are read past, and counted against the spells (ImportPipeline.CheckSpellCounts).
                 "spelllists" => new List<ParsedEntry>(),
                 _ => ParseEntries(range, slice, book, compounds),

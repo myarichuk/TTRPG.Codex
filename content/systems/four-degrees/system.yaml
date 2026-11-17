@@ -80,12 +80,20 @@ entityTypes:
     summaryFields: [ancestry]
     filterFields: [ancestry]
     fields:
-      - { key: ancestry, label: Ancestry, type: EntityReference, targetEntityType: ancestry, description: "The ancestry this heritage can be picked with." }
+      - { key: ancestry, label: Ancestry, type: EntityReference, targetEntityType: ancestry, description: "The ancestry this heritage can be picked with. Empty: a versatile heritage, which any ancestry may take." }
       - { key: traits,   label: Traits,   type: TagList, description: "Trait keys, as the Library's trait entries name them; the rarity word is one." }
+      - { key: grantsTraits, label: Granted traits, type: TagList, description: "Trait keys the heritage adds to its owner (a mixed-ancestry heritage adds its parent ancestry's). Not read by the sheet yet." }
   - type: background
     label: Background
     pluralLabel: Backgrounds
     folder: backgrounds
+    summaryFields: [skills]
+    fields:
+      - { key: boosts,    label: Attribute boosts, type: TagList, description: "A word is a fixed boost, a|b one of two, free any attribute. A background whose limited boost depends on a faith's attribute (the pack holds no faiths) lists it as free; its description says which one is limited." }
+      - { key: skills,    label: Trained skills,   type: TagList, description: "The skill keys the background trains; a|b is a choice between two." }
+      - { key: lore,      label: Lore,             type: Text,    description: "The Lore subject, as text. The sheet's skill list has no Lore, so it is shown and not computed." }
+      - { key: skillFeat, label: Skill feat,       type: Text,    description: "The id of the skill feat the background grants; a|b when the skill chosen decides it." }
+      - { key: traits,    label: Traits,           type: TagList, description: "Trait keys; the rarity word is one." }
   - type: class
     label: Class
     pluralLabel: Classes
@@ -544,11 +552,11 @@ functions:
 
 sheetRules:
   enforcement: warn
-  # A heritage is picked from those of the chosen ancestry.
+  # A heritage is picked from those of the chosen ancestry, or from those that name none (the versatile heritages, which any ancestry may take).
   constraints:
     - field: heritage
       where:
-        - { property: ancestry, equalsField: ancestry, message: "that heritage belongs to another ancestry." }
+        - { property: ancestry, equalsField: ancestry, orEmpty: true, message: "that heritage belongs to another ancestry." }
   # Hit points: the class's own number per level (no die) plus Constitution, and the ancestry's number once.
   hitPoints:
     key: HP_Max
@@ -566,8 +574,10 @@ sheetRules:
       label: Boosts
       sources:
         - { key: ancestry, label: Ancestry, field: ancestry, trade: { fixed: 2, free: 1 } }
+        # The background gives two boosts: one of two attributes it names and one free (the entry's `boosts`, as an ancestry's are).
+        - { key: background, label: Background, field: background }
         - { key: class,    label: Class,    field: class }
-        # The step that finishes the 1st-level build: four free boosts, each to a different modifier. The background's two boosts come with the backgrounds.
+        # The step that finishes the 1st-level build: four free boosts, each to a different modifier.
         - { key: lvl1,     label: Level 1,  level: 1,  free: 4 }
         - { key: lvl5,     label: Level 5,  level: 5,  free: 4 }
         - { key: lvl10,    label: Level 10, level: 10, free: 4 }

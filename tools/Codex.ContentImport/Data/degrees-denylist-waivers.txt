@@ -358,3 +358,46 @@ alternate ancestry
 ancestry boosts
 # Found when the pairs of the redacted spans were hashed (chapter 7a review): `skills key` is two words of a `source` line that meet across its separator (the section Skills, then the rule Key Attribute); a redacted sentence of the skills chapter said both.
 skills key
+# Chapter 7b review: ordinary words of Lore subjects and of a feat name (a field of work or study, a kind of performance, an adjective) that a left-out section also capitalizes. None is a name of a person, place, faith or people, and no redaction row takes one out.
+academia
+eternal
+genealogy
+gladiatorial
+heraldry
+herbalism
+mercantile
+angels
+ghouls
+giants
+subterranean
+downplay
+communicating
+speakers
+scribing
+tanning
+theater
+underworld
+# Chapter 7b pair review: each pair is a Lore subject (an ordinary word of a field of work or study) and the word Lore, which a left-out section writes the same way; or two words of the label of a deity's statistics (a game term of the rules the backgrounds point to). None names a person, place, faith or people.
+academia lore
+art lore
+circus lore
+divine attribute
+divine skill
+engineering lore
+fortune telling
+games lore
+genealogy lore
+gladiatorial lore
+guild lore
+heraldry lore
+herbalism lore
+labor lore
+mercantile lore
+mining lore
+scribing lore
+tanning lore
+telling lore
+theater lore
+underworld lore
+# Retired pairs: a pair hash that nothing produces any more, which `denylist --fresh` may drop (and says so). A hash and a one-line reason, no words.
+retired-pair 284c34fb2cf8624689826b6ea7f3087e367fa08578a85c9fb246c392047bf662 cross-span artifact of an intermediate build; both words denied singly

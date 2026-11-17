@@ -54,7 +54,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Theory]
     [InlineData("condition", 42)] // 46 bookmark children minus 4 sidebars, and 42 entry headers in the taken range
     [InlineData("gear", 124)]     // chapter 6b: 124 rows of the gear tables (counted again in EveryGearEntryCarriesItsStatisticsAndTheCountsAreThePinnedOnes)
-    [InlineData("rule", 133)]     // chapter 7a adds 1 (the general rules of an ancestry's entry: its nine children are paragraphs of one rule); chapter 6b adds 16 (the gear's section texts, price tables and the one sidebar the take-list names: 15 sections and the wheelchair rules); chapter 6a adds 38 (see EveryArmorShieldAndWeaponCarriesItsStatisticsAndTheCountsAreThePinnedOnes): the chapter's own text, 7 more sections' own text (5 with children, Shields and Attack Rolls), 12 of their
+    [InlineData("rule", 140)]     // chapter 7b adds 7 (the versatile heritages' own text, its two sections about limits and about playing one, the mixed-ancestry introduction, the backgrounds' introduction, the languages' own text and the sign language); chapter 7a adds 1 (the general rules of an ancestry's entry: its nine children are paragraphs of one rule); chapter 6b adds 16 (the gear's section texts, price tables and the one sidebar the take-list names: 15 sections and the wheelchair rules); chapter 6a adds 38 (see EveryArmorShieldAndWeaponCarriesItsStatisticsAndTheCountsAreThePinnedOnes): the chapter's own text, 7 more sections' own text (5 with children, Shields and Attack Rolls), 12 of their
                                   // children, Price, Item Level and Shoddy Items, 3 armor rules, the 3 statistics sections (their children are paragraphs), 6 of the weapon rules, the weapon traits and the kinds of ammunition. Before that: chapter 1: the appendix's own intro rule, condition values, overriding conditions (3); chapter 4: the chapter's own introduction, the checks' own text, 4 sections of the checks,
                                   // 17 skills' descriptions, the lead of the skills, 2 subsections of Performance, 4 of the general actions, one of Crafting and the income table (33); chapter 7: the chapter's
                                   // own introduction, the 15 spellcasting sections (6 of them with their own text before their children), their 17 children, and two boxes among the spells (35); and the
@@ -65,8 +65,9 @@ public class DegreesRulesPackTests : IAsyncLifetime
                                   // 48 trait lines and 29 action icons (two jumps have no trait line, the activities have no icon), and the overview table of actions lists the same 50 (name, proficiency) pairs
     [InlineData("armor", 16)]     // chapter 6a: 12 suits of armor (13 rows of the two armor tables, less the row for wearing none, against 12 descriptions) and 4 shields (4 rows, 4 descriptions)
     [InlineData("weapon", 83)]    // chapter 6a: 84 rows of the weapon tables, less the alchemical bomb (the gear chapter's) = 83; 87 descriptions, less the bomb and the 4 kinds of ammunition, plus the fist's row, which has none = 83
-    [InlineData("heritage", 45)]  // chapter 7a: the bookmark children of the eight heritages sections (5, 6, 5, 5, 6, 2, 9 and 7) are the heritage headings of their ranges, and the entries parsed
-    [InlineData("feat", 269)]     // chapter 7a adds the 143 ancestry feats (EveryAncestryFeatSitsUnderItsLevelBand_AndTheCountsAreThePinnedOnes); chapter 3: Chapter 5 of the book has no child bookmarks, so its entries are counted from the document three ways: the 126 header-font blocks that end in the
+    [InlineData("background", 40)] // chapter 7b: 40 headings that end in the background word, 40 sentences that open a background's rules and 40 that grant a skill feat; the chapter prints no list of them
+    [InlineData("heritage", 49)]  // chapter 7b adds the 4 versatile heritages (two kinds, and the two of the mixed-ancestry section: 4 lore bookmark pairs, 4 heritage bookmarks); chapter 7a: the bookmark children of the eight heritages sections (5, 6, 5, 5, 6, 2, 9 and 7) are the heritage headings of their ranges, and the entries parsed
+    [InlineData("feat", 312)]     // chapter 7b adds the 43 feats of the versatile heritages (EveryVersatileHeritageHasItsFeats_AndEveryBackgroundItsFields); chapter 7a adds the 143 ancestry feats (EveryAncestryFeatSitsUnderItsLevelBand_AndTheCountsAreThePinnedOnes); chapter 3: Chapter 5 of the book has no child bookmarks, so its entries are counted from the document three ways: the 126 header-font blocks that end in the
                                   // type's word and a level, the 126 trait-line blocks (one follows each header) and the 126 level markers read line by line. They agree, so no countsDiffer reason.
     [InlineData("trait", 125)]    // chapter 2: the glossary's trait definitions. The importer finds 129 definitions and 24 trait lines that only point to a page or another book
                                   // (153), and reads 153 occurrences of the trait mark in the range: the two counts agree, so no countsDiffer reason is needed.
@@ -173,10 +174,12 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Fact]
     public void EveryHeritageNamesItsAncestry_AndTheCountsAreThePinnedOnes()
     {
-        var heritages = Entries("heritage", PackId).ToList();
+        // The heritages of the ancestries; the versatile heritages (chapter 7b) name no ancestry and have their own test.
+        var heritages = Entries("heritage", PackId).Where(h => h.Properties.ContainsKey("ancestry")).ToList();
         var ancestries = Entries("ancestry", PackId).Select(a => a.Id).ToHashSet();
 
         Assert.Equal(45, heritages.Count);
+        Assert.Equal(4, Entries("heritage", PackId).Count(h => !h.Properties.ContainsKey("ancestry")));
         // The heritage's ancestry is an ancestry entry's id (after the suffix pass), so the sheet's filter (property ancestry equals the sheet's ancestry) finds it.
         Assert.All(heritages, h => Assert.Contains((string)h.Properties["ancestry"], ancestries));
         Assert.Equal(new[] { 5, 6, 5, 5, 6, 2, 9, 7 }, AncestryKeys.Select(k => heritages.Count(h => (string)h.Properties["ancestry"] == k + "-ancestry")));
@@ -198,7 +201,8 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Fact]
     public void EveryAncestryFeatSitsUnderItsLevelBand_AndTheCountsAreThePinnedOnes()
     {
-        var feats = Entries("feat", PackId).Where(f => f.Source!.StartsWith("pc > Chapter 2", StringComparison.Ordinal)).ToList();
+        // The feats of the eight ancestries (those of the versatile heritages, chapter 7b, are under "Feats" and have their own test).
+        var feats = Entries("feat", PackId).Where(f => f.Source!.StartsWith("pc > Chapter 2", StringComparison.Ordinal) && f.Source.EndsWith("Ancestry Feats", StringComparison.Ordinal)).ToList();
         var traitKeys = Entries("trait", PackId).Select(e => e.Id).ToHashSet();
 
         Assert.Equal(143, feats.Count);
@@ -220,6 +224,121 @@ public class DegreesRulesPackTests : IAsyncLifetime
         Assert.Equal(new[] { 32, 15, 14, 4, 0, 6 }, new[] { "prerequisites", "frequency", "trigger", "requirements", "cost", "special" }.Select(k => feats.Count(f => f.Properties.ContainsKey(k))));
         // The trait lines name shipped traits, except three words the glossary has no definition for: the rarity word and two that other chapters' entries use too.
         Assert.Equal(new[] { "fortune", "polymorph", "uncommon" }, feats.SelectMany(f => Words(f, "traits")).Where(t => !traitKeys.Contains(t)).Distinct().Order());
+    }
+
+    private static readonly string[] SkillKeys = { "acrobatics", "arcana", "athletics", "crafting", "deception", "diplomacy", "intimidation", "medicine", "nature", "occultism", "performance", "religion", "society", "stealth", "survival", "thievery" };
+
+    private static readonly string[] AttributeWords = { "str", "dex", "con", "int", "wis", "cha" };
+
+    /// <summary>
+    /// The versatile heritages (chapter 7b): two kinds and the two of the mixed-ancestry section, which the importer counts from the bookmarks (the overview lists the three sections; the lore, heritage, lineage and level bookmarks of
+    /// each), the feat headers, trait lines and level markers (43 in all, equal in each) and the level bands. Each names no ancestry (any ancestry may take one), and its feats carry its key in their trait line. The lineage feats
+    /// sit under no level band and are of 1st level. The two mixed-ancestry heritages say what they are in plain words and grant their parent's trait besides their own.
+    /// </summary>
+    [Fact]
+    public void EveryVersatileHeritageHasItsFeats_AndItsOwnKey()
+    {
+        var heritages = Entries("heritage", PackId).Where(h => !h.Properties.ContainsKey("ancestry")).OrderBy(h => h.Id, StringComparer.Ordinal).ToList();
+        Assert.Equal(new[] { "changeling-heritage", "half-elf", "half-orc", "nephilim-heritage" }, heritages.Select(h => h.Id));
+        Assert.Equal(new[] { "Changeling", "Half-Elf", "Half-Orc", "Nephilim" }, heritages.Select(h => h.Name));
+
+        // The book marks two of them uncommon; the rarity word is their trait. No other has a trait.
+        Assert.Equal(new[] { "changeling-heritage", "nephilim-heritage" }, heritages.Where(h => h.Properties.ContainsKey("traits")).Select(h => h.Id));
+        Assert.All(heritages.Where(h => h.Properties.ContainsKey("traits")), h => Assert.Equal(new[] { "uncommon" }, Words(h, "traits")));
+        Assert.All(heritages, h => Assert.Matches(@"^pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > (Changeling|Nephilim|Mixed Ancestry)$", h.Source!));
+
+        // The traits a heritage grants (read from its own sentence after redaction): its own key last, and a mixed ancestry's parent's before it. The sheet does not read the field yet.
+        Assert.Equal(new[] { "changeling" }, Words(heritages[0], "grantsTraits"));
+        Assert.Equal(new[] { "elf", "half-elf" }, Words(heritages[1], "grantsTraits"));
+        Assert.Equal(new[] { "orc", "half-orc" }, Words(heritages[2], "grantsTraits"));
+        Assert.Equal(new[] { "nephilim" }, Words(heritages[3], "grantsTraits"));
+
+        // The feats: 12, 4, 2 and 25, by level (1, 5, 9, 13, 17), and each carries its heritage's key, once.
+        var feats = Entries("feat", PackId).Where(f => f.Source!.Contains("> Versatile Heritages >", StringComparison.Ordinal)).ToList();
+        Assert.Equal(43, feats.Count);
+        Assert.All(feats, f => Assert.Matches(@"^pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > (Changeling|Nephilim|Mixed Ancestry) > Feats$", f.Source!));
+        Assert.All(feats, f => Assert.Single(Words(f, "traits").Intersect(new[] { "changeling", "half-elf", "half-orc", "nephilim" })));
+        var keys = new[] { "changeling", "half-elf", "half-orc", "nephilim" };
+        var levels = new long[] { 1, 5, 9, 13, 17 };
+        var perKey = new[] { new[] { 7, 2, 2, 1, 0 }, new[] { 2, 2, 0, 0, 0 }, new[] { 2, 0, 0, 0, 0 }, new[] { 11, 5, 4, 3, 2 } };
+        for (var i = 0; i < keys.Length; i++)
+        {
+            var own = feats.Where(f => Words(f, "traits").Contains(keys[i])).ToList();
+            Assert.Equal(perKey[i], levels.Select(l => own.Count(f => (long)f.Properties["level"] == l)));
+        }
+
+        // The ten lineage feats (4 of the changeling, 6 of the nephilim) are of 1st level and carry the lineage trait; no other feat does.
+        var lineages = feats.Where(f => Words(f, "traits").Contains("lineage")).ToList();
+        Assert.Equal(new[] { 4, 6 }, new[] { "changeling", "nephilim" }.Select(k => lineages.Count(f => Words(f, "traits").Contains(k))));
+        Assert.All(lineages, f => Assert.Equal(1L, (long)f.Properties["level"]));
+
+        // The two mixed-ancestry keys (6 feats) have no trait entry, as the shipped traits do for the other two kinds, and one word is a trait the glossary lacks that other chapters' entries use too: the gap is deliberate and visible here.
+        var traitKeys = Entries("trait", PackId).Select(t => t.Id).ToHashSet();
+        Assert.Equal(new[] { "half-elf", "half-orc", "morph" }, feats.SelectMany(f => Words(f, "traits")).Where(t => !traitKeys.Contains(t)).Distinct().Order());
+
+        // The labelled fields of the feats, as the book prints them, and the one two-action feat.
+        Assert.Equal(new[] { 10, 1, 0, 0, 0, 5 }, new[] { "prerequisites", "frequency", "trigger", "requirements", "cost", "special" }.Select(k => feats.Count(f => f.Properties.ContainsKey(k))));
+        Assert.Equal(new[] { "divine-wings" }, feats.Where(f => f.Properties.ContainsKey("actions")).Select(f => f.Id));
+
+        // The rules of the section (chapter 7b): its own text, the limits on combining heritages, how to play one (with the lineage feats as a paragraph) and the mixed-ancestry introduction.
+        var rules = Entries("rule", PackId).Where(r => r.Source!.Contains("> Versatile Heritages", StringComparison.Ordinal)).Select(r => r.Id).Order().ToList();
+        Assert.Equal(new[] { "heritage-limits", "mixed-ancestry", "playing-a-versatile-heritage", "versatile-heritages" }, rules);
+    }
+
+    /// <summary>
+    /// The backgrounds (chapter 7b): 40, counted from the document as the headings that end in the background word, the sentences that open a background's rules and the sentences that grant its skill feat (the chapter prints no list).
+    /// Each has two boosts (one of two attributes and a free one; one has two free ones, the deity's attribute being another entry's), its trained skills (a choice is written a|b), its Lore subject as text, and the id of the
+    /// skill feat it grants, which resolves to a feat of the pack. All 40 are common: none has a trait. The sheet's skill list has no Lore, so the subject is shown and not computed.
+    /// </summary>
+    [Fact]
+    public void EveryBackgroundCarriesItsBoostsSkillsLoreAndFeat_AndTheCountsAreThePinnedOnes()
+    {
+        var backgrounds = Entries("background", PackId).ToList();
+        var feats = Entries("feat", PackId).Select(f => f.Id).ToHashSet();
+
+        Assert.Equal(40, backgrounds.Count);
+        Assert.All(backgrounds, b => Assert.Equal("pc > Chapter 2: Ancestries & Backgrounds > Backgrounds", b.Source));
+        Assert.Empty(backgrounds.Where(b => b.Properties.ContainsKey("traits")));
+
+        // Boosts: 39 with "one of two, and a free one", one with two free ones.
+        Assert.All(backgrounds, b => Assert.Equal(2, Words(b, "boosts").Length));
+        Assert.Equal(39, backgrounds.Count(b => Regex.IsMatch(Words(b, "boosts")[0], "^(str|dex|con|int|wis|cha)\\|(str|dex|con|int|wis|cha)$") && Words(b, "boosts")[1] == "free"));
+        Assert.Equal(new[] { "raised-by-belief" }, backgrounds.Where(b => Words(b, "boosts").All(w => w == "free")).Select(b => b.Id));
+        Assert.All(backgrounds.SelectMany(b => Words(b, "boosts")).Where(w => w != "free").SelectMany(w => w.Split('|')), w => Assert.Contains(w, AttributeWords));
+
+        // Trained skills: 39 name some (4 as a choice between skills); the one that does not trains the skill its deity's statistics name.
+        var withSkills = backgrounds.Where(b => b.Properties.ContainsKey("skills")).ToList();
+        Assert.Equal(39, withSkills.Count);
+        Assert.Equal(4, withSkills.Count(b => Words(b, "skills").Any(w => w.Contains('|'))));
+        Assert.All(withSkills.SelectMany(b => Words(b, "skills")).SelectMany(w => w.Split('|')), w => Assert.Contains(w, SkillKeys));
+        Assert.Equal(new[] { "raised-by-belief" }, backgrounds.Where(b => !b.Properties.ContainsKey("skills")).Select(b => b.Id));
+
+        // Lore: every background has a subject (31 a plain subject or two, 9 a phrase that says what the player chooses).
+        Assert.All(backgrounds, b => Assert.False(string.IsNullOrWhiteSpace(b.Properties["lore"] as string), b.Id));
+        Assert.Equal(9, backgrounds.Count(b => Regex.IsMatch((string)b.Properties["lore"], "^(related|for the)")));
+
+        // The skill feat: every id (35 different, one background grants one of two by the skill chosen) is a feat of the pack.
+        var granted = backgrounds.SelectMany(b => ((string)b.Properties["skillFeat"]).Split('|')).ToList();
+        Assert.Equal(41, granted.Count);
+        Assert.Equal(35, granted.Distinct().Count());
+        Assert.All(granted, id => Assert.Contains(id, feats));
+
+        // The introduction of the section is a rule of its own category.
+        var intro = Entries("rule", PackId).Single(r => r.Id == "backgrounds");
+        Assert.Equal("Backgrounds", intro.Properties["category"]);
+    }
+
+    /// <summary>The languages (chapter 7b): the section's own rules and the sign language, as rules of the category Languages; the regional languages and the tables of language names are left out, so no entry is a language (the ancestries' fixed languages stay the lowercase words of their `languages` field).</summary>
+    [Fact]
+    public void TheLanguagesAreRulesOfTheirCategory_AndNoEntryIsALanguage()
+    {
+        var rules = Entries("rule", PackId).Where(r => (string)r.Properties["category"] == "Languages").Select(r => r.Id).Order().ToList();
+        Assert.Equal(new[] { "languages", "sign-language-rule" }, rules);
+        Assert.Empty(Entries("language", PackId));
+
+        // The tables of language names and their speakers are read past: the rules say nothing of any one language, so no capitalized word of them is the name of one (the word gate over the pack checks the rest).
+        // Structurally: no run of four capitalized words in a row (a table's rows) and no line that is a heading.
+        Assert.All(Entries("rule", PackId).Where(r => rules.Contains(r.Id)), r => Assert.DoesNotMatch(@"(?:\b[A-Z][a-z]+\b ){4}", r.Description));
     }
 
     [Fact]
@@ -651,7 +770,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Fact]
     public void ThePackHoldsNothingElse_AndTheReportAgrees()
     {
-        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83 + 16 + 124 + 1 + 8 + 45 + 143; // 16 gear rules and 124 gear entries (chapter 6b); then the ancestry rules, 8 ancestries, 45 heritages and 143 ancestry feats (chapter 7a)
+        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83 + 16 + 124 + 1 + 8 + 45 + 143 + 4 + 43 + 7 + 40; // 16 gear rules and 124 gear entries (chapter 6b); then the ancestry rules, 8 ancestries, 45 heritages and 143 ancestry feats (chapter 7a); then 4 versatile heritages, their 43 feats, 7 rules and 40 backgrounds (chapter 7b)
         Assert.Equal(total, AllEntries(PackId).Count());
 
         // import-report.yaml holds counts and ids only; its totals are the importer's own and must match what loaded.
@@ -666,7 +785,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     {
         Assert.All(AllEntries(PackId), e =>
         {
-            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9:& ]+( > [A-Za-z: ,'-]+){0,4})$", e.Source!); // chapters 1 to 7a (the ancestries chapter's title has an ampersand) (the chapter title is the book's, with its number, then up to a section and a skill or a child section, and the rituals' rules are four deep; a title may have a comma or a hyphen); a later chapter widens this
+            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9:& ]+( > [A-Za-z: ,'!-]+){0,4})$", e.Source!); // chapters 1 to 7b (a title may end in an exclamation mark) (the ancestries chapter's title has an ampersand) (the chapter title is the book's, with its number, then up to a section and a skill or a child section, and the rituals' rules are four deep; a title may have a comma or a hyphen); a later chapter widens this
             Assert.DoesNotContain("homebrew", e.Tags);
             Assert.DoesNotMatch(@"(?<!Chapter )\d", e.Source!); // no page numbers (a chapter's own number is not one)
         });

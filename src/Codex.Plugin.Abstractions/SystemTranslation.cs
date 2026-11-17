@@ -88,6 +88,9 @@ public class SheetRulesTranslation
     /// <summary>Choice id (the <c>choose.id</c> of a feature source: <c>lineage</c>) -> the label the picker shows.</summary>
     public Dictionary<string, string> Choices { get; set; } = new();
 
+    /// <summary>Attribute boost source key (<c>ancestry</c>, <c>lvl1</c>) -> the name the sheet shows for it.</summary>
+    public Dictionary<string, string> BoostSources { get; set; } = new();
+
     /// <summary>Passive score key -> label.</summary>
     public Dictionary<string, string> Passives { get; set; } = new();
 

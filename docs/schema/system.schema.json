@@ -2015,6 +2015,10 @@
           ],
           "description": "Candidate value equals the raw value of this sheet field (an entry id, say)."
         },
+        "orEmpty": {
+          "type": "boolean",
+          "description": "With EqualsField: a candidate whose property is empty (absent, null or blank text; an empty list is not read as empty) is allowed too, so an entry that names no owner is open to every owner (a heritage with no ancestry)."
+        },
         "equalsPropertyOfField": {
           "$ref": "#/$defs/FieldProperty",
           "description": "Candidate value equals a property of the entry a sheet field references (e.g. the feat named by the chosen background)."

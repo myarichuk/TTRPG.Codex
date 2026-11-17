@@ -41,6 +41,10 @@ public static class TakeStage
         ["actions"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon", "table" },
         // An ancestry's pages: its flavor (entry-header and rules), the titles of its two sections, its heritages (entry-header), the level bands and feats (block-header, tag, body) and its statistics box.
         ["ancestries"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon" },
+        // A versatile heritage's pages are the same parts as an ancestry's, less the statistics box.
+        ["versatile"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon" },
+        // The backgrounds: each one's heading (block-header) and its text.
+        ["backgrounds"] = new[] { "block-header", "rules", "body", "icon" },
     };
 
     private static readonly string[] Claimable = { "entry-header", "rules", "body", "tag", "table" };
@@ -120,7 +124,15 @@ public static class TakeStage
             {
                 var number = row.Paths.Count + o + 1;
                 var node = PathNode(spine, row, row.Own[o]) ?? throw new DegreesException($"Chapter {row.Chapter}, own-text path {o + 1}: no bookmark has that path.");
-                ranges.Add(OwnRange(spine, blocks, row, number, node) with { RowNumber = r + 1 });
+                var own = OwnRange(spine, blocks, row, number, node);
+                if (row.TailFromHeader)
+                {
+                    // An own-text range reads its tail past too (the languages' tables, between the section's text and its first child): it ends at its first block-header heading, which must exist.
+                    var caption = Enumerable.Range(own.Start, Math.Max(0, own.End - own.Start)).Where(i => blocks.Blocks[i].Role == "block-header").Cast<int?>().FirstOrDefault();
+                    own = caption is { } at ? own with { End = at, TailEnd = own.End } : throw new DegreesException($"Chapter {row.Chapter}, own-text path {o + 1}: the row reads the tail of its section past, but no heading in the block-header font starts one.");
+                }
+
+                ranges.Add(own with { RowNumber = r + 1 });
             }
         }
 

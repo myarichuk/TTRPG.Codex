@@ -291,7 +291,7 @@ public static partial class EntriesStage
 
         result.Languages.AddRange(lines[..additional].Select(l => l.ToLowerInvariant()));
         var rest = string.Join(' ', lines[additional..]);
-        var count = Regex.Match(rest, @"^Additional languages equal to (?:(?<n>\d+) \+ )?your Intelligence modifier");
+        var count = Regex.Match(rest, @"^Additional languages[^.\d]*(?:(?<n>\d+) \+ )?[^.]*\bIntelligence\b");
         if (!count.Success)
         {
             throw new DegreesException("An ancestry's additional languages are not 'equal to' the Intelligence modifier, with a number or not.");

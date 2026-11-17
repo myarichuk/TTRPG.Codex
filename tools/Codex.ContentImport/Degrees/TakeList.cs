@@ -235,10 +235,10 @@ public sealed class PlannedRow
 
 public sealed partial class TakeList
 {
-    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions", "spelllists", "items", "ancestries" };
+    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions", "spelllists", "items", "ancestries", "versatile", "backgrounds" };
 
     /// <summary>The parsers that exist. Any other parser in the list fails the run, so a row cannot silently take nothing.</summary>
-    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions", "spelllists", "items", "ancestries" };
+    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions", "spelllists", "items", "ancestries", "versatile", "backgrounds" };
 
     public List<TakeRow> Rows { get; set; } = new();
 
@@ -312,9 +312,16 @@ public sealed partial class TakeList
             }
 
             // The ancestries parser also writes the heritages and the ancestry feats of the ancestries it reads.
-            if (Rows[i].Parser == "ancestries")
+            // The versatile parser writes heritages, their feats and the introduction of a section of several as a rule; the backgrounds parser writes backgrounds and the introduction as a rule.
+            if (Rows[i].Parser is "ancestries" or "versatile" or "backgrounds")
             {
-                foreach (var (also, folder) in new[] { ("heritage", "heritages"), ("feat", "feats") })
+                var needed = Rows[i].Parser switch
+                {
+                    "ancestries" => new[] { ("heritage", "heritages"), ("feat", "feats") },
+                    "versatile" => new[] { ("heritage", "heritages"), ("feat", "feats"), ("rule", "rules") },
+                    _ => new[] { ("rule", "rules") },
+                };
+                foreach (var (also, folder) in needed)
                 {
                     var declared = system.EntityTypes.FirstOrDefault(t => t.Type == also);
                     if (declared == null || (declared.Folder ?? declared.Type) != folder)

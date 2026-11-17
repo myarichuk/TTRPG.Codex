@@ -1121,6 +1121,9 @@ public class RuleCondition
     /// <summary>Candidate value equals the raw value of this sheet field (an entry id, say).</summary>
     public string? EqualsField { get; set; }
 
+    /// <summary>With <see cref="EqualsField"/>: a candidate whose property is empty (absent, null or blank text; an empty list is not read as empty) is allowed too, so an entry that names no owner is open to every owner (a heritage with no ancestry).</summary>
+    public bool OrEmpty { get; set; }
+
     /// <summary>Candidate value equals a property of the entry a sheet field references
     /// (e.g. the feat named by the chosen background).</summary>
     public FieldProperty? EqualsPropertyOfField { get; set; }

@@ -1279,3 +1279,429 @@ rows:
     span: { sha256: "28c7491333f2de5b6aeb9ec67f5a23d1f9de439a5a08dde34ee140c18f26bef7", length: 11 }
     action: cut
     reason: "A sentence the page layout cut in two paragraphs at a line set short beside a picture; the two halves are one sentence again, in the book's own words."
+  # Chapter 7b: the versatile heritages, the backgrounds and the languages. Names the setting coined are said by what they are (the old name is named by hash only).
+  - book: pc
+    entryHash: "57d7f58fcd86a5ed38fc15ffc0e99a511827a5b76e2b38dbf9418f74cf75d9c9"
+    field: name
+    span: { sha256: "5e473422d78a0ed74ad327fa2332dee2833e4bc801445d2b793535750b82fc8b", length: 8 }
+    action: replace
+    text: "Angel Blood"
+    reason: "A name the setting coined from ordinary words; the mechanic stands without it, so the entry is said by what it is."
+  - book: pc
+    entryHash: "0d8d61161e26ef6581f87ea7823cb0707a7f7bd6bc3b7ac945f1c3f6f9099115"
+    field: name
+    span: { sha256: "bdb41d6fb75c29e07fa9b9d4857362c2240f6d04c05cc867b4b703ca1e83a4d5", length: 9 }
+    action: replace
+    text: "Soul-Eater Blood"
+    reason: "A name the setting coined from ordinary words; the mechanic stands without it, so the entry is said by what it is."
+  - book: pc
+    entryHash: "9fe9af88fd30cd93b470b47091f929b92eecc99e580a3bf9e155f1a0dc0678ef"
+    field: name
+    span: { sha256: "96360dfeb2cc6e878e1bfd40ec60e0623dc7865ea5009f22623bf577262a8abc", length: 9 }
+    action: replace
+    text: "Devil Blood"
+    reason: "A name the setting coined from ordinary words; the mechanic stands without it, so the entry is said by what it is."
+  - book: pc
+    entryHash: "6edb3163535a144e8587cee202187f4e73ae9df10155e5759beed7df62e10650"
+    field: name
+    span: { sha256: "c87d6c5a6cb69e6e207df2287473db27d4d0546d448ae83a52ae4b4292aa6fc1", length: 10 }
+    action: replace
+    text: "Law Guardian Blood"
+    reason: "A name the setting coined from ordinary words; the mechanic stands without it, so the entry is said by what it is."
+  - book: pc
+    entryHash: "5ae8bf437c8fdf6590421a6736845474c82174782c88f670fca379d1c00fe874"
+    field: name
+    span: { sha256: "9dfae4bcff7291b3f7a032ff89c98482cca32a330009592a69d4b2bd06dc8326", length: 11 }
+    action: replace
+    text: "Freedom Spirit Blood"
+    reason: "A name the setting coined from ordinary words; the mechanic stands without it, so the entry is said by what it is."
+  - book: pc
+    entryHash: "ef419b947eb28f843f3b1313f653826c6871ce9d4449e6f7c7cbab1f7d7349f9"
+    field: name
+    span: { sha256: "207ff7d690b7979240eb3d3921bf44122436c857280edd1c6d1f8558b866deb1", length: 7 }
+    action: replace
+    text: "Demon Blood"
+    reason: "A name the setting coined from ordinary words; the mechanic stands without it, so the entry is said by what it is."
+  - book: pc
+    entryHash: "0ec76fa70919a70a54838ead7fe8aa6baa66bf8e5e7eea7a1a6b69e045fe1f17"
+    field: name
+    span: { sha256: "a622b500a58e8085a733d7b9f040cf4a9dd63cb93b3c26f636c02923747b8158", length: 9 }
+    action: replace
+    text: "Sea Hag Mother"
+    reason: "A name the setting coined from ordinary words; the mechanic stands without it, so the entry is said by what it is."
+  - book: pc
+    entryHash: "f518a22589528d5f3e3eb4acf4a513e8138e598298162fd36ccb2089f4d1eb55"
+    field: name
+    span: { sha256: "fd5a82c19e3bfc4c46022aa198205e0ff3ea3bdb0b1adc917b50a37107c05348", length: 10 }
+    action: replace
+    text: "Sweet Hag Mother"
+    reason: "A name the setting coined from ordinary words; the mechanic stands without it, so the entry is said by what it is."
+  - book: pc
+    entryHash: "82e2c3c4bc9f4c08e05cbdfbd3d53cd1ba0cc599b32cd7d6789c491323114c19"
+    field: name
+    span: { sha256: "36eeccce7ea34c355acea9ca4a7e800afa2e5610f48b25c4e2dd7c8ab4ad972f", length: 9 }
+    action: replace
+    text: "Cuckoo Hag Mother"
+    reason: "A name the setting coined from ordinary words; the mechanic stands without it, so the entry is said by what it is."
+  - book: pc
+    entryHash: "ff3a4d0dcfc2fd38c96f54d576d9410d9f18d74f81f949f82f82a09994d21d19"
+    field: name
+    span: { sha256: "930e8830576a32add6f41b0f139ce50285584f026e440db0871760aa87d5e478", length: 8 }
+    action: replace
+    text: "Iron Hag Mother"
+    reason: "A name the setting coined from ordinary words; the mechanic stands without it, so the entry is said by what it is."
+  - book: pc
+    entryHash: "ae1e229e4056c7c1ed9d7c20664fcaeca09ab12cd04e7465821995260c48d208"
+    field: name
+    span: { sha256: "28d76a3ce88b097007886c18b8410e3fa11becfd7ca20488b068615955a1d21e", length: 8 }
+    action: replace
+    text: "Half-Elf"
+    reason: "A name the setting coined for the children of elves and other peoples; the mechanic (the parent's traits and feats) stands without it, so the heritage is said by what it is."
+  - book: pc
+    entryHash: "454883c1ab08db9b6ba85eb5ee2deb5f8245ee5839476ad548791f502cecbec1"
+    field: name
+    span: { sha256: "ad81aa6bacee409f8f840f4d95c1d8f0838b6ff704abb89e12de85a488b4e0e8", length: 7 }
+    action: replace
+    text: "Half-Orc"
+    reason: "A name the setting coined for the children of orcs and other peoples; the mechanic (the parent's traits and feats) stands without it, so the heritage is said by what it is."
+  - book: pc
+    entryHash: "ae1e229e4056c7c1ed9d7c20664fcaeca09ab12cd04e7465821995260c48d208"
+    field: description
+    span: { sha256: "fdb7c50a939f367d04a7dc6965395cbc7f71e2187fd1673cdd72859df5c2be81", length: 65 }
+    action: replace
+    text: "You have elves, or possibly other half-elves, in your family tree."
+    reason: "Sentence naming the coined people."
+  - book: pc
+    entryHash: "ae1e229e4056c7c1ed9d7c20664fcaeca09ab12cd04e7465821995260c48d208"
+    field: description
+    span: { sha256: "17ab74867ddef2dbd9ec523e43307ac0e2d188f66d492f7e59bed8fdc6120622", length: 65 }
+    action: replace
+    text: "You gain the elf trait, the half-elf trait, and low-light vision."
+    reason: "The trait named by the coined word is said by the heritage's plain name."
+  - book: pc
+    entryHash: "ae1e229e4056c7c1ed9d7c20664fcaeca09ab12cd04e7465821995260c48d208"
+    field: description
+    span: { sha256: "389cdae23b993d1af3a5723f32a60494fc2a7cdb5c86d2ef4863611744d23807", length: 128 }
+    action: replace
+    text: "In addition, when you gain an ancestry feat, you can choose from half-elf and elf feats in addition to those from your ancestry."
+    reason: "The feats named by the coined word are said by the heritage's plain name."
+  - book: pc
+    entryHash: "454883c1ab08db9b6ba85eb5ee2deb5f8245ee5839476ad548791f502cecbec1"
+    field: description
+    span: { sha256: "8e1d079b41b0ae984699faa79043a9596fb9f193b33f25309320e7c74ef2a79c", length: 72 }
+    action: replace
+    text: "You gain the orc trait, the half-orc trait, and low-light vision."
+    reason: "The trait named by the coined word is said by the heritage's plain name; a picture's caption that the extraction ran into the sentence goes."
+  - book: pc
+    entryHash: "454883c1ab08db9b6ba85eb5ee2deb5f8245ee5839476ad548791f502cecbec1"
+    field: description
+    span: { sha256: "f8e678fe6805371bbeb60da824eb955fa5f69a0b23a708d2c320d49788612f7f", length: 114 }
+    action: replace
+    text: "When you gain an ancestry feat, you can choose from half-orc and orc feats in addition to those from your ancestry."
+    reason: "The feats named by the coined word are said by the heritage's plain name."
+  - book: pc
+    entry: mixed-ancestry
+    field: description
+    span: { sha256: "1fe8cd4daa2d59446dfbe502f3b676712f91be2c279a466f0d9a2249e80759f9", length: 217 }
+    action: replace
+    text: "The possible combinations of ancestries are immeasurable, though the half-elf and half-orc heritages below are the most common."
+    reason: "A sentence that named the setting's region and two coined peoples; the mechanic (the two heritages below are the common ones) is kept in plain words."
+  - book: pc
+    entry: mixed-ancestry
+    field: description
+    span: { sha256: "c85282190dc1645302b18981d7ec0bb5f595e49a6755c5579f96237dac75288e", length: 163 }
+    action: replace
+    text: "You gain any traits of that ancestry and a new trait for your combined ancestry, similar to how the half-elf heritage below grants the \"elf\" and \"half-elf\" traits."
+    reason: "The heritage and trait named by the coined word are said by the heritage's plain name."
+  - book: pc
+    entry: mixed-ancestry
+    field: description
+    span: { sha256: "a0dcd99c0a2d69820d7be96b8cbccd0ce8fae571a0f312d1de7cedecd75219cc", length: 112 }
+    action: replace
+    text: "You also gain low-light vision if the ancestry tied to the heritage has low-light vision or darkvision."
+    reason: "A picture's caption that the extraction ran into the sentence goes; the mechanic is kept."
+  - book: pc
+    entry: mixed-ancestry
+    field: description
+    span: { sha256: "b95b47dff329b1c1fc26c681b1aca68f78997036c605330b15202c221fcedb8c", length: 141 }
+    action: replace
+    text: "The half-elf and half-orc heritages both have special feats, but a custom heritage will need you to work with your GM to create or adapt some."
+    reason: "The heritages named by the coined words are said by their plain names."
+  - book: pc
+    entry: versatile-heritages
+    field: description
+    span: { sha256: "5519ff34b8eadc7e220d1449cc622c33dda37b4d2763e8a2ff029e446d111255", length: 170 }
+    action: replace
+    text: "The most common versatile heritages by far are the half-elf and half-orc ones, usually born to a human parent on one side and either an elf or orc parent on the other."
+    reason: "The two coined peoples are said by their plain names; the mechanic is kept."
+  - book: pc
+    entry: versatile-heritages
+    field: description
+    span: { sha256: "13676b68335782aa72ef801b0d7f0f4b74620f30541329a7eb1d57e0c61c905b", length: 53 }
+    action: replace
+    text: "Many kinds of versatile heritage exist."
+    reason: "A sentence that named a place, a being or a people the setting coined; the same sentence says it in plain words and the mechanic is kept."
+  - book: pc
+    entry: versatile-heritages
+    field: description
+    span: { sha256: "df1735dd06836b71240e8d44401c4e36c3541430dec8df2fe75a2c4fa18451aa", length: 45 }
+    action: cut
+    reason: "A sentence that only named a kind of being the setting coined; it states no rule."
+  - book: pc
+    entry: heritage-limits
+    field: description
+    span: { sha256: "ed398d2d8c686aeebd9cc814ea0cd78f041c8002f47a313033b7484b4384387d", length: 371 }
+    action: replace
+    text: "A half-elf character might still have a changeling parent whose nature is visible in the coloration of their eyes even if they don't have access to changeling ancestry feats, and a dwarf with demon blood might very well have an ancestor with fey influences on their bloodline, reflected with a fey muse or patron gained through their class alongside their ancestral fiendishness."
+    reason: "The coined names in an example are said in plain words; the example (a heritage, a parent, a class patron) is kept."
+  - book: pc
+    entryHash: "57d7f58fcd86a5ed38fc15ffc0e99a511827a5b76e2b38dbf9418f74cf75d9c9"
+    field: description
+    span: { sha256: "296fbcac7796a2af49b94fb57f0e2268242db089a69f2432a2603cf42ddd45dd", length: 96 }
+    action: replace
+    text: "You descend from an angel, a winged messenger from one of the celestial realms."
+    reason: "A sentence that named a place, a being or a people the setting coined; the same sentence says it in plain words and the mechanic is kept."
+  - book: pc
+    entryHash: "57d7f58fcd86a5ed38fc15ffc0e99a511827a5b76e2b38dbf9418f74cf75d9c9"
+    field: description
+    span: { sha256: "827908bd2c0f64bb2fb6d47ac965c4754657977e2c3e98dc4057ee6f9bfdea1b", length: 73 }
+    action: replace
+    text: "You know a language spoken by celestials, and you gain the Multilingual skill feat."
+    reason: "A language name the languages table holds is said by who speaks it; the mechanic (a language and a feat) is kept."
+  - book: pc
+    entryHash: "0d8d61161e26ef6581f87ea7823cb0707a7f7bd6bc3b7ac945f1c3f6f9099115"
+    field: description
+    span: { sha256: "a5510c767de8fc1f6a6b144f877ae332930b28ba967c3dfac6390adb30d7f5fb", length: 143 }
+    action: replace
+    text: "Your lineage traces back to a daemon, one of the manifestations of horrific forms of death that devour souls."
+    reason: "A sentence that named a place, a being or a people the setting coined; the same sentence says it in plain words and the mechanic is kept."
+  - book: pc
+    entryHash: "9fe9af88fd30cd93b470b47091f929b92eecc99e580a3bf9e155f1a0dc0678ef"
+    field: description
+    span: { sha256: "8976e0c008cae6ba7eeef7ca6e58910339ae71576ef1983a927842443087b504", length: 62 }
+    action: replace
+    text: "Your lineage descends from devils, conniving schemers."
+    reason: "A sentence that named a place, a being or a people the setting coined; the same sentence says it in plain words and the mechanic is kept."
+  - book: pc
+    entryHash: "6edb3163535a144e8587cee202187f4e73ae9df10155e5759beed7df62e10650"
+    field: description
+    span: { sha256: "a0bb561fa7e4686085a54578f1a473eeeefebd55d2dc2531a5cf0ed6b37f726a", length: 130 }
+    action: replace
+    text: "You trace your lineage to celestials who guard law and virtue within mortals."
+    reason: "A sentence that named a place, a being or a people the setting coined; the same sentence says it in plain words and the mechanic is kept."
+  - book: pc
+    entryHash: "5ae8bf437c8fdf6590421a6736845474c82174782c88f670fca379d1c00fe874"
+    field: description
+    span: { sha256: "260a262ebdb9288ce260a2f7fe6836ba31209f0a00a8f1cbcff9d206fd1b0c78", length: 119 }
+    action: replace
+    text: "Your blood sings with the liberating power of celestials who embody freedom."
+    reason: "A sentence that named a place, a being or a people the setting coined; the same sentence says it in plain words and the mechanic is kept."
+  - book: pc
+    entryHash: "ef419b947eb28f843f3b1313f653826c6871ce9d4449e6f7c7cbab1f7d7349f9"
+    field: description
+    span: { sha256: "64c0c74687c7f9d798e39c65cc26301fda97b53e3f2b1b0837e42267c0400f56", length: 106 }
+    action: replace
+    text: "Your blood bears the mark of a demon, a living embodiment of sin."
+    reason: "A sentence that named a place, a being or a people the setting coined; the same sentence says it in plain words and the mechanic is kept."
+  - book: pc
+    entryHash: "ef419b947eb28f843f3b1313f653826c6871ce9d4449e6f7c7cbab1f7d7349f9"
+    field: description
+    span: { sha256: "760b22d7efc96ac30b12adfcc574713515a7d30b5e98235acd9765340f330688", length: 222 }
+    action: replace
+    text: "Demonic power pulses through your veins and manifests in a different way for each person with this lineage, whether you have webbed fingers and thrive in the water, large hands capable of wrestling larger foes, or some other manifestation."
+    reason: "The coined name of the lineage is said in plain words."
+  - book: pc
+    entry: celestial-magic
+    field: prerequisites
+    span: { sha256: "8b98325ec208bc6b6fc6a49c4124e607fa811ed223daddadd178e28f7ef1c476", length: 85 }
+    action: replace
+    text: "Angel Blood, Law Guardian Blood, Freedom Spirit Blood, or another lineage feat associated with celestials"
+    reason: "The lineage feats named by their coined names are said by their plain names."
+  - book: pc
+    entry: celestial-mercy
+    field: prerequisites
+    span: { sha256: "8b98325ec208bc6b6fc6a49c4124e607fa811ed223daddadd178e28f7ef1c476", length: 85 }
+    action: replace
+    text: "Angel Blood, Law Guardian Blood, Freedom Spirit Blood, or another lineage feat associated with celestials"
+    reason: "The lineage feats named by their coined names are said by their plain names."
+  - book: pc
+    entry: fiendish-magic
+    field: prerequisites
+    span: { sha256: "693752040a40266504f989fa8f7b1f4c4fe6511acadc81708849b13d78ec0c4b", length: 77 }
+    action: replace
+    text: "Soul-Eater Blood, Demon Blood, Devil Blood, or another lineage feat associated with fiends"
+    reason: "The lineage feats named by their coined names are said by their plain names."
+  - book: pc
+    entry: slip-sideways
+    field: prerequisites
+    span: { sha256: "5fce78241fbd0ea6a83c4563bf0031b1d604e1aec656cd231cb5333e1419171e", length: 80 }
+    action: replace
+    text: "Soul-Eater Blood, Demon Blood, or Devil Blood, or another lineage feat associated with fiends"
+    reason: "The lineage feats named by their coined names are said by their plain names."
+  - book: pc
+    entry: celestial-magic
+    field: description
+    span: { sha256: "3c916bb9d81cdf0ea2adfad5f61be204b3ed01e63f162c543953910758e07852", length: 171 }
+    action: replace
+    text: "Those with angel blood typically take clear mind and humanoid form, those with law guardian blood typically have everlight and share life, and those with freedom spirit blood typically have revealing light and sure footing."
+    reason: "The coined names of the lineages are said by their plain names; the spells are kept."
+  - book: pc
+    entry: fiendish-magic
+    field: description
+    span: { sha256: "a9ed4746ce8cd791fb76855632a14ad50b0aebfa68923cb7465109f7dbb45f58", length: 160 }
+    action: replace
+    text: "Those with soul-eater blood typically take false vitality and see the unseen, those with demon blood typically take paranoia and shatter, and those with devil blood typically take invisibility and disguise."
+    reason: "The coined names of the lineages are said by their plain names; the spells are kept."
+  - book: pc
+    entry: summon-nephilim-kin
+    field: description
+    span: { sha256: "f7098e6f5f06215c56c866159f41f1b7b464432939d8dde7b08acc401d87eb50", length: 80 }
+    action: replace
+    text: "You have a connection to the planes beyond the world, allowing you to summon a divine ally."
+    reason: "A sentence that named a place, a being or a people the setting coined; the same sentence says it in plain words and the mechanic is kept."
+  - book: pc
+    entry: summon-nephilim-kin
+    field: description
+    span: { sha256: "7a611699c8cc1b3f7d8e2210425629b84181b6d8a61f552dc2a0e651cd5688ea", length: 220 }
+    action: replace
+    text: "Once per day, you can cast the chosen spell as a 5th-rank divine innate spell, but the creature summoned must be from the same category as your own lineage, such as a creature with the angel trait if you have angel blood."
+    reason: "The coined name of the lineage is said by its plain name."
+  - book: pc
+    entry: nephilim-lore
+    field: description
+    span: { sha256: "f66e66dfc7dd2820156eb4b07af54a5969ed7dab7ff0daa8273f7df88e405671", length: 39 }
+    action: replace
+    text: "You know the secrets of the planes beyond the world."
+    reason: "A sentence that named a place, a being or a people the setting coined; the same sentence says it in plain words and the mechanic is kept."
+  - book: pc
+    entry: blessed-blood
+    field: description
+    span: { sha256: "53cb652e71154c2e567d9a8db78b15fa6d1b023eacc49e6d73b66a798e3f2125", length: 92 }
+    action: replace
+    text: "Your spilled blood is sanctified, with effects similar to those of holy water."
+    reason: "A sentence that sent the reader to a page or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: earned-glory
+    field: description
+    span: { sha256: "5766ee5d4479383958d9d6a42ab57ad6bc3141e571eccb9a22e3ebd8254666ed", length: 142 }
+    action: replace
+    text: "Elves often struggle with underestimating half-elves, and you are experienced at telling stories of your accomplishments to gain their respect."
+    reason: "The coined name of the people is said in plain words."
+  - book: pc
+    entry: elf-atavism
+    field: description
+    span: { sha256: "bf6f54dc5af7e8d2e88537f259b6a710ca766997e34ee054ccb96b078030c525", length: 113 }
+    action: replace
+    text: "Your elven blood runs particularly strong, granting you features far more elven than those of a typical half-elf."
+    reason: "The coined name of the people is said in plain words."
+  - book: pc
+    entry: backgrounds
+    field: description
+    span: { sha256: "40e6cd7fda2c51c3ec3ca2b9992ffe3d1432a1439f2b349b28261121292606b2", length: 89 }
+    action: replace
+    text: "Lore skills represent deep knowledge of a specific subject."
+    reason: "A sentence that sent the reader to a page or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: backgrounds
+    field: description
+    span: { sha256: "fd4c4b8c43c417911dd83915f9064dcfd1c0a4713fa02c32be1488b274448041", length: 149 }
+    action: cut
+    reason: "A sentence that sent the reader to a sidebar of another page; it states no rule."
+  - book: pc
+    entry: backgrounds
+    field: description
+    span: { sha256: "3a6198d21614eb7c82492093422879c348e177e0107b9df58dc0cad578695804", length: 79 }
+    action: replace
+    text: "Skill feats expand the functions of your skills."
+    reason: "A sentence that sent the reader to a page or another book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: raised-by-belief
+    field: description
+    span: { sha256: "47af4a19f8511f0f4ffe01def00896f6fb5e7f676138781a7947660500e94cea", length: 86 }
+    action: replace
+    text: "You are also trained in a Lore skill related to your deity."
+    reason: "A sentence whose example named a deity; the mechanic (a Lore skill for the deity) is kept."
+  - book: pc
+    entry: raised-by-belief
+    field: lore
+    span: { sha256: "dd1c660ff9e572b16db4e4b702a335a2d230ccae9754c657cf08605c81fb19e9", length: 48 }
+    action: replace
+    text: "related to your deity"
+    reason: "An example in the field named a deity; the subject is kept."
+  - book: pc
+    entry: street-urchin
+    field: description
+    span: { sha256: "882d0a166635b0a7a351b4d767478db61009f6fdf7c0241541115c7fc2b8c7e3", length: 129 }
+    action: replace
+    text: "You're trained in Thievery and a Lore skill for the city you lived in as a street urchin."
+    reason: "A sentence whose examples named two cities of the setting; the mechanic (a Lore skill for the city) is kept."
+  - book: pc
+    entry: street-urchin
+    field: lore
+    span: { sha256: "d1cbf56f3d29afa6bf10cf805cd53d018d9240c6f41c400a949da74faa2b7a66", length: 84 }
+    action: replace
+    text: "for the city you lived in as a street urchin"
+    reason: "An example in the field named two cities of the setting; the subject is kept."
+  - book: pc
+    entry: languages
+    field: description
+    span: { sha256: "fc30ac06245715ca0966aa14b28c47bd177b978917d5ca135bb13c5d1fd4d634", length: 106 }
+    action: replace
+    text: "The languages presented here are grouped according to how common they are."
+    reason: "A sentence that named the setting's region; the mechanic (grouped by how common) is kept."
+  - book: pc
+    entry: languages
+    field: description
+    span: { sha256: "20f7967bf89284832a68b9afc7f84764ef0a54332d2cf8b1afe2902d694d2485", length: 118 }
+    action: replace
+    text: "Languages that are common are regularly encountered, even among those who aren't native speakers."
+    reason: "A sentence that named the setting's region; the mechanic is kept."
+  - book: pc
+    entry: languages
+    field: description
+    span: { sha256: "a4019d38aac9a45391883f2941fd797f19b6a78f3b170864c958006561ce9d60", length: 227 }
+    action: replace
+    text: "Languages that are uncommon are most frequently spoken by native speakers, but they are also spoken by certain scholars and others interested in the associated cultures."
+    reason: "A sentence with a pointer to a table and a section that the pack does not hold; the mechanic is kept."
+  - book: pc
+    entry: languages
+    field: description
+    span: { sha256: "14e709f66f7c8b491840cb9b0d320c82fcb5968c8cc1770e6747091ffca9e6f3", length: 115 }
+    action: replace
+    text: "Many uncommon languages are spoken by natives of other planes who rarely appear unless summoned."
+    reason: "A sentence that named the setting's region; the mechanic is kept."
+  - book: pc
+    entry: sailor
+    field: description
+    span: { sha256: "e615d4b813e02abbca7db0f0a9a0f83a8871698fa0a1af9ec2a496fe94e8ccb1", length: 65 }
+    action: replace
+    text: "You're trained in the Athletics skill and the Seafaring Lore skill."
+    reason: "A Lore subject whose word an earlier row already takes out of other entries, and a word the denylist may never waive; said by a plain synonym, and the mechanic (a Lore skill for life at sea) is kept."
+  - book: pc
+    entry: sailor
+    field: lore
+    span: { sha256: "ff9c89e5ee6e9b53749da050f52a5df3c26dd558bdd0d874424d5eefa817d42c", length: 7 }
+    action: replace
+    text: "Seafaring"
+    reason: "The same Lore subject in the field, said by the same plain synonym."
+  - book: pc
+    entry: nephilim-resistance
+    field: description
+    span: { sha256: "6aa3d7784e3d6d0d5223eff26902fbc5fc936ba16ca7cf30317f3e3d76b2b37c", length: 109 }
+    action: replace
+    text: "For instance, someone with angel blood might choose resistance to cold, while someone with devil blood might choose resistance to fire."
+    reason: "The coined names of two lineages in an example are said by their plain names; the example is kept."
+  - book: pc
+    entry: languages
+    field: description
+    span: { sha256: "a0d0fb25b2b3b2d2871ee157e65ab05491dad24bbc89f01895f356a1222b4d54", length: 145 }
+    action: replace
+    text: "You can choose these languages from those available from your region or ethnicity."
+    reason: "A sentence that sent the reader to a list the pack does not hold (the ancestry's list of languages to choose from is read past); the mechanic (the region or ethnicity gives access) is kept."
+  - book: pc
+    entry: languages
+    field: description
+    span: { sha256: "be392a24bd9c3c2425f57355d4ed45bda3416638d711bcfc4c92527fe0ba336d", length: 79 }
+    action: replace
+    text: "Ask your GM if there's a language you want to select."
+    reason: "A sentence that pointed to lists the pack does not hold; the mechanic (the GM decides) is kept."

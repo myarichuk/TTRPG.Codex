@@ -6,7 +6,7 @@ namespace Codex.ContentImport.Degrees;
 public sealed record ItemCounts(string Chapter, string Kind, int TableRows, int Descriptions, int Excluded, int Entries, int Tables, int ArtLabels, int LeadLines, Dictionary<string, int> PerCategory);
 
 /// <summary>What a regeneration from scratch did to one hash file: how many it writes, keeps and adds, and why the others went (see <see cref="ImportPipeline.ReviewFresh"/>).</summary>
-public sealed record FreshReview(string File, int Written, int Kept, int New, int Waived, int Taken, int Titles);
+public sealed record FreshReview(string File, int Written, int Kept, int New, int Waived, int Taken, int Titles, IReadOnlyList<string>? Retired = null);
 
 public static partial class ImportPipeline
 {
