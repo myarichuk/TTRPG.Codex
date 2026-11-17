@@ -46,6 +46,12 @@ public sealed class TakeRow
     /// </summary>
     public string? CountsDiffer { get; set; }
 
+    /// <summary>
+    /// A page number: the section's last lines sit on the page its next section starts on, above that section's own text, because the bookmarks end the section a page early.
+    /// The blocks taken there are the first of each column when it starts at the page's top edge (see <see cref="TakeStage"/>).
+    /// </summary>
+    public int? SpillsOnto { get; set; }
+
     /// <summary>The bookmark path of a taken range, whichever list it came from.</summary>
     public List<string> PathOf(TakenRange range) => range.Own ? Own[range.PathNumber - Paths.Count - 1] : Paths[range.PathNumber - 1];
 
@@ -64,7 +70,7 @@ public sealed partial class TakeList
     public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules" };
 
     /// <summary>The parsers that exist. Any other parser in the list fails the run, so a row cannot silently take nothing.</summary>
-    public static readonly string[] BuiltParsers = { "entries", "rules" };
+    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary" };
 
     public List<TakeRow> Rows { get; set; } = new();
 

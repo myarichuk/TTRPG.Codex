@@ -8,6 +8,7 @@
 # and a `reason` in our words that names no names. A row whose hash is not found fails the run.
 # The replacement text is Licensed Material under the ORC and is released with the packs.
 #
+# A row names its entry by `entry` (the id) or, when the entry's own name is one the notice reserves, by `entryHash` (the lowercase hex SHA-256 of the id), so the file never holds the name.
 # A row names its `book` (pc or mc) and applies only to that book's run; a row with no book applies to every run, so committed rows should always name theirs.
 #
 # - book: pc
@@ -54,3 +55,125 @@ rows:
     action: replace
     text: "They can Seek to try to find you."
     reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: angel
+    field: description
+    span: { sha256: "93cdd2c7ed6595a130f133d61e8e8b5c8f5d7cf718b93d7e5e379169631cf5a3", length: 60 }
+    action: replace
+    text: "This is a family of celestials."
+    reason: "A sentence that named a place of the setting; the trait's meaning is kept and the name goes."
+  - book: pc
+    entry: archon
+    field: description
+    span: { sha256: "1d94dd38d98872d252df577abc89ea57dd885096820fc60dbf5144b2bf13dc70", length: 41 }
+    action: replace
+    text: "This is a family of celestials."
+    reason: "A sentence that named a place of the setting; the trait's meaning is kept and the name goes."
+  - book: pc
+    entryHash: "3ca8fc9bee026309dbe5a05736980d53b1917a481f9861b9245ae50e8e82eac3"
+    field: description
+    span: { sha256: "3acb176853401eabe03769687d0c47aaf055c5726fb19d22d078024d1f430b14", length: 47 }
+    action: drop-entry
+    reason: "The trait's name is one the setting invented for a kind of being, a descriptive term the ORC notice reserves."
+  - book: pc
+    entryHash: "a82e3f050a201b4a0f84eb95c195d34bc166c69807bedf0f0950353c08587110"
+    field: description
+    span: { sha256: "1d9d2b74cae287da2b1f3fbf830761d6eea774dc5adb9869d5bcdc9fced033cf", length: 63 }
+    action: drop-entry
+    reason: "The trait's name is one the setting invented for a kind of being, a descriptive term the ORC notice reserves."
+  - book: pc
+    entryHash: "a90500e6356389d29880f63d30d7be7a56d9a4fdc7055c2b858515d032d9f5e5"
+    field: description
+    span: { sha256: "9aedfee2d7222b533cae8d6232ae9f01a6524281f9ff0f7128d59b3898a947a4", length: 62 }
+    action: drop-entry
+    reason: "The trait's name is one the setting invented for a kind of being, a descriptive term the ORC notice reserves."
+  - book: pc
+    entry: daemon
+    field: description
+    span: { sha256: "ff9656da75b5de62ab094dc75e526d2b1444e623f74d89ea349db3b0ed1b95c9", length: 32 }
+    action: replace
+    text: "A family of fiends."
+    reason: "A sentence that named a place of the setting; the trait's meaning is kept and the name goes."
+  - book: pc
+    entry: demon
+    field: description
+    span: { sha256: "0bfedfddc4e18a822159e4f176a460b25af326d43961c337d45d601fe2c06f8c", length: 47 }
+    action: replace
+    text: "A family of sinful fiends."
+    reason: "A sentence that named a place of the setting; the trait's meaning is kept and the name goes."
+  - book: pc
+    entry: devil
+    field: description
+    span: { sha256: "0319f7319bce8793ebaf2f1756e72e11d658b80711aa4976c77f033fa4c48dd0", length: 40 }
+    action: replace
+    text: "A family of regimented fiends."
+    reason: "A sentence that named a place of the setting; the trait's meaning is kept and the name goes."
+  - book: pc
+    entry: vitality
+    field: description
+    span: { sha256: "c5b8e13b32bc97613affab38b6a56c3468a66421ebdbfdc94b7e3cce2c954d9f", length: 155 }
+    action: replace
+    text: "Effects with this trait heal living creatures, deal vitality energy damage to undead, or manipulate vitality energy."
+    reason: "A sentence that named a place of the setting; the mechanic is kept and the name goes."
+  - book: pc
+    entry: shadow
+    field: description
+    span: { sha256: "408b9087e66256d75c3be007394dbc2bccf955118b0ab0a3b63c38d8b31ba420", length: 72 }
+    action: replace
+    text: "Magic with this trait involves shadows or shadow energy."
+    reason: "A sentence that named a place of the setting; the mechanic is kept and the name goes."
+  - book: pc
+    entry: ethereal
+    field: description
+    span: { sha256: "41cb72ece63ea1ff997460948bcd0f2185b0485191eb0a6d225a5ebfe858aa84", length: 53 }
+    action: replace
+    text: "Ethereal creatures are natives of the ethereal plane."
+    reason: "A sentence that named a place of the setting; the mechanic is kept and the name is written as a plain word."
+  - book: pc
+    entry: ethereal
+    field: description
+    span: { sha256: "165c40e8a81dd444f7477d66eda9db3bce6bbaa8d32c3504d9bed60940545bcd", length: 71 }
+    action: replace
+    text: "They can survive the basic environmental effects of the ethereal plane."
+    reason: "A sentence that named a place of the setting; the mechanic is kept and the name is written as a plain word."
+  - book: pc
+    entry: fey
+    field: description
+    span: { sha256: "198fa7400ca388a53322d79fd698c32c304295cb93afa29f3178e5ae5dfc3cfb", length: 48 }
+    action: replace
+    text: "Creatures of a primeval, nature-bound magical realm are called the fey."
+    reason: "A sentence that named a place of the setting; the trait's meaning is kept and the name goes."
+  - book: pc
+    entry: celestial
+    field: description
+    span: { sha256: "6b439b79e1d71f8fb23793c3715a4d29c80293395e78f66321126ae7797e1512", length: 85 }
+    action: replace
+    text: "Celestials can survive the basic environmental effects of their home planes."
+    reason: "A sentence that named a realm of the setting; the mechanic is kept and the name goes."
+  - book: pc
+    entry: fiend
+    field: description
+    span: { sha256: "349a514f58a62f4ef4848b87ec9707bc7ce4e5c93e6fcb6d7eeef976ff157cfa", length: 81 }
+    action: replace
+    text: "Fiends can survive the basic environmental effects of their home planes."
+    reason: "A sentence that named a realm of the setting; the mechanic is kept and the name goes."
+  - book: pc
+    entry: monitor
+    field: description
+    span: { sha256: "6284df8fda5a1f978f456e19aaceb7e7d5694172c49211a2bf0c7e65019e686c", length: 113 }
+    action: replace
+    text: "Creatures that hail from or have a strong connection to planes that are neither holy nor unholy are called monitors."
+    reason: "A sentence that named places of the setting; the trait's meaning is kept and the names go."
+  - book: pc
+    entry: monitor
+    field: description
+    span: { sha256: "c9d82395e0374b7ae7fb1f57b2a0252714550bb357d0a3078c7868b56e6aec41", length: 83 }
+    action: replace
+    text: "Monitors can survive the basic environmental effects of their home planes."
+    reason: "A sentence that named a realm of the setting; the mechanic is kept and the name goes."
+  - book: pc
+    entryHash: "0232678781daf4e2d4d6acd433ec4ac8be7ac3d008828f9072e0ceeeb8afc4a1"
+    field: description
+    span: { sha256: "decb9febeb6674e028a4ce942cc37b3c784185d98d3643fdcd195b5990f3356b", length: 113 }
+    action: drop-entry
+    reason: "The trait's name is one the setting invented for a kind of being, a descriptive term the ORC notice reserves."

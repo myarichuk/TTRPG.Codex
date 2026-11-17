@@ -552,6 +552,19 @@ public class DegreesRedactionTests : IDisposable
         Assert.Empty(PackWordCheck.CheckAllowlist(user, terms, NoDenylist));
     }
 
+    [Fact]
+    public void ThePluralOfAGameTermIsAGameTerm_ButAnyOtherCapitalizedWordIsStillFlagged()
+    {
+        var user = Path.Combine(_temp, "plural");
+        Directory.CreateDirectory(Path.Combine(user, "feats"));
+        File.WriteAllText(Path.Combine(user, "feats", "feats.yaml"), "- id: one\n  name: one\n  description: \"You make two Strikes at the Boxes, and the Foxes and the Gloops run.\"\n");
+
+        var flagged = PackWordCheck.CheckAllowlist(user, new HashSet<string> { "you", "strike", "box", "fox" }, NoDenylist);
+
+        var finding = Assert.Single(flagged);
+        Assert.Contains("Gloops", finding.ToString());
+    }
+
     /// <summary>The generated packs the CI gate must find, so it never passes on nothing; each chapter that adds a pack folder
     /// adds its name here, and a folder that is not listed fails the test.</summary>
     private static readonly string[] ExpectedGeneratedPacks = { "rules-core" };

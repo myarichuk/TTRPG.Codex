@@ -221,7 +221,8 @@ public static class DegreesCommand
         var blocks = BlocksStage.Run(layout.Pages, ImportPipeline.OptionsFor(spine, rows));
         var ranges = TakeStage.Resolve(spine, blocks, rows);
         var planned = TakeStage.PlannedRanges(spine, blocks, options.Book, take.Planned);
-        var (words, excluded) = ImportPipeline.DenylistWords(blocks, ranges, Waivers.Embedded(), 3, planned);
+        var redacted = ImportPipeline.RedactedWords(blocks, ranges, RedactionTable.Embedded(), options.Book);
+        var (words, excluded) = ImportPipeline.DenylistWords(blocks, ranges, Waivers.Embedded(), 3, planned, redacted);
         var path = options.Out ?? Path.Combine(options.Work, "denylist.sha256");
         if (options.Out == null)
         {
@@ -235,14 +236,17 @@ public static class DegreesCommand
         // The book's common lowercase words go beside it, as hashes too: the allowlist gate lets an ordinary word open a sentence.
         var commonPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-common.sha256");
         var common = ImportPipeline.CommonWords(blocks);
-        var commonBefore = MergeDenylist(commonPath, Denylist.Format(common), out var commonTotal, CommonHeader);
-        output.WriteLine($"common words: {common.Count} lowercase word(s) of this book hashed; the file now holds {commonTotal} hash(es) ({commonTotal - commonBefore} new)");
+        var openers = ImportPipeline.OpenerWords(blocks, ranges);
+        var commonBefore = MergeDenylist(commonPath, Denylist.Format(common.Concat(openers).Concat(Waivers.Embedded())), out var commonTotal, CommonHeader);
+        output.WriteLine($"common words: {common.Count} lowercase word(s) and {openers.Count} sentence-opener word(s) of this book hashed; the file now holds {commonTotal} hash(es) ({commonTotal - commonBefore} new)");
         return 0;
     }
 
     private const string CommonHeader =
         "# The hashed common words of the local book importer: one lowercase hex SHA-256 of a lowercased word per line, no words.\n" +
-        "# A word is here when the book writes it in lowercase at least three times. The allowlist gate lets such a word open a sentence.\n";
+        "# A word is here when the book writes it in lowercase at least three times, or capitalizes it at the start of a sentence and nowhere else but also writes it in lowercase,\n" +
+        "# or when a person reviewed it as an ordinary word (the waiver file).\n" +
+        "# The allowlist gate lets such a word open a sentence, unless it is on the denylist. Only the first kind is left off the denylist.\n";
 
     /// <summary>Writes the union of the hashes already in <paramref name="path"/> and <paramref name="hashes"/>, under the file's own comment header. Returns how many were there before.</summary>
     public static int MergeDenylist(string path, string hashes, out int total, string? defaultHeader = null)

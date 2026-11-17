@@ -2,7 +2,16 @@ namespace Codex.ContentImport.Degrees;
 
 /// <summary>The blocks of one taken bookmark path: <c>[Start, End)</c> in <see cref="BlocksResult.Blocks"/>.</summary>
 /// <param name="Own">The range is a section's own text before its first child (<see cref="TakeRow.Own"/>); <paramref name="PathNumber"/> then counts on after the row's <see cref="TakeRow.Paths"/>.</param>
-public sealed record TakenRange(TakeRow Row, int PathNumber, SpineNode Node, int Start, int End, int RowNumber = 0, bool Own = false);
+/// <param name="Extra">Indexes of blocks outside <c>[Start, End)</c> that belong to the range too: the top of the page a row says its section spills onto (<see cref="TakeRow.SpillsOnto"/>).</param>
+public sealed record TakenRange(TakeRow Row, int PathNumber, SpineNode Node, int Start, int End, int RowNumber = 0, bool Own = false, IReadOnlyList<int>? Extra = null)
+{
+    /// <summary>The indexes of every block of the range, in order.</summary>
+    public IEnumerable<int> Indexes => Enumerable.Range(Start, End - Start).Concat(Extra ?? Array.Empty<int>());
+
+    public bool Contains(int index) => (index >= Start && index < End) || (Extra?.Contains(index) ?? false);
+
+    public List<Block> BlocksIn(BlocksResult blocks) => Indexes.Select(i => blocks.Blocks[i]).ToList();
+}
 
 /// <summary>
 /// Turns take-list rows into block ranges. A path's range runs from just after its own title block to its next sibling's (or ancestor's) title block,
@@ -17,6 +26,7 @@ public static class TakeStage
     {
         ["entries"] = new[] { "entry-header", "rules", "body", "tag", "icon", "table" },
         ["rules"] = new[] { "rules", "body", "tag", "icon", "table" },
+        ["glossary"] = new[] { "body" },
     };
 
     private static readonly string[] Claimable = { "entry-header", "rules", "body", "tag", "table" };
@@ -120,6 +130,10 @@ public static class TakeStage
 
         var index = IndexOf(spine, node);
         var after = spine.Skip(index + 1).FirstOrDefault(n => n.Depth <= node.Depth);
+        if (row.SpillsOnto != null && after?.PageStart != row.SpillsOnto)
+        {
+            throw new DegreesException($"{where}: the row says the section spills onto page {row.SpillsOnto}, but the next section does not start on page {row.SpillsOnto}.");
+        }
         int end;
         if (after == null)
         {
@@ -133,6 +147,12 @@ public static class TakeStage
             if (end < 0)
             {
                 end = blocks.Blocks.Count;
+            }
+
+            if (row.SpillsOnto == after.PageStart)
+            {
+                // The row says its section's last lines sit on the page the next section starts on, above that section's own text. The edge is found by position, below.
+                return new TakenRange(row, pathNumber, node, start, Math.Max(start, end), 0, false, SpillBlocks(blocks.Blocks, row.SpillsOnto.Value, end, where));
             }
 
             var at = FindTitle(blocks.Blocks, after, end) ?? throw new DegreesException($"{where}: the next section's title is not a block on page {after.PageStart}, so the end of the range is unknown.");
@@ -151,6 +171,32 @@ public static class TakeStage
         }
 
         return new TakenRange(row, pathNumber, node, start, Math.Max(start, end));
+    }
+
+    /// <summary>
+    /// The blocks of a section that spills onto a page it shares with the next section: on that page, the first block of each column, when it starts at the page's top edge
+    /// (within three points of the highest block on the page before). A column whose first block starts lower holds none of the section. <paramref name="from"/> is the
+    /// index of the first block of the shared page.
+    /// </summary>
+    private static List<int> SpillBlocks(List<Block> blocks, int page, int from, string where)
+    {
+        var top = blocks.Where(b => b.Page == page - 1).Select(b => b.Top).DefaultIfEmpty(double.MinValue).Max();
+        var result = new List<int>();
+        var seen = new HashSet<int>();
+        for (var i = from; i < blocks.Count && blocks[i].Page == page; i++)
+        {
+            if (seen.Add(blocks[i].Column) && blocks[i].Top >= top - 3)
+            {
+                result.Add(i);
+            }
+        }
+
+        if (result.Count == 0)
+        {
+            throw new DegreesException($"{where}: the row says the section spills onto page {page}, but no column there starts at the page's top edge.");
+        }
+
+        return result;
     }
 
     private static int IndexOf(IReadOnlyList<SpineNode> spine, SpineNode node)
@@ -232,7 +278,7 @@ public static class TakeStage
     {
         var allowed = Claims[range.Row.Parser];
         var stray = new List<string>();
-        for (var i = range.Start; i < range.End; i++)
+        foreach (var i in range.Indexes)
         {
             var b = blocks.Blocks[i];
             if (!allowed.Contains(b.Role) || (i == range.Start && range.Row.Parser == "entries" && b.Role != "entry-header"))
@@ -249,6 +295,6 @@ public static class TakeStage
 
     /// <summary>Every block that no range takes, with the dropped sidebar and opener blocks: the text the denylist is made from.</summary>
     public static IEnumerable<Block> LeftOut(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<(int Start, int End)>? planned = null) =>
-        blocks.Blocks.Where((_, i) => !ranges.Any(r => i >= r.Start && i < r.End) && !(planned ?? Array.Empty<(int Start, int End)>()).Any(r => i >= r.Start && i < r.End))
+        blocks.Blocks.Where((_, i) => !ranges.Any(r => r.Contains(i)) && !(planned ?? Array.Empty<(int Start, int End)>()).Any(r => i >= r.Start && i < r.End))
             .Concat(blocks.Dropped ?? new List<Block>());
 }

@@ -430,7 +430,7 @@ public class DegreesChapterOneTests : IDisposable
 
         Assert.Contains("no bookmark has that path", Assert.Throws<DegreesException>(() => TakeStage.Resolve(TwoSections, blocks, new[] { RowFor("entries", "Root", "Nope") })).Message);
         Assert.Contains("has the bookmark's title", Assert.Throws<DegreesException>(() => TakeStage.Resolve(TwoSections, Result(new[] { Blk(1, 0, "rules", "x") }), new[] { RowFor("entries", "Root", "Sec A") })).Message);
-        Assert.Contains("not built yet", Assert.Throws<DegreesException>(() => TakeStage.Resolve(TwoSections, blocks, new[] { RowFor("glossary", "Root", "Sec A") })).Message);
+        Assert.Contains("not built yet", Assert.Throws<DegreesException>(() => TakeStage.Resolve(TwoSections, blocks, new[] { RowFor("statblocks", "Root", "Sec A") })).Message);
     }
 
     [Fact]

@@ -119,3 +119,6 @@ skills
 feats
 equipment
 spells
+# The generic words of chapter 2's section title (the glossary and index); the trait words themselves join the game terms through the generated trait entries.
+glossary
+index

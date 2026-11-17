@@ -2,7 +2,7 @@
 # A row names a book (pc or mc), a chapter key, the bookmark path(s) taken (titles, top level first), the parser, the entity type the entries
 # become and whether the row is approved. A chapter may have several rows. Only an approved row reaches the pack; every row is parsed into
 # the work folder so a reviewer can look at it first.
-#   parser    entries (headers by font, one entry each), rules (the whole range is one entry), statblocks, table, glossary (not built yet)
+#   parser    entries (headers by font, one entry each), rules (the whole range is one entry), statblocks, table, glossary (one alphabetical list: only the trait definitions are kept)
 #   target    the entity type of the four-degrees system the entries become (its pack folder is the plural unless `folder` says otherwise)
 #   category  the entry's `category` field, in our own words, for a target type that has one
 #   columns   the most columns a page of the row has (two unless stated)
@@ -31,6 +31,16 @@ rows:
     own:
       - [Conditions Appendix]
     ownName: Conditions
+  # The glossary is one alphabetical list with the index. Only an entry whose term is followed by the trait mark and some text is taken; the rest of the list is read past.
+  - chapter: glossary-traits
+    book: pc
+    parser: glossary
+    target: trait
+    approved: true
+    # The bookmarks end the glossary a page early: its last lines are at the top of the page the backmatter starts on.
+    spillsOnto: 464
+    paths:
+      - ["Glossary & Index"]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
