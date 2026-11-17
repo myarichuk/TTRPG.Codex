@@ -141,6 +141,44 @@ public static class PackWordCheck
         return findings;
     }
 
+    /// <summary>
+    /// The trait keys of the shipped packs as game terms: the words of the id and the name of every entry in a pack's trait folder (the system's `trait` type), lowercase.
+    /// A pack with no such folder adds nothing, so the gate is unchanged until chapter 2 generates trait entries.
+    /// </summary>
+    public static HashSet<string> TraitTerms(IEnumerable<string> packDirs, string traitFolder)
+    {
+        var terms = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var packDir in packDirs)
+        {
+            var folder = Path.Combine(packDir, traitFolder);
+            if (!Directory.Exists(folder))
+            {
+                continue;
+            }
+
+            foreach (var path in Directory.EnumerateFiles(folder, "*.yaml", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
+            {
+                if (BooksConfig.Deserializer.Deserialize<object>(File.ReadAllText(path)) is not List<object> list)
+                {
+                    throw new DegreesException($"Trait file {Path.GetFileName(path)} is not a list of entries.");
+                }
+
+                foreach (var map in list.OfType<IDictionary<object, object>>())
+                {
+                    foreach (var key in new[] { "id", "name" })
+                    {
+                        if (map.TryGetValue(key, out var value) && value is string text)
+                        {
+                            terms.UnionWith(Words(text).Select(w => w.ToLowerInvariant()));
+                        }
+                    }
+                }
+            }
+        }
+
+        return terms;
+    }
+
     public static List<PackFinding> CheckDenylist(string packDir, Denylist denylist)
     {
         var findings = new List<PackFinding>();

@@ -523,6 +523,22 @@ public class DegreesRedactionTests : IDisposable
         Assert.DoesNotContain("orblax", finding.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void TraitKeysAndNamesOfAPackJoinTheGameTerms_AndAPackWithoutTraitsAddsNone()
+    {
+        var pack = FixturePack("- id: quick-draw\n  name: Quick Draw\n  description: Light.\n- id: agile\n  name: Agile\n", "traits/traits.yaml");
+        var terms = PackWordCheck.TraitTerms(new[] { pack }, "traits");
+        Assert.Equal(new[] { "agile", "draw", "quick" }, terms.Order().ToArray());
+        Assert.Empty(PackWordCheck.TraitTerms(new[] { pack }, "no-such-folder"));
+
+        // Without the trait terms the capitalized names are flagged; with them the pack passes.
+        var user = Path.Combine(_temp, "user");
+        Directory.CreateDirectory(Path.Combine(user, "feats"));
+        File.WriteAllText(Path.Combine(user, "feats", "feats.yaml"), "- id: one\n  name: Agile Draw\n  tags: [agile]\n");
+        Assert.NotEmpty(PackWordCheck.CheckAllowlist(user, new HashSet<string>(), NoDenylist));
+        Assert.Empty(PackWordCheck.CheckAllowlist(user, terms, NoDenylist));
+    }
+
     /// <summary>The generated packs the CI gate must find, so it never passes on nothing; each chapter that adds a pack folder
     /// adds its name here, and a folder that is not listed fails the test.</summary>
     private static readonly string[] ExpectedGeneratedPacks = { "rules-core" };
@@ -544,6 +560,11 @@ public class DegreesRedactionTests : IDisposable
         }
 
         var packsRoot = Path.Combine(TestPaths.ContentRoot, "systems", "four-degrees", "packs");
+
+        // Trait keys of every shipped pack are game terms too, read from the system's trait type folder.
+        var traitFolder = system.EntityTypes.Single(t => t.Type == "trait").Folder;
+        terms.UnionWith(PackWordCheck.TraitTerms(Directory.EnumerateDirectories(packsRoot), traitFolder));
+
         var generated = Directory.EnumerateDirectories(packsRoot).Select(Path.GetFileName).Where(n => n != "homebrew-core").OrderBy(n => n, StringComparer.Ordinal).ToList();
         Assert.Equal(ExpectedGeneratedPacks.OrderBy(n => n, StringComparer.Ordinal), generated);
 
