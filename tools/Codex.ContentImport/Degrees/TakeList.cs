@@ -37,6 +37,12 @@ public sealed class TakeRow
     /// </summary>
     public List<List<string>> Own { get; set; } = new();
 
+    /// <summary>
+    /// For a <c>rules</c> row: the names, in our own words, of entries whose section's title would clash with another entry's id (a section called Spellcasting under the services, as the spells' chapter has one),
+    /// by the section's last title. Any other section keeps its title.
+    /// </summary>
+    public Dictionary<string, string> EntryNames { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>The name, in our own words, of the entry made from an <see cref="Own"/> path (its title is not the entry's name). Defaults to the path's last title.</summary>
     public string? OwnName { get; set; }
 
@@ -149,6 +155,23 @@ public sealed class TakeRow
     /// or is not a row, fails the run.
     /// </summary>
     public List<string> Undescribed { get; set; } = new();
+
+    /// <summary>
+    /// For an items row of kind <c>gear</c>: the sections whose table is set in two panels side by side (see <see cref="GearTables"/>); the right panel reads as the rows that follow the left one.
+    /// </summary>
+    public List<List<string>> TwoUp { get; set; } = new();
+
+    /// <summary>
+    /// For an items row of kind <c>gear</c>: the paths of the row whose text before the first description (the section's rules for its items, and a sentence that says what follows) is one
+    /// <c>rule</c> entry of the category <see cref="RuleCategory"/>, named by the path's last title. A path not named here has its lead read past, and counted.
+    /// </summary>
+    public List<List<string>> LeadRules { get; set; } = new();
+
+    /// <summary>
+    /// For a <c>rules</c> row: the bookmark paths of sidebars that are taken as rules in spite of the rule that sidebars stay out (a sidebar of game rules that a section's items depend on). Each is one
+    /// <c>rule</c> entry of the row's <see cref="Category"/>, named by the bookmark's title without its <c>Sidebar:</c> prefix, whose text is the sidebar's blocks.
+    /// </summary>
+    public List<List<string>> Sidebars { get; set; } = new();
 
     /// <summary>
     /// For an <c>items</c> row: names of descriptions that have no row of their own (the kinds of ammunition, whose prices sit under the weapons that fire them). They become the paragraphs of one <c>rule</c> entry,
@@ -380,10 +403,28 @@ public sealed partial class TakeList
             }
 
             if (itemRow != (r.ItemKind != null) || (!itemRow && (r.Tables.Count > 0 || r.TableColumns.Count > 0 || r.Exclude.Count > 0))
-                || (itemRow && (r.ItemKind is not ("armor" or "shield" or "weapon") || r.Tables.Count == 0 || r.TableColumns.Count == 0
+                || (itemRow && (r.ItemKind is not ("armor" or "shield" or "weapon" or "gear") || r.Tables.Count == 0 || r.TableColumns.Count == 0
                     || r.TableColumns.Any(c => c.Count < 2 || c[0] != "Price" || c.Any(string.IsNullOrWhiteSpace)))))
             {
-                throw new DegreesException($"Take-list row {n}: itemKind, tables and tableColumns (each list starting with Price) belong to the items parser, which needs all three and an itemKind of armor, shield or weapon.");
+                throw new DegreesException($"Take-list row {n}: itemKind, tables and tableColumns (each list starting with Price) belong to the items parser, which needs all three and an itemKind of armor, shield, weapon or gear.");
+            }
+
+            if (((r.TwoUp.Count > 0 || r.LeadRules.Count > 0) && r.ItemKind != "gear") || (r.Sidebars.Count > 0 && r.Parser != "rules")
+                || (r.LeadRules.Count > 0 && string.IsNullOrWhiteSpace(r.RuleCategory)) || r.Sidebars.Any(p => p.Count == 0 || p.Any(string.IsNullOrWhiteSpace)))
+            {
+                throw new DegreesException($"Take-list row {n}: twoUp and leadRules belong to an items row of kind gear (leadRules needs a ruleCategory), and sidebars to the rules parser, each with titles.");
+            }
+
+            // An option that names a path or a title the row does not have would do nothing, silently: it fails here.
+            bool Same(List<string> a, List<string> b) => a.SequenceEqual(b, StringComparer.OrdinalIgnoreCase);
+            if (r.LeadRules.Any(p => !r.Paths.Any(q => Same(p, q))) || r.TwoUp.Any(p => !r.Tables.Any(q => Same(p, q))))
+            {
+                throw new DegreesException($"Take-list row {n}: a leadRules path must be one of the row's paths, and a twoUp path one of its tables.");
+            }
+
+            if (r.EntryNames.Count > 0 && (r.Parser != "rules" || r.EntryNames.Any(e => string.IsNullOrWhiteSpace(e.Value) || !r.Paths.Concat(r.Own).Any(p => p[^1].Equals(e.Key, StringComparison.OrdinalIgnoreCase)))))
+            {
+                throw new DegreesException($"Take-list row {n}: entryNames belongs to the rules parser, each key being the last title of one of the row's paths or own-text paths, with a name for a value.");
             }
 
             if (r.Exclude.Count > 0 && string.IsNullOrWhiteSpace(r.CountsDiffer))

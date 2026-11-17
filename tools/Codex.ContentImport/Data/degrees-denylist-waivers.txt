@@ -317,3 +317,18 @@ large huge
 encumbered you
 # `shades` is an ordinary noun (a spell's text opens with it, the book writes it in lowercase twice elsewhere); regenerating the common-word file from the book as it stands now counts the word's third lowercase use no more.
 shades
+# Chapter 6b (gear) review. Each word is an ordinary English word that names an item or a service of the gear tables (a bottle, a mirror, a wheelchair, a crutch, corrective lenses, a stabling fee), which a left-out section also capitalizes
+# (an index, a heading, a sentence start). None is a name of a person, place, deity or creature; each was read in its entry's name or in the sentence of the table it stands in.
+bottle
+corrective
+crutch
+mirror
+stabling
+wheelchair
+# `mobile` (an alchemist's toolkit is a mobile collection of vials) and `traveler` (a traveler's chair; the spells' names say it too) are ordinary words.
+mobile
+traveler
+# Chapter 6b review of the pairs: the labels of a gear table meet across a row (`bulk hands`, `item price`: the header of the services table), and a sentence's last word meets the next one's first (`gm the`, a table note's end and the next line).
+bulk hands
+item price
+gm the

@@ -38,30 +38,62 @@ public static partial class ImportPipeline
             .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)g.SelectMany(n => SidebarTitles(n.Title)).ToList());
         // The pages an items row names for its stat tables, with the column label lists a header row there may carry.
         var tables = new Dictionary<int, List<IReadOnlyList<string>>>();
+        var gearTables = new Dictionary<int, List<IReadOnlyList<string>>>();
+        var twoUp = new HashSet<int>();
         foreach (var row in rows.Where(r => r.Parser == "items"))
         {
+            // A row of kind gear is carved by the gear reader, which also knows the pages whose table is set in two panels.
+            var target = row.ItemKind == "gear" ? gearTables : tables;
             foreach (var path in row.Tables)
             {
                 var node = SpineStage.FindUnique(spine, path) ?? throw new DegreesException("An items row names a bookmark path for its tables that is not in the book.");
                 for (var page = node.PageStart; page <= node.PageEnd; page++)
                 {
-                    if (!tables.TryGetValue(page, out var sets))
+                    if (!target.TryGetValue(page, out var sets))
                     {
-                        tables[page] = sets = new List<IReadOnlyList<string>>();
+                        target[page] = sets = new List<IReadOnlyList<string>>();
                     }
 
                     sets.AddRange(row.TableColumns.Where(c => !sets.Any(s => s.SequenceEqual(c))));
                 }
             }
+
+            foreach (var path in row.TwoUp)
+            {
+                var node = SpineStage.FindUnique(spine, path) ?? throw new DegreesException("An items row names a bookmark path for its two-panel table that is not in the book.");
+                twoUp.UnionWith(Enumerable.Range(node.PageStart, node.PageEnd - node.PageStart + 1));
+            }
+        }
+
+        // The sidebars the take-list takes as rules: their titles' keys, so the blocks stage keeps them apart instead of dropping them.
+        var takenSidebars = new Dictionary<int, IReadOnlySet<string>>();
+        foreach (var path in rows.SelectMany(r => r.Sidebars))
+        {
+            var node = SpineStage.FindUnique(spine, path);
+            var named = node is { Sidebar: true } ? SidebarTitles(node.Title).ToList() : new List<string>();
+            if (named.Count != 1)
+            {
+                throw new DegreesException("A rules row names a sidebar path that is not one sidebar bookmark of the book.");
+            }
+
+            // Taken on the bookmark's own pages only, so a sidebar of the same title elsewhere stays a dropped one.
+            for (var page = node!.PageStart; page <= node.PageEnd; page++)
+            {
+                var keys = takenSidebars.TryGetValue(page, out var held) ? (HashSet<string>)held : new HashSet<string>(StringComparer.Ordinal);
+                keys.Add(BlocksStage.SidebarTitleSet.Key(named[0]));
+                takenSidebars[page] = keys;
+            }
         }
 
         return new BlocksOptions
         {
+            TakenSidebarKeys = takenSidebars,
             MaxColumns = page => columns.GetValueOrDefault(page, 2),
             SidebarPages = sidebars,
             SidebarStarts = starts,
             SidebarTitles = titles,
             StatTablePages = tables.ToDictionary(t => t.Key, t => (IReadOnlyList<IReadOnlyList<string>>)t.Value),
+            GearTablePages = gearTables.ToDictionary(t => t.Key, t => new GearPage(t.Value, twoUp.Contains(t.Key))),
         };
     }
 
@@ -853,7 +885,9 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
     public static HashSet<string> ExplainedPairs(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<(int Start, int End)>? planned, IReadOnlyCollection<string> deniedWords)
     {
         var denied = deniedWords.ToHashSet(StringComparer.Ordinal);
-        var titles = ranges.SelectMany(r => r.Row.Paths.Concat(r.Row.Own)).SelectMany(p => p).SelectMany(PackWordCheck.CapitalPairs);
+        // A sidebar the take-list takes as a rule (TakeRow.Sidebars) is taken text, which its entry reads, so its pairs are no longer left out: the reviewer reads the taken sidebar, as the titles are read.
+        var taken = (blocks.TakenSidebars ?? new Dictionary<string, List<Block>>()).Values.SelectMany(b => b).SelectMany(b => b.Lines).SelectMany(PackWordCheck.CapitalPairs);
+        var titles = ranges.SelectMany(r => r.Row.Paths.Concat(r.Row.Own)).SelectMany(p => p).SelectMany(PackWordCheck.CapitalPairs).Concat(taken);
         var withDenied = LeftOutLines(blocks, ranges, planned).SelectMany(PackWordCheck.CapitalPairs).Where(p => denied.Contains(p.First) || denied.Contains(p.Second));
         return titles.Concat(withDenied).Select(p => Denylist.PairHash(p.First, p.Second)).ToHashSet(StringComparer.Ordinal);
     }

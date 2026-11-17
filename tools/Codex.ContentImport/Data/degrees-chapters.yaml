@@ -283,7 +283,7 @@ rows:
       - Creature Creation Rituals
     paths:
       - ["Chapter 7: Spells", Spell Lists, Rituals, Rituals]
-# The equipment chapter, without its gear (6b). Its rules prose is `rule` entries of the category Equipment; the item statistics are in tables (armor, shields, weapons), which the stat table reader
+# The equipment chapter (6a, then the gear: 6b, the last two rows). Its rules prose is `rule` entries of the category Equipment; the item statistics are in tables (armor, shields, weapons), which the stat table reader
 # carves out of their pages, and each row of a table is joined by name to the paragraph that describes it (the `items` parser). Sidebars are all left out.
   - chapter: equipment
     book: pc
@@ -456,6 +456,92 @@ rows:
       - ["Price", "Damage", "Range", "Reload", "Bulk", "Hands", "Group", "Weapon Traits"]
     paths:
       - ["Chapter 6: Equipment", Weapons, Weapon Descriptions]
+  # The gear (6b). Its rules prose is `rule` entries again: the statistics sections (the hands and toolkit rules), the intro of each section, the price tables as text rows (formulas, services, spellcasting, cost of living,
+  # animals) and the one sidebar of game rules the chapter's items depend on, which the take-list names (`sidebars`) in spite of the rule that sidebars stay out. The barding table is the gear items' (below).
+  - chapter: equipment
+    book: pc
+    parser: rules
+    target: rule
+    category: Equipment
+    approved: true
+    tableRows: true
+    subheadings: true
+    # The section under the services is called Spellcasting, as the spells chapter's introduction is.
+    entryNames:
+      Spellcasting: Spellcasting Services
+    sidebars:
+      - ["Chapter 6: Equipment", Gear, "Sidebar: Wheelchair Rules"]
+    own:
+      - ["Chapter 6: Equipment", Gear, Gear Statistics]
+      - ["Chapter 6: Equipment", Gear, Alchemical Gear]
+      - ["Chapter 6: Equipment", Gear, Services]
+      - ["Chapter 6: Equipment", Gear, Animals]
+    paths:
+      - ["Chapter 6: Equipment", Gear, Gear Statistics, Hands]
+      - ["Chapter 6: Equipment", Gear, Gear Statistics, Wearing Toolkits]
+      - ["Chapter 6: Equipment", Gear, Formulas]
+      - ["Chapter 6: Equipment", Gear, Services, Transportation]
+      - ["Chapter 6: Equipment", Gear, Services, Spellcasting]
+      - ["Chapter 6: Equipment", Gear, Cost of Living]
+      - ["Chapter 6: Equipment", Gear, Animals, Barding]
+  # The gear items: a row of a gear table is one entry, joined by name to its description (a heading of the table joins the description of the rows set under it, and an item the description of its version). The
+  # alchemical items, the assistive items and the barding are tables of the same kind; the text before the first description of the alchemical sections and of the assistive items is their own rules (`leadRules`).
+  - chapter: equipment
+    book: pc
+    parser: items
+    target: gear
+    folder: gear
+    itemKind: gear
+    approved: true
+    artLabels: true
+    ruleCategory: Equipment
+    countsDiffer: The book describes only the gear that follows special rules; the other rows of the gear tables (a rope, a bedroll, a chain) have no paragraph, and their entries are their rows alone.
+    twoUp:
+      - ["Chapter 6: Equipment", Gear, Adventuring Gear]
+    leadRules:
+      - ["Chapter 6: Equipment", Gear, Alchemical Gear, Alchemical Bombs]
+      - ["Chapter 6: Equipment", Gear, Alchemical Gear, Elixirs]
+      - ["Chapter 6: Equipment", Gear, Alchemical Gear, Alchemical Tools]
+      - ["Chapter 6: Equipment", Gear, Assistive Items]
+    # The rows with no paragraph, by name: the plain gear (a rope, a bedroll), the three tents (their heading has none), and the sizes of barding, whose paragraph is the rule of the animals' section.
+    undescribed:
+      - Bedroll
+      - Chain (10 feet)
+      - Chalk (10)
+      - Cookware
+      - Hammer
+      - Hourglass
+      - Ladder (10-foot)
+      - Merchant’s scale
+      - Mirror
+      - Mug
+      - Rations (1 week)
+      - Rope (50 feet)
+      - Soap
+      - Pup
+      - Four-person
+      - Pavilion
+      - Small or Medium
+      - Large
+    # The adventuring gear's descriptions go on to the page the alchemical gear starts on, above its title.
+    runsToTitle:
+      - ["Chapter 6: Equipment", Gear, Adventuring Gear]
+    tables:
+      - ["Chapter 6: Equipment", Gear, Adventuring Gear]
+      - ["Chapter 6: Equipment", Gear, Alchemical Gear]
+      - ["Chapter 6: Equipment", Gear, Assistive Items]
+      - ["Chapter 6: Equipment", Gear, Animals]
+    tableColumns:
+      - ["Price", "Bulk", "Hands"]
+      - ["Price", "Bulk", "Item Traits*"]
+      - ["Price", "Bulk", "Item Traits"]
+      - ["Price", "AC Bonus", "Dex Cap", "Check Penalty", "Speed Penalty", "Bulk", "Strength"]
+    paths:
+      - ["Chapter 6: Equipment", Gear, Adventuring Gear]
+      - ["Chapter 6: Equipment", Gear, Alchemical Gear, Alchemical Bombs]
+      - ["Chapter 6: Equipment", Gear, Alchemical Gear, Elixirs]
+      - ["Chapter 6: Equipment", Gear, Alchemical Gear, Alchemical Tools]
+      - ["Chapter 6: Equipment", Gear, Assistive Items]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
@@ -466,5 +552,4 @@ planned:
       - ["Chapter 1: Introduction", Character Creation]
       - ["Chapter 2: Ancestries & Backgrounds"]
       - ["Chapter 3: Classes"]
-      - ["Chapter 6: Equipment", Gear]
       - ["Chapter 8: Playing the Game"]

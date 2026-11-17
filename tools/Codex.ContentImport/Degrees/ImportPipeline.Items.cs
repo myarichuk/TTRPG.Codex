@@ -41,7 +41,8 @@ public static partial class ImportPipeline
     public static void CheckTableLabels(IReadOnlyList<SpineNode> spine, BlocksResult blocks, IEnumerable<TakeRow> rows)
     {
         var itemRows = rows.Where(r => r.Parser == "items").ToList();
-        foreach (var row in itemRows)
+        // The gear tables' labels are the headers of a price list (a name, a price, a Bulk, a trait column), not the statistics the chapter's sections explain; they are counted by GearCounts instead.
+        foreach (var row in itemRows.Where(r => r.ItemKind != "gear"))
         {
             var chapter = row.Paths[0][0];
             var titles = new HashSet<string>(StringComparer.Ordinal);
@@ -82,7 +83,12 @@ public static partial class ImportPipeline
     public static List<ItemCounts> CheckItemCounts(IReadOnlyList<SpineNode> spine, BlocksResult blocks, IEnumerable<TakenRange> ranges, IReadOnlyList<ParsedEntry> parsed)
     {
         var result = new List<ItemCounts>();
-        foreach (var range in ranges.Where(r => r.Row.Parser == "items"))
+        foreach (var group in ranges.Where(r => r.Row.Parser == "items" && r.Row.ItemKind == "gear").GroupBy(r => r.RowNumber))
+        {
+            result.Add(GearCounts(spine, blocks, group.ToList(), parsed));
+        }
+
+        foreach (var range in ranges.Where(r => r.Row.Parser == "items" && r.Row.ItemKind != "gear"))
         {
             var rows = ItemRows.Read(blocks, spine, range.Row);
             var (descriptions, art, lead) = EntriesStage.ReadDescriptions(range.BlocksIn(blocks), range.Row, new HashSet<string>(StringComparer.Ordinal));
@@ -100,5 +106,40 @@ public static partial class ImportPipeline
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// The counts of a gear row, from the document: the table rows by position (and the headings they sit under), the descriptions by their bold names, and the rows that have none. The rows are the descriptions' rows,
+    /// plus the rows that read the description of their heading or of the row above, plus the undescribed ones; any other total fails. Per kind, the rows are counted too.
+    /// </summary>
+    public static ItemCounts GearCounts(IReadOnlyList<SpineNode> spine, BlocksResult blocks, List<TakenRange> rowRanges, IReadOnlyList<ParsedEntry> parsed)
+    {
+        var row = rowRanges[0].Row;
+        var (rows, bands) = GearRows.Read(blocks, spine, row);
+        var descriptions = new List<EntriesStage.ItemDescription>();
+        int art = 0, lead = 0;
+        foreach (var r in rowRanges)
+        {
+            var read = EntriesStage.ReadDescriptions(r.BlocksIn(blocks), row, new HashSet<string>(StringComparer.Ordinal));
+            descriptions.AddRange(read.Descriptions);
+            art += read.ArtLabels;
+            lead += read.LeadLines;
+        }
+
+        var keys = descriptions.Select(d => GearRows.Key(d.Name)).ToHashSet(StringComparer.Ordinal);
+        var own = rows.Count(r => keys.Contains(GearRows.Key(r.Name)));
+        var inherited = rows.Count(r => !keys.Contains(GearRows.Key(r.Name)) && r.Parent != null && keys.Contains(GearRows.Key(r.Parent)));
+        var ofBands = descriptions.Count(d => bands.Any(b => GearRows.Key(b) == GearRows.Key(d.Name)));
+        var undescribedKeys = row.Undescribed.Select(GearRows.Key).ToHashSet(StringComparer.Ordinal);
+        var undescribed = rows.Count(r => undescribedKeys.Contains(GearRows.Key(r.Name)));
+        var items = parsed.Count(e => e.RowNumber == rowRanges[0].RowNumber && e.Type == row.Target);
+        var perKind = rows.GroupBy(r => r.Kind + (r.Uncommon ? "/uncommon" : string.Empty)).OrderBy(g => g.Key, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Count());
+        // The descriptions are of rows or of headings; a row reads one of its own, or its heading's or its row's, or is undescribed (a name may be two rows: the sizes of two barding tables).
+        if (rows.Count != items || own + ofBands != descriptions.Count || own + inherited + undescribed != items)
+        {
+            throw new DegreesException($"Chapter {row.Chapter}: {rows.Count} gear table rows and {descriptions.Count} descriptions ({own} of rows, {ofBands} of headings) make {items} items, {inherited} reading a heading's or a row's description and {undescribed} undescribed.");
+        }
+
+        return new ItemCounts(row.Chapter, "gear", rows.Count, descriptions.Count, 0, items, ItemRows.TablesOf(blocks, spine, row).Count, art, lead, perKind);
     }
 }
