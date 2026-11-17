@@ -51,7 +51,7 @@ public class FourDegreesRunesTests : IAsyncLifetime
         sheet["class"] = "warden";
         sheet["level"] = 3L;
         sheet[SheetRuleEngine.MethodKey] = SheetRuleEngine.ManualMethod;
-        foreach (var key in new[] { "str", "dex", "con", "int", "wis", "cha" }) sheet[SheetRuleEngine.BasePrefix + key] = 14L;
+        foreach (var key in new[] { "str", "dex", "con", "int", "wis", "cha" }) sheet[SheetRuleEngine.BasePrefix + key] = 2L;
         sheet["inventory"] = inventory.Cast<object>().ToList();
         return sheet;
     }
@@ -89,7 +89,7 @@ public class FourDegreesRunesTests : IAsyncLifetime
         var evaluation = Engine().Recompute(Warden("ledge-axe|equipped:1"));
 
         Assert.Empty(Problems(evaluation));
-        // Strength 14 (+2) and trained in martial weapons at level 3 (3 + 2).
+        // Strength +2 and trained in martial weapons at level 3 (3 + 2).
         Assert.Equal(7, Strike(evaluation, "ledge-axe").AttackBonus);
         Assert.Equal("1d10", Strike(evaluation, "ledge-axe").Damage);
     }

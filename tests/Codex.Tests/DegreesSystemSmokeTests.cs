@@ -169,7 +169,7 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
         sheet["class"] = cls;
         sheet["level"] = (long)level;
         sheet[SheetRuleEngine.MethodKey] = SheetRuleEngine.ManualMethod;
-        foreach (var key in new[] { "str", "dex", "con", "int", "wis", "cha" }) sheet[SheetRuleEngine.BasePrefix + key] = 14L;
+        foreach (var key in new[] { "str", "dex", "con", "int", "wis", "cha" }) sheet[SheetRuleEngine.BasePrefix + key] = 2L;
         return sheet;
     }
 
@@ -184,6 +184,34 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
         var engine = new SheetRuleEngine(_system, new PackResolver(_registry));
         for (var level = 1; level <= 3; level++)
             Assert.Empty(Problems(engine.Recompute(Character(ancestry, background, cls, level))));
+    }
+
+    [Fact]
+    public void ABoostBuildToLevel15_RunsOnTheModifierScale_WithAPendingPartialBoostAtPlusFour()
+    {
+        var engine = new SheetRuleEngine(_system, new PackResolver(_registry));
+        var sheet = Character("marshkin", "ferry-hand", "warden", 15);
+        sheet[SheetRuleEngine.MethodKey] = "boosts";
+        foreach (var key in new[] { "str", "dex", "con", "int", "wis", "cha" }) sheet.Remove(SheetRuleEngine.BasePrefix + key);
+        sheet["boost__ancestry__marshkin.b1"] = new List<object> { "str" }; // the "str|con" choice
+        sheet["boost__ancestry__marshkin.b2"] = new List<object> { "con" }; // the free boost
+        foreach (var level in new[] { 5, 10, 15 })
+        {
+            foreach (var (slot, key) in new[] { ("m1", "str"), ("m2", "dex"), ("m3", "wis"), ("m4", "con") }) sheet[$"boost__lvl{level}__{slot}"] = new List<object> { key };
+        }
+
+        var evaluation = engine.Recompute(sheet);
+
+        // Ancestry: +1 Dexterity and Wisdom (fixed), Strength and Constitution (picked), -1 Charisma; class: +1 Strength; then +1 on four attributes at each of levels 5, 10 and 15.
+        Assert.Equal(-1L, sheet["cha"]);
+        Assert.Equal(4L, sheet["str"]);
+        Assert.Equal(4L, sheet["dex"]);
+        Assert.Equal(4L, sheet["con"]);
+        Assert.Equal(4L, sheet["wis"]);
+        Assert.Equal(0L, sheet["int"]);
+        // Strength reached +4 at level 10, so its level-15 boost is the pending partial one.
+        Assert.Equal(new[] { "str" }, evaluation.Attributes!.Boosts!.Halves.ToArray());
+        Assert.Empty(evaluation.Violations);
     }
 
     [Fact]

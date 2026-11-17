@@ -36,7 +36,7 @@ categories:
   Defenses: Защита
   Senses: Чувства
   Actions: Действия
-  Ability scores: Характеристики
+  Attribute modifiers: Модификаторы характеристик
 
 conditions:
   Blinded: Слеп
