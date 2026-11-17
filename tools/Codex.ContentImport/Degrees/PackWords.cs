@@ -54,6 +54,14 @@ public sealed partial class Denylist
     /// </summary>
     public static Denylist EmbeddedCommon() => Parse(BooksConfig.EmbeddedYaml("degrees-common.sha256"));
 
+    /// <summary>
+    /// The hashed pairs of capitalized words (<c>Data/degrees-pairs.sha256</c>, the same file shape; each hash is of the two words, lowercased, with a space between): the two-word runs of the
+    /// left-out text whose words the word gates would let through one by one (a name made of an ordinary word and a game term). A pack that says such a pair fails the denylist gate.
+    /// </summary>
+    public static Denylist EmbeddedPairs() => Parse(BooksConfig.EmbeddedYaml("degrees-pairs.sha256"));
+
+    public static string PairHash(string first, string second) => Hash(first.ToLowerInvariant() + " " + second.ToLowerInvariant());
+
     /// <summary>The file text for a set of words: sorted unique hashes, minus the words in <paramref name="exclude"/> (game terms the packs may use).</summary>
     public static string Format(IEnumerable<string> words, IReadOnlySet<string>? exclude = null)
     {
@@ -185,7 +193,29 @@ public static partial class PackWordCheck
         return terms;
     }
 
-    public static List<PackFinding> CheckDenylist(string packDir, Denylist denylist)
+    /// <summary>The two-word runs of capitalized words in a text, lowercased: each pair of capitalized words (two letters or more) that follow one another with only punctuation or space between.</summary>
+    public static IEnumerable<(string First, string Second)> CapitalPairs(string text)
+    {
+        string? previous = null;
+        foreach (var word in Words(text))
+        {
+            if (word.Length > 1 && IsCapital(word))
+            {
+                if (previous != null)
+                {
+                    yield return (previous.ToLowerInvariant(), word.ToLowerInvariant());
+                }
+
+                previous = word;
+            }
+            else
+            {
+                previous = null;
+            }
+        }
+    }
+
+    public static List<PackFinding> CheckDenylist(string packDir, Denylist denylist, Denylist? pairs = null)
     {
         var findings = new List<PackFinding>();
         foreach (var file in Load(packDir, denylist))
@@ -196,6 +226,15 @@ public static partial class PackWordCheck
                 var seen = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var item in entry.Items)
                 {
+                    foreach (var (first, second) in pairs == null ? Enumerable.Empty<(string, string)>() : CapitalPairs(item.Text))
+                    {
+                        var hash = Denylist.PairHash(first, second);
+                        if (pairs!.Contains(hash) && seen.Add(hash))
+                        {
+                            findings.Add(new PackFinding(file.Name, entry.Number, item.Path, "pair of words on the denylist", hash));
+                        }
+                    }
+
                     foreach (var word in Words(item.Text))
                     {
                         var hash = Denylist.Hash(word);

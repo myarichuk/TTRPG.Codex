@@ -809,7 +809,7 @@ public class DegreesChapterOneTests : IDisposable
         var waivers = Waivers.Embedded();
 
         Assert.NotEmpty(waivers);
-        Assert.All(waivers, w => Assert.Matches("^[a-z]+$", w));
+        Assert.All(waivers, w => Assert.Matches("^[a-z]+( [a-z]+)?$", w)); // a word, or two words that waive a pair on the pair list
 
         // A waived word is one the packs say, so the denylist must not hold its hash, and the committed denylist must hold no hash of a book key.
         var deny = Denylist.Embedded();
@@ -993,7 +993,9 @@ public class DegreesChapterOneTests : IDisposable
 
         Assert.Contains("no child section", Assert.Throws<DegreesException>(() => TakeStage.Resolve(TwoSections, blocks, new[] { leaf })).Message);
         Assert.Throws<DegreesException>(() => TakeList.Parse("rows:\n  - { chapter: c, book: pc, parser: entries, target: condition, paths: [[A]], own: [[A]], ownName: X }\n"));
-        Assert.Throws<DegreesException>(() => TakeList.Parse("rows:\n  - { chapter: c, book: pc, parser: rules, target: rule, paths: [[A]], own: [[A]] }\n"));
+        // An own-text path with no ownName is named by its last title; several of them take no ownName, since one name could not fit each.
+        Assert.Single(TakeList.Parse("rows:\n  - { chapter: c, book: pc, parser: rules, target: rule, paths: [[A, B]], own: [[A]] }\n").Rows);
+        Assert.Throws<DegreesException>(() => TakeList.Parse("rows:\n  - { chapter: c, book: pc, parser: rules, target: rule, paths: [[A, B]], own: [[A], [C]], ownName: X }\n"));
         Assert.Single(TakeList.Parse("rows:\n  - { chapter: c, book: pc, parser: rules, target: rule, paths: [[A, B]], own: [[A]], ownName: X }\n").Rows);
     }
 

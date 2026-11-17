@@ -23,6 +23,12 @@
     • Learn a Spell from the arcane tradition.
   properties:
     category: "Skills"
+- id: "areas"
+  name: "Areas"
+  source: "pc > Chapter 7: Spells > Ranges, Areas, and Targets > Areas"
+  description: "Sometimes a spell has an area, which can be a burst, cone, emanation, or line. If the spell originates from your position, the spell has only an area; if you can cause the spell's area to appear farther away from you, the spell has both a range and an area."
+  properties:
+    category: "Spells"
 - id: "armor-and-skills"
   name: "Armor and Skills"
   source: "pc > Chapter 4: Skills > Skill Checks and DCs > Armor and Skills"
@@ -43,6 +49,29 @@
   description: "Some performances require you to be more than just charismatic, and if you don't meet the demands of the art form or the audience, the GM might apply a penalty based on the relevant attribute. For example, if you're dancing and have a negative Dexterity modifier, you might take a penalty to your attempt at dancing. Likewise, if you are orating and have a negative Intelligence modifier, you might have to hope your raw Charisma can overcome the penalties from your intellectual shortcomings—or ask someone to help write your speeches!"
   properties:
     category: "Skills"
+- id: "basic-saving-throws"
+  name: "Basic Saving Throws"
+  source: "pc > Chapter 7: Spells > Defenses > Basic Saving Throws"
+  description: "If a spell's Defenses entry specifies a \"basic\" saving throw, the spell's potential effects all relate to the damage listed in the spell's description. The target takes no damage on a critical success, half damage on a success, full damage on a failure, or double damage on a critical failure."
+  properties:
+    category: "Spells"
+- id: "cantrips"
+  name: "Cantrips"
+  source: "pc > Chapter 7: Spells > Cantrips"
+  description: |-
+    A cantrip is a special type of spell that's weaker than other spells but can be used with greater freedom and flexibility. The title of a cantrip's stat block says "Cantrip" instead of "Spell", and the spell has the cantrip trait. Casting a cantrip doesn't use up your spell slots; you can cast a cantrip at will, any number of times per day. If you're a prepared caster, you can prepare a specific number of cantrips each day. You can't prepare a cantrip in a spell slot.
+    A cantrip is always automatically heightened to half your level, rounded up. For a typical spellcaster, this means its rank is equal to the highest rank of spell slot you have.
+  properties:
+    category: "Spells"
+- id: "casting-spells"
+  name: "Casting Spells"
+  source: "pc > Chapter 7: Spells > Casting Spells"
+  description: |-
+    The casting of a spell can range from a simple word of magical might that creates a fleeting effect to a complex process taking hours to cast and producing a long-term impact. Casting a spell requires the caster to make gestures and utter incantations, so being unable to speak prevents spellcasting for most casters. If your character has a long-term disability that prevents or complicates them from speaking, work with the GM to determine an analogous way they cast their spells, such as tapping in code on their staff or whistling.
+    Spellcasting creates obvious sensory manifestations, such as bright lights, crackling sounds, and sharp smells from the gathering magic. Nearly all spells manifest a spell signature—a colorful, glowing ring of magical runes that appears in midair, typically around your hands, though what kind of spellcaster you are can affect this—academic wizards typically have neat and ordered spell signatures, while a druid's might be more organic and a cleric's might be inspired by their deity. How spellcasting looks can vary from one spellcasting tradition or class to another, or even from person to person. You have a great deal of freedom in flavoring your character's magic however you wish!
+    Spells can vary in how many actions they take, as shown in the spell's stat block. You cast cantrips, spells from spell slots, and focus spells using the same process, but must expend the spell when casting a spell from a spell slot and must spend 1 Focus Point to cast a focus spell. Some rules will refer to the Cast a Spell activity, such as "if the next action you use is to Cast a Spell." Any spell qualifies as a Cast a Spell activity, and any characteristics of the spell use those of the specific spell you're casting.
+  properties:
+    category: "Spells"
 - id: "condition-values"
   name: "Condition Values"
   source: "pc > Conditions Appendix > Condition Values"
@@ -55,6 +84,20 @@
   description: "Conditions are persistent. Whenever you're affected by a condition, its effects last until the condition's stated duration ends, the condition is removed, or terms dictated in the condition itself cause it to end."
   properties:
     category: "Conditions"
+- id: "costs-and-loci"
+  name: "Costs and Loci"
+  source: "pc > Chapter 7: Spells > Casting Spells > Costs and Loci"
+  description: |-
+    Some spells require you to pay a cost or provide a locus. If the spell lists a cost, you must have the listed money, valuable materials, or other resources to cast the spell (such as gems or magical reagents), and they're expended during the casting.
+    A locus is an object that funnels or directs the magical energy of the spell but is not consumed in its casting. As part of Casting the Spell, you retrieve the locus (if necessary, and if you have a free hand), and you can put it away again if you so choose. Loci tend to be expensive, and you need to acquire them in advance to cast the spell, but they aren't expended like costs are. Unless noted otherwise, a locus has negligible Bulk.
+  properties:
+    category: "Spells"
+- id: "counteracting"
+  name: "Counteracting"
+  source: "pc > Chapter 7: Spells > Counteracting"
+  description: "Some spells, such as dispel magic, can be used to eliminate the effects of other spells. At least one creature, object, or manifestation of the spell you are trying to counteract must be within range of the spell that you are using. You attempt a counteract check using your Charisma (or other spellcasting attribute modifier) and your proficiency bonus for spell attack rolls."
+  properties:
+    category: "Spells"
 - id: "crafting"
   name: "Crafting"
   source: "pc > Chapter 4: Skills > Skills > Crafting"
@@ -79,12 +122,39 @@
   description: "You can trick and mislead others using disguises, lies, and other forms of subterfuge. Deception often has a drawback if you get found out, and it's often best to be out of town by the time this happens."
   properties:
     category: "Skills"
+- id: "defenses"
+  name: "Defenses"
+  source: "pc > Chapter 7: Spells > Defenses"
+  description: "If a spell allows the target to attempt a saving throw or use their AC to defend against it, the type of defense is listed in the stat block. Any details on the particular results and timing of the save appear in the text unless the entry specifies a basic saving throw, which follows a standard rule. If a spell allows a defense only under certain circumstances or at a certain time, the Defenses entry is omitted, since the text needs to explain it in more detail. Whenever a spell allows a saving throw, it uses the caster's spell DC, and one that allows AC as a defense typically requires a spell attack."
+  properties:
+    category: "Spells"
 - id: "diplomacy"
   name: "Diplomacy"
   source: "pc > Chapter 4: Skills > Skills > Diplomacy"
   description: "You influence others through negotiation and flattery, or find out information through friendly chats."
   properties:
     category: "Skills"
+- id: "dismissing"
+  name: "Dismissing"
+  source: "pc > Chapter 7: Spells > Durations > Dismissing"
+  description: "Some spells can be dismissed, ending the duration early. This requires the caster or target to use the Dismiss action."
+  properties:
+    category: "Spells"
+- id: "disrupted-and-lost-spells"
+  name: "Disrupted and Lost Spells"
+  source: "pc > Chapter 7: Spells > Casting Spells > Disrupted and Lost Spells"
+  description: "Some abilities and spells can disrupt a spell, causing it to have no effect and be lost. When you lose a spell, you've already expended the spell slot and spent the spell's costs and actions. If a spell is disrupted during a Sustain action, the spell immediately ends."
+  properties:
+    category: "Spells"
+- id: "durations"
+  name: "Durations"
+  source: "pc > Chapter 7: Spells > Durations"
+  description: |-
+    The duration of a spell is how long the spell effect lasts. Spells that last for more than an instant have a Duration entry. A spell might last until the start or end of a turn, for some number of rounds, for minutes, or even longer. If a spell's duration is given in rounds, the number of rounds remaining decreases by 1 at the start of each of the spellcaster's turns, ending when the duration reaches 0.
+    Some spells have effects that remain even after the spell's magic is gone. Any ongoing effect that isn't part of the spell's duration entry isn't magical. For instance, a spell that creates a brief, loud sound might deafen someone for a time, even permanently. This deafness couldn't be counteracted because it is not itself magical (though it might be cured by other magic, such as sound body).
+    If a spell's caster dies or is incapacitated during the spell's duration, the spell remains in effect until its duration ends, using the caster's initiative order.
+  properties:
+    category: "Spells"
 - id: "exploration-and-downtime-activities"
   name: "Exploration and Downtime Activities"
   source: "pc > Chapter 4: Skills > Skill Checks and DCs > Exploration and Downtime Activities"
@@ -93,6 +163,53 @@
     ask your GM.
   properties:
     category: "Skills"
+- id: "focus-points-from-multiple-sources"
+  name: "Focus Points from Multiple Sources"
+  source: "pc > Chapter 7: Spells > Focus Spells > Focus Points from Multiple Sources"
+  description: "It's possible, especially through archetypes, to gain focus spells from more than one source. If this happens, you have just one focus pool, counting all your focus spells to determine the points in your pool. You can spend any of your Focus Points on any of your focus spells. Likewise, when you Refocus, you get back a point as long as you follow the guidelines of any abilities that granted you focus spells. Having Focus Points from multiple sources doesn't change the tradition of your spells; if you had both cleric domain spells and druid order spells, your domain spells would remain divine and the order spells primal. Similarly, you need to use the attribute modifier determined by the source of the focus spell."
+  properties:
+    category: "Spells"
+- id: "focus-spells"
+  name: "Focus Spells"
+  source: "pc > Chapter 7: Spells > Focus Spells"
+  description: |-
+    Focus spells are a special type of spell attained directly from a branch of study, from a deity, or from another specific source. You can learn focus spells only through special class features or feats, rather than choosing them from a spell list. Furthermore, you cast focus spells using a special pool of Focus Points—you can't prepare a focus spell in a spell slot or use your spell slots to cast focus spells; similarly, you can't spend your Focus Points to cast spells that aren't focus spells. Even some classes that don't normally grant spellcasting can grant focus spells, such as the ranger. The title of a focus spell's stat block says "Focus" instead of "Spell", and the spell has the focus trait.
+    Focus spells are automatically heightened to half your level rounded up, just like cantrips are. You can't cast a focus spell if its minimum rank is greater than half your level rounded up, even if you somehow gain access to it.
+    Casting any of your focus spells costs you 1 Focus Point. You automatically gain a focus pool the first time you gain an ability that gives you a focus spell. The maximum number of points in your pool is equal to the number of focus spells you know or 3, whichever is lower. This counts only spells that require Focus Points to cast. For example, a bard's composition cantrips don't count toward the size of the pool.
+    You replenish all the Focus Points in your pool during your daily preparations. You can also use the Refocus activity to pray, study, meditate, or otherwise reattune yourself to the source of your focus magic and regain 1 Focus Point. You can Refocus multiple times to regain multiple points, up to your pool's maximum.
+    Refocus
+    CONCENTRATE EXPLORATION
+    **Requirements.** You have a focus pool.
+    You spend 10 minutes performing deeds to restore your magical connection. This restores 1 Focus Point to your focus pool. The deeds you need to perform are specified in the class or ability that gives you your focus spells. These deeds can usually overlap with other tasks that relate to the source of your focus spells. For instance, a cleric with focus spells from a holy deity can usually Refocus while tending the wounds of their allies.
+  properties:
+    category: "Spells"
+- id: "heightened-spells"
+  name: "Heightened Spells"
+  source: "pc > Chapter 7: Spells > Spell Slots > Heightened Spells"
+  description: |-
+    Both prepared and spontaneous spellcasters can cast a spell at a higher spell rank than that listed for the spell. This is called heightening the spell. A prepared spellcaster can heighten a spell by preparing it in a higher-rank slot than its normal spell rank, while a spontaneous spellcaster can heighten a spell by casting it using a higher-rank spell slot, so long as they know the spell at that rank (see Heightened Spontaneous Spells below). When you heighten your spell, the spell's rank increases to match the higher rank of the spell slot you've prepared it in or used to cast it. This is useful for any spell, because some effects, such as counteracting, depend on the spell's rank.
+    In addition, many spells have additional specific benefits when they are heightened, such as increased damage. These extra benefits are described at the end of the spell's stat block. Some heightened entries specify one or more ranks at which the spell must be prepared or cast to gain these extra advantages. Each of these heightened entries states specifically which aspects of the spell change at the given rank. Read the heightened entry only for the spell rank you're using or preparing; if its benefits are meant to include any of the effects of a lower-rank heightened entry, those benefits will be included in the entry.
+    Other heightened entries give a number after a plus sign, indicating that heightening grants extra advantages over multiple ranks. The listed effect applies for every increment of ranks by which the spell is heightened above its lowest spell rank, and the benefit is cumulative. For example, fireball says "Heightened (+1) The damage increases by 2d6." Because fireball deals 6d6 fire damage at 3rd rank, a 4th-rank fireball would deal 8d6 fire damage, a 5th-rank spell would deal 10d6 fire damage, and so on.
+    Heightened Spontaneous Spells
+    If you're a spontaneous spellcaster, you must know a spell at the specific rank that you want to cast it in order to heighten it. You can add a spell to your spell repertoire at more than a single rank so that you have more options when casting it. For example, if you added fireball to your repertoire as a 3rd-rank spell and again as a 5th-rank spell, you could cast it as a 3rd-rank or a 5th-rank spell; however, you couldn't cast it as a 4th-rank spell.
+    Many spontaneous spellcasting classes provide abilities like the signature spells class feature, which allows you to cast a limited number of spells as heightened versions even if you know the spell at only a single rank.
+    As a spontaneous caster, you can also choose to cast a lower-rank spell using a higher-rank spell slot without heightening it or knowing it at a higher rank. This casts the spell at the rank you know the spell, not the rank of the higher slot. The spell doesn't have any heightened effects, so it's usually not a very efficient use of your magic outside of highly specific circumstances. For instance, if your party was having trouble with an invisible enemy, and you had revealing light in your repertoire but had already spent all of your 2nd-rank spell slots, it might be worth it to use a 3rd-rank spell slot to cast the spell, even though it'd have no heightened benefit.
+  properties:
+    category: "Spells"
+- id: "hostile-actions"
+  name: "Hostile Actions"
+  source: "pc > Chapter 7: Spells > Hostile Actions"
+  description: "Sometimes spells prevent a target from using hostile actions, or the spell ends if a creature uses any hostile actions. A hostile action is one that can harm or damage another creature, whether directly or indirectly, but not one that a creature is unaware could cause harm. For instance, casting fireball into a crowd would be a hostile action, but opening a door and accidentally freeing a horrible monster wouldn't be. The GM is the final arbitrator of what is a hostile action."
+  properties:
+    category: "Spells"
+- id: "identifying-spells"
+  name: "Identifying Spells"
+  source: "pc > Chapter 7: Spells > Identifying Spells"
+  description: |-
+    Sometimes you need to identify a spell, especially if its effects aren't obvious right away. If you notice a spell being cast, and you have that spell in your repertoire or prepared it that day (even if you already cast it), you automatically know what the spell is, including the rank to which it is heightened.
+    If you want to identify a spell but don't have it prepared or in your repertoire, you must spend an action on your turn attempting to identify it using Recall Knowledge. You typically notice a spell being cast due to its sensory spell manifestations. Identifying long-lasting spells that are already in place requires using Identify Magic instead of Recall Knowledge because you don't have the advantage of watching the spell being cast.
+  properties:
+    category: "Spells"
 - id: "income-earned"
   name: "Income Earned"
   source: "pc > Chapter 4: Skills > General Skill Actions"
@@ -124,6 +241,16 @@
     (critical)
   properties:
     category: "Skills"
+- id: "innate-spells"
+  name: "Innate Spells"
+  source: "pc > Chapter 7: Spells > Innate Spells"
+  description: |-
+    Certain spells are natural to your character, typically coming from your ancestry or a magic item. They're called innate spells. Innate spells don't let you qualify for abilities that require you to be a spellcaster—those require you to have spell slots. The ability that gives you an innate spell tells you how often you can cast it—usually once per day—and its magical tradition. Innate spells are refreshed during your daily preparations. Innate cantrips are cast at will and automatically heightened as normal for cantrips unless otherwise specified.
+    When you gain an innate spell, you become trained in the spell attack modifier and spell DC statistics. At 12th level, these proficiencies increase to expert. Unless noted otherwise, Charisma is your spellcasting attribute modifier for innate spells.
+    If you have an innate spell, you can cast it even if it's not of a spell rank you can normally cast. This is especially common for monsters.
+    You can't use your spell slots to cast your innate spells, but you might have an innate spell and also be able to prepare or cast the same spell through your class. You also can't heighten innate spells, but some abilities that grant innate spells might give you the spell at a higher rank than its base rank or change the rank at which you cast the spell.
+  properties:
+    category: "Spells"
 - id: "intimidation"
   name: "Intimidation"
   source: "pc > Chapter 4: Skills > Skills > Intimidation"
@@ -142,6 +269,24 @@
   description: "A spell you learn is added to your repository of spells, such as a spellbook for a wizard, familiar for a witch, or spell list for a cleric or druid. If you have a spell repertoire, such as a bard, it's not automatically added since you can only know a limited number of spells. Instead, you can select it when you add or swap spells."
   properties:
     category: "Skills"
+- id: "line-of-effect"
+  name: "Line of Effect"
+  source: "pc > Chapter 7: Spells > Ranges, Areas, and Targets > Line of Effect"
+  description: "You usually need an unobstructed path to the target of a spell, the origin point of an area, or the place where you create something with a spell."
+  properties:
+    category: "Spells"
+- id: "long-casting-times"
+  name: "Long Casting Times"
+  source: "pc > Chapter 7: Spells > Casting Spells > Long Casting Times"
+  description: "Some spells take minutes or hours to cast. You can't use other actions or reactions while casting such a spell, though at the GM's discretion, you might be able to speak a few sentences. As with other activities that take a long time, these spells have the exploration trait, and you can't cast them in an encounter. If combat breaks out while you're casting one, your spell is disrupted (see Disrupted and Lost Spells below)."
+  properties:
+    category: "Spells"
+- id: "long-durations"
+  name: "Long Durations"
+  source: "pc > Chapter 7: Spells > Durations > Long Durations"
+  description: "If a spell's duration says it lasts until your next daily preparations, on the next day you can refrain from preparing a new spell in that spell's slot. (If you are a spontaneous caster, you can instead expend a spell slot during your preparations.) Doing so extends the spell's duration until your next daily preparations. This effectively Sustains the spell over a long period of time. If you prepare a new spell in the slot (or don't expend a spell slot), the spell ends. You can't do this if the spell didn't come from one of your spell slots. If you are dead or otherwise incapacitated at the 24-hour mark after the time you Cast the Spell or the last time you extended its duration, the spell ends. Spells with an unlimited duration last until counteracted or Dismissed. You don't need to keep a spell slot open for these spells."
+  properties:
+    category: "Spells"
 - id: "lore"
   name: "Lore"
   source: "pc > Chapter 4: Skills > Skills > Lore"
@@ -175,6 +320,12 @@
     • Learn a Spell from the primal tradition.
   properties:
     category: "Skills"
+- id: "non-spellcasters-with-focus-spells"
+  name: "Non-Spellcasters with Focus Spells"
+  source: "pc > Chapter 7: Spells > Focus Spells > Non-Spellcasters with Focus Spells"
+  description: "If you get focus spells from a class or other source that doesn't grant spellcasting ability, the ability that gives you focus spells also provides your proficiency for your spell attack modifier and spell DC, as well as the magical tradition of your focus spells. Though you can cast your focus spells, you don't qualify for feats and other rules that require you to be a spellcaster or have a spellcasting class feature—those require you to have spell slots."
+  properties:
+    category: "Spells"
 - id: "occultism"
   name: "Occultism"
   source: "pc > Chapter 4: Skills > Skills > Occultism"
@@ -215,12 +366,58 @@
     Orate or sing Auditory and linguistic
   properties:
     category: "Skills"
+- id: "phantasmal-minion-statistics"
+  name: "Phantasmal Minion Statistics"
+  source: "pc > Chapter 7: Spells > Spell Lists > Spells"
+  description: |-
+    Phantasmal Minion Creature -1
+    MEDIUM FORCE MINDLESS
+    **Perception.** +0; darkvision
+    **Languages.** none (understands its creator)
+    **Skills.** Stealth +8
+    **Str.** -4, Dex +2, Con +0, Int -5, Wis +0, Cha +0
+    **Force Body.** A phantasmal minion's body is made of magical force. It can't use attack actions. Though it has no physical weight, it can move and use Interact actions to do things such as fetch objects, open unstuck or unlocked doors, hold chairs, and clean. It can't pass through solid objects.
+    **AC.** 13; Fort +0, Ref +4, Will +0
+    **HP.** 4; Immunities disease, mental, non-magical attacks, paralysis, poison, precision, spirit, unconscious; Resistances all damage 5 (except force or ghost touch)
+    **Speed.** fly 30 feet
+  properties:
+    category: "Spells"
 - id: "practicing-a-trade"
   name: "Practicing a Trade"
   source: "pc > Chapter 4: Skills > General Skill Actions"
   description: "You apply the practical benefits of one of your Lore specialties during downtime by practicing your trade. This is most effective for Lore specialties where there's high demand for workers. The GM might increase the DC or determine only low-level tasks are available if you're attempting to use an obscure Lore skill to Earn Income. You might also need specialized tools to accept a job, like mining tools to work in a mine or a merchant's scale to buy and sell valuables in a market."
   properties:
     category: "Skills"
+- id: "prepared-spells"
+  name: "Prepared Spells"
+  source: "pc > Chapter 7: Spells > Spell Slots > Prepared Spells"
+  description: |-
+    If you're a prepared spellcaster—such as a cleric, druid, witch, or wizard—you must spend time each day preparing spells for that day. At the start of your daily preparations, you select a number of spells of different spell ranks, determined by your character level and class. Your spells remain prepared until you cast them or until you prepare spells again.
+    Each prepared spell is expended after a single casting, so if you want to cast a particular spell more than once in a day, you need to prepare that spell multiple times. The exception to this rule is for spells with the cantrip trait; once you prepare a cantrip, you can cast it as many times as you want until the next time you prepare spells.
+    You might gain an ability that allows you to swap prepared spells or perform other aspects of preparing spells at different times throughout the day, but only your daily preparation counts for the purpose of effects that last until the next time you prepare spells.
+  properties:
+    category: "Spells"
+- id: "ranges-areas-and-targets"
+  name: "Ranges, Areas, and Targets"
+  source: "pc > Chapter 7: Spells > Ranges, Areas, and Targets"
+  description: "Spells with a range can affect targets, create areas, or make things appear only within that range. Most spell ranges are measured in feet, though some can stretch over miles, reach anywhere on the planet, or go even farther!"
+  properties:
+    category: "Spells"
+- id: "reading-spells"
+  name: "Reading Spells"
+  source: "pc > Chapter 7: Spells > Reading Spells"
+  description: |-
+    Each spell uses the following format. Entries appear only when applicable, so not all spells will have every entry described here. The spell's name line also lists the type of spell if it's a cantrip or focus spell, as well as the rank.
+    SPELL NAME [1 action] SPELL (RANK)
+    TRAITS
+    **Tradition.** This entry lists the magical traditions the spell belongs to. Some feats or other abilities might add a spell to your spell list even if you don't follow the listed traditions.
+    **Cast.** Spells that take longer than a single turn to cast include this entry to list the time required, such as "1 minute." If the spell has a cost, locus, requirements, or a trigger, that information is also listed in this section.
+    **Range, Area, and Targets.** This entry lists the range of the spell, the area it affects, and the targets it can affect, if any. If none of these entries are present, the spell affects only the caster.
+    **Defense and Duration.** If a spell allows the target to attempt a saving throw or use their AC to defend against it, the type of defense appears here. A Duration entry appears if the spell has one. A spell that doesn't list a duration takes place instantaneously, and anything created by it persists after the spell.
+    A horizontal line follows defense and duration, and the effects of the spell are described after this line. This section might also detail the possible results of a saving throw: critical success, success, failure, and critical failure.
+    **Heightened (rank).** If the spell has special effects when heightened, those effects appear at the end of the stat block.
+  properties:
+    category: "Spells"
 - id: "religion"
   name: "Religion"
   source: "pc > Chapter 4: Skills > Skills > Religion"
@@ -239,6 +436,14 @@
   description: "Sometimes you won't know whether you have succeeded at a skill check. If an action has the secret trait, the GM rolls the check for you and informs you of the effect without revealing the result of the roll or the degree of success. The GM rolls secret checks when your knowledge about the outcome is imperfect, like when you're searching for a hidden creature or object, attempting to deceive someone, translating a tricky bit of ancient text, or remembering some piece of lore. This way, you as the player don't know things that your character wouldn't. This rule is the default for actions with the secret trait, but the GM can choose not to use secret checks if they would rather some or all rolls be public."
   properties:
     category: "Skills"
+- id: "setting-triggers"
+  name: "Setting Triggers"
+  source: "pc > Chapter 7: Spells > Setting Triggers"
+  description: |-
+    If a spell is meant to respond only to certain events or under certain conditions, it might require you to set a trigger. This is a simple sensory cue that causes the spell to activate. The spell activates as a reaction when the spell's sensor observes something that fits its trigger. Depending on the spell, the trigger might be the presence of a type of creature, such as "red-bearded dwarven men," or it could be an observed action, such as "whenever someone enters the spell's area."
+    Disguises and illusions fool the spell as long as they appear to match its parameters. For a spell to detect something visually, the spell's origin point must have line of sight. Darkness doesn't prevent this, but invisibility does, as does a successful Stealth check to Hide (against the spell's DC). For auditory detection, line of sight isn't necessary, though the sound must be audible at the spell's origin point. A Stealth check to Sneak can fool the sensor.
+  properties:
+    category: "Spells"
 - id: "skill-actions"
   name: "Skill Actions"
   source: "pc > Chapter 4: Skills > Skill Actions"
@@ -291,6 +496,38 @@
     • Decipher Writing that's a coded message, text written in an incomplete or archaic form, or in some cases, text in a language you don't know.
   properties:
     category: "Skills"
+- id: "spell-attacks"
+  name: "Spell Attacks"
+  source: "pc > Chapter 7: Spells > Spell Attacks"
+  description: |-
+    Some spells require you to succeed at a spell attack roll to affect the target. This is usually because they require you to precisely aim a ray or otherwise make an accurate attack. A spell attack roll is compared to the target's AC. Spell attack rolls benefit from any bonuses or penalties to attack rolls, including your multiple attack penalty, but not any special benefits or penalties that apply only to weapon or unarmed attacks. Spell attacks don't deal any damage beyond what's listed in the spell description.
+    In rare cases, a spell might have you make some other type of attack, such as a weapon Strike. Such attacks use the normal rules and attack bonus for that type of attack.
+  properties:
+    category: "Spells"
+- id: "spell-slots"
+  name: "Spell Slots"
+  source: "pc > Chapter 7: Spells > Spell Slots"
+  description: "Characters of spellcasting classes can cast a number of spells each day; the spells you can cast in a day are referred to as spell slots. At 1st level, a character has only a small number of 1st-rank spell slots per day, but as you advance in level, you gain more spell slots of higher rank. A spell's rank indicates its overall power, from 1 to 10."
+  properties:
+    category: "Spells"
+- id: "spellcasters-with-focus-spells"
+  name: "Spellcasters with Focus Spells"
+  source: "pc > Chapter 7: Spells > Focus Spells > Spellcasters with Focus Spells"
+  description: "If you are a spellcaster, your focus spells are the same tradition of spell as the class that gave you the focus spell. A bard's are occult, a cleric's are divine, a druid's are primal, a wizard's are arcane, and a witch's are determined by their patron."
+  properties:
+    category: "Spells"
+- id: "spellcasting"
+  name: "Spellcasting"
+  source: "pc > Chapter 7: Spells"
+  description: "With special gestures and utterances, a spellcaster can call forth mystic energies, warp the mind, protect themself against danger, or even create something from nothing. Each class has its own method of learning, preparing, and casting spells, and every individual spell produces a specific effect, so learning new spells gives a spellcaster an increasing array of options to accomplish their goals."
+  properties:
+    category: "Spells"
+- id: "spontaneous-spells"
+  name: "Spontaneous Spells"
+  source: "pc > Chapter 7: Spells > Spell Slots > Spontaneous Spells"
+  description: "If you're a spontaneous spellcaster—such as a bard—you choose which spell from your spell repertoire that you're using a spell slot for at the moment you decide to cast it. This provides you with more freedom in your spellcasting, but you have fewer spells in your spell repertoire, as determined by your character level and class. When you make your daily preparations, all your spell slots are refreshed, but you don't get to change the spells in your repertoire."
+  properties:
+    category: "Spells"
 - id: "staging-a-performance"
   name: "Staging a Performance"
   source: "pc > Chapter 4: Skills > General Skill Actions"
@@ -313,9 +550,54 @@
     • Subsist in the wild by foraging for food and building shelter.
   properties:
     category: "Skills"
+- id: "sustaining-spells"
+  name: "Sustaining Spells"
+  source: "pc > Chapter 7: Spells > Durations > Sustaining Spells"
+  description: "If the spell's duration is \"sustained,\" it lasts until the end of your next turn unless you use the Sustain action on that turn to extend the duration of that spell."
+  properties:
+    category: "Spells"
+- id: "targets"
+  name: "Targets"
+  source: "pc > Chapter 7: Spells > Ranges, Areas, and Targets > Targets"
+  description: |-
+    Some spells allow you to target a creature, an object, or something more specific. The target must be within the spell's range, and you must be able to see it (or otherwise perceive it with a precise sense) to target it. At the GM's discretion, you can attempt to target a creature you can't see. If you fail to target a particular creature, this doesn't change how the spell affects any other targets the spell has.
+    If you choose a target that isn't valid, such as if you thought a vampire was a living creature and targeted it with a spell that can target only living creatures, your spell fails to target that creature. If a creature starts out as a valid target but ceases to be one during a spell's duration, the spell typically ends, but the GM might decide otherwise in certain situations. Some spells restrict you to willing targets. A player can declare their character a willing or unwilling target at any time, regardless of turn order or their character's condition (such as when a character is paralyzed, unconscious, or even dead).
+    Spells that affect multiple creatures in an area can have both an Area entry and a Targets entry. A spell that has an area but no targets listed usually affects all creatures in the area indiscriminately.
+  properties:
+    category: "Spells"
+- id: "the-summon-trait"
+  name: "The Summon Trait"
+  source: "pc > Chapter 7: Spells > Spell Lists > Spells"
+  description: |-
+    Spells with the summon trait can conjure creatures, typically ones with a particular trait. Such creatures can be found in books of creatures. Unless noted otherwise, the creature must be common, it gains the summoned trait, and it must appear in an unoccupied space in range large enough to contain it. The highest level of creature the spell can summon depends on the rank of the spell, as listed below. The spell can still summon a creature of a lower level if you so choose. These rules apply only to spells that have the summon trait; other spells that call or conjure items or beings but that don't have the trait, like summon instrument, work as explained in the spell.
+    Spell Rank Maximum Creature Level
+    1st -1
+    2nd 1
+    3rd 2
+    4th 3
+    5th 5
+    6th 7
+    7th 9
+    8th 11
+    9th 13
+    10th 15
+  properties:
+    category: "Spells"
 - id: "thievery"
   name: "Thievery"
   source: "pc > Chapter 4: Skills > Skills > Thievery"
   description: "You are trained in a particular set of skills favored by thieves and miscreants."
   properties:
     category: "Skills"
+- id: "touch-range"
+  name: "Touch Range"
+  source: "pc > Chapter 7: Spells > Ranges, Areas, and Targets > Touch Range"
+  description: "A spell with a touch range requires you to physically touch the target. You use your unarmed reach to determine whether you can touch the creature. You can usually touch them automatically, though the spell might specify that they can attempt a saving throw or that you must attempt a spell attack roll. If an ability increases the range of a touch spell, start at 0 feet and increase from there."
+  properties:
+    category: "Spells"
+- id: "walls"
+  name: "Walls"
+  source: "pc > Chapter 7: Spells > Walls"
+  description: "Spells that create walls list the depth, length, and height of the wall, also specifying how it can be positioned. Some walls can be shaped; you can manipulate the wall into a form other than a straight line, choosing its contiguous path square by square. The path of a shaped wall can't enter the same space more than once, but it can double back so one section is adjacent to another section of the wall."
+  properties:
+    category: "Spells"

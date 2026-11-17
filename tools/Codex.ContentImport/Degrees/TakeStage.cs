@@ -32,6 +32,8 @@ public static class TakeStage
         ["entries"] = new[] { "entry-header", "rules", "body", "tag", "icon", "table" },
         ["rules"] = new[] { "rules", "body", "tag", "icon", "table" },
         ["glossary"] = new[] { "body" },
+        // The tradition lists: a heading per rank (entry-header) and the lines of names and summaries under it.
+        ["spelllists"] = new[] { "entry-header", "body", "tag", "table" },
         // A skill's heading (section), a general action's or subsection's title (entry-header), an action's or table caption's heading (block-header) and its text.
         ["actions"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon", "table" },
     };
@@ -49,7 +51,8 @@ public static class TakeStage
     {
         var where = $"Chapter {row.Chapter}, own-text path {pathNumber - row.Paths.Count}";
         var title = FindTitle(blocks.Blocks, node, 0) ?? throw new DegreesException($"{where}: no block on page {node.PageStart} has the bookmark's title.");
-        var child = spine.Skip(IndexOf(spine, node) + 1).FirstOrDefault();
+        // A sidebar bookmark between the section and its first child is no child: the sidebar is split out of the blocks, so its title is not one.
+        var child = spine.Skip(IndexOf(spine, node) + 1).FirstOrDefault(n => !n.Sidebar);
         if (child == null || child.Depth != node.Depth + 1)
         {
             throw new DegreesException($"{where}: the section has no child section, so it has no 'own text before the first child'.");
@@ -187,7 +190,13 @@ public static class TakeStage
             var at = FindTitle(blocks.Blocks, after, end) ?? throw new DegreesException($"{where}: the next section's title is not a block on page {after.PageStart}, so the end of the range is unknown.");
             if (Enumerable.Range(end, at - end).Any(i => Claimable.Contains(blocks.Blocks[i].Role)))
             {
-                throw new DegreesException($"{where}: text sits above the next section's title on page {after.PageStart}, so the end of the range is unknown.");
+                if (!row.RunsToTitleFor(node.Path))
+                {
+                    throw new DegreesException($"{where}: text sits above the next section's title on page {after.PageStart}, so the end of the range is unknown.");
+                }
+
+                // The row says its sections' text goes on over a page break (past a page of sidebars, say) above the next title: the blocks are in reading order, so the range runs to the title.
+                end = at;
             }
         }
         else if (FindTitle(blocks.Blocks, after, title + 1) is { } next)
@@ -321,13 +330,16 @@ public static class TakeStage
 
     private static void CheckClaimed(BlocksResult blocks, TakenRange range)
     {
-        var allowed = Claims[range.Row.Parser].Concat(range.Row.HeaderRole == null ? Array.Empty<string>() : new[] { range.Row.HeaderRole }).ToArray();
+        var allowed = Claims[range.Row.Parser].Concat(range.Row.HeaderRole == null ? Array.Empty<string>() : new[] { range.Row.HeaderRole })
+            .Concat(range.Row.Subheadings ? new[] { "block-header" } : Array.Empty<string>()).ToArray();
+        // A row that names its boxes (or says how many it reads past) holds headings of the header role that have no entry's shape: each starts a box.
+        var boxes = range.Row.Boxes.Count > 0 || range.Row.ReadPastBoxes > 0;
         var stray = new List<string>();
         foreach (var i in range.Indexes)
         {
             var b = blocks.Blocks[i];
             // With a header role shared with other things (the block-header font), a block of that role that is not a header's shape belongs to no entry.
-            if (!allowed.Contains(b.Role) || (b.Role == range.Row.HeaderRole && b.Role != "entry-header" && !range.Row.IsHeader(b))
+            if (!allowed.Contains(b.Role) || (!boxes && b.Role == range.Row.HeaderRole && b.Role != "entry-header" && !range.Row.IsHeader(b))
                 || (i == range.Start && range.Row.Parser == "entries" && !range.Row.IsHeader(b)))
             {
                 stray.Add($"{b.Role} on page {b.Page} column {b.Column}");

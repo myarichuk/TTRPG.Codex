@@ -163,7 +163,8 @@ public static class DegreesCommand
             new TakeList { Rows = rows }.CheckAgainstSystem(File.ReadAllText(systemFile));
         }
 
-        var result = ImportPipeline.Run(blocks, spine, rows, redactions ?? RedactionTable.Embedded(), book);
+        // The ids of the pack as committed: an id that has shipped keeps its entry when a later chapter brings another with the same name.
+        var result = ImportPipeline.Run(blocks, spine, rows, redactions ?? RedactionTable.Embedded(), book, packDir == null ? null : PackEmitter.ShippedIds(packDir));
         Write(work, "entries.json", result.Parsed);
         Write(work, "redacted.json", result.Final);
         var files = PackEmitter.Files(result.Final.Where(e => e.Approved), result.Report);
@@ -175,6 +176,15 @@ public static class DegreesCommand
             var counts = ImportPipeline.CheckActionCounts(spine, blocks, result.Ranges, result.Parsed);
             output.WriteLine($"actions: {counts.Children} bookmark children = {counts.Units} headings in the ranges; {counts.Headers} action headings, {counts.TraitLines} trait lines, {counts.Icons} action icons; " +
                 $"the overview table lists {counts.TableNames} (name, proficiency) pairs, and the parsed actions have the same");
+        }
+
+        if (ImportPipeline.CheckSpellCounts(blocks, result.Ranges, result.Parsed) is { } spells)
+        {
+            var (degrees, heightened) = ImportPipeline.CheckSpellDegrees(blocks, result.Ranges, result.Parsed);
+            var sections = ImportPipeline.CheckRuleSectionCounts(spine, blocks, result.Ranges);
+            output.WriteLine($"spells: {spells.Headers} headers = {spells.TraitLines} trait lines = {spells.TraditionLines} traditions lines; the four lists name {string.Join(", ", spells.PerTradition.Select(p => $"{p.Value} {p.Key}"))} " +
+                $"({spells.Listed} in all), the parsed spells say the same ({spells.Parsed}); {spells.OnNoList} on no list; {spells.ArtLabels} labels of the page's art skipped; {degrees} degree sections, {heightened} heightened entries; " +
+                $"rule sections: {sections.Sum(s => s.Children)} bookmark children = {sections.Sum(s => s.Headings)} headings in {sections.Count} section(s)");
         }
 
         if (packDir == null)
@@ -245,6 +255,12 @@ public static class DegreesCommand
         var before = MergeDenylist(path, Denylist.Format(words), out var total);
         output.WriteLine($"denylist: {words.Count} word(s) hashed from the sections left out ({planned.Count} planned section(s) are not left out), {excluded} common, waived or book-key word(s) left off; the file now holds {total} hash(es) ({total - before} new)");
 
+        // The pairs of capitalized words go beside it too: a name of two words that each pass the word gates (see ImportPipeline.DenylistPairs).
+        var pairsPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-pairs.sha256");
+        var pairs = ImportPipeline.DenylistPairs(blocks, ranges, planned, words, Waivers.Embedded());
+        var pairsBefore = MergeDenylist(pairsPath, string.Concat(pairs.Select(h => h + "\n")), out var pairsTotal, PairsHeader);
+        output.WriteLine($"pairs: {pairs.Count} pair(s) of capitalized words hashed from the sections left out; the file now holds {pairsTotal} hash(es) ({pairsTotal - pairsBefore} new)");
+
         // The book's common lowercase words go beside it, as hashes too: the allowlist gate lets an ordinary word open a sentence.
         var commonPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-common.sha256");
         var common = ImportPipeline.CommonWords(blocks);
@@ -253,6 +269,11 @@ public static class DegreesCommand
         output.WriteLine($"common words: {common.Count} lowercase word(s) and {openers.Count} sentence-opener word(s) of this book hashed; the file now holds {commonTotal} hash(es) ({commonTotal - commonBefore} new)");
         return 0;
     }
+
+    private const string PairsHeader =
+        "# The hashed pairs of the local book importer: one lowercase hex SHA-256 of two lowercased words with a space between, no words.\n" +
+        "# A pair is two capitalized words that follow one another in the text the take-list leaves out, where neither word is on the word denylist and the pair is not game text.\n" +
+        "# The denylist test fails a pack that says one: it catches a name of two words that each pass the word gates alone.\n";
 
     private const string CommonHeader =
         "# The hashed common words of the local book importer: one lowercase hex SHA-256 of a lowercased word per line, no words.\n" +

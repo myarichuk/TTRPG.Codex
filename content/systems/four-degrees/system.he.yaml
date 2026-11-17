@@ -117,6 +117,13 @@ entityTypes:
     fields:
       skill: { label: מיומנות }
       proficiency: { label: דרגת מיומנות }
+  spell:
+    label: לחש
+    pluralLabel: לחשים
+    fields:
+      kind: { label: סוג }
+      rank: { label: דרגה }
+      traditions: { label: מסורות }
   armor:
     label: שריון
     pluralLabel: שריונות

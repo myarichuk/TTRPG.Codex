@@ -61,6 +61,38 @@ public sealed class TakeRow
     /// </summary>
     public string? LevelWord { get; set; }
 
+    /// <summary>The words <see cref="LevelWord"/> names: one, or several joined with a vertical bar (<c>spell|cantrip</c>) for a type whose header word says what kind of entry it is.</summary>
+    public string[] LevelWords => (LevelWord ?? string.Empty).Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    /// <summary>The regular-expression group that matches any of the <see cref="LevelWords"/> (named <c>word</c>), whatever their case.</summary>
+    public string LevelPattern => "(?<word>" + string.Join('|', LevelWords.Select(Regex.Escape)) + ")";
+
+    /// <summary>
+    /// For an <c>entries</c> row with a level word: the titles, in our own words, of the boxes the range holds that are not entries (a heading in the entry-header font that has not the
+    /// entries' shape, and the blocks after it up to the next entry). Each becomes one <c>rule</c> entry (the row's <see cref="Category"/>), named by the title in title case.
+    /// </summary>
+    public List<string> Boxes { get; set; } = new();
+
+    /// <summary>
+    /// For an <c>entries</c> row with a level word: how many boxes the range holds that the row does not take (they are read past, and hashed for the denylist). Any other count fails the run,
+    /// so a box that is not named is never dropped silently.
+    /// </summary>
+    public int ReadPastBoxes { get; set; }
+
+    /// <summary>
+    /// For a <c>rules</c> row: a heading in the block-header font inside the range (a sub-subsection that has no bookmark, or an activity's name) is a paragraph of the entry, in title case,
+    /// and its trait line is a paragraph of its own. Without it such a heading is a block the parser does not claim, and the run fails.
+    /// </summary>
+    public bool Subheadings { get; set; }
+
+    /// <summary>
+    /// The bookmark paths of this row whose section goes on, over a page break, above the title of the next section (the pages between are sidebars, or the bookmark ends a page early). For any other
+    /// path that fails the run, since the end of its range is then unknown; for these the range runs to the next title, which is right when the blocks in between are in reading order.
+    /// </summary>
+    public List<List<string>> RunsToTitle { get; set; } = new();
+
+    public bool RunsToTitleFor(IReadOnlyList<string> path) => RunsToTitle.Any(p => p.SequenceEqual(path, StringComparer.OrdinalIgnoreCase));
+
     /// <summary>
     /// For the <c>actions</c> parser: the name, in our own words, of the one rule entry made from the section's own prose, the text between the start of the range and its first
     /// skill or subsection heading. Without it that text must be a table (the proficiency table of the general skill actions), which is read past.
@@ -86,7 +118,7 @@ public sealed class TakeRow
 
     private Regex? _levelHeader;
 
-    private Regex LevelHeader() => _levelHeader ??= new Regex(@"\s" + Regex.Escape(LevelWord!) + @"\s+\d+$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private Regex LevelHeader() => _levelHeader ??= new Regex(@"\s" + LevelPattern + @"\s+\d+$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     /// <summary>The bookmark path of a taken range, whichever list it came from.</summary>
     public List<string> PathOf(TakenRange range) => range.Own ? Own[range.PathNumber - Paths.Count - 1] : Paths[range.PathNumber - 1];
@@ -103,10 +135,10 @@ public sealed class PlannedRow
 
 public sealed partial class TakeList
 {
-    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions" };
+    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions", "spelllists" };
 
     /// <summary>The parsers that exist. Any other parser in the list fails the run, so a row cannot silently take nothing.</summary>
-    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions" };
+    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions", "spelllists" };
 
     public List<TakeRow> Rows { get; set; } = new();
 
@@ -244,9 +276,15 @@ public sealed partial class TakeList
                 throw new DegreesException($"Take-list row {n}: own-text paths belong to the rules parser.");
             }
 
-            if (r.Own.Any(p => p.Count == 0 || p.Any(string.IsNullOrWhiteSpace)) || (r.Own.Count > 0 && string.IsNullOrWhiteSpace(r.OwnName)))
+            // Without an ownName, an own-text entry is named by its path's last title; with several own-text paths that is the only way to name each one.
+            if (r.Own.Any(p => p.Count == 0 || p.Any(string.IsNullOrWhiteSpace)) || (r.Own.Count > 1 && !string.IsNullOrWhiteSpace(r.OwnName)))
             {
-                throw new DegreesException($"Take-list row {n}: an own-text path needs titles and the row needs an ownName.");
+                throw new DegreesException($"Take-list row {n}: an own-text path needs titles, and a row with several of them takes no ownName (each is named by its last title).");
+            }
+
+            if ((r.Subheadings && r.Parser != "rules") || ((r.Boxes.Count > 0 || r.ReadPastBoxes > 0) && (r.Parser != "entries" || r.LevelWord == null)))
+            {
+                throw new DegreesException($"Take-list row {n}: subheadings belong to the rules parser, and boxes and readPastBoxes to an entries row with a levelWord.");
             }
 
             if ((r.LeadName != null && r.Parser != "actions") || (r.TailFromHeader && r.Parser != "rules") || (r.TableRows && r.Parser == "glossary"))

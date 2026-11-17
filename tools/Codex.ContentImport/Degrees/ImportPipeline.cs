@@ -47,17 +47,24 @@ public static partial class ImportPipeline
     {
         var colon = bookmarkTitle.IndexOf(':', StringComparison.Ordinal);
         var rest = colon >= 0 ? bookmarkTitle[(colon + 1)..] : bookmarkTitle;
-        return rest.Split(" & ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        // "Sidebars: X and Y" names two as well, when no ampersand does (a title that says "and" inside one sidebar's name, as in "A and B & C", is split at the ampersand only).
+        var plural = colon >= 0 && bookmarkTitle[..colon].TrimEnd().EndsWith('s') && !rest.Contains(" & ", StringComparison.Ordinal);
+        var parts = rest.Split(plural ? new[] { " and " } : new[] { " & " }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        // A split on "and" is a guess (a single title may hold the word): its parts must match their headings exactly, or the page is flagged (see BlocksStage.SidebarTitleSet).
+        return plural ? parts.Select(p => "=" + p) : parts;
     }
 
-    public static PipelineOutput Run(BlocksResult blocks, IReadOnlyList<SpineNode> spine, IReadOnlyList<TakeRow> rows, RedactionTable redactions, string book)
+    public static PipelineOutput Run(BlocksResult blocks, IReadOnlyList<SpineNode> spine, IReadOnlyList<TakeRow> rows, RedactionTable redactions, string book, IReadOnlyDictionary<string, string>? shippedIds = null)
     {
         var ranges = TakeStage.Resolve(spine, blocks, rows);
         CheckEntryCounts(spine, blocks, ranges);
         CheckGlossaryCounts(blocks, ranges);
         CheckLevelCounts(blocks, ranges);
-        var parsed = EntriesStage.Run(blocks, ranges, book);
+        CheckRuleSectionCounts(spine, blocks, ranges);
+        var parsed = EntriesStage.Run(blocks, ranges, book, shippedIds);
         CheckActionCounts(spine, blocks, ranges, parsed);
+        CheckSpellCounts(blocks, ranges, parsed);
+        CheckSpellDegrees(blocks, ranges, parsed);
 
         // Only this book's rows apply, so one book's rows are never "unmatched" in the other's run.
         var scoped = new RedactionTable { Normalization = redactions.Normalization, Rows = redactions.Rows.Where(r => r.Book == null || r.Book == book).ToList() };
@@ -77,6 +84,8 @@ public static partial class ImportPipeline
             Name = kept[e.Id].Fields["name"],
             Description = kept[e.Id].Fields["description"],
             Level = e.Level,
+            Kind = e.Kind,
+            Traditions = e.Traditions.ToList(),
             Actions = e.Actions,
             Traits = e.Traits.ToList(),
             Skill = e.Skill,
@@ -148,9 +157,12 @@ public static partial class ImportPipeline
         foreach (var range in ranges.Where(r => !r.Own && r.Row.Parser == "entries" && r.Row.LevelWord != null))
         {
             var slice = range.BlocksIn(blocks);
-            var marker = new Regex(@"\s" + Regex.Escape(range.Row.LevelWord!.ToUpperInvariant()) + @"\s+\d+$", RegexOptions.CultureInvariant);
+            var marker = new Regex(@"\s(?:" + string.Join('|', range.Row.LevelWords.Select(w => Regex.Escape(w.ToUpperInvariant()))) + @")\s+\d+$", RegexOptions.CultureInvariant);
             var headers = slice.Count(range.Row.IsHeader);
-            var traitLines = slice.Count(b => b.Role == "tag");
+            // A box's own stat block has a trait line under a heading that is no entry's: it is no entry's trait line.
+            var inBox = EntriesStage.BoxIndexes(range.Row, slice);
+            // A trait line that wraps is two tag blocks in a row (the second is the rest of the first), so a run of them is one.
+            var traitLines = Enumerable.Range(0, slice.Count).Count(k => slice[k].Role == "tag" && !inBox.Contains(k) && (k == 0 || slice[k - 1].Role != "tag"));
             var markers = slice.SelectMany(b => b.Lines).Count(l => marker.IsMatch(SpanText.Normalize(l)));
 
             // The overview tables before the first header list every entry with its level: a count that no header, trait line or classification step touches. Not every chapter has them.
@@ -167,6 +179,200 @@ public static partial class ImportPipeline
         }
 
         return compared;
+    }
+
+    /// <summary>
+    /// For every taken own-text path of a <c>rules</c> row (a section whose own text comes before its first child section): the section's non-sidebar bookmark children against the headings
+    /// of the right font in its range, up to the last child's own heading. A child is a heading in the section font under a chapter and in the entry-header font under a section. They
+    /// must be equal: a bookmark with no heading, or a heading with no bookmark (a section the take-list would have swallowed whole), fails the run. Returns the (children, headings) pairs.
+    /// </summary>
+    public static List<(int Children, int Headings)> CheckRuleSectionCounts(IReadOnlyList<SpineNode> spine, BlocksResult blocks, IEnumerable<TakenRange> ranges)
+    {
+        var compared = new List<(int, int)>();
+        foreach (var range in ranges.Where(r => r.Own && r.Row.Parser == "rules"))
+        {
+            var node = range.Node;
+            var children = spine.Where(n => n.Depth == node.Depth + 1 && n.Path.Length == node.Path.Length + 1 && n.Path.Take(node.Path.Length).SequenceEqual(node.Path) && !n.Sidebar).ToList();
+            if (children.Count == 0)
+            {
+                continue;
+            }
+
+            var role = node.Depth == 0 ? "section" : "entry-header";
+            var last = BlocksStage.SidebarTitleSet.Key(children[^1].Title);
+            var headings = 0;
+            var found = false;
+            for (var i = range.End; i < blocks.Blocks.Count && !found; i++)
+            {
+                var b = blocks.Blocks[i];
+                if (b.Role == role)
+                {
+                    headings++;
+                    found = BlocksStage.SidebarTitleSet.Key(string.Join(' ', b.Lines)) == last;
+                }
+            }
+
+            compared.Add((children.Count, headings));
+            if (!found || children.Count != headings)
+            {
+                throw new DegreesException($"Chapter {range.Row.Chapter}, own-text path {range.PathNumber - range.Row.Paths.Count}: the section has {children.Count} bookmark children (sidebars left out) but {headings} {role} headings up to the last child's, so a heading has no bookmark or a bookmark no heading.");
+            }
+        }
+
+        return compared;
+    }
+
+    /// <summary>What <see cref="CheckSpellCounts"/> counted.</summary>
+    /// <param name="Headers">Spell headers (block-header font, the shape of a name, an optional icon, the kind word and a rank).</param>
+    /// <param name="TraitLines">Trait lines directly under a header.</param>
+    /// <param name="TraditionLines">Lines that open with the traditions label.</param>
+    /// <param name="Listed">Distinct (tradition, name, rank) of the four tradition lists.</param>
+    /// <param name="Parsed">Distinct (tradition, name, rank) of the parsed spells.</param>
+    /// <param name="PerTradition">The number of spells each tradition's list holds, by tradition key.</param>
+    public sealed record SpellCounts(int Headers, int TraitLines, int TraditionLines, int Listed, int Parsed, SortedDictionary<string, int> PerTradition, int OnNoList, int ArtLabels = 0);
+
+    private static readonly Regex ListHeading = new(@"^(?<tradition>Arcane|Divine|Occult|Primal) (?:(?<cantrips>Cantrips)|(?<rank>\d+)(?:st|nd|rd|th)-Rank Spells)$", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// Counts the spells of a <c>spells</c> row three ways from the document and checks them against four lists. The headers of the range, the trait lines below them and the lines that open
+    /// with the traditions label must agree (or the row says why in <see cref="TakeRow.CountsDiffer"/>). The four tradition lists, which the row of <c>spelllists</c> reads past, give
+    /// (tradition, name, rank) for every spell on each list; the parsed spells give the same triples from their own traditions line and header. The two sets must be equal for each
+    /// tradition, and a spell on no list fails the run unless the row says why. Nothing here is decided by the spell parser's text handling beyond the header and the traditions line.
+    /// </summary>
+    public static SpellCounts? CheckSpellCounts(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<ParsedEntry> parsed)
+    {
+        var spellRanges = ranges.Where(r => !r.Own && r.Row.Parser == "entries" && r.Row.Target == "spell").ToList();
+        var listRanges = ranges.Where(r => r.Row.Parser == "spelllists").ToList();
+        if (spellRanges.Count == 0 && listRanges.Count == 0)
+        {
+            return null;
+        }
+
+        if (spellRanges.Count == 0 || listRanges.Count == 0)
+        {
+            throw new DegreesException("A spells row needs the tradition lists to count against (a spelllists row), and the lists need spells.");
+        }
+
+        int headers = 0, traitLines = 0, traditionLines = 0, art = 0;
+        foreach (var range in spellRanges)
+        {
+            var slice = range.BlocksIn(blocks);
+            // The labels of the page's art (a lone line in capitals set in from the column's edge, in the bold face of a header): skipped, and counted here to be pinned.
+            art += slice.Count(b => EntriesStage.IsStrayLabel(b, slice, range.Row));
+            var h = slice.Count(range.Row.IsHeader);
+            var inBox = EntriesStage.BoxIndexes(range.Row, slice);
+            var t = Enumerable.Range(0, slice.Count).Count(k => slice[k].Role == "tag" && !inBox.Contains(k) && (k == 0 || slice[k - 1].Role != "tag"));
+            var l = slice.Where(b => b.Info != null).SelectMany(b => b.Info!).Count(i => SpanText.Normalize(i.Label).Trim().ToLowerInvariant() == "traditions");
+            headers += h;
+            traitLines += t;
+            traditionLines += l;
+            if ((h != t || h != l) && string.IsNullOrWhiteSpace(range.Row.CountsDiffer))
+            {
+                throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: the range has {h} spell headers, {t} trait lines below them and {l} traditions lines, and the row gives no countsDiffer reason.");
+            }
+        }
+
+        // The lists: one range per tradition, a heading per rank, and a bold name at the start of each entry's line.
+        var listed = new Dictionary<string, HashSet<(string Name, string Rank)>>(StringComparer.Ordinal);
+        foreach (var range in listRanges)
+        {
+            var tradition = range.Node.Title.Split(' ')[0].ToLowerInvariant();
+            if (!EntriesStage.TraditionKeys.Contains(tradition))
+            {
+                throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: a tradition list's title does not start with one of the four traditions.");
+            }
+
+            var set = listed.TryGetValue(tradition, out var existing) ? existing : listed[tradition] = new HashSet<(string, string)>();
+            string? rank = null;
+            foreach (var b in range.BlocksIn(blocks))
+            {
+                if (b.Role == "entry-header")
+                {
+                    var m = ListHeading.Match(SpanText.Normalize(string.Join(' ', b.Lines)));
+                    if (!m.Success || !string.Equals(m.Groups["tradition"].Value, tradition, StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: a heading of a tradition list is not a rank of that tradition.");
+                    }
+
+                    rank = m.Groups["cantrips"].Success ? "c" : m.Groups["rank"].Value;
+                    continue;
+                }
+
+                if (rank == null)
+                {
+                    throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: text of a tradition list comes before its first rank heading.");
+                }
+
+                for (var i = 0; b.Info != null && i < b.Lines.Count; i++)
+                {
+                    var name = SpanText.Normalize(b.Info[i].Label).Trim();
+                    if (name.Length > 0 && !set.Add((EntriesStage.Slug(name), rank)))
+                    {
+                        throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: a spell is listed twice at one rank of one tradition.");
+                    }
+                }
+            }
+        }
+
+        var spells = parsed.Where(e => e.Type == "spell").ToList();
+        var onNoList = spells.Count(e => e.Traditions.Count == 0);
+        if (onNoList > 0 && spellRanges.All(r => string.IsNullOrWhiteSpace(r.Row.CountsDiffer)))
+        {
+            throw new DegreesException($"{onNoList} parsed spell(s) have no tradition, so they are on no list, and the row gives no countsDiffer reason.");
+        }
+
+        var perTradition = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        var parsedTotal = 0;
+        foreach (var tradition in EntriesStage.TraditionKeys)
+        {
+            var mine = spells.Where(e => e.Traditions.Contains(tradition)).Select(e => (EntriesStage.Slug(e.Name), e.Kind == "cantrip" ? "c" : (e.Level ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture))).ToHashSet();
+            var theirs = listed.GetValueOrDefault(tradition) ?? new HashSet<(string, string)>();
+            perTradition[tradition] = theirs.Count;
+            parsedTotal += mine.Count;
+            if (!mine.SetEquals(theirs))
+            {
+                throw new DegreesException($"The {tradition} list names {theirs.Count} spells and the parsed spells that say {tradition} are {mine.Count}: {theirs.Except(mine).Count()} listed spell(s) are not among them and {mine.Except(theirs).Count()} parsed spell(s) are not listed.");
+            }
+        }
+
+        return new SpellCounts(headers, traitLines, traditionLines, listed.Values.Sum(s => s.Count), parsedTotal, perTradition, onNoList, art);
+    }
+
+    /// <summary>
+    /// The degrees of success and heightened entries of a spells row, counted from the blocks and against what the parser made: the bold degree labels (and heightened labels) that open a
+    /// line of the range, against the degree sections and heightened parts of the entries the row wrote. A sidebar that took some of a spell's text with it lowers the parsed count, and a
+    /// dropped block on a taken page that opens a line with one of the labels says so directly. Returns the (degrees, heightened) counts.
+    /// </summary>
+    public static (int Degrees, int Heightened) CheckSpellDegrees(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<ParsedEntry> parsed)
+    {
+        var spellRanges = ranges.Where(r => !r.Own && r.Row.Parser == "entries" && r.Row.Target == "spell").ToList();
+        if (spellRanges.Count == 0)
+        {
+            return (0, 0);
+        }
+
+        string Label(LineInfo i) => SpanText.Normalize(i.Label).Trim().ToLowerInvariant();
+        var infos = spellRanges.SelectMany(r => r.BlocksIn(blocks)).Where(b => b.Info != null && b.Role == "body").SelectMany(b => b.Info!).ToList();
+        var degreeLabels = infos.Count(i => DegreeLabels.Contains(Label(i)));
+        var heightenedLabels = infos.Count(i => Label(i).StartsWith("heightened", StringComparison.Ordinal));
+        var rows = spellRanges.Select(r => r.RowNumber).ToHashSet();
+        var mine = parsed.Where(e => rows.Contains(e.RowNumber)).ToList();
+        var degrees = mine.Sum(e => e.Degrees.Count);
+        var heightened = mine.Sum(e => e.Parts.Count(p => p.Label.StartsWith("Heightened", StringComparison.Ordinal)));
+        if (degreeLabels != degrees || heightenedLabels != heightened)
+        {
+            throw new DegreesException($"The ranges of the spells rows have {degreeLabels} degree labels and {heightenedLabels} heightened labels at line starts, but the parser made {degrees} degree sections and {heightened} heightened entries.");
+        }
+
+        var pages = spellRanges.SelectMany(r => r.Indexes).Select(i => blocks.Blocks[i].Page).ToHashSet();
+        var lost = (blocks.Dropped ?? new List<Block>()).Where(b => pages.Contains(b.Page) && b.Info != null
+            && b.Info.Any(i => DegreeLabels.Contains(Label(i)) || Label(i).StartsWith("heightened", StringComparison.Ordinal))).ToList();
+        if (lost.Count > 0)
+        {
+            throw new DegreesException($"{lost.Count} dropped sidebar block(s) on the pages of a spells row hold a degree or heightened label at a line start, so a spell's text may have gone with a sidebar (pages {string.Join(",", lost.Select(b => b.Page).Distinct())}).");
+        }
+
+        return (degrees, heightened);
     }
 
 /// <summary>What <see cref="CheckActionCounts"/> counted for the <c>actions</c> rows together.</summary>
@@ -309,7 +515,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
     /// <summary>(name in title case, level) of a header block.</summary>
     private static (string Name, int Level) HeaderPair(Block header, TakeRow row)
     {
-        var m = Regex.Match(Regex.Replace(EntriesStage.Clean(string.Join(' ', header.Lines)), @"\s*\[[^\]]+\]", string.Empty), @"^(?<name>.+?)\s+" + Regex.Escape(row.LevelWord!) + @"\s+(?<level>\d+)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var m = Regex.Match(Regex.Replace(EntriesStage.Clean(string.Join(' ', header.Lines)), @"\s*\[[^\]]+\]", string.Empty), @"^(?<name>.+?)\s+" + row.LevelPattern + @"\s+(?<level>\d+)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         return (EntriesStage.TitleCase(m.Groups["name"].Value), int.Parse(m.Groups["level"].Value, System.Globalization.CultureInfo.InvariantCulture));
     }
 
@@ -372,7 +578,9 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
             // Text a taken range reads past: its lead and tail (tables), and the boxes of examples. Counted, never listed.
             var mineRanges = ranges.Where(r => r.RowNumber == i + 1).ToList();
             var readPast = mineRanges.Sum(r => (r.LeadStart >= 0 ? r.Start - r.LeadStart : 0) + (r.TailEnd >= 0 ? r.TailEnd - r.End : 0))
-                + mineRanges.Where(r => r.Row.Parser == "actions").Sum(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks)).Count);
+                + mineRanges.Where(r => r.Row.Parser == "actions").Sum(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks)).Count)
+                + mineRanges.Where(r => r.Row.Parser == "entries").Sum(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks)).Count)
+                + mineRanges.Where(r => r.Row.Parser == "spelllists").Sum(r => r.Indexes.Count());
 
             // One report row for each type the row wrote (an actions row also writes rules), the row's own target first. The row's counts of dropped blocks go on the first.
             var types = mine.Select(e => e.Type).Distinct().OrderBy(t => t == row.Target ? 0 : 1).ThenBy(t => t, StringComparer.Ordinal).ToList();
@@ -522,6 +730,26 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
     /// the book's text. One-letter words are left off. Nothing else is, except a word in <paramref name="waivers"/> (<c>Data/degrees-denylist-waivers.txt</c>): a game term
     /// a person has reviewed and decided the packs may say.
     /// </summary>
+    /// <summary>
+    /// The hashed pairs of capitalized words of the left-out text (see <see cref="PackWordCheck.CapitalPairs"/>), for the pair gate: a name of two words whose words pass the word gates one by one
+    /// (an ordinary word and a game term) is still caught. A pair is left off when either of its words is on the word denylist already (<paramref name="deniedWords"/>), when it is in a title
+    /// of the take-list (every `source:` line says it), or when the waiver file waives the pair. Being game text of a taken range is no reason to leave a pair off.
+    /// </summary>
+    public static List<string> DenylistPairs(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<(int Start, int End)>? planned, IReadOnlyCollection<string> deniedWords, IReadOnlySet<string>? waivers = null)
+    {
+        var leftOut = TakeStage.LeftOut(blocks, ranges, planned).SelectMany(b => b.Lines)
+            .Concat(ranges.Where(r => r.Row.Parser == "glossary").SelectMany(r => EntriesStage.ScanGlossary(r.BlocksIn(blocks), new HashSet<string>(StringComparer.Ordinal)).Dropped))
+            .Concat(ranges.Where(r => r.Row.Parser == "actions").SelectMany(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks))).SelectMany(b => b.Lines))
+            .Concat(ranges.Where(r => r.Row.Parser == "entries").SelectMany(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks))).SelectMany(b => b.Lines));
+        // A pair is NOT left off because the taken text says it too: the day a setting's name reaches a taken range, a regeneration must not silently remove its pair. A game pair that the
+        // left-out text also capitalizes is waived by name in the waiver file, with its reason.
+        var game = ranges.SelectMany(r => r.Row.Paths.Concat(r.Row.Own)).SelectMany(p => p).SelectMany(PackWordCheck.CapitalPairs).ToHashSet();
+        var denied = deniedWords.ToHashSet(StringComparer.Ordinal);
+        return leftOut.SelectMany(PackWordCheck.CapitalPairs).Distinct()
+            .Where(p => !game.Contains(p) && !denied.Contains(p.First) && !denied.Contains(p.Second) && !(waivers?.Contains(p.First + " " + p.Second) ?? false)) // a waiver line of two words waives that pair
+            .Select(p => Denylist.PairHash(p.First, p.Second)).Distinct(StringComparer.Ordinal).OrderBy(h => h, StringComparer.Ordinal).ToList();
+    }
+
     public static (List<string> Words, int Excluded) DenylistWords(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlySet<string> waivers, int commonAfter = 3, IReadOnlyList<(int Start, int End)>? planned = null,
         (IReadOnlyList<string> SpanWords, IReadOnlyList<string> Names)? redacted = null)
     {
@@ -542,7 +770,8 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         var takenPages = ranges.SelectMany(r => r.Indexes.Concat(r.LeadStart >= 0 ? Enumerable.Range(r.LeadStart, r.Start - r.LeadStart) : Enumerable.Empty<int>())
             .Concat(r.TailEnd >= 0 ? Enumerable.Range(r.End, r.TailEnd - r.End) : Enumerable.Empty<int>())).Select(i => blocks.Blocks[i].Page).ToHashSet();
         var legacy = (blocks.LegacyDropped ?? new List<Block>()).Where(b => !takenPages.Contains(b.Page)).SelectMany(b => b.Lines);
-        var boxes = legacy.Concat(ranges.Where(r => r.Row.Parser == "actions").SelectMany(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks))).SelectMany(b => b.Lines));
+        var boxes = legacy.Concat(ranges.Where(r => r.Row.Parser == "actions").SelectMany(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks))).SelectMany(b => b.Lines))
+            .Concat(ranges.Where(r => r.Row.Parser == "entries").SelectMany(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks))).SelectMany(b => b.Lines));
         var candidates = leftOut.SelectMany(b => b.Lines).Concat(glossaryLeftOut).Concat(boxes).SelectMany(PackWordCheck.Words).Where(w => w.Length > 1 && char.IsUpper(w[0]))
             .Select(w => w.ToLowerInvariant()).Concat(redacted?.SpanWords ?? Array.Empty<string>()).Distinct(StringComparer.Ordinal).ToList();
         var words = candidates.Where(w => !exclude.Contains(w)).ToList();

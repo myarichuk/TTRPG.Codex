@@ -117,6 +117,13 @@ entityTypes:
     fields:
       skill: { label: Навык }
       proficiency: { label: Мастерство }
+  spell:
+    label: Заклинание
+    pluralLabel: Заклинания
+    fields:
+      kind: { label: Вид }
+      rank: { label: Ранг }
+      traditions: { label: Традиции }
   armor:
     label: Доспех
     pluralLabel: Доспехи
