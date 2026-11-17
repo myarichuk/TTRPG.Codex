@@ -88,6 +88,20 @@ entityTypes:
     label: Feat
     pluralLabel: Feats
     folder: feats
+    icon: sparkles
+    summaryFields: [level, actions]
+    filterFields: [level]
+    # What the book prints on a feat's header, trait line and labelled lines. The rest of its text, and any degree sections, stay in the description.
+    fields:
+      - { key: level,         label: Level,         type: Number }
+      - { key: actions,       label: Actions,       type: Dropdown, options: [one, two, three, reaction, free], description: "The action cost. Empty: not an activity." }
+      - { key: traits,        label: Traits,        type: TagList, description: "Trait keys, as the Library's trait entries name them." }
+      - { key: prerequisites, label: Prerequisites, type: LongText }
+      - { key: frequency,     label: Frequency,     type: Text }
+      - { key: trigger,       label: Trigger,       type: LongText }
+      - { key: requirements,  label: Requirements,  type: LongText }
+      - { key: cost,          label: Cost,          type: Text }
+      - { key: special,       label: Special,       type: LongText }
   - type: armor
     label: Armor
     pluralLabel: Armor
