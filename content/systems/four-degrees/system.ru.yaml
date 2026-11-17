@@ -111,7 +111,16 @@ entityTypes:
     fields:
       ancestry: { label: Происхождение }
       traits: { label: Свойства }
-  background: { label: Предыстория, pluralLabel: Предыстории }
+      grantsTraits: { label: Даваемые свойства }
+  background:
+    label: Предыстория
+    pluralLabel: Предыстории
+    fields:
+      boosts: { label: Повышения характеристик }
+      skills: { label: Обученные навыки }
+      lore: { label: Знание }
+      skillFeat: { label: Черта навыка }
+      traits: { label: Свойства }
   class:
     label: Класс
     pluralLabel: Классы
@@ -274,6 +283,15 @@ values:
 sheetRules:
   lists:
     feats: Черты
+  boostSources:
+    ancestry: Происхождение
+    background: Предыстория
+    class: Класс
+    lvl1: Уровень 1
+    lvl5: Уровень 5
+    lvl10: Уровень 10
+    lvl15: Уровень 15
+    lvl20: Уровень 20
   messages:
     "that heritage belongs to another ancestry.": это наследие принадлежит другому происхождению.
   skills:

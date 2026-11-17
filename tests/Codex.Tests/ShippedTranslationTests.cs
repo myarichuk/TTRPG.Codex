@@ -49,6 +49,7 @@ public class ShippedTranslationTests
             Check("skill", labels.Skills.Keys, rules?.Skills?.List.Select(k => k.Key) ?? []);
             Check("passive", labels.Passives.Keys, rules?.Skills?.Passives.Select(p => p.Key) ?? []);
             Check("slot pool", labels.SlotPools.Keys, rules?.SlotPools.Select(p => p.Key) ?? []);
+            Check("boost source", labels.BoostSources.Keys, rules?.Attributes?.Boosts?.Sources.Select(s => s.Key) ?? []);
 
             Assert.Empty(problems);
 
@@ -58,6 +59,7 @@ public class ShippedTranslationTests
             Assert.All(rules?.Skills?.List ?? [], k => Assert.True(labels.Skills.ContainsKey(k.Key), $"{language}: skill {k.Key} untranslated"));
             Assert.All(rules?.Skills?.Passives ?? [], p => Assert.True(labels.Passives.ContainsKey(p.Key), $"{language}: passive {p.Key} untranslated"));
             Assert.All(rules?.SlotPools ?? [], p => Assert.True(labels.SlotPools.ContainsKey(p.Key), $"{language}: slot pool {p.Key} untranslated"));
+            Assert.All(rules?.Attributes?.Boosts?.Sources ?? [], s => Assert.True(labels.BoostSources.ContainsKey(s.Key), $"{language}: boost source {s.Key} untranslated"));
 
             // The sentences and headings the sheet prints from the rules, not only their labels.
             Assert.All(rules?.Lists.Where(l => !string.IsNullOrWhiteSpace(l.Description)) ?? [], l => Assert.True(labels.ListDescriptions.ContainsKey(l.Key), $"{language}: description of list {l.Key} untranslated"));
@@ -157,5 +159,20 @@ public class ShippedTranslationTests
         Assert.DoesNotContain("Cantrips known", list.Description);
         Assert.NotEqual("Background bonuses", system.SheetRules.Attributes!.Bonuses!.Label);
         Assert.NotEqual("Ability score increases", system.SheetRules.Attributes.Increases!.Label);
+    }
+
+    [Theory]
+    [InlineData("he", "רקע")]
+    [InlineData("ru", "Предыстория")]
+    public void LocalizedFourDegrees_NamesItsBoostSourcesInTheLanguage(string language, string background)
+    {
+        var english = SystemDefinitionLoader.Load(Path.Combine(TestPaths.ContentRoot, "systems/four-degrees", "system.yaml"));
+        var system = english.Localize(language);
+        var before = english.SheetRules!.Attributes!.Boosts!.Sources;
+        var after = system.SheetRules!.Attributes!.Boosts!.Sources;
+
+        Assert.Equal(before.Select(s => s.Key), after.Select(s => s.Key));
+        Assert.All(before.Zip(after), p => Assert.NotEqual(p.First.Label, p.Second.Label));
+        Assert.Equal(background, after.Single(s => s.Key == "background").Label);
     }
 }

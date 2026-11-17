@@ -111,7 +111,16 @@ entityTypes:
     fields:
       ancestry: { label: מוצא }
       traits: { label: תכונות }
-  background: { label: רקע, pluralLabel: רקעים }
+      grantsTraits: { label: תכונות שמוענקות }
+  background:
+    label: רקע
+    pluralLabel: רקעים
+    fields:
+      boosts: { label: הגברות תכונה }
+      skills: { label: מיומנויות מאומנות }
+      lore: { label: ידע }
+      skillFeat: { label: כשרון מיומנות }
+      traits: { label: תכונות }
   class:
     label: מקצוע
     pluralLabel: מקצועות
@@ -272,6 +281,15 @@ values:
   Gear: ציוד
 
 sheetRules:
+  boostSources:
+    ancestry: מוצא
+    background: רקע
+    class: מקצוע
+    lvl1: דרגה 1
+    lvl5: דרגה 5
+    lvl10: דרגה 10
+    lvl15: דרגה 15
+    lvl20: דרגה 20
   lists:
     feats: כשרונות
   messages:

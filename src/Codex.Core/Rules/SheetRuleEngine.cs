@@ -1161,6 +1161,11 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
         if (condition.EqualsField != null)
         {
+            if (condition.OrEmpty && (value == null || (value is string blank && string.IsNullOrWhiteSpace(blank))))
+            {
+                return true;
+            }
+
             var sheetValue = sheet.TryGetValue(condition.EqualsField, out var sv) ? sv : null;
             return sheetValue != null && ValuesEqual(value, sheetValue);
         }

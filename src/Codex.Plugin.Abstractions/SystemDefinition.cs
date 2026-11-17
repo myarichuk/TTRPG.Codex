@@ -940,6 +940,12 @@ public class SystemDefinition
                 copy.Attributes.Bonuses.Label = t.BonusesLabel ?? rules.Attributes.Bonuses.Label;
             }
 
+            if (rules.Attributes.Boosts != null)
+            {
+                copy.Attributes.Boosts = Copy(rules.Attributes.Boosts);
+                copy.Attributes.Boosts.Sources = rules.Attributes.Boosts.Sources.Select(s => { var c = Copy(s); c.Label = Pick(t.BoostSources, s.Key, s.Label); return c; }).ToList();
+            }
+
             if (rules.Attributes.Increases != null)
             {
                 copy.Attributes.Increases = Copy(rules.Attributes.Increases);

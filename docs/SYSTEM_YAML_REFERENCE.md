@@ -507,6 +507,7 @@ One condition on a candidate entry. Exactly one comparison is set; Property name
 | `gte` | number | Candidate numeric value >= / <= a constant. |
 | `lte` | number | Candidate numeric value <= this constant (with `gte`, both must hold). |
 | `equalsField` | text (a number is text too) | Candidate value equals the raw value of this sheet field (an entry id, say). |
+| `orEmpty` | true or false | With EqualsField: a candidate whose property is empty (absent, null or blank text; an empty list is not read as empty) is allowed too, so an entry that names no owner is open to every owner (a heritage with no ancestry). |
 | `equalsPropertyOfField` | [FieldProperty](#fieldproperty) | Candidate value equals a property of the entry a sheet field references (e.g. the feat named by the chosen background). |
 | `containsNameOfField` | text (a number is text too) | Candidate list property contains the display name of the entry a sheet field references. |
 | `contains` | text (a number is text too) | Candidate list property contains this constant (`classes` contains `Warlock`), by name or id, ignoring case. ContainsNameOfField does the same with the name of the entry a sheet field references. |
