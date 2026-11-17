@@ -28,12 +28,13 @@ license:
     - "Modified from the upstream rules: restated as data in this project's own words, with invented names and content."
 
 attributes:
-  - { key: str, label: Strength,     abbreviation: STR, default: 10, min: 1, max: 30, modifier: half-minus-five }
-  - { key: dex, label: Dexterity,    abbreviation: DEX, default: 10, min: 1, max: 30, modifier: half-minus-five }
-  - { key: con, label: Constitution, abbreviation: CON, default: 10, min: 1, max: 30, modifier: half-minus-five }
-  - { key: int, label: Intelligence, abbreviation: INT, default: 10, min: 1, max: 30, modifier: half-minus-five }
-  - { key: wis, label: Wisdom,       abbreviation: WIS, default: 10, min: 1, max: 30, modifier: half-minus-five }
-  - { key: cha, label: Charisma,     abbreviation: CHA, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  # An attribute IS its modifier (`modifier: value`): it starts at +0, a boost adds 1, a flaw takes 1. Typed in by hand it runs -5 to +10.
+  - { key: str, label: Strength,     abbreviation: STR, default: 0, min: -5, max: 10, modifier: value }
+  - { key: dex, label: Dexterity,    abbreviation: DEX, default: 0, min: -5, max: 10, modifier: value }
+  - { key: con, label: Constitution, abbreviation: CON, default: 0, min: -5, max: 10, modifier: value }
+  - { key: int, label: Intelligence, abbreviation: INT, default: 0, min: -5, max: 10, modifier: value }
+  - { key: wis, label: Wisdom,       abbreviation: WIS, default: 0, min: -5, max: 10, modifier: value }
+  - { key: cha, label: Charisma,     abbreviation: CHA, default: 0, min: -5, max: 10, modifier: value }
 
 resources:
   - { key: HP, label: Hit Points, maxKey: HP_Max, default: 10, isPrimary: true }
@@ -311,12 +312,12 @@ entityTypes:
       - { key: saveWis,         label: Wis save,       type: Number, category: Defenses }
       - { key: perceptionBonus, label: Perception,     type: Number, category: Senses }
       - { key: classDcValue,    label: Special DC,     type: Number, category: Senses }
-      - { key: str, label: Strength,     type: Number, category: Ability scores }
-      - { key: dex, label: Dexterity,    type: Number, category: Ability scores }
-      - { key: con, label: Constitution, type: Number, category: Ability scores }
-      - { key: int, label: Intelligence, type: Number, category: Ability scores }
-      - { key: wis, label: Wisdom,       type: Number, category: Ability scores }
-      - { key: cha, label: Charisma,     type: Number, category: Ability scores }
+      - { key: str, label: Strength,     type: Number, category: Attribute modifiers }
+      - { key: dex, label: Dexterity,    type: Number, category: Attribute modifiers }
+      - { key: con, label: Constitution, type: Number, category: Attribute modifiers }
+      - { key: int, label: Intelligence, type: Number, category: Attribute modifiers }
+      - { key: wis, label: Wisdom,       type: Number, category: Attribute modifiers }
+      - { key: cha, label: Charisma,     type: Number, category: Attribute modifiers }
       - { key: strikes,         label: Strikes,        type: Collection, category: Actions, description: "One row per Strike: name, bonus, range (melee or ranged) and damage." }
       - { key: abilities,       label: Abilities,      type: Collection, category: Actions }
     attributeProperties: { str: str, dex: dex, con: con, int: int, wis: wis, cha: cha }

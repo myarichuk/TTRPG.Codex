@@ -58,15 +58,24 @@ public class AttributeDefinition
 
     /// <summary>
     /// Optional derived-modifier rule. Supported: <c>"half-minus-five"</c> (floor((v-10)/2), the d20
-    /// family) or <c>"none"</c>. Systems that need anything else define a derived field instead.
+    /// family), <c>"value"</c> (the attribute is the modifier: default 0, min and max on the modifier scale, <c>mod(x)</c> is x, and the
+    /// sheet shows no score; every attribute of a system must use it, or none) or <c>"none"</c>.
+    /// Systems that need anything else define a derived field instead.
     /// </summary>
     public string Modifier { get; set; } = "none";
 
     public const string HalfMinusFiveRule = "half-minus-five";
 
+    /// <summary>The other supported rule, <c>"value"</c>: the attribute IS its modifier (default 0, min, max and boosts all on the
+    /// modifier scale), so <c>mod(x)</c> is the value itself and the sheet shows no score. Every attribute of a system uses the same rule.</summary>
+    public const string ValueRule = "value";
+
+    /// <summary>True when the attribute is stored and shown as a modifier (<see cref="ValueRule"/>).</summary>
+    public bool IsModifier => Modifier == ValueRule;
+
     /// <summary>The modifier <see cref="Modifier"/> gives <paramref name="score"/>, or null when the attribute has none.
     /// The one place the rule is worked out: the sheet, the table and the formulas' <c>mod()</c> all come here.</summary>
-    public int? ModifierFor(int score) => Modifier == HalfMinusFiveRule ? HalfMinusFive(score) : null;
+    public int? ModifierFor(int score) => Modifier switch { HalfMinusFiveRule => HalfMinusFive(score), ValueRule => score, _ => null };
 
     /// <summary>floor((score - 10) / 2): the d20 family's modifier.</summary>
     public static int HalfMinusFive(int score) => (int)Math.Floor((score - 10) / 2.0);

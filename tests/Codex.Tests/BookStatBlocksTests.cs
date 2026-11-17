@@ -51,6 +51,33 @@ public class BookStatBlocksTests
     }
 
     [Fact]
+    public void AModifierSystem_PrintsEachAttributeOnce_AsASignedModifier()
+    {
+        var system = Codex.Core.Systems.SystemDefinitionLoader.Parse("""
+            id: mods
+            name: Mods
+            attributes:
+              - { key: str, label: Strength, abbreviation: STR, default: 0, min: -5, max: 10, modifier: value }
+              - { key: dex, label: Dexterity, abbreviation: DEX, default: 0, min: -5, max: 10, modifier: value }
+              - { key: wis, label: Wisdom, abbreviation: WIS, default: 0, min: -5, max: 10, modifier: value }
+            entityTypes:
+              - type: creature
+                label: Creature
+                playerFacing: false
+                actorBlueprint: true
+                fields:
+                  - { key: armorClass, label: Armor Class, type: Number }
+                  - { key: str, label: Strength, type: Number }
+                  - { key: dex, label: Dexterity, type: Number }
+                  - { key: wis, label: Wisdom, type: Number }
+                attributeProperties: { str: str, dex: dex, wis: wis }
+            """);
+        var foe = new HomebrewEntryDocument { Id = "h-foe", Type = "creature", Name = "Mire Hound", Properties = { ["armorClass"] = 16, ["str"] = 2, ["dex"] = -4, ["wis"] = 0 } };
+        var block = BookStatBlocks.For(foe, system, "en", "sFOE", Mention, dm: true)!;
+        Assert.Contains("|STR|DEX|WIS|\n|:---:|:---:|:---:|\n|+2|−4|+0|", block);
+    }
+
+    [Fact]
     public void AnotherSystem_GetsItsOwnStatBlock_AndATypeItDoesNotDescribe_GetsNone()
     {
         var foe = new HomebrewEntryDocument

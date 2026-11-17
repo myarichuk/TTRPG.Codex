@@ -276,7 +276,8 @@ public static class BookStatBlocks
             }
 
             var modifier = attribute.ModifierFor(score) is { } m ? " (" + (m >= 0 ? "+" + m : "−" + -m) + ")" : string.Empty;
-            scores.Add((field, attribute.Abbreviation ?? attribute.Label, score.ToString(CultureInfo.InvariantCulture) + modifier));
+            // A modifier-scale attribute is its modifier: print it once, signed.
+            scores.Add((field, attribute.Abbreviation ?? attribute.Label, attribute.IsModifier ? (score >= 0 ? "+" : "−") + Math.Abs(score).ToString(CultureInfo.InvariantCulture) : score.ToString(CultureInfo.InvariantCulture) + modifier));
         }
 
         return scores;

@@ -11,15 +11,16 @@ public static partial class FormulaWorking
     [GeneratedRegex(@"\bmod\(\s*([A-Za-z_]\w*)\s*\)|\b([A-Za-z_]\w*)\b(?!\s*\()")]
     private static partial Regex Names();
 
+    /// <param name="inputsAreModifiers">True when the system's attributes are modifiers already (<c>modifier: value</c>): <c>mod(x)</c> shows the value as it is.</param>
     /// <param name="abbreviationOf">The short name to show for an attribute key, in the reader's language; null for a key that is not one.</param>
-    public static string Write(string formula, IReadOnlyDictionary<string, double> inputs, Func<string, string?> abbreviationOf) =>
+    public static string Write(string formula, IReadOnlyDictionary<string, double> inputs, Func<string, string?> abbreviationOf, bool inputsAreModifiers = false) =>
         Names().Replace(formula, m =>
         {
             if (m.Groups[1].Success)
             {
                 var key = m.Groups[1].Value;
                 if (!inputs.TryGetValue(key, out var score)) return m.Value;
-                var modifier = AttributeDefinition.HalfMinusFive((int)Math.Floor(score));
+                var modifier = inputsAreModifiers ? (int)Math.Floor(score) : AttributeDefinition.HalfMinusFive((int)Math.Floor(score));
                 return $"{abbreviationOf(key) ?? key} {(modifier >= 0 ? "+" : "")}{modifier.ToString(CultureInfo.InvariantCulture)}";
             }
 

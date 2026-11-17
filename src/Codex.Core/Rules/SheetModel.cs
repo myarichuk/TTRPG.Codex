@@ -1149,6 +1149,8 @@ public sealed class SheetModel
     internal double AttributeModifier(object? scoreOrKey)
     {
         var score = scoreOrKey is string ? Score(scoreOrKey) : SheetFormulas.Number(scoreOrKey);
+        // A system whose attributes are modifiers (modifier: value) has no score to turn into one; every attribute of a system shares the rule.
+        if (_system.Attributes.Any(a => a.IsModifier)) return Math.Floor(score);
         return AttributeDefinition.HalfMinusFive((int)Math.Floor(score));
     }
 

@@ -162,6 +162,26 @@ public class AiPromptsTests
     }
 
     [Fact]
+    public void CreateCharacter_AsksForAModifier_WhenTheAttributesAreModifiers_AndAScoreOtherwise()
+    {
+        var spec = new[] { new FieldSpec("str", "Strength", "Number", null, -5, 10) };
+        CharacterConceptRequest Request(bool modifiers) => new("A tired guard", "player character", "demo", spec, Array.Empty<FieldSpec>(), "HP", "HP_Max", AttributesAreModifiers: modifiers);
+
+        var (_, modifier) = AiPrompts.CreateCharacter(Request(true));
+        Assert.Contains("str: Strength, -5 to +10", modifier);
+        Assert.Contains("whole-number modifier (not a score", modifier);
+        Assert.DoesNotContain("whole-number score", modifier);
+
+        var (_, score) = AiPrompts.CreateCharacter(Request(false));
+        Assert.Contains("str: Strength, -5-10", score);
+        Assert.Contains("whole-number score", score);
+
+        // A model that writes a score anyway is held to the range the sheet allows.
+        using var doc = System.Text.Json.JsonDocument.Parse("14");
+        Assert.Equal(10L, FieldCoercion.Coerce(doc.RootElement, spec[0]));
+    }
+
+    [Fact]
     public void Describe_PlayerAudience_StaysInWorldAndCarriesFacts()
     {
         var (system, user) = AiPrompts.Describe(new DescribeRequest("Bog Toad", "homebrew creature (Large beast)", "SRD 5.2.1",

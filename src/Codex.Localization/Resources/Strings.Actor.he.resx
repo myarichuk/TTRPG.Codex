@@ -276,6 +276,8 @@
   <data name="Actor.Sheet.BoostTrade" xml:space="preserve"><value>מוותרים על {0} שיפורים קבועים תמורת {1} חופשיים</value></data>
   <data name="Actor.Sheet.BoostNone" xml:space="preserve"><value>אין עדיין שיפורים. בחרו את מה שנותן אותם, כמו מוצא או מקצוע.</value></data>
   <data name="Actor.Sheet.BoostHalf" xml:space="preserve"><value>{0}, חצי צעד לקראת המקדם הבא</value></data>
+  <data name="Actor.Sheet.BoostPartial" xml:space="preserve"><value>שיפור חלקי</value></data>
+  <data name="Actor.Sheet.BoostPartialNote" xml:space="preserve"><value>שיפור למקדם +{0} ומעלה הוא שיפור חלקי: הוא מסומן והמקדם נשאר. שיפור חלקי שני מוסיף 1 ומנקה את הסימון.</value></data>
   <data name="Actor.Sheet.BoostHalfNote" xml:space="preserve"><value>שיפור במקדם +{0} ומעלה נחשב לחצי צעד. שני חצאים הם צעד אחד, וחצי מוצג כ־½.</value></data>
   <data name="Actor.Sheet.BoostTradeGive" xml:space="preserve"><value>מוותרים על: {0}</value></data>
   <data name="Actor.Sheet.PrintedNote" xml:space="preserve"><value>כמו בתיאור: אלה הערכים מתיאור היצור. בונוסי רקע והגדלות תכונה מבחירות אינם מתווספים; בחרו שיטה אחרת כדי להוסיף אותם.</value></data>

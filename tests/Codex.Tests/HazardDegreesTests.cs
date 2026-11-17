@@ -94,7 +94,7 @@ public class HazardDegreesTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
         var sheet = new Dictionary<string, object>
         {
             ["HP"] = 30L, ["HP_Max"] = 30L, ["level"] = 5L,
-            ["str"] = 10L, ["dex"] = 10L, ["con"] = 10L, ["int"] = 10L, ["wis"] = 10L, ["cha"] = 10L
+            ["str"] = 0L, ["dex"] = 0L, ["con"] = 0L, ["int"] = 0L, ["wis"] = 0L, ["cha"] = 0L
         };
         foreach (var group in ranks.GroupBy(r => r.List)) sheet[group.Key] = group.Select(r => (object)r.Skill).ToList();
         return sheet;

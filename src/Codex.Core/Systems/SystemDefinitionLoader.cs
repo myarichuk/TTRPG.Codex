@@ -189,10 +189,15 @@ public static class SystemDefinitionLoader
         foreach (var attribute in definition.Attributes)
         {
             if (string.IsNullOrWhiteSpace(attribute.Key)) yield return "every attribute needs a key.";
-            if (attribute.Modifier is not ("none" or AttributeDefinition.HalfMinusFiveRule))
+            if (attribute.Modifier is not ("none" or AttributeDefinition.HalfMinusFiveRule or AttributeDefinition.ValueRule))
             {
-                yield return $"attribute '{attribute.Key}' has unknown modifier rule '{attribute.Modifier}' (use 'none' or 'half-minus-five').";
+                yield return $"attribute '{attribute.Key}' has unknown modifier rule '{attribute.Modifier}' (use 'none', 'half-minus-five' or 'value').";
             }
+        }
+
+        if (definition.Attributes.Any(a => a.IsModifier) && definition.Attributes.Any(a => !a.IsModifier))
+        {
+            yield return "attributes: 'modifier: value' must be used by every attribute or by none (mod() has one rule for the whole system).";
         }
 
         foreach (var duplicate in Duplicates(definition.Resources.Select(r => r.Key)))
@@ -415,9 +420,9 @@ public static class SystemDefinitionLoader
             }
             else if (offersBoosts && attributes.Boosts is { } boosts)
             {
-                foreach (var attribute in definition.Attributes.Where(a => a.Modifier != AttributeDefinition.HalfMinusFiveRule || a.Default != 10))
+                foreach (var attribute in definition.Attributes.Where(a => !(a.Modifier == AttributeDefinition.HalfMinusFiveRule && a.Default == 10) && !(a.IsModifier && a.Default == 0)))
                 {
-                    yield return $"sheetRules.attributes.boosts: attribute '{attribute.Key}' must use the half-minus-five modifier and default 10 (a boost is two score points).";
+                    yield return $"sheetRules.attributes.boosts: attribute '{attribute.Key}' must use the half-minus-five modifier and default 10 (a boost is two score points), or the value modifier and default 0 (a boost is one).";
                 }
 
                 if (boosts.Sources.Count == 0) yield return "sheetRules.attributes.boosts.sources: list at least one source.";
