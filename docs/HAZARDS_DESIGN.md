@@ -663,7 +663,7 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   - **The attack-repeat gap.** `HazardCommand.AttackRolled` (attack total per target) goes back as `Attacked` with `Rolled`, so a creature that hit and waited for its save bonus is not attacked
     again; `HazardsTable` keeps it with the waiting record. Tested on a system whose hazard block names an attack.
   - **Content.** The four-degrees system gains a `hazard` type (no passive scores, no complex hazards, no scaling table; ru and he labels) and the pack three invented hazards,
-    `lantern-snare` (level 1, trained Craft, two successes, `failure` sets it off), `cinder-vent` (level 2, an area hazard, expert Athletics, three successes, `criticalFailure` sets it off,
+    `lantern-snare` (level 1, trained Crafting, two successes, `failure` sets it off), `cinder-vent` (level 2, an area hazard, expert Athletics, three successes, `criticalFailure` sets it off,
     a no-check smother route) and `gravity-bell` (level 3, trained and expert Arcana, two successes). Every name, number and line is invented.
   - **Review fixes.** (a) The repeat for a creature that hit and waited for a number skips the armor class and the attack (`Attacked` has it), keeps it in `AttackRolled` for a
     later pass and says no second "Hit". (b) **One `Successes` counter per placed hazard, shared by all its disarm routes** (not per route; two check routes with different counts

@@ -183,6 +183,7 @@ continual
 control
 cooking
 courtly
+craft
 crafting
 create
 cry

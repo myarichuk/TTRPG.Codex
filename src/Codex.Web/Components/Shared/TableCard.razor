@@ -402,7 +402,7 @@
 
     private string? PrintedTitle(PrintedNumber number) => number.Bonuses.Count == 0 && number.Dice.Count == 0 ? null : PrintedTitle(number.Printed, number.Bonuses, number.Dice);
 
-    /// <summary>"printed 18; Shaken -2": the number as printed, and what each condition did to it.</summary>
+    /// <summary>"printed 18; Frightened -2": the number as printed, and what each condition did to it.</summary>
     private string PrintedTitle(int printed, IReadOnlyList<RollBonus> bonuses, IReadOnlyList<RollDice> dice) =>
         L["Combat.Card.PrintedTitle", printed, string.Join(", ", bonuses.Select(b => $"{ConditionName(b.Source)} {Amount(b.Amount)}").Concat(dice.Select(d => $"{ConditionName(d.Source)} {d.Dice}")))];
 

@@ -88,7 +88,7 @@ public class HazardDegreesTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
 
     private sealed record Table(CampaignRuntime Runtime, ScriptedRoller Dice, ActorDocument Aria, ActorDocument Brin);
 
-    // Level 5, every attribute 10 (+0). A trained rank is worth 7, expert 9. Aria has no ranks; Brin is trained in Craft, expert in Athletics.
+    // Level 5, every attribute 10 (+0). A trained rank is worth 7, expert 9. Aria has no ranks; Brin is trained in Crafting, expert in Athletics.
     private static Dictionary<string, object> Hero(params (string List, string Skill)[] ranks)
     {
         var sheet = new Dictionary<string, object>
@@ -113,7 +113,7 @@ public class HazardDegreesTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
         }
 
         var aria = await Seed("Aria", Hero());
-        var brin = await Seed("Brin", Hero(("skillTrained", "craft"), ("skillTrained", "arcana"), ("skillExpert", "athletics"), ("perceptionExpert", "perception")));
+        var brin = await Seed("Brin", Hero(("skillTrained", "crafting"), ("skillTrained", "arcana"), ("skillExpert", "athletics"), ("perceptionExpert", "perception")));
         var session = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Status = SessionStatus.Live, Title = "Live" };
         await _sessions.SaveAsync(session);
         var dice = new ScriptedRoller();
@@ -198,7 +198,7 @@ public class HazardDegreesTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
         var snare = Hazard("lantern-snare");
         var placed = await PlaceAsync(table, Hidden(snare, "cord"));
 
-        // Craft, trained at level 5 is 7: 12 + 7 = 19 against DC 16 passes.
+        // Crafting, trained at level 5 is 7: 12 + 7 = 19 against DC 16 passes.
         table.Dice.Faces.Enqueue(12);
         await DisableAsync(table, placed, snare, "cut", table.Brin);
         var half = await StoredAsync(placed);
@@ -317,7 +317,7 @@ public class HazardDegreesTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
         // Brin is expert in Perception (the second rank), Aria has no rank in it.
         Assert.Equal(2, table.Runtime.Checks.RankOf(table.Brin.Id, "Perception"));
         Assert.True((table.Runtime.Checks.RankOf(table.Aria.Id, "Perception") ?? 0) < 2);
-        Assert.Equal(1, table.Runtime.Checks.RankOf(table.Brin.Id, "Craft"));
+        Assert.Equal(1, table.Runtime.Checks.RankOf(table.Brin.Id, "Crafting"));
     }
 
     [Fact]
@@ -328,7 +328,7 @@ public class HazardDegreesTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
             Id = "typo", Type = "hazard", Name = "typo", Description = string.Empty, PackId = "test",
             Properties = new Dictionary<string, object>
             {
-                ["disarm"] = new List<object> { new Dictionary<string, object> { ["id"] = "x", ["name"] = "X", ["check"] = "Craft", ["dc"] = 15L, ["rank"] = "expret" } }
+                ["disarm"] = new List<object> { new Dictionary<string, object> { ["id"] = "x", ["name"] = "X", ["check"] = "Crafting", ["dc"] = 15L, ["rank"] = "expret" } }
             }
         };
 

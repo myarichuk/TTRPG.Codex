@@ -212,13 +212,13 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
     }
 
     [Fact]
-    public void ALevel3Lorekeeper_HasExpertPerception_AndTheBackgroundTrainsCraft()
+    public void ALevel3Lorekeeper_HasExpertPerception_AndTheBackgroundTrainsCrafting()
     {
         var engine = new SheetRuleEngine(_system, new PackResolver(_registry));
         var evaluation = engine.Recompute(Character("cliffborn", "lamp-keeper", "lorekeeper", 3));
 
         Assert.Equal(9, Convert.ToInt32(evaluation.Derived["perception"])); // 3 + 4 + Wisdom 14 (+2)
-        Assert.Equal(7, evaluation.Skills.Single(s => s.Key == "craft").Bonus); // 3 + 2 + Intelligence (+2)
+        Assert.Equal(7, evaluation.Skills.Single(s => s.Key == "crafting").Bonus); // 3 + 2 + Intelligence (+2)
         Assert.Contains("Sharp watch", evaluation.Features.Select(f => f.Name).ToList());
     }
 
@@ -248,14 +248,14 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
     }
 
     [Fact]
-    public void Pinned_BringsWobbly2_AndHeartenedDoesNotStackWithItself()
+    public void Encumbered_BringsClumsy1_AndHeartenedDoesNotStackWithItself()
     {
-        var sheet = new Dictionary<string, object> { [SheetModel.ConditionsKey] = new List<object> { "Pinned" } };
+        var sheet = new Dictionary<string, object> { [SheetModel.ConditionsKey] = new List<object> { "Encumbered" } };
 
         var held = SheetConditions.Holding(_system, sheet);
 
-        Assert.Equal(2, held.Single(h => h.Name == "Wobbly").Value);
-        Assert.False(held.Single(h => h.Name == "Wobbly").Listed);
+        Assert.Equal(1, held.Single(h => h.Name == "Clumsy").Value);
+        Assert.False(held.Single(h => h.Name == "Clumsy").Listed);
         // Status bonuses of one type keep the highest, so a second copy of Heartened adds nothing (the rule is declared in modifierTypes).
         Assert.Equal("highest", _system.ModifierTypes!.Types["status"]);
     }
@@ -273,13 +273,56 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
         Assert.Equal(14, plain.Single(n => n.Target == "classDc").Total);
         Assert.Equal(8, plain.Single(n => n.Label == "Bite").Total);
 
-        // Shaken 1 lowers Perception, the DC and the Strike by 1, not armor class. Wobbly 1 lowers armor class.
-        sheet["condition_shaken"] = 1L;
-        sheet["condition_wobbly"] = 1L;
+        // Frightened 1 lowers armor class, Perception, the DC and the Strike by 1; Clumsy 1 lowers armor class by 1 as well (not the melee Bite).
+        sheet["condition_frightened"] = 1L;
+        sheet["condition_clumsy"] = 1L;
         var lowered = engine.Printed(sheet);
         Assert.Equal(15, lowered.Single(n => n.Target == "armorClass").Total);
         Assert.Equal(5, lowered.Single(n => n.Target == "perception").Total);
         Assert.Equal(13, lowered.Single(n => n.Target == "classDc").Total);
-        Assert.Equal(7, lowered.Single(n => n.Label == "Bite").Total); // two status penalties of 1 keep only the worst: -1, not -2
+        Assert.Equal(7, lowered.Single(n => n.Label == "Bite").Total);
+        // Two status penalties of 1 on armor class keep only the worst: -1, not -2 (15, not 14, above).
+    }
+
+    [Fact]
+    public void Clumsy_AloneLowersTheDexteritySave_TheRangedStrike_AndArmorClass_ButNotTheMeleeOne()
+    {
+        var engine = new SheetRuleEngine(_system, new PackResolver(_registry));
+        var wisp = Entries("creature").Single(e => e.Id == "veil-wisp");
+        var sheet = new Dictionary<string, object>(wisp.Properties) { [SheetRuleEngine.MethodKey] = SheetRuleEngine.PrintedMethod, ["condition_clumsy"] = 2L };
+
+        var lowered = engine.Printed(sheet);
+
+        Assert.Equal(15, lowered.Single(n => n.Target == "armorClass").Total);
+        Assert.Equal(8, lowered.Single(n => n.Target == "save.dex").Total);
+        Assert.Equal(7, lowered.Single(n => n.Label == "Lure spark").Total);
+        Assert.Equal(9, lowered.Single(n => n.Label == "Chilling touch").Total);
+        // Constitution saves are not Dexterity-based.
+        Assert.Equal(5, lowered.Single(n => n.Target == "save.con").Total);
+    }
+
+    [Fact]
+    public void Drained_LowersTheConstitutionSaveAndTheMaximumHitPoints_ByItsValueTimesTheLevel()
+    {
+        var engine = new SheetRuleEngine(_system, new PackResolver(_registry));
+        var sheet = Character("marshkin", "ferry-hand", "warden", 3);
+        var before = engine.Recompute(sheet);
+        sheet["condition_drained"] = 2L;
+
+        var after = engine.Recompute(sheet);
+
+        Assert.Equal(before.HitPoints!.Max - 6, after.HitPoints!.Max);
+        Assert.Equal(before.SavingThrows.Single(s => s.Key == "con").Bonus - 2, after.SavingThrows.Single(s => s.Key == "con").Bonus);
+    }
+
+    [Fact]
+    public void DyingTopsOutAtFour_AndDoomedAndDrainedDropAtDailyPreparations()
+    {
+        Assert.Equal("4", _system.ConditionEffects["Dying"].Value!.Max);
+        foreach (var name in new[] { "Doomed", "Drained" })
+        {
+            var decrease = _system.ConditionEffects[name].Value!.Decrease!;
+            Assert.Equal(("dailyPrep", 1), (decrease.On, decrease.By));
+        }
     }
 }

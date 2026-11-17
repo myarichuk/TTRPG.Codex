@@ -240,36 +240,173 @@ moments:
   - { key: catchBreath,  label: Short breather }
   - { key: sessionStart, label: Session start }
 
-conditions: [Shaken, Wobbly, Pinned]
+# The book's conditions, by the names of the pack's `conditions/` entries (rules-core), which hold each one's text. The effects below are the part
+# the engine can express; a condition with no effect there has a rule the engine cannot compute, and its entry is the whole of it.
+conditions:
+  - Blinded
+  - Broken
+  - Clumsy
+  - Concealed
+  - Confused
+  - Controlled
+  - Dazzled
+  - Deafened
+  - Doomed
+  - Drained
+  - Dying
+  - Encumbered
+  - Enfeebled
+  - Fascinated
+  - Fatigued
+  - Fleeing
+  - Friendly
+  - Frightened
+  - Grabbed
+  - Helpful
+  - Hidden
+  - Hostile
+  - Immobilized
+  - Indifferent
+  - Invisible
+  - Observed
+  - Off-guard
+  - Paralyzed
+  - Persistent Damage
+  - Petrified
+  - Prone
+  - Quickened
+  - Restrained
+  - Sickened
+  - Slowed
+  - Stunned
+  - Stupefied
+  - Unconscious
+  - Undetected
+  - Unfriendly
+  - Unnoticed
+  - Wounded
 
 # An effect beside the conditions. Its bonus is a status bonus, so two copies of it never add.
 effects: [Heartened]
 
-# Shaken lowers every check and every DC by its value, as a status penalty, and drops by 1 at the end of the creature's turn.
-# Wobbly lowers armor class and attacks. Pinned brings Wobbly 2 with it while it holds and slows the creature. Each target belongs to
-# one side (docs/SHEET_CONDITIONS_DESIGN.md): attack, save, check, armorClass, classDc and perception are the rules' own; senseDc and
-# speed are the sheet kind's.
+# What the engine can compute of each condition, read from its pack entry. Each target belongs to one side (docs/SHEET_CONDITIONS_DESIGN.md):
+# attack, save, check, armorClass, classDc and perception are the rules' own; senseDc and speed are the sheet kind's. `check.<attribute>`
+# reaches the skills that use that attribute, `save.<attribute>` the saving throw of that attribute. A condition that is not here, or is
+# here with no modifiers, holds a rule of actions, senses, damage or targeting, and its entry carries the text. Not modelled anywhere in
+# this block: the one-off loss of current hit points under Drained, the floor under a Speed penalty, and the conditions that override
+# another. A night's rest is the table's `dailyPrep` moment.
 conditionEffects:
-  Shaken:
-    value: { max: 4, decrease: { on: turnEnd, by: 1 } }
+  # A status penalty of its value on everything that runs on Dexterity: armor class, saves, skills and ranged attacks.
+  Clumsy:
+    value: {}
+    modifiers:
+      - { target: armorClass,    amount: "-value", type: status }
+      - { target: save.dex,      amount: "-value", type: status }
+      - { target: check.dex,     amount: "-value", type: status }
+      - { target: attack.ranged, amount: "-value", type: status }
+  Confused:
+    implies: [Off-guard]
+  Doomed:
+    value: { decrease: { on: dailyPrep, by: 1 } }
+  # Constitution-based penalty, and the maximum hit points drop by the value times the level (at least 1). The hit points lost at once are
+  # not modelled, only the lower maximum.
+  Drained:
+    value: { decrease: { on: dailyPrep, by: 1 } }
+    modifiers:
+      - { target: save.con,  amount: "-value", type: status }
+      - { target: check.con, amount: "-value", type: status }
+      - { target: HP_Max,    amount: "-value * max(1, level)" }
+  # Bleeding out brings unconsciousness with it; at 4 the creature is dead, which is the value's top. A Doomed value lowers that top in the
+  # entry's text; the maximum here is the plain 4.
+  Dying:
+    value: { max: 4 }
+    implies: [Unconscious]
+  Encumbered:
+    implies: [{ condition: Clumsy, value: 1 }]
+    modifiers:
+      - { target: speed, amount: -10 }
+  # Strength-based rolls. The pack entry also names melee attacks, but only those that use Strength, which a target cannot tell, so they are left out.
+  Enfeebled:
+    value: {}
+    modifiers:
+      - { target: save.str,  amount: "-value", type: status }
+      - { target: check.str, amount: "-value", type: status }
+  Fascinated:
+    modifiers:
+      - { target: check,      amount: -2, type: status }
+      - { target: perception, amount: -2, type: status }
+  Fatigued:
+    modifiers:
+      - { target: armorClass, amount: -1, type: status }
+      - { target: save,       amount: -1, type: status }
+  # A penalty equal to the value on every check and DC, dropping by 1 at the end of the creature's turn.
+  Frightened:
+    value: { decrease: { on: turnEnd, by: 1 } }
     modifiers:
       - { target: attack,     amount: "-value", type: status }
       - { target: save,       amount: "-value", type: status }
       - { target: check,      amount: "-value", type: status }
       - { target: strike,     amount: "-value", type: status }
+      - { target: armorClass, amount: "-value", type: status }
       - { target: classDc,    amount: "-value", type: status }
       - { target: perception, amount: "-value", type: status }
       - { target: senseDc,    amount: "-value", type: status }
-  Wobbly:
-    value: { max: 4 }
+  Grabbed:
+    implies: [Off-guard, Immobilized]
+  Invisible:
+    implies: [Undetected]
+  Off-guard:
     modifiers:
-      - { target: armorClass, amount: "-value", type: status }
+      - { target: armorClass, amount: -2, type: circumstance }
+  Paralyzed:
+    implies: [Off-guard]
+  Prone:
+    implies: [Off-guard]
+    modifiers:
+      - { target: attack, amount: -2, type: circumstance }
+      - { target: strike, amount: -2, type: circumstance }
+  Restrained:
+    implies: [Off-guard, Immobilized]
+  # The same penalty as Frightened, but it does not drop by itself; the entry's way of recovering is an action.
+  Sickened:
+    value: {}
+    modifiers:
       - { target: attack,     amount: "-value", type: status }
+      - { target: save,       amount: "-value", type: status }
+      - { target: check,      amount: "-value", type: status }
       - { target: strike,     amount: "-value", type: status }
-  Pinned:
-    implies: [{ condition: Wobbly, value: 2 }]
+      - { target: armorClass, amount: "-value", type: status }
+      - { target: classDc,    amount: "-value", type: status }
+      - { target: perception, amount: "-value", type: status }
+      - { target: senseDc,    amount: "-value", type: status }
+  Slowed:
+    value: {}
+  Stunned:
+    value: {}
+  # Everything that runs on Intelligence, Wisdom or Charisma; here Perception and the sense DC run on Wisdom. Spell attacks and spell DCs wait for the spells chapter.
+  Stupefied:
+    value: {}
     modifiers:
-      - { target: speed, amount: -10, type: circumstance }
+      - { target: save.wis,   amount: "-value", type: status }
+      - { target: save.int,   amount: "-value", type: status }
+      - { target: save.cha,   amount: "-value", type: status }
+      - { target: check.int,  amount: "-value", type: status }
+      - { target: check.wis,  amount: "-value", type: status }
+      - { target: check.cha,  amount: "-value", type: status }
+      - { target: perception, amount: "-value", type: status }
+      - { target: senseDc,    amount: "-value", type: status }
+  # Knocked out: blinded and off-guard, and it falls prone, which stays when the condition ends.
+  Unconscious:
+    implies: [Blinded, Off-guard, { condition: Prone, stays: true }]
+    modifiers:
+      - { target: armorClass, amount: -4, type: status }
+      - { target: perception, amount: -4, type: status }
+      - { target: senseDc,    amount: -4, type: status }
+      - { target: save.dex,   amount: -4, type: status }
+  Unnoticed:
+    implies: [Undetected]
+  Wounded:
+    value: {}
   Heartened:
     modifiers:
       - { target: attack,  amount: 1, type: status }
@@ -377,12 +514,24 @@ sheetRules:
   skills:
     label: Skills
     list:
-      - { key: athletics, label: Athletics, attribute: str }
-      - { key: arcana,    label: Arcana,    attribute: int }
-      - { key: craft,     label: Craft,     attribute: int }
-      - { key: diplomacy, label: Diplomacy, attribute: cha }
-      - { key: stealth,   label: Stealth,   attribute: dex }
-      - { key: survival,  label: Survival,  attribute: wis }
+      - { key: acrobatics,  label: Acrobatics,  attribute: dex }
+      - { key: arcana,      label: Arcana,      attribute: int }
+      - { key: athletics,   label: Athletics,   attribute: str }
+      - { key: crafting,    label: Crafting,    attribute: int }
+      - { key: deception,   label: Deception,   attribute: cha }
+      - { key: diplomacy,   label: Diplomacy,   attribute: cha }
+      - { key: intimidation, label: Intimidation, attribute: cha }
+      - { key: medicine,    label: Medicine,    attribute: wis }
+      - { key: nature,      label: Nature,      attribute: wis }
+      - { key: occultism,   label: Occultism,   attribute: int }
+      - { key: performance, label: Performance, attribute: cha }
+      - { key: religion,    label: Religion,    attribute: wis }
+      - { key: society,     label: Society,     attribute: int }
+      - { key: stealth,     label: Stealth,     attribute: dex }
+      - { key: survival,    label: Survival,    attribute: wis }
+      - { key: thievery,    label: Thievery,    attribute: dex }
+      # The book also has Lore, an open-ended skill: each subject (a trade, a place, a kind of creature) counts as a skill of its own, with its own
+      # rank, all on Intelligence. The sheet's skill list is fixed, so Lore is not modelled yet; a Lore subject is a decision for chapter 4.
     ranks:
       - { key: trained,   label: Trained,   sheetKey: skillTrained,   value: "level + 2" }
       - { key: expert,    label: Expert,    sheetKey: skillExpert,    value: "level + 4" }

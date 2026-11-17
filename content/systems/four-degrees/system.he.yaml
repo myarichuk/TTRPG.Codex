@@ -39,9 +39,48 @@ categories:
   Ability scores: ציוני תכונות
 
 conditions:
-  Shaken: מזועזע
-  Wobbly: מתנודד
-  Pinned: מוצמד
+  Blinded: עיוור
+  Broken: שבור
+  Clumsy: מגושם
+  Concealed: מוסתר חלקית
+  Confused: מבולבל
+  Controlled: נשלט
+  Dazzled: מסונוור
+  Deafened: חירש
+  Doomed: נידון
+  Drained: מותש
+  Dying: גוסס
+  Encumbered: עמוס
+  Enfeebled: חלש
+  Fascinated: מוקסם
+  Fatigued: עייף
+  Fleeing: בורח
+  Friendly: ידידותי
+  Frightened: מפוחד
+  Grabbed: תפוס
+  Helpful: מסייע
+  Hidden: חבוי
+  Hostile: עוין
+  Immobilized: חסר תנועה
+  Indifferent: אדיש
+  Invisible: בלתי נראה
+  Observed: נצפה
+  Off-guard: לא ערני
+  Paralyzed: משותק
+  Persistent Damage: נזק מתמשך
+  Petrified: מאובן
+  Prone: שרוע
+  Quickened: מואץ
+  Restrained: כבול
+  Sickened: חש בחילה
+  Slowed: מואט
+  Stunned: המום
+  Stupefied: מעורפל
+  Unconscious: חסר הכרה
+  Undetected: לא מאותר
+  Unfriendly: לא ידידותי
+  Unnoticed: לא מורגש
+  Wounded: פצוע
   Heartened: מעודד
 
 moments:
@@ -165,12 +204,22 @@ sheetRules:
   lists:
     feats: כשרונות
   skills:
-    athletics: אתלטיקה
+    acrobatics: אקרובטיקה
     arcana: מאגיה
-    craft: מלאכה
+    athletics: אתלטיקה
+    crafting: מלאכה
+    deception: הונאה
     diplomacy: דיפלומטיה
+    intimidation: הפחדה
+    medicine: רפואה
+    nature: טבע
+    occultism: אוקולטיזם
+    performance: הופעה
+    religion: דת
+    society: חברה
     stealth: התגנבות
     survival: הישרדות
+    thievery: גניבה
   ranks:
     trained: מיומן
     expert: מומחה

@@ -14,7 +14,7 @@
       - { name: Weapon training, level: 1, description: You are trained in simple and martial weapons and in unarmed Strikes., adds: [{ to: weapons, entries: [unarmed, simple, martial], rank: trained }] }
       - { name: Watchful, level: 1, description: You are trained in Perception and in your class DC., adds: [{ to: perception, rank: trained }, { to: classDc, rank: trained }] }
       - { name: Lucky break, level: 1, description: Once per session you may turn a failure on one of your checks into a success., uses: { max: 1, key: luckyBreak, label: Lucky break, recovers: [{ on: sessionStart, amount: all }] } }
-      - { name: Plant your feet, level: 2, description: Once between daily preparations you brace in place; until the end of your next turn your Shaken and Wobbly values are each lowered by 1 (to a minimum of 0); the table applies this by hand., uses: { max: 1, key: plantFeet, label: Plant your feet, recovers: [{ on: dailyPrep, amount: all }] } }
+      - { name: Plant your feet, level: 2, description: Once between daily preparations you brace in place; until the end of your next turn your Frightened and Clumsy values are each lowered by 1 (to a minimum of 0); the table applies this by hand., uses: { max: 1, key: plantFeet, label: Plant your feet, recovers: [{ on: dailyPrep, amount: all }] } }
       - { name: Hardy, level: 3, description: Your Constitution saves become expert., adds: [{ to: saveExpert, entries: [con] }] }
 - id: lorekeeper
   name: Lorekeeper

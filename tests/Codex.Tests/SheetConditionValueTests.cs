@@ -64,7 +64,7 @@ public class SheetConditionValueTests
         Assert.Contains(Errors("""
             conditionEffects:
               Frightened: { value: { key: fear } }
-              Shaken: { value: { key: fear } }
+              Sickened: { value: { key: fear } }
             """), e => e.Contains("also the value of 'Frightened'"));
     }
 
@@ -85,7 +85,7 @@ public class SheetConditionValueTests
         var known = Parse("""
             conditionEffects:
               Frightened: { value: { decrease: { on: Long Rest } } }
-              Shaken: { value: { decrease: { on: downtime } } }
+              Sickened: { value: { decrease: { on: downtime } } }
             """, "moments: [{ key: downtime }]\nvitals:\n  rests: [{ name: Long Rest }]");
         Assert.Equal(2, known.ConditionEffects.Count);
     }
