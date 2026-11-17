@@ -119,7 +119,8 @@ public sealed record CharacterConceptRequest(
     string? HitPointsBasis = null,
     IReadOnlyList<EquipmentOption>? Equipment = null,
     bool OneArmorAndShield = false,
-    string? AttributeAdvice = null);
+    string? AttributeAdvice = null,
+    bool AttributesAreModifiers = false);
 
 /// <summary>What the world-building chat's model is told about the campaign.</summary>
 /// <param name="HomebrewTypes">Content types a homebrew entry may have, as "id (label)".</param>
@@ -511,16 +512,23 @@ public static class AiPrompts
             sb.AppendLine("Campaign: " + r.CampaignContext);
         }
 
-        sb.AppendLine().AppendLine("Attributes (key: label, min-max):");
+        // A system whose attributes are modifiers (modifier: value) is asked for a modifier, not a score: a score of 14 would be stored as +14.
+        string Signed(double? n) => n is { } v ? (v > 0 ? "+" : "") + v.ToString(System.Globalization.CultureInfo.InvariantCulture) : "?";
+        sb.AppendLine().AppendLine(r.AttributesAreModifiers ? "Attributes (key: label, modifier from min to max):" : "Attributes (key: label, min-max):");
         foreach (var a in r.Attributes)
         {
-            sb.AppendLine($"- {a.Key}: {a.Label}, {a.Min?.ToString() ?? "?"}-{a.Max?.ToString() ?? "?"}");
+            sb.AppendLine(r.AttributesAreModifiers
+                ? $"- {a.Key}: {a.Label}, {Signed(a.Min)} to {Signed(a.Max)}"
+                : $"- {a.Key}: {a.Label}, {a.Min?.ToString() ?? "?"}-{a.Max?.ToString() ?? "?"}");
         }
 
         if (r.Attributes.Count > 0)
         {
             // Left to "respect the specification", models often leave the scores out, and the sheet then keeps its starting values.
-            sb.AppendLine($"Give EVERY attribute above a whole-number score in \"sheet\", under its key, chosen to suit the concept{(string.IsNullOrWhiteSpace(r.AttributeAdvice) ? "" : ": " + r.AttributeAdvice.Trim())}");
+            var advice = string.IsNullOrWhiteSpace(r.AttributeAdvice) ? "" : ": " + r.AttributeAdvice.Trim();
+            sb.AppendLine(r.AttributesAreModifiers
+                ? $"Give EVERY attribute above a whole-number modifier (not a score; +0 is average) in \"sheet\", under its key, within the range shown, chosen to suit the concept{advice}"
+                : $"Give EVERY attribute above a whole-number score in \"sheet\", under its key, chosen to suit the concept{advice}");
         }
 
         sb.AppendLine().AppendLine("Fields (key: label, type, options):");

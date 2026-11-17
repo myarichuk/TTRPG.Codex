@@ -986,7 +986,9 @@ public class BonusRules
 /// The <c>boosts</c> attribute method (<c>sheetRules.attributes.boosts</c>): every attribute starts at its default (a modifier of 0)
 /// and sources (an ancestry, a background, a class, a level milestone) each give boosts. A boost adds a full step (+1 to the
 /// modifier, 2 score points); at <see cref="PartialFrom"/> or above it adds half a step, and two halves make one. A flaw takes a full step
-/// away. The attributes must use the <c>half-minus-five</c> modifier and default 10, so a step is two score points.
+/// away. The attributes must use the <c>half-minus-five</c> modifier and default 10 (a step is two score points), or the <c>value</c>
+/// modifier and default 0 (the attributes are modifiers: a step is 1, and a boost at <see cref="PartialFrom"/> or above is a pending
+/// partial boost that the next such boost turns into +1).
 /// A referenced entry lists its boosts in its <see cref="Property"/>: <c>str</c> (fixed), <c>free</c> (any attribute),
 /// <c>dex|wis</c> (one of those) and <c>-con</c> (a flaw).
 /// </summary>

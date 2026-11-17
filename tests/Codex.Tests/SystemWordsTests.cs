@@ -189,6 +189,9 @@ public class SystemWordsTests
         Assert.Equal("2 + (5 - 1) / 4", Working("edge", "2 + (rank - 1) / 4"));
         Assert.Equal("AGI +2 + 3", Working("quickness", "mod(agi) + edge"));
         Assert.Equal("AGI -1", FormulaWorking.Write("mod(agi)", new Dictionary<string, double> { ["agi"] = 8 }, _ => "AGI"));
+        // Attributes that are modifiers already are shown as they are: +2 stays +2, not the modifier of a score of 2.
+        Assert.Equal("10 + AGI +2", FormulaWorking.Write("10 + mod(agi)", new Dictionary<string, double> { ["agi"] = 2 }, _ => "AGI", inputsAreModifiers: true));
+        Assert.Equal("AGI -4", FormulaWorking.Write("mod(agi)", new Dictionary<string, double> { ["agi"] = -4 }, _ => "AGI", inputsAreModifiers: true));
     }
 
     [Fact]

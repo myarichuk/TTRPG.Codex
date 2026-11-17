@@ -303,7 +303,8 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             HitPointsBasis: system?.Ai.PrimaryResourceBasis,
             Equipment: carriable.Count == 0 ? null : Options(carriable),
             OneArmorAndShield: armor != null,
-            AttributeAdvice: AttributeAdvice(system?.SheetRules?.Attributes)), ct);
+            AttributeAdvice: AttributeAdvice(system?.SheetRules?.Attributes),
+            AttributesAreModifiers: system?.Attributes.Any(a => a.IsModifier) == true), ct);
 
         if (inventory == null || carriable.Count == 0)
         {

@@ -76,7 +76,7 @@ A character attribute (ability score, characteristic, stat) the system tracks pe
 | `default` | whole number | The score a sheet has until one is entered. Default 10. |
 | `min` | whole number | The lowest score that can be typed in on a sheet when the system has no `sheetRules.attributes`; also given to the AI as the attribute's range. None: no floor. |
 | `max` | whole number | The highest score that can be typed in on a sheet when the system has no `sheetRules.attributes` (which caps scores with its own `max`); also given to the AI as the attribute's range. None: no cap. |
-| `modifier` | text (a number is text too) | Optional derived-modifier rule. Supported: `"half-minus-five"` (floor((v-10)/2), the d20 family) or `"none"`. Systems that need anything else define a derived field instead. |
+| `modifier` | text (a number is text too) | Optional derived-modifier rule. Supported: `"half-minus-five"` (floor((v-10)/2), the d20 family), `"value"` (the attribute is the modifier: default 0, min and max on the modifier scale, `mod(x)` is x, and the sheet shows no score; every attribute of a system must use it, or none) or `"none"`. Systems that need anything else define a derived field instead. |
 
 ## ResourceDefinition
 
@@ -443,7 +443,7 @@ Score increases that come from picks in a ListRule: each picked entry whose Prop
 
 ## BoostRules
 
-The `boosts` attribute method (`sheetRules.attributes.boosts`): every attribute starts at its default (a modifier of 0) and sources (an ancestry, a background, a class, a level milestone) each give boosts. A boost adds a full step (+1 to the modifier, 2 score points); at PartialFrom or above it adds half a step, and two halves make one. A flaw takes a full step away. The attributes must use the `half-minus-five` modifier and default 10, so a step is two score points. A referenced entry lists its boosts in its Property: `str` (fixed), `free` (any attribute), `dex|wis` (one of those) and `-con` (a flaw).
+The `boosts` attribute method (`sheetRules.attributes.boosts`): every attribute starts at its default (a modifier of 0) and sources (an ancestry, a background, a class, a level milestone) each give boosts. A boost adds a full step (+1 to the modifier, 2 score points); at PartialFrom or above it adds half a step, and two halves make one. A flaw takes a full step away. The attributes must use the `half-minus-five` modifier and default 10 (a step is two score points), or the `value` modifier and default 0 (the attributes are modifiers: a step is 1, and a boost at PartialFrom or above is a pending partial boost that the next such boost turns into +1). A referenced entry lists its boosts in its Property: `str` (fixed), `free` (any attribute), `dex|wis` (one of those) and `-con` (a flaw).
 
 | Key | Type | What it is |
 |---|---|---|

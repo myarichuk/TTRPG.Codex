@@ -60,7 +60,14 @@
                     @if (half)
                     {
                         @* The half step is drawn as ½; a screen reader is told it in words instead. *@
-                        <div class="attr-mod" data-testid="@("attr-mod-" + attr.Key)"><span aria-hidden="true">@modifierText</span><span class="visually-hidden" data-testid="@("attr-mod-spoken-" + attr.Key)">@L["Actor.Sheet.BoostHalf", L["Actor.Sheet.Modifier", attr.Label] + " " + Bidi.Ltr((modifier >= 0 ? "+" : "") + modifier)]</span></div>
+                        <div class="attr-mod" data-testid="@("attr-mod-" + attr.Key)"><span aria-hidden="true">@modifierText</span><span class="visually-hidden" data-testid="@("attr-mod-spoken-" + attr.Key)">@(attr.IsModifier
+                            ? L["Actor.Sheet.Modifier", attr.Label] + " " + Bidi.Ltr((modifier >= 0 ? "+" : "") + modifier) + ", " + L["Actor.Sheet.BoostPartial"]
+                            : L["Actor.Sheet.BoostHalf", L["Actor.Sheet.Modifier", attr.Label] + " " + Bidi.Ltr((modifier >= 0 ? "+" : "") + modifier)])</span></div>
+                        @if (attr.IsModifier)
+                        {
+                            @* On the modifier scale the half is the book's "partial boost" mark: said in plain words under the number as well. *@
+                            <div class="attr-feature small-muted" aria-hidden="true" data-testid="@("attr-partial-" + attr.Key)">@L["Actor.Sheet.BoostPartial"]</div>
+                        }
                     }
                     else
                     {
@@ -77,7 +84,11 @@
                                      OnClick="() => OnRoll.InvokeAsync(new RollRequest(checkLabel, (modifier ?? 0) + (Evaluation?.CheckBonuses.GetValueOrDefault(attr.Key) ?? 0), RollKind.Check, attr.Key))" />
                     }
                 }
-                @if (Boosting)
+                @if (attr.IsModifier && (Boosting || !CanEdit))
+                {
+                    @* The value is the modifier drawn above; a modifier-scale attribute has no separate score. *@
+                }
+                else if (Boosting)
                 {
                     @* The score is what the boosts below make of it. *@
                     <div class="attr-medallion attr-score" data-testid="@testId">@total</div>
@@ -99,7 +110,7 @@
                     var min = attributeRules != null && AttrMethod == "point-buy" ? attributeRules.PointBuy?.Min : attr.Min;
                     var max = attributeRules != null && AttrMethod == "point-buy" ? attributeRules.PointBuy?.Max : attr.Max;
                     <div class="attr-medallion">
-                    <label for="@inputId" class="visually-hidden">@L["Actor.Sheet.Score", attr.Label]</label>
+                    <label for="@inputId" class="visually-hidden">@(attr.IsModifier ? L["Actor.Sheet.Modifier", attr.Label] : L["Actor.Sheet.Score", attr.Label])</label>
                     <input id="@inputId" type="number" class="field-input field-sm" min="@min" max="@max"
                            value="@baseScore" data-testid="@testId"
                            @onchange="e => SetBase(attr, e.Value?.ToString())" />
@@ -109,7 +120,7 @@
                 {
                     <div class="attr-medallion attr-score">@total</div>
                 }
-                @if (attributeRules != null && !Boosting && (bonus != 0 || increase != 0 || CanEdit))
+                @if (attributeRules != null && !Boosting && (bonus != 0 || increase != 0 || (CanEdit && !attr.IsModifier)))
                 {
                     <div class="attr-total small-muted" data-testid="@(testId + "-total")"><bdi>@TotalText(baseScore, bonus, increase, total)</bdi></div>
                 }
@@ -122,7 +133,7 @@
     {
         <div class="mt-3" data-testid="attr-boosts" data-rule-key="boosts" role="group" aria-labelledby="boosts-heading">
             <div class="field-label" id="boosts-heading">@attributeRules!.Boosts!.Label</div>
-            <p class="small small-muted mb-2">@L["Actor.Sheet.BoostHalfNote", attributeRules.Boosts.PartialFrom]</p>
+            <p class="small small-muted mb-2">@L[Definition.Attributes.Any(a => a.IsModifier) ? "Actor.Sheet.BoostPartialNote" : "Actor.Sheet.BoostHalfNote", attributeRules.Boosts.PartialFrom]</p>
             @* The problems sit in a live region that stays on the page, so a screen reader hears one appear. *@
             <div role="status" aria-live="polite" data-testid="boost-status">
                 <RuleProblemList Problems="BoostProblems" Describe="Describe" TestId="boost-problems" />
@@ -358,7 +369,7 @@
 
     private string Working(DerivedField derived) =>
         Evaluation!.DerivedInputs.TryGetValue(derived.Key, out var inputs)
-            ? FormulaWorking.Write(derived.Formula, inputs, key => Definition.Attributes.FirstOrDefault(a => a.Key == key)?.Abbreviation)
+            ? FormulaWorking.Write(derived.Formula, inputs, key => Definition.Attributes.FirstOrDefault(a => a.Key == key)?.Abbreviation, Definition.Attributes.Any(a => a.IsModifier))
             : derived.Formula;
 
     private static string FormatSigned(object value) => Bidi.Ltr(value is long l && l >= 0 ? "+" + l : value.ToString() ?? string.Empty);

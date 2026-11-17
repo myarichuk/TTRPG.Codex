@@ -276,6 +276,8 @@
   <data name="Actor.Sheet.BoostTrade" xml:space="preserve"><value>Обмен: отдать постоянных повышений: {0}, получить свободных: {1}</value></data>
   <data name="Actor.Sheet.BoostNone" xml:space="preserve"><value>Повышений пока нет. Выберите то, что их даёт: происхождение или класс.</value></data>
   <data name="Actor.Sheet.BoostHalf" xml:space="preserve"><value>{0}, полшага до следующего модификатора</value></data>
+  <data name="Actor.Sheet.BoostPartial" xml:space="preserve"><value>Частичное повышение</value></data>
+  <data name="Actor.Sheet.BoostPartialNote" xml:space="preserve"><value>Повышение модификатора +{0} и выше — частичное: оно отмечается, а модификатор не меняется. Второе частичное повышение добавляет 1 и снимает отметку.</value></data>
   <data name="Actor.Sheet.BoostHalfNote" xml:space="preserve"><value>Повышение при модификаторе +{0} и выше считается за полшага. Два полшага дают один шаг, половина показана как ½.</value></data>
   <data name="Actor.Sheet.BoostTradeGive" xml:space="preserve"><value>Отдать: {0}</value></data>
   <data name="Actor.Sheet.PrintedNote" xml:space="preserve"><value>Как в описании: это значения из описания существа. Бонусы предыстории и увеличения характеристик от выборов не добавляются; выберите другой способ, чтобы их учесть.</value></data>

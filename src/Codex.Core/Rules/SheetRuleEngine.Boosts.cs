@@ -36,7 +36,7 @@ public sealed partial class SheetRuleEngine
     /// stops counting when the entry changes), <c>boost__{source}__{slot}</c> for a level milestone.</summary>
     public const string BoostKeyPrefix = "boost__";
 
-    /// <summary>A modifier step is two score points on the half-minus-five scale.</summary>
+    /// <summary>A modifier step is two score points on the half-minus-five scale (one on the <c>value</c> scale, which has its own branch).</summary>
     private const int BoostStep = 2;
 
     public const string BoostOpenKey = "Actor.Rule.BoostOpen";
@@ -67,6 +67,8 @@ public sealed partial class SheetRuleEngine
     private (Dictionary<string, int> Deltas, BoostSummary Summary) EvaluateBoosts(BoostRules rules, IReadOnlyDictionary<string, object> sheet, List<RuleViolation>? violations, List<RuleViolation>? warnings = null)
     {
         var score = system.Attributes.ToDictionary(a => a.Key, a => a.Default);
+        var onModifierScale = system.Attributes.Any(a => a.IsModifier);
+        var pendingHalves = new HashSet<string>();
         var summaries = new List<BoostSourceSummary>();
         var level = BoostLevel(sheet);
         string Label(string key) => system.Attributes.First(a => a.Key == key).Label;
@@ -151,12 +153,29 @@ public sealed partial class SheetRuleEngine
                 violations?.Add(new RuleViolation("boosts", $"{source.Label}: each boost needs a different attribute, and {Label(twice)} has more than one.", BoostSameKey, new object?[] { source.Label, Label(twice) }));
             }
 
+            if (onModifierScale)
+            {
+                // The values are modifiers: a boost adds 1, a flaw takes 1, and a boost at PartialFrom or above is a mark that the
+                // next such boost turns into +1 (the pending partial boost, kept in pendingHalves, shown as a half step).
+                // A flaw only lowers the modifier (the book's flaw rule says nothing of a mark), so a pending partial boost stays, as in score mode.
+                foreach (var flaw in flaws) score[flaw] -= 1;
+                foreach (var attribute in used)
+                {
+                    if (score[attribute] < rules.PartialFrom) score[attribute] += 1;
+                    else if (!pendingHalves.Remove(attribute)) pendingHalves.Add(attribute);
+                    else score[attribute] += 1;
+                }
+
+                summaries.Add(new BoostSourceSummary(source.Key, source.Label, shown, flaws, source.Trade, tradeKey, tradeOptions, traded, given));
+                continue;
+            }
+
             foreach (var flaw in flaws) score[flaw] -= BoostStep;
             foreach (var attribute in used) score[attribute] += AttributeDefinition.HalfMinusFive(score[attribute]) >= rules.PartialFrom ? 1 : BoostStep;
             summaries.Add(new BoostSourceSummary(source.Key, source.Label, shown, flaws, source.Trade, tradeKey, tradeOptions, traded, given));
         }
 
-        var halves = system.Attributes.Where(a => (score[a.Key] - a.Default) % 2 != 0).Select(a => a.Key).ToHashSet();
+        var halves = onModifierScale ? pendingHalves : system.Attributes.Where(a => (score[a.Key] - a.Default) % 2 != 0).Select(a => a.Key).ToHashSet();
         var deltas = system.Attributes.ToDictionary(a => a.Key, a => score[a.Key] - a.Default);
         return (deltas, new BoostSummary(summaries, halves));
     }

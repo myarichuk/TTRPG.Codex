@@ -58,7 +58,7 @@ license:                      # shown on the About page and under every entry
   modified: true              # CC-BY: say so if you changed the material
   notices: [ "..." ]          # extra notices (upstream MIT, trademark disclaimers)
 
-attributes:                   # per-actor scores; modifier: none | half-minus-five (the d20 rule)
+attributes:                   # per-actor scores; modifier: none | half-minus-five (the d20 rule) | value (the attribute IS its modifier: default 0, min/max on that scale, mod(x) is x, no score on the sheet; all attributes of a system use it or none does)
   - { key: str, label: Strength, abbreviation: STR, default: 10, min: 1, max: 30, modifier: half-minus-five }
 
 resources:                    # depletable pools; the primary one is what damage/healing target
@@ -220,7 +220,7 @@ sheetRules:
       capProperty: abilityIncreaseCap         # entry property: highest score they may reach (else `max`)
   derived:                                    # read-only, computed from numeric sheet fields
     - { key: proficiencyBonus, label: Proficiency Bonus, formula: "2 + (level - 1) / 4" }
-    #  floor(), ceil(), max(), min() and mod(score) (the half-minus-five modifier) are available
+    #  floor(), ceil(), max(), min() and mod(score) (the half-minus-five modifier; under `modifier: value` it is the value itself) are available
   constraints:                                # on single-pick reference fields
     - field: subclass
       where:
