@@ -16,6 +16,10 @@
 #   levelWord (entries parser) a header ends in the type's word and a number; `spell|cantrip` gives several words, and the one found is the entry's kind
 #   boxes / readPastBoxes (entries row with a level word) a heading in the header font that has no entry's shape starts a box among the entries: each named title becomes a rule entry (the row's category),
 #             and the number of the others, which are read past, must be the one stated
+#   groups    (entries row with a level word) the section has child sections that group its entries (a class's focus spells, a domain, an order, a school): a heading in the section font or
+#             the entry-header font names a group, and each entry after it says that group in its `focusGroup` field. The range starts at the section's first heading, and every bookmark below the
+#             section is counted against these headings
+#   listHeading (entries row with a level word) a heading in the block-header font, anywhere in the book, under which a table lists every entry of the row by rank: the independent count
 #   subheadings (rules parser) a heading in the block-header font inside a section that has no bookmark is a paragraph of the entry; runsToTitle: the bookmark paths whose section's text goes on over a page break
 #             above the next title (the pages between are sidebars, or the bookmark ends early); any other path still fails when text sits there
 #   own       paths (rules parser) whose own text, between the section's title and its first child section, becomes one entry named by ownName
@@ -222,6 +226,55 @@ rows:
     readPastBoxes: 1
     paths:
       - ["Chapter 7: Spells", Spell Lists, Spells]
+  # The focus spells (5b). A header is `NAME [icon] FOCUS n` or `NAME [icon] CANTRIP n` (a class's focus cantrip), set under the heading of its group (a class, then a domain, an order, a school or a tier).
+  # The groups' headings are the section's bookmark children and grandchildren, and no group has any text of its own.
+  - chapter: spells
+    book: pc
+    parser: entries
+    target: spell
+    approved: true
+    headerRole: block-header
+    levelWord: focus|cantrip
+    groups: true
+    tableRows: true
+    paths:
+      - ["Chapter 7: Spells", Spell Lists, Focus Spells]
+  # The rules of casting a ritual: its own text, then each child section. The section on checks holds a smaller heading with a bookmark of its own (secondary checks) that is a paragraph of its text.
+  - chapter: spells
+    book: pc
+    parser: rules
+    target: rule
+    category: Spells
+    approved: true
+    subheadings: true
+    tableRows: true
+    # The checks section goes on over a page break above the next title.
+    runsToTitle:
+      - ["Chapter 7: Spells", Spell Lists, Rituals, Casting Rituals, Checks]
+    own:
+      - ["Chapter 7: Spells", Spell Lists, Rituals, Casting Rituals]
+    paths:
+      - ["Chapter 7: Spells", Spell Lists, Rituals, Casting Rituals, Learning Rituals]
+      - ["Chapter 7: Spells", Spell Lists, Rituals, Casting Rituals, Cost]
+      - ["Chapter 7: Spells", Spell Lists, Rituals, Casting Rituals, Secondary Casters]
+      - ["Chapter 7: Spells", Spell Lists, Rituals, Casting Rituals, Checks]
+      - ["Chapter 7: Spells", Spell Lists, Rituals, Casting Rituals, Effect]
+  # The rituals themselves: `NAME RITUAL n`, a trait line, and the stat lines of a ritual (its casting time, cost, checks and casters, then the spell's own). The book lists them by rank under a
+  # heading in the rules above, which is the count; a table of the cost by creature level sits among them and is a rule.
+  - chapter: spells
+    book: pc
+    parser: entries
+    target: spell
+    category: Spells
+    approved: true
+    headerRole: block-header
+    levelWord: ritual
+    listHeading: Rituals by Rank
+    tableRows: true
+    boxes:
+      - Creature Creation Rituals
+    paths:
+      - ["Chapter 7: Spells", Spell Lists, Rituals, Rituals]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
@@ -233,7 +286,4 @@ planned:
       - ["Chapter 2: Ancestries & Backgrounds"]
       - ["Chapter 3: Classes"]
       - ["Chapter 6: Equipment"]
-      # The focus spells and the rituals of the spell lists are the next step (5b).
-      - ["Chapter 7: Spells", Spell Lists, Focus Spells]
-      - ["Chapter 7: Spells", Spell Lists, Rituals]
       - ["Chapter 8: Playing the Game"]

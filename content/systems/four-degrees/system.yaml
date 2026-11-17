@@ -120,7 +120,7 @@ entityTypes:
       - { key: trigger,      label: Trigger,      type: LongText }
       - { key: requirements, label: Requirements, type: LongText }
   # A spell, a cantrip or a focus spell: what the book prints on its header (the rank, the kind word and the action cost), its trait line and its labelled lines.
-  # `kind` is the word the header sets before the rank (spell, cantrip or focus; a dropdown, not a yes/no, so the focus spells fit without another field), and `rank` is the
+  # `kind` is the word the header sets before the rank (spell, cantrip, focus or ritual; a dropdown, not a yes/no, so the focus spells and rituals fit without another field), and `rank` is the
   # number after it: a cantrip's printed number is the rank it is cast at. The text holds the rest, with the degrees of success and the heightened entries in their source order.
   - type: spell
     label: Spell
@@ -128,17 +128,21 @@ entityTypes:
     folder: spells
     icon: wand
     summaryFields: [rank, kind]
-    filterFields: [rank, kind, traditions]
+    filterFields: [rank, kind, traditions, focusGroup]
     fields:
-      - { key: kind,         label: Kind,         type: Dropdown, options: [spell, cantrip, focus], description: "The word the header sets before the rank." }
+      - { key: kind,         label: Kind,         type: Dropdown, options: [spell, cantrip, focus, ritual], description: "The word the header sets before the rank." }
       - { key: rank,         label: Rank,         type: Number, description: "The printed rank (1 to 10). A cantrip's is the rank it is cast at." }
       - { key: actions,      label: Actions,      type: Dropdown, options: [one, two, three, reaction, free], description: "The action cost in the header. Empty: a spell that takes minutes or hours, or a range of action costs (see Cast time)." }
       - { key: traits,       label: Traits,       type: TagList, description: "Trait keys, as the Library's trait entries name them." }
       - { key: traditions,   label: Traditions,   type: TagList, description: "The magical traditions whose lists hold the spell: arcane, divine, occult, primal." }
+      - { key: focusGroup,   label: Focus group,  type: Text, description: "For a focus spell or focus cantrip: the group the book lists it under (a class's compositions, a domain, an order, a school, a warden tier, the hexes)." }
       - { key: castTime,     label: Cast time,    type: Text, description: "The time a spell that takes longer than a turn needs, or the range of action costs of a spell that has no one cost (1 to 3 actions)." }
       - { key: cost,         label: Cost,         type: Text }
       - { key: trigger,      label: Trigger,      type: LongText }
       - { key: requirements, label: Requirements, type: LongText }
+      - { key: secondaryCasters, label: Secondary casters, type: Text, description: "A ritual's minimum number of secondary casters, and any condition on them." }
+      - { key: primaryCheck, label: Primary check, type: Text, description: "A ritual's primary skill check: the skills and the least proficiency of each." }
+      - { key: secondaryChecks, label: Secondary checks, type: Text, description: "A ritual's secondary skill checks." }
       - { key: range,        label: Range,        type: Text }
       - { key: area,         label: Area,         type: Text }
       - { key: targets,      label: Targets,      type: Text }

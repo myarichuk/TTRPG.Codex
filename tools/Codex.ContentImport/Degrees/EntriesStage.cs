@@ -35,6 +35,9 @@ public sealed class ParsedEntry
     /// <summary>For a spell whose header gives a range of action costs: the cost as a cast time ("1 to 3 actions"), since the action dropdown names one cost.</summary>
     public string? VariableCost { get; set; }
 
+    /// <summary>For an entry of a row with groups (<see cref="TakeRow.Groups"/>): the title of the group heading it sits under, as the book prints it.</summary>
+    public string? Group { get; set; }
+
     /// <summary>For a spell: the traditions its labelled line lists, in lowercase, in the book's order.</summary>
     public List<string> Traditions { get; set; } = new();
 
@@ -230,8 +233,17 @@ public static partial class EntriesStage
         var inBox = false;
         BodyReader? boxReader = null;
         var readPast = 0;
+        string? group = null;
         foreach (var block in slice)
         {
+            if (row.Groups && block.Role is "section" or "entry-header")
+            {
+                // The name of a group of entries (a class's focus spells, a domain, an order, a school): each entry after it says it, up to the next heading.
+                group = Clean(string.Join(' ', block.Lines));
+                traitsOpen = false;
+                continue;
+            }
+
             if (row.IsHeader(block))
             {
                 inBox = false;
@@ -239,11 +251,11 @@ public static partial class EntriesStage
                 var header = Clean(string.Join(' ', block.Lines));
                 string? actions = null;
                 string? variableCost = null;
-                if (spell && Regex.Match(header, @"\[(?<a>[^\]]+)\]\s+TO\s+\[(?<b>[^\]]+)\]", RegexOptions.CultureInvariant) is { Success: true } range2)
+                if (spell && Regex.Match(header, @"\[(?<a>[^\]]+)\]\s+(?<w>TO|OR)\s+\[(?<b>[^\]]+)\]", RegexOptions.CultureInvariant) is { Success: true } range2)
                 {
                     // A cost that runs from one number of actions to another ("[1 action] TO [3 actions]") has no one action cost: the dropdown stays empty and the cost is the spell's cast time.
                     string Count(string icon) => Icons.Values.FirstOrDefault(i => i.Text == $"[{icon}]").Actions ?? icon;
-                    variableCost = $"{Count(range2.Groups["a"].Value)} to {Count(range2.Groups["b"].Value)} actions";
+                    variableCost = $"{Count(range2.Groups["a"].Value)} {range2.Groups["w"].Value.ToLowerInvariant()} {Count(range2.Groups["b"].Value)} actions";
                     header = header.Replace(range2.Value, string.Empty, StringComparison.Ordinal);
                 }
 
@@ -264,7 +276,7 @@ public static partial class EntriesStage
                     // "NAME [icon] WORD 3": the name is set in capitals, the level is the number after the row's word (or one of its words: spell, cantrip).
                     var m = Regex.Match(header, @"^(?<name>.+?)\s+" + row.LevelPattern + @"\s+(?<level>\d+)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
                     level = int.Parse(m.Groups["level"].Value, CultureInfo.InvariantCulture);
-                    kind = row.LevelWords.Length > 1 ? m.Groups["word"].Value.ToLowerInvariant() : null;
+                    kind = row.LevelWords.Length > 1 || spell ? m.Groups["word"].Value.ToLowerInvariant() : null;
                     header = TitleCase(m.Groups["name"].Value);
                 }
 
@@ -273,6 +285,7 @@ public static partial class EntriesStage
                 entry.Level = level;
                 entry.Kind = kind;
                 entry.VariableCost = variableCost;
+                entry.Group = row.Groups ? group : null;
                 result.Add(entry);
                 readers.Add(new BodyReader(entry, compounds, row.LevelWord != null, row.TableRows, spell ? SpellStatLabels : null));
                 traitsOpen = true;
@@ -375,13 +388,21 @@ public static partial class EntriesStage
     private static readonly HashSet<string> SpellStatLabels = new(StringComparer.Ordinal)
     {
         "traditions", "cast", "cost", "trigger", "requirements", "range", "area", "target", "targets", "defense", "duration", "heightened",
+        // A ritual's own lines, and the lines a class's focus spells open with (the muse of a composition, the lesson of a hex, the patron of a hex cantrip): the last three stay in the description.
+        "secondary casters", "primary check", "secondary checks", "muse", "lesson", "patron",
+        // The older label of a spell's saving throw, which two focus spells print in place of Defense.
+        "saving throw",
     };
+
+    /// <summary>The labels a ritual's stat line puts after a semicolon. A bold run of one of them can be cut by a line break or a stray run, so the semicolon before one is the cut whatever the runs say.</summary>
+    private static readonly string[] RitualLabels = { "Secondary Casters", "Secondary Checks", "Primary Check" };
 
     /// <summary>The spell type's fields beside its header and traditions, in the system's order: the field key and the labels that fill it.</summary>
     private static readonly (string Key, string[] Labels)[] SpellFieldLabels =
     {
         ("castTime", new[] { "cast" }), ("cost", new[] { "cost" }), ("trigger", new[] { "trigger" }), ("requirements", new[] { "requirements" }),
-        ("range", new[] { "range" }), ("area", new[] { "area" }), ("targets", new[] { "targets", "target" }), ("defense", new[] { "defense" }), ("duration", new[] { "duration" }),
+        ("secondaryCasters", new[] { "secondary casters" }), ("primaryCheck", new[] { "primary check" }), ("secondaryChecks", new[] { "secondary checks" }),
+        ("range", new[] { "range" }), ("area", new[] { "area" }), ("targets", new[] { "targets", "target" }), ("defense", new[] { "defense", "saving throw" }), ("duration", new[] { "duration" }),
     };
 
     internal static readonly string[] TraditionKeys = { "arcane", "divine", "occult", "primal" };
@@ -396,6 +417,11 @@ public static partial class EntriesStage
     /// <summary>Takes the spell's traditions and the labelled lines the type has a field of its own for out of its parts.</summary>
     private static void ExtractSpellFields(ParsedEntry entry)
     {
+        if (entry.Group != null)
+        {
+            entry.Extracted.Add(new LabelledText("focusGroup", entry.Group));
+        }
+
         var traditions = entry.Parts.Where(p => p.Label.Length > 0 && StatKey(p.Label.TrimEnd('.', ':', ' ')) == "traditions").ToList();
         if (traditions.Count > 1)
         {
@@ -968,6 +994,8 @@ public static partial class EntriesStage
     [GeneratedRegex(@"\p{L}+[-‐‑]\p{L}+")]
     private static partial Regex Compound();
 
+    private static readonly Regex ActionOptionLine = new(@"^\[(?:one-action|two-actions|three-actions)\] ", RegexOptions.CultureInvariant);
+
     /// <summary>Reads the body blocks of one entry into paragraphs, labelled fields and degree sections.</summary>
     private sealed class BodyReader
     {
@@ -1089,6 +1117,7 @@ public static partial class EntriesStage
                     // A spell's text has no first-line indents: a line set in from the edge under a paragraph with no label of its own is the hanging indent of an inset (a reaction, an affliction).
                     && !(_stat != null && _parts[^1].Label.Length == 0);
                 var startsParagraph = _parts.Count == 0 || text.StartsWith('•') || indented || (i == 0 ? (samePlace && !_runOn) || _previousShort : _previousShort);
+                var optionLine = _stat != null && ActionOptionLine.IsMatch(text); // a spell's option for one number of actions opens its own paragraph
                 if (_runOn && _parts.Count > 0 && _parts[^1].Label.Length > 0 && !text.StartsWith('•'))
                 {
                     // A labelled paragraph wraps with a hanging indent: its lines after the first are set in from the edge, and a line at the edge is the next paragraph.
@@ -1103,6 +1132,11 @@ public static partial class EntriesStage
                 if (rowsBlock && !(_stat != null && _parts.Count > 0 && text.Length > 0 && char.IsLower(text[0])))
                 {
                     startsParagraph = true; // a table's rows: one line each, whatever the line before it ran to
+                }
+
+                if (optionLine)
+                {
+                    startsParagraph = true;
                 }
 
                 if (label.Length > 0 && (KnownLabels.Contains(label.ToLowerInvariant()) || (_stat != null && _stat.Contains(StatKey(label)))))
@@ -1162,8 +1196,42 @@ public static partial class EntriesStage
             JoinLine(_parts[^1].Text, line, _compounds);
         }
 
+        /// <summary>
+        /// A ritual's stat line puts its second and third labels after a semicolon (<c>Cost ...; Secondary Casters 1</c>, <c>Primary Check ...; Secondary Checks ...</c>). The bold runs that
+        /// mark them are sometimes cut by a line break or read as a run of one word, so the cut is made here, on the text: a stat part is split at a semicolon that comes before one of
+        /// the ritual's labels, and each label starts a part of its own.
+        /// </summary>
+        private void SplitRitualLabels()
+        {
+            for (var i = 0; i < _parts.Count; i++)
+            {
+                var (label, sb) = _parts[i];
+                if (label.Length == 0 || !_stat!.Contains(StatKey(label)))
+                {
+                    continue;
+                }
+
+                // The first label in the text, whichever of the three it is; the rest of the text is a part of its own that the loop reaches next.
+                var cuts = RitualLabels.Select(r => (Label: r, At: sb.ToString().IndexOf("; " + r + " ", StringComparison.Ordinal))).Where(c => c.At >= 0).ToList();
+                if (cuts.Count == 0)
+                {
+                    continue;
+                }
+
+                var text = sb.ToString();
+                var (ritual, at) = cuts.OrderBy(c => c.At).First();
+                _parts[i] = (label, new StringBuilder(text[..at]));
+                _parts.Insert(i + 1, (ritual, new StringBuilder(text[(at + 3 + ritual.Length)..])));
+            }
+        }
+
         public void Finish()
         {
+            if (_stat != null)
+            {
+                SplitRitualLabels();
+            }
+
             // A paragraph that follows a labelled one stays a paragraph of its own: it is cut by a short line, so it is the closing prose, not the label's text.
             foreach (var (label, sb) in _parts)
             {

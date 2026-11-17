@@ -233,3 +233,50 @@ trigger the
 tumble through
 warfare lore
 you stride
+# Chapter 5b review (focus spells and rituals): each word is an ordinary English word, a musical term or a game term that a section the take-list leaves out also capitalizes (a
+# list of domains, a title, a heading). `allegro`, `overture`, `uplifting` and `whispering` are words of focus spells' names; `restoration` is a word of one spell's name;
+# `mentalism`, `indulgence` and `secrecy` are the names of a school and two domains of a class's focus spells; `initiate` is a word of a tier's heading; `hustle` is an exploration
+# activity and `soaring` a word of a form's name in a spell's list of effects; `yes` is a word in the example of the answers of a ritual's entity. None is a name of a person, place, deity or creature.
+allegro
+hustle
+indulgence
+initiate
+mentalism
+overture
+restoration
+secrecy
+soaring
+uplifting
+whispering
+yes
+# Chapter 5b review, the words the gate found after the cuts and the new text: `creations` (the plural noun a pointer's wording had; a feat says it too), `alternatively`, `prioritize`, `unbound` and `vault` are ordinary words of a ritual's text that a left-out section writes only at
+# the start of a sentence or in an index; `wilding` is a word of a hex cantrip's name and `resentment` an emotion a cantrip's text names (the cut line named a patron with the same words).
+alternatively
+creations
+prioritize
+resentment
+unbound
+vault
+wilding
+# Chapter 5b review of the pairs the gate found (each read in its sentence or list in the pack): two skills or two game terms that follow one another across a comma or a bullet (`crafting diplomacy`, `burrow climb`,
+# `religion divine`), a Lore subject (`legal lore`, `farming lore`), the name of a spell or a form (`primal summons`, `triple time`, `untamed form`, `insect shape`, `elemental shape`, `plant shape`, `soaring shape`,
+# `uplifting overture`), the heading of a tier (`warden spells`), and four pairs of a label or a sentence's last word and the next sentence's first (`failure you`, `earth the`,
+# `spell if`, `the strike`). None is a name of a person, place, deity or creature.
+burrow climb
+crafting diplomacy
+earth the
+elemental shape
+failure you
+farming lore
+insect shape
+legal lore
+plant shape
+primal summons
+religion divine
+soaring shape
+spell if
+the strike
+triple time
+untamed form
+uplifting overture
+warden spells

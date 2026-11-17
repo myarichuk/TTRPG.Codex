@@ -124,6 +124,10 @@ entityTypes:
       kind: { label: Вид }
       rank: { label: Ранг }
       traditions: { label: Традиции }
+      focusGroup: { label: Группа фокуса }
+      secondaryCasters: { label: Вторичные заклинатели }
+      primaryCheck: { label: Основная проверка }
+      secondaryChecks: { label: Вторичные проверки }
   armor:
     label: Доспех
     pluralLabel: Доспехи

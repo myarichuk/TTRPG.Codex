@@ -111,6 +111,22 @@ public sealed class TakeRow
     /// </summary>
     public bool TableRows { get; set; }
 
+    /// <summary>
+    /// For an <c>entries</c> row with a level word whose section has child sections that group its entries (the focus spells of a class, a domain, an order, a school): a heading in the
+    /// section font or the entry-header font is the name of a group, and each entry that follows it says that group in its <c>focusGroup</c> field. The row's range starts at the first
+    /// group heading, and the section's bookmark descendants are counted against these headings.
+    /// </summary>
+    public bool Groups { get; set; }
+
+    /// <summary>
+    /// For an <c>entries</c> row with a level word: the title of a heading in the block-header font, anywhere in the book, under which a table lists every entry of the row with its rank
+    /// (<c>rank name</c> one to a line). It is the entries' independent count: the (name, rank) pairs of the list must equal those of the entries.
+    /// </summary>
+    public string? ListHeading { get; set; }
+
+    /// <summary>True for the row that holds the spells the four tradition lists name: its level words include <c>spell</c>. Only these are counted against the lists.</summary>
+    public bool OnTraditionLists => LevelWords.Contains("spell", StringComparer.OrdinalIgnoreCase);
+
     /// <summary>True when <paramref name="block"/> is an entry header of this row.</summary>
     public bool IsHeader(Block block) =>
         block.Role == (HeaderRole ?? "entry-header")
@@ -285,6 +301,11 @@ public sealed partial class TakeList
             if ((r.Subheadings && r.Parser != "rules") || ((r.Boxes.Count > 0 || r.ReadPastBoxes > 0) && (r.Parser != "entries" || r.LevelWord == null)))
             {
                 throw new DegreesException($"Take-list row {n}: subheadings belong to the rules parser, and boxes and readPastBoxes to an entries row with a levelWord.");
+            }
+
+            if ((r.Groups || r.ListHeading != null) && (r.Parser != "entries" || r.LevelWord == null || r.Target != "spell"))
+            {
+                throw new DegreesException($"Take-list row {n}: groups and listHeading belong to an entries row of spells with a levelWord.");
             }
 
             if ((r.LeadName != null && r.Parser != "actions") || (r.TailFromHeader && r.Parser != "rules") || (r.TableRows && r.Parser == "glossary"))

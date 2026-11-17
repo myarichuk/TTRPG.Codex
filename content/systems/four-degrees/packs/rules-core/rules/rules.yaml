@@ -63,6 +63,35 @@
     A cantrip is always automatically heightened to half your level, rounded up. For a typical spellcaster, this means its rank is equal to the highest rank of spell slot you have.
   properties:
     category: "Spells"
+- id: "casting-rituals"
+  name: "Casting Rituals"
+  source: "pc > Chapter 7: Spells > Spell Lists > Rituals > Casting Rituals"
+  description: |-
+    When you take charge of a ritual, you are its primary caster, and others assisting you are secondary casters. You can be a primary caster for a ritual even if you can't cast spells. You must know the ritual, and the ritual's spell rank can be no higher than half your level rounded up. You must also have the required proficiency rank in the skill used for the ritual's primary check (see Checks below), and as the primary caster, you must attempt this skill check to determine the ritual's effects. The primary skill check determines the tradition.
+    Rituals do not require spell slots to cast. You can heighten a ritual up to half your level rounded up, decided when the ritual is initiated. A ritual always takes at least 1 hour to perform, and often longer. While a ritual is a downtime activity, it's possible—albeit risky—to perform a ritual during exploration with enough uninterrupted time. A ritual's casting time is usually listed in days. Each day of casting requires 8 hours of participation in the ritual from all casters, with breaks during multiday rituals to allow rest. One caster can continue a multiday ritual, usually with some light chanting or meditation, while the other casters rest. All rituals require repeated spellcasting words and gestures throughout their casting time.
+    Rituals by Rank
+    Rank Ritual
+    2 animate object
+    2 consecrate
+    2 create undead
+    3 geas
+    3 rune trap
+    4 atone
+    4 blight
+    4 plant growth
+    5 call spirit
+    5 planar servitor
+    5 resurrect
+    6 awaken animal
+    6 binding circle
+    6 commune
+    6 primal call
+    7 collective memories
+    7 planar displacement
+    8 control weather
+    10 wish
+  properties:
+    category: "Spells"
 - id: "casting-spells"
   name: "Casting Spells"
   source: "pc > Chapter 7: Spells > Casting Spells"
@@ -70,6 +99,21 @@
     The casting of a spell can range from a simple word of magical might that creates a fleeting effect to a complex process taking hours to cast and producing a long-term impact. Casting a spell requires the caster to make gestures and utter incantations, so being unable to speak prevents spellcasting for most casters. If your character has a long-term disability that prevents or complicates them from speaking, work with the GM to determine an analogous way they cast their spells, such as tapping in code on their staff or whistling.
     Spellcasting creates obvious sensory manifestations, such as bright lights, crackling sounds, and sharp smells from the gathering magic. Nearly all spells manifest a spell signature—a colorful, glowing ring of magical runes that appears in midair, typically around your hands, though what kind of spellcaster you are can affect this—academic wizards typically have neat and ordered spell signatures, while a druid's might be more organic and a cleric's might be inspired by their deity. How spellcasting looks can vary from one spellcasting tradition or class to another, or even from person to person. You have a great deal of freedom in flavoring your character's magic however you wish!
     Spells can vary in how many actions they take, as shown in the spell's stat block. You cast cantrips, spells from spell slots, and focus spells using the same process, but must expend the spell when casting a spell from a spell slot and must spend 1 Focus Point to cast a focus spell. Some rules will refer to the Cast a Spell activity, such as "if the next action you use is to Cast a Spell." Any spell qualifies as a Cast a Spell activity, and any characteristics of the spell use those of the specific spell you're casting.
+  properties:
+    category: "Spells"
+- id: "checks"
+  name: "Checks"
+  source: "pc > Chapter 7: Spells > Spell Lists > Rituals > Casting Rituals > Checks"
+  description: |-
+    At the ritual's culmination, you must attempt the skill check listed in the Primary Check entry to determine the ritual's outcome. Primary checks usually have a very hard DC for a level that's twice the ritual's spell rank. As with other downtime activities, fortune and misfortune effects can't modify your checks for the ritual, nor can bonuses or penalties that aren't active throughout the process.
+    The GM can adjust the DCs of rituals, add or change primary or secondary checks, or even waive requirements to fit specific circumstances. For example, performing a ritual in a location where ley lines converge on the night of a new moon might make a normally difficult ritual drastically easier.
+    Secondary Checks
+    Often, a ritual requires secondary checks to represent aspects of its casting, usually with a standard DC for a level twice the ritual's spell rank. A different secondary caster must attempt each secondary check. If there are more secondary casters than checks, the others don't attempt any.
+    Secondary casters attempt their checks before you attempt the primary check; no matter their results, the ritual proceeds to the primary check. Secondary checks affect the primary check depending on their results.
+    **Critical Success.** You gain a +2 circumstance bonus to the primary check.
+    **Success.** No bonus or penalty.
+    **Failure.** You take a -4 circumstance penalty to the primary check.
+    **Critical Failure.** As failure, and you reduce the degree of success of the primary skill check by one step.
   properties:
     category: "Spells"
 - id: "condition-values"
@@ -84,6 +128,12 @@
   description: "Conditions are persistent. Whenever you're affected by a condition, its effects last until the condition's stated duration ends, the condition is removed, or terms dictated in the condition itself cause it to end."
   properties:
     category: "Conditions"
+- id: "cost"
+  name: "Cost"
+  source: "pc > Chapter 7: Spells > Spell Lists > Rituals > Casting Rituals > Cost"
+  description: "A ritual's Cost entry lists valuable components required to cast the ritual. If a ritual doesn't have any such components, it won't have a Cost entry. The cost is consumed when you attempt the primary skill check. Costs are often presented as a base cost multiplied by the target's level and sometimes the spell's rank. If the target's level is lower than 1, multiply the cost by 1 instead. Heightened versions that increase the base cost multiply it by the target's level or another value as appropriate. Most rituals that create permanent creatures, such as create undead, use costs based on the level of the creature, as presented in Creature Creation Rituals."
+  properties:
+    category: "Spells"
 - id: "costs-and-loci"
   name: "Costs and Loci"
   source: "pc > Chapter 7: Spells > Casting Spells > Costs and Loci"
@@ -116,6 +166,31 @@
     Higher-level tasks represent special commissions, which might require you to Craft a specific item using the Craft downtime activity and sell it to a buyer at full Price. These opportunities don't occur as often and might have special requirements—or serious consequences if you disappoint a prominent client.
   properties:
     category: "Skills"
+- id: "creature-creation-rituals"
+  name: "Creature Creation Rituals"
+  source: "pc > Chapter 7: Spells > Spell Lists > Rituals > Rituals"
+  description: |-
+    Creature Level Ritual Rank Required Cost
+    -1 or 0 2 15 gp
+    1 2 60 gp
+    2 3 105 gp
+    3 3 180 gp
+    4 4 300 gp
+    5 4 480 gp
+    6 5 750 gp
+    7 5 1,080 gp
+    8 6 1,500 gp
+    9 6 2,100 gp
+    10 7 3,000 gp
+    11 7 4,200 gp
+    12 8 6,000 gp
+    13 8 9,000 gp
+    14 9 13,500 gp
+    15 9 19,500 gp
+    16 10 30,000 gp
+    17 10 45,000 gp
+  properties:
+    category: "Spells"
 - id: "deception"
   name: "Deception"
   source: "pc > Chapter 4: Skills > Skills > Deception"
@@ -153,6 +228,12 @@
     The duration of a spell is how long the spell effect lasts. Spells that last for more than an instant have a Duration entry. A spell might last until the start or end of a turn, for some number of rounds, for minutes, or even longer. If a spell's duration is given in rounds, the number of rounds remaining decreases by 1 at the start of each of the spellcaster's turns, ending when the duration reaches 0.
     Some spells have effects that remain even after the spell's magic is gone. Any ongoing effect that isn't part of the spell's duration entry isn't magical. For instance, a spell that creates a brief, loud sound might deafen someone for a time, even permanently. This deafness couldn't be counteracted because it is not itself magical (though it might be cured by other magic, such as sound body).
     If a spell's caster dies or is incapacitated during the spell's duration, the spell remains in effect until its duration ends, using the caster's initiative order.
+  properties:
+    category: "Spells"
+- id: "effect"
+  name: "Effect"
+  source: "pc > Chapter 7: Spells > Spell Lists > Rituals > Casting Rituals > Effect"
+  description: "A ritual's effect depends on the result of the primary check. If an effect lists a save DC, use your spell DC for the ritual's magic tradition (or 12 + your level + your highest mental attribute modifier, if you don't have a spell DC)."
   properties:
     category: "Spells"
 - id: "exploration-and-downtime-activities"
@@ -269,6 +350,12 @@
   description: "A spell you learn is added to your repository of spells, such as a spellbook for a wizard, familiar for a witch, or spell list for a cleric or druid. If you have a spell repertoire, such as a bard, it's not automatically added since you can only know a limited number of spells. Instead, you can select it when you add or swap spells."
   properties:
     category: "Skills"
+- id: "learning-rituals"
+  name: "Learning Rituals"
+  source: "pc > Chapter 7: Spells > Spell Lists > Rituals > Casting Rituals > Learning Rituals"
+  description: "Learning a ritual does not count against any limits on spells in your spell repertoire or on any other normal spellcasting ability. Rituals are never common, though if you look hard, you can probably find someone who can perform an uncommon ritual for you. They may still be unwilling to teach it to you."
+  properties:
+    category: "Spells"
 - id: "line-of-effect"
   name: "Line of Effect"
   source: "pc > Chapter 7: Spells > Ranges, Areas, and Targets > Line of Effect"
@@ -430,6 +517,12 @@
     • Learn a Spell from the divine tradition.
   properties:
     category: "Skills"
+- id: "secondary-casters"
+  name: "Secondary Casters"
+  source: "pc > Chapter 7: Spells > Spell Lists > Rituals > Casting Rituals > Secondary Casters"
+  description: "Many rituals need additional secondary casters, who also don't need to be able to cast spells. Unlike a primary caster, a secondary caster doesn't need a minimum level or skill proficiency. The Secondary Casters entry, if present, indicates the minimum number of secondary casters required."
+  properties:
+    category: "Spells"
 - id: "secret-checks"
   name: "Secret Checks"
   source: "pc > Chapter 4: Skills > Skill Checks and DCs > Secret Checks"

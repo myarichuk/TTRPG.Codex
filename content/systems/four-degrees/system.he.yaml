@@ -124,6 +124,10 @@ entityTypes:
       kind: { label: סוג }
       rank: { label: דרגה }
       traditions: { label: מסורות }
+      focusGroup: { label: קבוצת לחשי מיקוד }
+      secondaryCasters: { label: מטילים משניים }
+      primaryCheck: { label: בדיקה ראשית }
+      secondaryChecks: { label: בדיקות משניות }
   armor:
     label: שריון
     pluralLabel: שריונות

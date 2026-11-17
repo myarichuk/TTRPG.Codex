@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace Codex.ContentImport.Degrees;
 
 /// <summary>Where one line of a block sits, and the bold run it starts with (a field label such as a degree name), or empty.</summary>
@@ -459,6 +461,9 @@ public static class BlocksStage
         }).ToList();
     }
 
+    /// <summary>The last cell of an entry header: the word the header sets before its rank (spell, cantrip, focus spell, ritual, feat) and the rank.</summary>
+    private static readonly Regex EntryHeaderCell = new(@"^(?:SPELL|CANTRIP|FOCUS|RITUAL|FEAT)\s+\d+$", RegexOptions.CultureInvariant);
+
     private static IEnumerable<Block> ColumnBlocks(int page, int column, List<LayoutWord> words, int[] rejected)
     {
         var lines = Lines(words);
@@ -466,7 +471,9 @@ public static class BlocksStage
         for (var i = 0; i < lines.Count; i++)
         {
             var line = lines[i];
-            if (line.Role == "block-header" && Cells(line.Words).Count >= 2)
+            // An entry's header (a name and icon, then the kind word and rank in a cell of their own) is never a table's header row, whatever sits under it: a header over a stat line
+            // that has two cells (a range and a target set apart) would otherwise be read as a table and the entry lost.
+            if (line.Role == "block-header" && Cells(line.Words) is { Count: >= 2 } headerCells && !EntryHeaderCell.IsMatch(headerCells[^1].Text))
             {
                 var end = TableEnd(lines, i);
                 if (end > 0)

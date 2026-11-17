@@ -273,14 +273,14 @@ public class DegreesSpellsTests
     [Fact]
     public void TwoStatBlockHeadersInARowAreNotATable_ButARowOfABodyLineStillIs()
     {
-        PdfDocumentBuilder Build(bool tableRow)
+        PdfDocumentBuilder Build(bool tableRow, bool entryHeader = false)
         {
             var b = new PdfDocumentBuilder();
             var hel = b.AddStandard14Font(Standard14Font.Helvetica);
             var bold = b.AddStandard14Font(Standard14Font.HelveticaBold);
             var page = b.AddPage(603, 783);
             page.AddText("Wolf", 11, new PdfPoint(60, 700), bold);
-            page.AddText("SPELL 1", 11, new PdfPoint(200, 700), bold);
+            page.AddText(entryHeader ? "FOCUS 1" : "BADGE 1", 11, new PdfPoint(200, 700), bold);
             page.AddText("A short line.", 9, new PdfPoint(60, 688), hel);
             if (tableRow)
             {
@@ -290,7 +290,7 @@ public class DegreesSpellsTests
             else
             {
                 page.AddText("Fox", 11, new PdfPoint(60, 676), bold);
-                page.AddText("SPELL 2", 11, new PdfPoint(200, 676), bold);
+                page.AddText("BADGE 2", 11, new PdfPoint(200, 676), bold);
             }
 
             return b;
@@ -306,6 +306,14 @@ public class DegreesSpellsTests
         using (var doc = PdfDocument.Open(Build(true).Build()))
         {
             Assert.Equal(1, BlocksStage.Run(LayoutStage.Run(doc, FontRoles.Parse(Roles)).Pages).Tables);
+        }
+
+        // An entry's header (the name, then the kind word and rank in a cell of its own) is never a table's header row, whatever sits under it: a focus spell's header over a stat line of two cells.
+        using (var doc = PdfDocument.Open(Build(true, entryHeader: true).Build()))
+        {
+            var blocks = BlocksStage.Run(LayoutStage.Run(doc, FontRoles.Parse(Roles)).Pages);
+            Assert.Equal(0, blocks.Tables);
+            Assert.Contains(blocks.Blocks, b => b.Role == "block-header" && b.Lines[0].EndsWith("FOCUS 1", StringComparison.Ordinal));
         }
     }
 }

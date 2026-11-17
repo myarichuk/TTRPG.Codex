@@ -187,6 +187,15 @@ public static class DegreesCommand
                 $"rule sections: {sections.Sum(s => s.Children)} bookmark children = {sections.Sum(s => s.Headings)} headings in {sections.Count} section(s)");
         }
 
+        if (result.Ranges.Any(r => r.Row.Groups || r.Row.ListHeading != null))
+        {
+            var levels = ImportPipeline.CheckLevelCounts(blocks, result.Ranges);
+            var groups = ImportPipeline.CheckEntryCounts(spine, blocks, result.Ranges.Where(r => r.Row.Groups));
+            var lists = ImportPipeline.CheckRankLists(blocks, result.Ranges, result.Parsed);
+            output.WriteLine($"focus spells and rituals: the level-word ranges hold (headers, trait lines, level markers) {string.Join("; ", levels.Select(l => $"{l.Headers}, {l.TraitLines}, {l.Markers}"))}; " +
+                $"group headings against the section's bookmark descendants {string.Join("; ", groups.Select(g => $"{g.Headers} = {g.Bookmarks}"))}; rank list against the entries {string.Join("; ", lists.Select(l => $"{l.Listed} = {l.Entries}"))}");
+        }
+
         if (packDir == null)
         {
             return 0;
@@ -252,13 +261,16 @@ public static class DegreesCommand
             Directory.CreateDirectory(options.Work);
         }
 
-        var before = MergeDenylist(path, Denylist.Format(words), out var total);
+        // A waiver lifts a hash only when this book's own left-out text would hash the word without it, and never a reserved name (see ImportPipeline.LiftedWaivers).
+        var withoutWaivers = ImportPipeline.DenylistWords(blocks, ranges, new HashSet<string>(StringComparer.Ordinal), 3, planned, redacted).Words;
+        var before = MergeDenylist(path, Denylist.Format(words), out var total, lifted: ImportPipeline.LiftedWaivers(Waivers.Embedded(), redacted.Names, withoutWaivers));
         output.WriteLine($"denylist: {words.Count} word(s) hashed from the sections left out ({planned.Count} planned section(s) are not left out), {excluded} common, waived or book-key word(s) left off; the file now holds {total} hash(es) ({total - before} new)");
 
         // The pairs of capitalized words go beside it too: a name of two words that each pass the word gates (see ImportPipeline.DenylistPairs).
         var pairsPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-pairs.sha256");
         var pairs = ImportPipeline.DenylistPairs(blocks, ranges, planned, words, Waivers.Embedded());
-        var pairsBefore = MergeDenylist(pairsPath, string.Concat(pairs.Select(h => h + "\n")), out var pairsTotal, PairsHeader);
+        var pairsBefore = MergeDenylist(pairsPath, string.Concat(pairs.Select(h => h + "\n")), out var pairsTotal, PairsHeader,
+            ImportPipeline.LiftedPairWaivers(Waivers.Embedded(), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, new HashSet<string>(StringComparer.Ordinal))));
         output.WriteLine($"pairs: {pairs.Count} pair(s) of capitalized words hashed from the sections left out; the file now holds {pairsTotal} hash(es) ({pairsTotal - pairsBefore} new)");
 
         // The book's common lowercase words go beside it, as hashes too: the allowlist gate lets an ordinary word open a sentence.
@@ -281,9 +293,13 @@ public static class DegreesCommand
         "# or when a person reviewed it as an ordinary word (the waiver file).\n" +
         "# The allowlist gate lets such a word open a sentence, unless it is on the denylist. Only the first kind is left off the denylist.\n";
 
-    /// <summary>Writes the union of the hashes already in <paramref name="path"/> and <paramref name="hashes"/>, under the file's own comment header. Returns how many were there before.</summary>
-    public static int MergeDenylist(string path, string hashes, out int total, string? defaultHeader = null)
+    /// <summary>
+    /// Writes the union of the hashes already in <paramref name="path"/> and <paramref name="hashes"/>, under the file's own comment header, less the hashes in <paramref name="lifted"/>
+    /// (the words and pairs a person has reviewed and waived: the file may not hold them, and a waiver written after the hash was committed lifts it here). Returns how many were there before.
+    /// </summary>
+    public static int MergeDenylist(string path, string hashes, out int total, string? defaultHeader = null, IEnumerable<string>? lifted = null)
     {
+        var drop = (lifted ?? Array.Empty<string>()).ToHashSet(StringComparer.Ordinal);
         var DefaultHeader = defaultHeader ?? "# The hashed denylist of the local book importer: one lowercase hex SHA-256 of a lowercased word per line, no names.\n";
         var header = new StringBuilder();
         var existing = new List<string>();
@@ -307,7 +323,7 @@ public static class DegreesCommand
             }
         }
 
-        var all = existing.Concat(hashes.Split('\n', StringSplitOptions.RemoveEmptyEntries)).Distinct(StringComparer.Ordinal).OrderBy(h => h, StringComparer.Ordinal).ToList();
+        var all = existing.Concat(hashes.Split('\n', StringSplitOptions.RemoveEmptyEntries)).Distinct(StringComparer.Ordinal).Where(h => !drop.Contains(h)).OrderBy(h => h, StringComparer.Ordinal).ToList();
         File.WriteAllText(path, (header.Length > 0 ? header.ToString() : DefaultHeader) + string.Concat(all.Select(h => h + "\n")), new UTF8Encoding(false));
         total = all.Count;
         return existing.Distinct(StringComparer.Ordinal).Count();

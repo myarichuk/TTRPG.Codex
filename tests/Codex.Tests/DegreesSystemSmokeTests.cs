@@ -55,12 +55,26 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
         Assert.NotNull(_system);
     }
 
+    /// <summary>The names no file may say. The fifth is not matched inside the word of one spell's name (two letters before it), but it is in camelCase and snake_case identifiers and after a prefix.</summary>
+    internal const string DeniedPattern = "pathfinder|paizo|golarion|pf2e|(?<!lo)remaster|starfinder|dungeons|d&d|wizards of the coast";
+
+    [Theory]
+    [InlineData("isRemaster", true)]
+    [InlineData("is_remaster_flag", true)]
+    [InlineData("Remastered", true)]
+    [InlineData("the remaster", true)]
+    [InlineData("Loremaster's Etude", false)]
+    public void TheDeniedPatternCatchesTheFifthNameInIdentifiers_ButNotTheSpellNameThatContainsIt(string text, bool caught)
+    {
+        Assert.Equal(caught, new Regex(DeniedPattern, RegexOptions.IgnoreCase).IsMatch(text));
+    }
+
     [Fact]
     public void NoFileOfTheSystemNamesAPublisherASettingOrAGame()
     {
         // Every line of every file, the overlays and comments included. The licence lines are the one place the upstream publisher and
         // product are named (the ORC requires the credit), so lines naming the licence url and the attribution line are skipped.
-        var denied = new Regex("pathfinder|paizo|golarion|pf2e|remaster|starfinder|dungeons|d&d|wizards of the coast", RegexOptions.IgnoreCase);
+        var denied = new Regex(DeniedPattern, RegexOptions.IgnoreCase);
         var hits = Files()
             .SelectMany(f => File.ReadLines(f).Select((line, i) => (File: Path.GetRelativePath(Folder, f), Line: i + 1, Text: line)))
             .Where(l => !l.Text.Contains("orclicense", StringComparison.Ordinal)

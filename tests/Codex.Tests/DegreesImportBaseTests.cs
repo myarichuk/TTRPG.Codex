@@ -222,7 +222,7 @@ public class DegreesImportBaseTests : IDisposable
     public void NothingTheImporterCommitsNamesAPublisherOrAGame()
     {
         // The credit line in degrees-books.yaml is the one place a product name may appear, because the licence requires it.
-        var denied = new Regex("pathfinder|paizo|golarion|pf2e|remaster|starfinder|dungeons|d&d|wizards of the coast", RegexOptions.IgnoreCase);
+        var denied = new Regex(DegreesSystemSmokeTests.DeniedPattern, RegexOptions.IgnoreCase);
         var tool = Path.Combine(TestPaths.RepoRoot, "tools", "Codex.ContentImport");
         var files = Directory.EnumerateFiles(Path.Combine(tool, "Degrees"), "*.cs")
             .Append(Path.Combine(tool, "Data", "degrees-fonts.yaml"))
