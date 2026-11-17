@@ -1,7 +1,7 @@
 namespace Codex.ContentImport.Degrees;
 
 /// <summary>The arguments after <c>degrees</c>. Paths come only from the command line: no book file name is kept anywhere in the repository.</summary>
-public sealed record DegreesOptions(string Action, string Book, string Pdf, string Work, string? Out = null, bool Check = false)
+public sealed record DegreesOptions(string Action, string Book, string Pdf, string Work, string? Out = null, bool Check = false, bool Fresh = false, string? Pack = null)
 {
     public const string Usage = """
           degrees [run|fingerprint|notice|denylist] --book <pc|mc> --pdf <path> [--work <dir>] [--out <path>] [--check]
@@ -18,6 +18,8 @@ public sealed record DegreesOptions(string Action, string Book, string Pdf, stri
           --out        run: the pack folder to write for the approved rows (it is wiped first, but its manifest.yaml is kept);
                        denylist: the hash file to merge into (default: denylist.sha256 in the work folder)
           --check      run, with --out: regenerate into a temp folder and fail on any byte difference from the pack folder; writes nothing there
+          --pack       denylist: the pack folder whose ids have shipped, so an entry that shares a name with a shipped one is told apart as the run tells it
+          --fresh      denylist: write the hash files from this run alone, not merged with what they hold (a section the take-list has taken since leaves its hashes)
         """;
 
     public static readonly string[] Books = { "pc", "mc" };
@@ -39,8 +41,9 @@ public sealed record DegreesOptions(string Action, string Book, string Pdf, stri
             return null;
         }
 
-        string? book = null, pdf = null, work = null, output = null;
+        string? book = null, pdf = null, work = null, output = null, pack = null;
         var check = false;
+        var fresh = false;
         for (var i = start; i < args.Length; i++)
         {
             if (args[i] == "--check")
@@ -54,14 +57,25 @@ public sealed record DegreesOptions(string Action, string Book, string Pdf, stri
                 continue;
             }
 
+            if (args[i] == "--fresh")
+            {
+                if (fresh)
+                {
+                    return null;
+                }
+
+                fresh = true;
+                continue;
+            }
+
             // A value that starts with "--" is the next flag, not a path; a repeated flag is a mistake, not an override.
-            if (args[i] is not ("--book" or "--pdf" or "--work" or "--out") || i + 1 >= args.Length || args[i + 1].StartsWith("--", StringComparison.Ordinal))
+            if (args[i] is not ("--book" or "--pdf" or "--work" or "--out" or "--pack") || i + 1 >= args.Length || args[i + 1].StartsWith("--", StringComparison.Ordinal))
             {
                 return null;
             }
 
             var value = args[i + 1];
-            var taken = args[i] switch { "--book" => book, "--pdf" => pdf, "--work" => work, _ => output };
+            var taken = args[i] switch { "--book" => book, "--pdf" => pdf, "--work" => work, "--pack" => pack, _ => output };
             if (taken != null)
             {
                 return null;
@@ -77,6 +91,9 @@ public sealed record DegreesOptions(string Action, string Book, string Pdf, stri
                     break;
                 case "--work":
                     work = value;
+                    break;
+                case "--pack":
+                    pack = value;
                     break;
                 default:
                     output = value;
@@ -97,6 +114,11 @@ public sealed record DegreesOptions(string Action, string Book, string Pdf, stri
             return null;
         }
 
-        return new DegreesOptions(action, book, pdf, string.IsNullOrWhiteSpace(work) ? DefaultWork(book) : work, output, check);
+        if ((fresh || pack != null) && action != "denylist")
+        {
+            return null;
+        }
+
+        return new DegreesOptions(action, book, pdf, string.IsNullOrWhiteSpace(work) ? DefaultWork(book) : work, output, check, fresh, pack);
     }
 }

@@ -56,6 +56,12 @@ public sealed class BlocksOptions
     /// A page without titles falls back to treating every heading in the block-header font as a sidebar's.
     /// </summary>
     public IReadOnlyDictionary<int, IReadOnlyList<string>> SidebarTitles { get; init; } = new Dictionary<int, IReadOnlyList<string>>();
+
+    /// <summary>
+    /// Pages whose stat tables (armor, shields, weapons) are carved out before the page is cut into columns (see <see cref="StatTables"/>), each with the column label lists a header row may carry.
+    /// Only the pages a take-list row names: every other page is read as before.
+    /// </summary>
+    public IReadOnlyDictionary<int, IReadOnlyList<IReadOnlyList<string>>> StatTablePages { get; init; } = new Dictionary<int, IReadOnlyList<IReadOnlyList<string>>>();
 }
 
 /// <summary>
@@ -207,6 +213,14 @@ public static class BlocksStage
             if (openers.Count > 0)
             {
                 dropped.AddRange(ColumnBlocks(page.Number, 0, openers, rejected));
+            }
+
+            if (options.StatTablePages.TryGetValue(page.Number, out var labelSets))
+            {
+                // A page a row names for its stat tables: they are carved out first, before the gutter is looked for (a table spans both columns).
+                var carved = StatTables.Carve(page.Number, body, labelSets);
+                blocks.AddRange(carved.Tables);
+                body = carved.Words;
             }
 
             if (body.Count == 0)

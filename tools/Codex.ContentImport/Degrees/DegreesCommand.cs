@@ -164,7 +164,7 @@ public static class DegreesCommand
         }
 
         // The ids of the pack as committed: an id that has shipped keeps its entry when a later chapter brings another with the same name.
-        var result = ImportPipeline.Run(blocks, spine, rows, redactions ?? RedactionTable.Embedded(), book, packDir == null ? null : PackEmitter.ShippedIds(packDir));
+        var result = ImportPipeline.Run(blocks, spine, rows, redactions ?? RedactionTable.Embedded(), book, StableIds(packDir));
         Write(work, "entries.json", result.Parsed);
         Write(work, "redacted.json", result.Final);
         var files = PackEmitter.Files(result.Final.Where(e => e.Approved), result.Report);
@@ -176,6 +176,29 @@ public static class DegreesCommand
             var counts = ImportPipeline.CheckActionCounts(spine, blocks, result.Ranges, result.Parsed);
             output.WriteLine($"actions: {counts.Children} bookmark children = {counts.Units} headings in the ranges; {counts.Headers} action headings, {counts.TraitLines} trait lines, {counts.Icons} action icons; " +
                 $"the overview table lists {counts.TableNames} (name, proficiency) pairs, and the parsed actions have the same");
+        }
+
+        if (packDir != null)
+        {
+            // An imported id may not equal an id of the homebrew pack beside it (in any type): the run fails, the ids are named (they are our own invented ids or a book's item names, never a reserved word).
+            var clashes = PackEmitter.HomebrewClashes(result.Final, packDir);
+            if (clashes.Count > 0)
+            {
+                throw new DegreesException($"{clashes.Count} imported id(s) equal an id of the homebrew pack: {string.Join(", ", clashes.Take(10))}.");
+            }
+
+            output.WriteLine($"homebrew: none of the {result.Final.Count} imported ids equals one of the {PackEmitter.HomebrewIds(packDir).Count} ids of the homebrew pack");
+        }
+
+        if (result.Ranges.Any(r => r.Row.Parser == "items"))
+        {
+            var folds = ImportPipeline.CheckFoldCounts(spine, blocks, result.Ranges);
+            output.WriteLine($"equipment: folded sections {string.Join("; ", folds.Select(f => $"{f.Children} bookmark children = {f.Headings} headings"))}");
+            foreach (var c in ImportPipeline.CheckItemCounts(spine, blocks, result.Ranges, result.Parsed))
+            {
+                output.WriteLine($"items ({c.Kind}): {c.Tables} stat table(s), {c.TableRows} table rows, {c.Descriptions} descriptions, {c.Excluded} excluded name(s), {c.Entries} entries; {c.ArtLabels} art label(s) and {c.LeadLines} lead line(s) skipped; " +
+                    string.Join(", ", c.PerCategory.Select(p => $"{p.Value} {p.Key}")));
+            }
         }
 
         if (ImportPipeline.CheckSpellCounts(blocks, result.Ranges, result.Parsed) is { } spells)
@@ -252,7 +275,7 @@ public static class DegreesCommand
         var blocks = BlocksStage.Run(layout.Pages, ImportPipeline.OptionsFor(spine, rows));
         var ranges = TakeStage.Resolve(spine, blocks, rows);
         var planned = TakeStage.PlannedRanges(spine, blocks, options.Book, take.Planned);
-        var redacted = ImportPipeline.RedactedWords(blocks, ranges, RedactionTable.Embedded(), options.Book);
+        var redacted = ImportPipeline.RedactedWords(blocks, ranges, RedactionTable.Embedded(), options.Book, spine, StableIds(options.Pack));
         var (words, excluded) = ImportPipeline.DenylistWords(blocks, ranges, Waivers.Embedded(), 3, planned, redacted);
         var path = options.Out ?? Path.Combine(options.Work, "denylist.sha256");
         if (options.Out == null)
@@ -263,23 +286,59 @@ public static class DegreesCommand
 
         // A waiver lifts a hash only when this book's own left-out text would hash the word without it, and never a reserved name (see ImportPipeline.LiftedWaivers).
         var withoutWaivers = ImportPipeline.DenylistWords(blocks, ranges, new HashSet<string>(StringComparer.Ordinal), 3, planned, redacted).Words;
-        var before = MergeDenylist(path, Denylist.Format(words), out var total, lifted: ImportPipeline.LiftedWaivers(Waivers.Embedded(), redacted.Names, withoutWaivers));
-        output.WriteLine($"denylist: {words.Count} word(s) hashed from the sections left out ({planned.Count} planned section(s) are not left out), {excluded} common, waived or book-key word(s) left off; the file now holds {total} hash(es) ({total - before} new)");
+        var liftedWords = ImportPipeline.LiftedWaivers(Waivers.Embedded(), redacted.Names, withoutWaivers);
+        var liftedPairs = ImportPipeline.LiftedPairWaivers(Waivers.Embedded(), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, new HashSet<string>(StringComparer.Ordinal)));
+        var pairsFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-pairs.sha256");
+        var commonFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-common.sha256");
+        if (options.Fresh)
+        {
+            // A regeneration from scratch is reviewed before anything is written: it never drops a hash of a redacted word or of a dropped entry's name, never drops a pair a waiver, a title or a
+            // denied word does not explain, and says what it removes and what is new.
+            ImportPipeline.RefuseFreshWithOtherBooks(take.Rows, options.Book);
+            var never = redacted.SpanWords.Select(Denylist.Hash).Concat(redacted.Names.SelectMany(n => new[] { n, n + "s", n + "es" }).Select(Denylist.Hash)).ToHashSet(StringComparer.Ordinal);
+            var reviews = new[]
+            {
+                ImportPipeline.ReviewFresh("denylist", ReadHashes(path), words.Select(Denylist.Hash).ToList(), liftedWords, never, null),
+                ImportPipeline.ReviewFresh("pairs", ReadHashes(pairsFile), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, Waivers.Embedded()), liftedPairs, new HashSet<string>(StringComparer.Ordinal),
+                    ImportPipeline.ExplainedPairs(blocks, ranges, planned, words)),
+                ImportPipeline.ReviewFresh("common", ReadHashes(commonFile), Denylist.Format(ImportPipeline.CommonWords(blocks).Concat(ImportPipeline.OpenerWords(blocks, ranges)).Concat(Waivers.Embedded())).Split('\n', StringSplitOptions.RemoveEmptyEntries), Array.Empty<string>(),
+                    new HashSet<string>(StringComparer.Ordinal), null),
+            };
+            foreach (var r in reviews)
+            {
+                output.WriteLine($"fresh {r.File}: writes {r.Written} (kept {r.Kept}, new {r.New}); removes {r.Waived + r.Taken + r.Titles}: {r.Waived} waived, {r.Taken} of left-out text since taken or common, {r.Titles} pair(s) of a title or of a denied word");
+            }
+        }
+
+        var before = MergeDenylist(path, Denylist.Format(words), out var total, lifted: liftedWords, fresh: options.Fresh);
+        output.WriteLine($"denylist: {words.Count} word(s) hashed from the sections left out ({planned.Count} planned section(s) are not left out), {excluded} common, waived or book-key word(s) left off; the file now holds {total} hash(es){(options.Fresh ? string.Empty : $" ({total - before} new)")}");
 
         // The pairs of capitalized words go beside it too: a name of two words that each pass the word gates (see ImportPipeline.DenylistPairs).
         var pairsPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-pairs.sha256");
         var pairs = ImportPipeline.DenylistPairs(blocks, ranges, planned, words, Waivers.Embedded());
         var pairsBefore = MergeDenylist(pairsPath, string.Concat(pairs.Select(h => h + "\n")), out var pairsTotal, PairsHeader,
-            ImportPipeline.LiftedPairWaivers(Waivers.Embedded(), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, new HashSet<string>(StringComparer.Ordinal))));
-        output.WriteLine($"pairs: {pairs.Count} pair(s) of capitalized words hashed from the sections left out; the file now holds {pairsTotal} hash(es) ({pairsTotal - pairsBefore} new)");
+            ImportPipeline.LiftedPairWaivers(Waivers.Embedded(), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, new HashSet<string>(StringComparer.Ordinal))), options.Fresh);
+        output.WriteLine($"pairs: {pairs.Count} pair(s) of capitalized words hashed from the sections left out; the file now holds {pairsTotal} hash(es){(options.Fresh ? string.Empty : $" ({pairsTotal - pairsBefore} new)")}");
 
         // The book's common lowercase words go beside it, as hashes too: the allowlist gate lets an ordinary word open a sentence.
         var commonPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-common.sha256");
         var common = ImportPipeline.CommonWords(blocks);
         var openers = ImportPipeline.OpenerWords(blocks, ranges);
-        var commonBefore = MergeDenylist(commonPath, Denylist.Format(common.Concat(openers).Concat(Waivers.Embedded())), out var commonTotal, CommonHeader);
-        output.WriteLine($"common words: {common.Count} lowercase word(s) and {openers.Count} sentence-opener word(s) of this book hashed; the file now holds {commonTotal} hash(es) ({commonTotal - commonBefore} new)");
+        var commonBefore = MergeDenylist(commonPath, Denylist.Format(common.Concat(openers).Concat(Waivers.Embedded())), out var commonTotal, CommonHeader, fresh: options.Fresh);
+        output.WriteLine($"common words: {common.Count} lowercase word(s) and {openers.Count} sentence-opener word(s) of this book hashed; the file now holds {commonTotal} hash(es){(options.Fresh ? string.Empty : $" ({commonTotal - commonBefore} new)")}");
         return 0;
+    }
+
+    /// <summary>The hashes a hash file holds (its comment lines and blank lines left out); none when the file is not there.</summary>
+    public static HashSet<string> ReadHashes(string path) => File.Exists(path)
+        ? File.ReadAllLines(path).Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith('#')).ToHashSet(StringComparer.Ordinal)
+        : new HashSet<string>(StringComparer.Ordinal);
+
+    /// <summary>The shipped ids a run reads: those of the pack folder it names, else those of the committed rules pack (null when neither is found; the entries then keep shipping order).</summary>
+    public static IReadOnlyDictionary<string, string>? StableIds(string? packDir)
+    {
+        var dir = packDir ?? PackEmitter.CommittedPackDir();
+        return dir == null ? null : PackEmitter.ShippedIds(dir);
     }
 
     private const string PairsHeader =
@@ -297,7 +356,7 @@ public static class DegreesCommand
     /// Writes the union of the hashes already in <paramref name="path"/> and <paramref name="hashes"/>, under the file's own comment header, less the hashes in <paramref name="lifted"/>
     /// (the words and pairs a person has reviewed and waived: the file may not hold them, and a waiver written after the hash was committed lifts it here). Returns how many were there before.
     /// </summary>
-    public static int MergeDenylist(string path, string hashes, out int total, string? defaultHeader = null, IEnumerable<string>? lifted = null)
+    public static int MergeDenylist(string path, string hashes, out int total, string? defaultHeader = null, IEnumerable<string>? lifted = null, bool fresh = false)
     {
         var drop = (lifted ?? Array.Empty<string>()).ToHashSet(StringComparer.Ordinal);
         var DefaultHeader = defaultHeader ?? "# The hashed denylist of the local book importer: one lowercase hex SHA-256 of a lowercased word per line, no names.\n";
@@ -318,7 +377,10 @@ public static class DegreesCommand
                         throw new DegreesException("--out names a file that is not a hash list (a line is not a SHA-256 hash); nothing was written.");
                     }
 
-                    existing.Add(line.Trim());
+                    if (!fresh)
+                    {
+                        existing.Add(line.Trim());
+                    }
                 }
             }
         }

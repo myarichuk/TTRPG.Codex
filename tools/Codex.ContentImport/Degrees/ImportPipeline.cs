@@ -36,7 +36,33 @@ public static partial class ImportPipeline
         var starts = spine.Where(n => n.Sidebar).GroupBy(n => n.PageStart).ToDictionary(g => g.Key, g => g.Count());
         var titles = spine.Where(n => n.Sidebar).GroupBy(n => n.PageStart)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)g.SelectMany(n => SidebarTitles(n.Title)).ToList());
-        return new BlocksOptions { MaxColumns = page => columns.GetValueOrDefault(page, 2), SidebarPages = sidebars, SidebarStarts = starts, SidebarTitles = titles };
+        // The pages an items row names for its stat tables, with the column label lists a header row there may carry.
+        var tables = new Dictionary<int, List<IReadOnlyList<string>>>();
+        foreach (var row in rows.Where(r => r.Parser == "items"))
+        {
+            foreach (var path in row.Tables)
+            {
+                var node = SpineStage.FindUnique(spine, path) ?? throw new DegreesException("An items row names a bookmark path for its tables that is not in the book.");
+                for (var page = node.PageStart; page <= node.PageEnd; page++)
+                {
+                    if (!tables.TryGetValue(page, out var sets))
+                    {
+                        tables[page] = sets = new List<IReadOnlyList<string>>();
+                    }
+
+                    sets.AddRange(row.TableColumns.Where(c => !sets.Any(s => s.SequenceEqual(c))));
+                }
+            }
+        }
+
+        return new BlocksOptions
+        {
+            MaxColumns = page => columns.GetValueOrDefault(page, 2),
+            SidebarPages = sidebars,
+            SidebarStarts = starts,
+            SidebarTitles = titles,
+            StatTablePages = tables.ToDictionary(t => t.Key, t => (IReadOnlyList<IReadOnlyList<string>>)t.Value),
+        };
     }
 
     /// <summary>
@@ -61,7 +87,10 @@ public static partial class ImportPipeline
         CheckGlossaryCounts(blocks, ranges);
         CheckLevelCounts(blocks, ranges);
         CheckRuleSectionCounts(spine, blocks, ranges);
-        var parsed = EntriesStage.Run(blocks, ranges, book, shippedIds);
+        CheckFoldCounts(spine, blocks, ranges);
+        CheckTableLabels(spine, blocks, rows);
+        var parsed = EntriesStage.Run(blocks, ranges, book, shippedIds, spine);
+        CheckItemCounts(spine, blocks, ranges, parsed);
         CheckActionCounts(spine, blocks, ranges, parsed);
         CheckSpellCounts(blocks, ranges, parsed);
         CheckSpellDegrees(blocks, ranges, parsed);
@@ -92,6 +121,8 @@ public static partial class ImportPipeline
             Skill = e.Skill,
             Proficiency = e.Proficiency,
             Extracted = e.Extracted.Select(x => new LabelledText(x.Label, kept[e.Id].Fields[x.Label])).ToList(),
+            Tags = e.Tags.ToList(),
+            Raw = e.Raw.ToList(),
         }).ToList();
 
         return new PipelineOutput(ranges, parsed, final, report, ReportRows(blocks, spine, rows, redactions, book, parsed, final, ranges));
@@ -193,7 +224,8 @@ public static partial class ImportPipeline
     public static List<(int Children, int Headings)> CheckRuleSectionCounts(IReadOnlyList<SpineNode> spine, BlocksResult blocks, IEnumerable<TakenRange> ranges)
     {
         var compared = new List<(int, int)>();
-        foreach (var range in ranges.Where(r => r.Own && r.Row.Parser == "rules"))
+        // A row that gives a countsDiffer reason is not compared (the chapter's own text of the equipment chapter, whose section headings share a font with their children's titles: see the row).
+        foreach (var range in ranges.Where(r => r.Own && r.Row.Parser == "rules" && string.IsNullOrWhiteSpace(r.Row.CountsDiffer)))
         {
             var node = range.Node;
             var children = spine.Where(n => n.Depth == node.Depth + 1 && n.Path.Length == node.Path.Length + 1 && n.Path.Take(node.Path.Length).SequenceEqual(node.Path) && !n.Sidebar).ToList();
@@ -203,6 +235,14 @@ public static partial class ImportPipeline
             }
 
             var role = node.Depth == 0 ? "section" : "entry-header";
+            // The children's titles are in the font of their own first heading (the equipment chapter sets a section's children in the section font under a chapter section, and in the entry-header font under a section).
+            var first = BlocksStage.SidebarTitleSet.Key(children[0].Title);
+            var firstHeading = blocks.Blocks.Skip(range.End).TakeWhile(b => b.Page <= children[0].PageStart).FirstOrDefault(b => b.Page == children[0].PageStart && b.Role is "section" or "entry-header" && BlocksStage.SidebarTitleSet.Key(string.Join(' ', b.Lines)) == first);
+            if (firstHeading != null)
+            {
+                role = firstHeading.Role;
+            }
+
             var last = BlocksStage.SidebarTitleSet.Key(children[^1].Title);
             var headings = 0;
             var found = false;
@@ -738,11 +778,16 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
     /// only capitalized as a sentence start), and the lowercase words of the name of every entry a drop-entry row removes. A redacted sentence is left-out text by definition, even though
     /// it sits in a taken range.
     /// </summary>
-    public static (List<string> SpanWords, List<string> Names) RedactedWords(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, RedactionTable redactions, string book)
+    public static (List<string> SpanWords, List<string> Names) RedactedWords(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, RedactionTable redactions, string book, IReadOnlyList<SpineNode>? spine = null, IReadOnlyDictionary<string, string>? shippedIds = null)
     {
-        var parsed = EntriesStage.Run(blocks, ranges, book);
+        var parsed = EntriesStage.Run(blocks, ranges, book, shippedIds, spine);
         var entries = parsed.Select(e => new RedactionEntry(e.Id, e.RedactionFields())).ToList();
         var scoped = new RedactionTable { Normalization = redactions.Normalization, Rows = redactions.Rows.Where(r => r.Book == null || r.Book == book).ToList() };
+        if (RedactionStage.RowsWithoutEntry(entries, scoped) is { Count: > 0 } missing)
+        {
+            throw new DegreesException($"{missing.Count} redaction row(s) of book {book} name no entry, so the words they remove cannot be hashed.");
+        }
+
         var spans = RedactionStage.SourceSpans(entries, scoped);
         var spanWords = spans
             .SelectMany(s => PackWordCheck.Words(s.Text).Skip(1))
@@ -785,10 +830,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
     /// </summary>
     public static List<string> DenylistPairs(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<(int Start, int End)>? planned, IReadOnlyCollection<string> deniedWords, IReadOnlySet<string>? waivers = null)
     {
-        var leftOut = TakeStage.LeftOut(blocks, ranges, planned).SelectMany(b => b.Lines)
-            .Concat(ranges.Where(r => r.Row.Parser == "glossary").SelectMany(r => EntriesStage.ScanGlossary(r.BlocksIn(blocks), new HashSet<string>(StringComparer.Ordinal)).Dropped))
-            .Concat(ranges.Where(r => r.Row.Parser == "actions").SelectMany(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks))).SelectMany(b => b.Lines))
-            .Concat(ranges.Where(r => r.Row.Parser == "entries").SelectMany(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks))).SelectMany(b => b.Lines));
+        var leftOut = LeftOutLines(blocks, ranges, planned);
         // A pair is NOT left off because the taken text says it too: the day a setting's name reaches a taken range, a regeneration must not silently remove its pair. A game pair that the
         // left-out text also capitalizes is waived by name in the waiver file, with its reason.
         var game = ranges.SelectMany(r => r.Row.Paths.Concat(r.Row.Own)).SelectMany(p => p).SelectMany(PackWordCheck.CapitalPairs).ToHashSet();
@@ -796,6 +838,60 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         return leftOut.SelectMany(PackWordCheck.CapitalPairs).Distinct()
             .Where(p => !game.Contains(p) && !denied.Contains(p.First) && !denied.Contains(p.Second) && !(waivers?.Contains(p.First + " " + p.Second) ?? false)) // a waiver line of two words waives that pair
             .Select(p => Denylist.PairHash(p.First, p.Second)).Distinct(StringComparer.Ordinal).OrderBy(h => h, StringComparer.Ordinal).ToList();
+    }
+
+    private static IEnumerable<string> LeftOutLines(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<(int Start, int End)>? planned) =>
+        TakeStage.LeftOut(blocks, ranges, planned).SelectMany(b => b.Lines)
+            .Concat(ranges.Where(r => r.Row.Parser == "glossary").SelectMany(r => EntriesStage.ScanGlossary(r.BlocksIn(blocks), new HashSet<string>(StringComparer.Ordinal)).Dropped))
+            .Concat(ranges.Where(r => r.Row.Parser == "actions").SelectMany(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks))).SelectMany(b => b.Lines))
+            .Concat(ranges.Where(r => r.Row.Parser == "entries").SelectMany(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks))).SelectMany(b => b.Lines));
+
+    /// <summary>
+    /// The pair hashes a regeneration may drop without a waiver: the pairs in a take-list title (every `source:` line says them) and the pairs that have a word on the word denylist (the pair
+    /// list leaves those off, since the word gate fires first).
+    /// </summary>
+    public static HashSet<string> ExplainedPairs(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<(int Start, int End)>? planned, IReadOnlyCollection<string> deniedWords)
+    {
+        var denied = deniedWords.ToHashSet(StringComparer.Ordinal);
+        var titles = ranges.SelectMany(r => r.Row.Paths.Concat(r.Row.Own)).SelectMany(p => p).SelectMany(PackWordCheck.CapitalPairs);
+        var withDenied = LeftOutLines(blocks, ranges, planned).SelectMany(PackWordCheck.CapitalPairs).Where(p => denied.Contains(p.First) || denied.Contains(p.Second));
+        return titles.Concat(withDenied).Select(p => Denylist.PairHash(p.First, p.Second)).ToHashSet(StringComparer.Ordinal);
+    }
+
+    /// <summary>
+    /// The review of a regeneration from scratch (<c>denylist --fresh</c>): the hashes the file holds that the new list does not. <paramref name="neverDropped"/> (the words of the redaction rows'
+    /// spans and the names of the entries they drop) may not be among them, or the run fails. A hash a waiver lifts is counted as waived. For the pair list, <paramref name="explained"/> says which
+    /// of the others may go (see <see cref="ExplainedPairs"/>); any other pair that would vanish fails the run, so a regeneration never silently removes a pair because a range has since been taken.
+    /// The rest are counted as left-out text that was taken (or became common) since.
+    /// </summary>
+    public static FreshReview ReviewFresh(string file, IReadOnlySet<string> existing, IReadOnlyCollection<string> fresh, IReadOnlyCollection<string> lifted, IReadOnlySet<string> neverDropped, IReadOnlySet<string>? explained)
+    {
+        var next = fresh.ToHashSet(StringComparer.Ordinal);
+        next.ExceptWith(lifted);
+        var gone = existing.Where(h => !next.Contains(h)).ToList();
+        if (gone.Any(neverDropped.Contains))
+        {
+            throw new DegreesException($"{file}: --fresh would drop {gone.Count(neverDropped.Contains)} hash(es) of the words a redaction row removes or of a dropped entry's name.");
+        }
+
+        var waived = gone.Where(lifted.Contains).ToList();
+        var rest = gone.Except(waived).ToList();
+        var unexplained = explained == null ? new List<string>() : rest.Where(h => !explained.Contains(h)).ToList();
+        if (unexplained.Count > 0)
+        {
+            throw new DegreesException($"{file}: --fresh would drop {unexplained.Count} pair(s) that no waiver, take-list title or denied word explains; a pair is never removed because a range has since been taken.");
+        }
+
+        return new FreshReview(file, next.Count, next.Count(existing.Contains), next.Count(h => !existing.Contains(h)), waived.Count, explained == null ? rest.Count : 0, explained == null ? 0 : rest.Count);
+    }
+
+    /// <summary>--fresh writes the files from one book's run alone, so it refuses when the take-list has rows of another book too (that book's hashes would be dropped).</summary>
+    public static void RefuseFreshWithOtherBooks(IEnumerable<TakeRow> rows, string book)
+    {
+        if (rows.Any(r => r.Book != book))
+        {
+            throw new DegreesException("--fresh would drop the hashes another book's run merged in: the take-list has rows of another book.");
+        }
     }
 
     /// <summary>

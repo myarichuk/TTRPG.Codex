@@ -53,7 +53,8 @@ public class DegreesRulesPackTests : IAsyncLifetime
 
     [Theory]
     [InlineData("condition", 42)] // 46 bookmark children minus 4 sidebars, and 42 entry headers in the taken range
-    [InlineData("rule", 78)]      // chapter 1: the appendix's own intro rule, condition values, overriding conditions (3); chapter 4: the chapter's own introduction, the checks' own text, 4 sections of the checks,
+    [InlineData("rule", 116)]     // chapter 6a adds 38 (see EveryArmorShieldAndWeaponCarriesItsStatisticsAndTheCountsAreThePinnedOnes): the chapter's own text, 7 more sections' own text (5 with children, Shields and Attack Rolls), 12 of their
+                                  // children, Price, Item Level and Shoddy Items, 3 armor rules, the 3 statistics sections (their children are paragraphs), 6 of the weapon rules, the weapon traits and the kinds of ammunition. Before that: chapter 1: the appendix's own intro rule, condition values, overriding conditions (3); chapter 4: the chapter's own introduction, the checks' own text, 4 sections of the checks,
                                   // 17 skills' descriptions, the lead of the skills, 2 subsections of Performance, 4 of the general actions, one of Crafting and the income table (33); chapter 7: the chapter's
                                   // own introduction, the 15 spellcasting sections (6 of them with their own text before their children), their 17 children, and two boxes among the spells (35); and the
                                   // rules of casting a ritual: the section's own text, its 5 children (the checks section holds the secondary checks) and the box of costs by creature level among the rituals (7)
@@ -61,6 +62,8 @@ public class DegreesRulesPackTests : IAsyncLifetime
                                   // 147 focus spells and focus cantrips (147 headers = 147 trait lines = 147 level markers, 59 group headings = 59 bookmarks); 19 rituals (19 headers, and the book's list by rank names them)
     [InlineData("action", 50)]    // chapter 4: the 23 bookmark children (6 general actions and 17 skills) are the 6 action headings and 17 skill headings of their ranges; 50 action headings in all,
                                   // 48 trait lines and 29 action icons (two jumps have no trait line, the activities have no icon), and the overview table of actions lists the same 50 (name, proficiency) pairs
+    [InlineData("armor", 16)]     // chapter 6a: 12 suits of armor (13 rows of the two armor tables, less the row for wearing none, against 12 descriptions) and 4 shields (4 rows, 4 descriptions)
+    [InlineData("weapon", 83)]    // chapter 6a: 84 rows of the weapon tables, less the alchemical bomb (the gear chapter's) = 83; 87 descriptions, less the bomb and the 4 kinds of ammunition, plus the fist's row, which has none = 83
     [InlineData("feat", 126)]     // chapter 3: Chapter 5 of the book has no child bookmarks, so its entries are counted from the document three ways: the 126 header-font blocks that end in the
                                   // type's word and a level, the 126 trait-line blocks (one follows each header) and the 126 level markers read line by line. They agree, so no countsDiffer reason.
     [InlineData("trait", 125)]    // chapter 2: the glossary's trait definitions. The importer finds 129 definitions and 24 trait lines that only point to a page or another book
@@ -358,9 +361,102 @@ public class DegreesRulesPackTests : IAsyncLifetime
     }
 
     [Fact]
+    public void EveryArmorShieldAndWeaponCarriesItsStatistics_AndTheCountsAreThePinnedOnes()
+    {
+        // Chapter 6a, counted from the document two ways (see docs/DEGREES_IMPORT_DESIGN.md, section 17). Armor: 13 rows in the two armor tables, one of them the row for wearing none (no item and no
+        // description), against 12 descriptions. Shields: 4 rows and 4 descriptions. Weapons: 84 rows in the weapon tables, one of them the alchemical bomb (whose statistics are the gear chapter's, and whose
+        // description is left to it), against 87 descriptions, 4 of them kinds of ammunition (a rule: their prices sit under the weapons that fire them) and the fist's row has none of its own.
+        var armor = Entries("armor", PackId).ToList();
+        var shields = armor.Where(a => a.Properties.GetValueOrDefault("armorType")?.ToString() == "shield").ToList();
+        var body = armor.Except(shields).ToList();
+        var weapons = Entries("weapon", PackId).ToList();
+        Assert.Equal(16, armor.Count);
+        Assert.Equal(12, body.Count);
+        Assert.Equal(4, shields.Count);
+        Assert.Equal(83, weapons.Count);
+
+        // Body armor: the base armor class is 10 plus the printed bonus, the Dexterity cap and the category of its band.
+        Assert.All(body, a =>
+        {
+            Assert.Equal("pc > Chapter 6: Equipment > Armor > Armor Descriptions", a.Source);
+            Assert.True(a.Properties["armorBase"] is long, a.Id);
+            Assert.Contains(a.Properties["armorCategory"], new object[] { "unarmored", "light", "medium", "heavy" });
+        });
+        Assert.Equal(new[] { "heavy:3", "light:4", "medium:4", "unarmored:1" }, body.GroupBy(a => (string)a.Properties["armorCategory"]).OrderBy(g => g.Key, StringComparer.Ordinal).Select(g => $"{g.Key}:{g.Count()}"));
+        Assert.Equal(new[] { "chain:2", "cloth:2", "composite:2", "leather:3", "plate:3" }, body.GroupBy(a => (string)a.Properties["group"]).OrderBy(g => g.Key, StringComparer.Ordinal).Select(g => $"{g.Key}:{g.Count()}"));
+        Assert.Equal(new[]
+        {
+            "breastplate 14 1", "chain-mail 14 1", "chain-shirt 12 3", "explorer-s-clothing 10 5", "full-plate 16 0", "half-plate 15 1",
+            "hide-armor 13 2", "leather 11 4", "padded-armor 11 3", "scale-mail 13 2", "splint-mail 15 1", "studded-leather 12 3",
+        }, body.OrderBy(a => a.Id, StringComparer.Ordinal).Select(a => $"{a.Id} {a.Properties["armorBase"]} {a.Properties["armorDexCap"]}"));
+        // The suits and the weapons whose name the book prints with an item level.
+        Assert.Equal(new[] { "composite-longbow 1", "composite-shortbow 1", "full-plate 2", "half-plate 1", "splint-mail 1" },
+            armor.Concat(weapons).Where(e => e.Properties.ContainsKey("level")).OrderBy(e => e.Id, StringComparer.Ordinal).Select(e => $"{e.Id} {e.Properties["level"]}"));
+        // Four of the armor groups' traits are the armor traits: bulwark, comfort, flexible and noisy.
+        Assert.Equal(new[] { "bulwark", "comfort", "flexible", "noisy" }, body.SelectMany(a => ((IEnumerable<object>?)a.Properties.GetValueOrDefault("traits") ?? Array.Empty<object>()).Select(t => (string)t)).Distinct().Order());
+
+        // Shields: armorType shield with the bonus, hardness, hit points and broken threshold; no base armor class and no category.
+        Assert.All(shields, s =>
+        {
+            Assert.Equal("pc > Chapter 6: Equipment > Shields > Shield Descriptions", s.Source);
+            Assert.False(s.Properties.ContainsKey("armorBase"), s.Id);
+            Assert.False(s.Properties.ContainsKey("armorCategory"), s.Id);
+        });
+        Assert.Equal(new[] { "buckler 1 3 6 3", "steel-shield 2 5 20 10", "tower-shield 2 5 20 10", "wooden-shield 2 3 12 6" },
+            shields.OrderBy(s => s.Id, StringComparer.Ordinal).Select(s => $"{s.Id} {s.Properties["armorClassBonus"]} {s.Properties["hardness"]} {s.Properties["hp"]} {s.Properties["brokenThreshold"]}"));
+
+        // Weapons: the categories (the advanced one is new), melee and ranged, the groups, the hands, the reload of the ranged ones, the damage dice and types.
+        Assert.All(weapons, w =>
+        {
+            Assert.Equal("pc > Chapter 6: Equipment > Weapons > Weapon Descriptions", w.Source);
+            Assert.Contains("weapons", w.Tags);
+            Assert.True(w.Properties["use"] is IDictionary<string, object>, w.Id);
+            Assert.Equal(w.Properties["damage"]?.ToString(), ((IDictionary<string, object>)w.Properties["use"])["damage"]?.ToString());
+        });
+        string Counts(IEnumerable<string> keys) => string.Join(' ', keys.GroupBy(k => k).OrderBy(g => g.Key, StringComparer.Ordinal).Select(g => $"{g.Key}:{g.Count()}"));
+        Assert.Equal("advanced:4 martial:58 simple:20 unarmed:1", Counts(weapons.Select(w => (string)w.Properties["weaponCategory"])));
+        Assert.Equal(15, weapons.Count(w => w.Properties.ContainsKey("range")));
+        Assert.Equal(68, weapons.Count(w => !w.Properties.ContainsKey("range")));
+        Assert.Equal("melee:68 ranged:15", Counts(weapons.Select(w => ((IDictionary<string, object>)w.Properties["use"])["attack"]!.ToString()!)));
+        Assert.Equal("axe:5 bow:4 brawling:3 club:10 crossbow:4 dart:4 flail:5 hammer:4 knife:10 pick:3 polearm:6 shield:3 sling:3 spear:5 sword:14", Counts(weapons.Select(w => (string)w.Properties["group"])));
+        Assert.Equal("1:57 1+:4 2:22", Counts(weapons.Select(w => w.Properties["hands"]!.ToString()!)));
+        Assert.Equal("0:5 1:6 2:1 none:3", Counts(weapons.Where(w => w.Properties.ContainsKey("range")).Select(w => w.Properties.TryGetValue("reload", out var r) ? r!.ToString()! : "none"))); // none: the thrown weapons, drawn rather than reloaded
+        Assert.Equal("1:1 1d10:11 1d12:3 1d4:19 1d6:31 1d8:18", Counts(weapons.Select(w => w.Properties["damage"]!.ToString()!)));
+        Assert.Equal("bludgeoning:24 piercing:34 slashing:25", Counts(weapons.Select(w => (string)w.Properties["damageType"])));
+        Assert.Equal(11, weapons.Count(w => w.Properties.ContainsKey("ammunition")));
+        IEnumerable<object> TraitsOf(ContentEntry e) => (IEnumerable<object>?)e.Properties.GetValueOrDefault("traits") ?? Array.Empty<object>();
+        Assert.Equal(19, weapons.Count(w => TraitsOf(w).Contains("finesse")));
+        Assert.Equal(23, weapons.Count(w => TraitsOf(w).Contains("uncommon"))); // the rows under a rarity heading
+        Assert.Equal("simple", weapons.Single(w => w.Id == "dagger").Properties["weaponCategory"]);
+        // A finesse weapon may use Dexterity, a ranged one uses Dexterity and the rest use Strength (the book's attack rolls, Weapons > Attack Rolls).
+        Assert.All(weapons, w =>
+        {
+            var use = (IDictionary<string, object>)w.Properties["use"];
+            var finesse = TraitsOf(w).Contains("finesse");
+            var expected = use["attack"]?.ToString() == "ranged" ? "dex" : finesse ? "str,dex" : "str";
+            Assert.Equal(expected, string.Join(',', ((IEnumerable<object>)use["abilities"]).Select(a => a.ToString())));
+        });
+
+        // The traits of the table rows: six are the ancestries' (shipped as traits), the others have their definitions in the rule of the weapon traits and the armor statistics, one is the rarity.
+        var shippedTraits = Entries("trait", PackId).Select(t => t.Id).ToHashSet();
+        var keys = armor.Concat(weapons).SelectMany(e => ((IEnumerable<object>?)e.Properties.GetValueOrDefault("traits") ?? Array.Empty<object>()).Select(t => (string)t)).Distinct().Order().ToList();
+        Assert.Equal(38, keys.Count);
+        Assert.Equal(new[] { "dwarf", "elf", "gnome", "goblin", "halfling", "orc" }, keys.Where(shippedTraits.Contains));
+        var definitions = Entries("rule", PackId).Where(r => r.Id is "weapon-traits" or "armor-statistics").Select(r => r.Description!).ToList();
+        Assert.All(keys.Where(k => !shippedTraits.Contains(k) && k != "uncommon"), k =>
+            Assert.Contains(definitions, d => Regex.IsMatch(d, "(?im)^" + k.Replace("-", "[- ]") + ":")));
+
+        // The rules sections of the chapter (the first step takes the gear chapter out): 38 rules of the category Equipment, and the one that holds the kinds of ammunition.
+        var rules = Entries("rule", PackId).Where(r => (string)r.Properties["category"] == "Equipment").ToList();
+        Assert.Equal(38, rules.Count);
+        Assert.Equal(new[] { "arrow", "blowgun dart", "bolt", "sling bullet" }, new[] { "Arrow", "Blowgun Dart", "Bolt", "Sling Bullet" }.Where(n => rules.Single(r => r.Id == "kinds-of-ammunition").Description!.Contains($"**{n}.**", StringComparison.Ordinal)).Select(n => n.ToLowerInvariant()));
+        Assert.Equal(new[] { "armor-statistics", "shield-statistics", "weapon-statistics" }, rules.Where(r => r.Id.EndsWith("-statistics", StringComparison.Ordinal)).Select(r => r.Id).Order());
+    }
+
+    [Fact]
     public void ThePackHoldsNothingElse_AndTheReportAgrees()
     {
-        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7;
+        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83;
         Assert.Equal(total, AllEntries(PackId).Count());
 
         // import-report.yaml holds counts and ids only; its totals are the importer's own and must match what loaded.
@@ -375,7 +471,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     {
         Assert.All(AllEntries(PackId), e =>
         {
-            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9: ]+( > [A-Za-z ,-]+){0,4})$", e.Source!); // chapters 1 to 5b (the chapter title is the book's, with its number, then up to a section and a skill or a child section, and the rituals' rules are four deep; a title may have a comma or a hyphen); a later chapter widens this
+            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9: ]+( > [A-Za-z ,'-]+){0,4})$", e.Source!); // chapters 1 to 6a (the chapter title is the book's, with its number, then up to a section and a skill or a child section, and the rituals' rules are four deep; a title may have a comma or a hyphen); a later chapter widens this
             Assert.DoesNotContain("homebrew", e.Tags);
             Assert.DoesNotMatch(@"(?<!Chapter )\d", e.Source!); // no page numbers (a chapter's own number is not one)
         });
