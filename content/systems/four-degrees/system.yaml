@@ -119,6 +119,31 @@ entityTypes:
       - { key: frequency,    label: Frequency,    type: Text }
       - { key: trigger,      label: Trigger,      type: LongText }
       - { key: requirements, label: Requirements, type: LongText }
+  # A spell, a cantrip or a focus spell: what the book prints on its header (the rank, the kind word and the action cost), its trait line and its labelled lines.
+  # `kind` is the word the header sets before the rank (spell, cantrip or focus; a dropdown, not a yes/no, so the focus spells fit without another field), and `rank` is the
+  # number after it: a cantrip's printed number is the rank it is cast at. The text holds the rest, with the degrees of success and the heightened entries in their source order.
+  - type: spell
+    label: Spell
+    pluralLabel: Spells
+    folder: spells
+    icon: wand
+    summaryFields: [rank, kind]
+    filterFields: [rank, kind, traditions]
+    fields:
+      - { key: kind,         label: Kind,         type: Dropdown, options: [spell, cantrip, focus], description: "The word the header sets before the rank." }
+      - { key: rank,         label: Rank,         type: Number, description: "The printed rank (1 to 10). A cantrip's is the rank it is cast at." }
+      - { key: actions,      label: Actions,      type: Dropdown, options: [one, two, three, reaction, free], description: "The action cost in the header. Empty: a spell that takes minutes or hours (see Cast time)." }
+      - { key: traits,       label: Traits,       type: TagList, description: "Trait keys, as the Library's trait entries name them." }
+      - { key: traditions,   label: Traditions,   type: TagList, description: "The magical traditions whose lists hold the spell: arcane, divine, occult, primal." }
+      - { key: castTime,     label: Cast time,    type: Text, description: "The time a spell that takes longer than a turn needs." }
+      - { key: cost,         label: Cost,         type: Text }
+      - { key: trigger,      label: Trigger,      type: LongText }
+      - { key: requirements, label: Requirements, type: LongText }
+      - { key: range,        label: Range,        type: Text }
+      - { key: area,         label: Area,         type: Text }
+      - { key: targets,      label: Targets,      type: Text }
+      - { key: defense,      label: Defense,      type: Text }
+      - { key: duration,     label: Duration,     type: Text }
   - type: armor
     label: Armor
     pluralLabel: Armor
