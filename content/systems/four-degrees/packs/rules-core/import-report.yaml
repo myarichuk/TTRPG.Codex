@@ -9,7 +9,7 @@
   droppedOpenerBlocks: 0
   pageReferencesLeft: 0
   readPastBlocks: 131
-  redactionRows: [155, 156, 157, 158, 159, 160, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186]
+  redactionRows: [154, 155, 156, 157, 158, 159, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185]
   ids:
     - "dwarf-ancestry"
     - "elf-ancestry"
@@ -232,7 +232,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
-  redactionRows: [161, 162, 163]
+  redactionRows: [160, 161, 162]
   ids:
     - "ancestry-entries"
 - chapter: "backgrounds"
@@ -243,7 +243,7 @@
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
   readPastBlocks: 40
-  redactionRows: [232, 233, 234, 235, 236, 237, 238, 243, 244]
+  redactionRows: [231, 232, 233, 234, 235, 236, 237, 242, 243]
   ids:
     - "acolyte"
     - "acrobat"
@@ -295,6 +295,248 @@
   redactionRows: []
   ids:
     - "backgrounds"
+- chapter: "classes"
+  parser: "classes"
+  target: "class"
+  entries: 1
+  droppedSidebarBlocks: 35
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 17
+  redactionRows: [247, 249, 251, 252, 254, 256, 266]
+  ids:
+    - "fighter-class"
+- chapter: "classes"
+  parser: "classes"
+  target: "class"
+  entries: 1
+  droppedSidebarBlocks: 15
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 21
+  redactionRows: [248, 250, 253, 255, 257, 267, 268]
+  ids:
+    - "rogue-class"
+- chapter: "classes"
+  parser: "classes"
+  target: "feat"
+  entries: 92
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "advanced-weapon-training"
+    - "advantageous-assault"
+    - "aggressive-block"
+    - "agile-grace"
+    - "assisting-shot"
+    - "barreling-charge"
+    - "blade-brake"
+    - "blind-fight-fighter"
+    - "boundless-reprisals"
+    - "brutal-finish"
+    - "brutish-shove"
+    - "certain-strike"
+    - "combat-assessment"
+    - "combat-grab"
+    - "crashing-slam"
+    - "cut-from-the-air"
+    - "dashing-strike"
+    - "dazing-blow"
+    - "debilitating-shot"
+    - "desperate-finisher"
+    - "determination"
+    - "disarming-stance"
+    - "disarming-twist"
+    - "disorienting-opening"
+    - "disruptive-stance"
+    - "double-shot"
+    - "double-slice"
+    - "dual-handed-assault"
+    - "dueling-dance"
+    - "dueling-parry"
+    - "dueling-riposte"
+    - "exacting-strike"
+    - "fearsome-brute"
+    - "felling-strike"
+    - "flinging-charge"
+    - "flinging-shove"
+    - "furious-focus"
+    - "graceful-poise"
+    - "guardian-s-deflection"
+    - "guiding-finish"
+    - "guiding-riposte"
+    - "impossible-volley"
+    - "improved-dueling-riposte"
+    - "improved-reflexive-shield"
+    - "improved-twin-riposte"
+    - "incredible-aim"
+    - "incredible-ricochet"
+    - "intimidating-strike"
+    - "lightning-swap"
+    - "lunge"
+    - "lunging-stance"
+    - "master-of-many-styles"
+    - "mirror-shield"
+    - "mobile-shot-stance"
+    - "multishot-stance"
+    - "opening-stance"
+    - "overpowering-charge"
+    - "overwhelming-blow"
+    - "paragon-s-guard"
+    - "parting-shot"
+    - "point-blank-stance"
+    - "positioning-assault"
+    - "powerful-shove"
+    - "quick-reversal"
+    - "quick-shield-block"
+    - "reactive-shield"
+    - "rebounding-toss"
+    - "reflexive-shield"
+    - "resounding-bravery"
+    - "revealing-stab"
+    - "ricochet-stance-fighter"
+    - "savage-critical"
+    - "shatter-defenses"
+    - "shield-warden"
+    - "shielded-stride"
+    - "slam-down"
+    - "sleek-reposition"
+    - "smash-from-the-air"
+    - "snagging-strike"
+    - "sudden-charge"
+    - "sudden-leap"
+    - "swipe"
+    - "tactical-reflexes"
+    - "triple-shot"
+    - "twin-parry"
+    - "twin-riposte"
+    - "twinned-defense"
+    - "two-weapon-flurry"
+    - "ultimate-flexibility"
+    - "vicious-swing"
+    - "weapon-supremacy"
+    - "whirlwind-strike"
+- chapter: "classes"
+  parser: "classes"
+  target: "feat"
+  entries: 81
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "analyze-weakness"
+    - "anticipate-ambush"
+    - "blank-slate"
+    - "blind-fight-rogue"
+    - "bloody-debilitation"
+    - "brutal-beating"
+    - "bullseye"
+    - "clever-gambit"
+    - "cloud-step"
+    - "cognitive-loophole"
+    - "critical-debilitation"
+    - "defensive-roll"
+    - "delay-trap"
+    - "dispelling-slice"
+    - "distracting-feint"
+    - "dread-striker"
+    - "fantastic-leap"
+    - "far-throw"
+    - "felling-shot"
+    - "gang-up"
+    - "head-stomp"
+    - "hidden-paragon"
+    - "implausible-infiltration"
+    - "implausible-purchase"
+    - "impossible-striker"
+    - "improved-poison-weapon"
+    - "inspired-stratagem"
+    - "instant-opening"
+    - "leave-an-opening"
+    - "light-step"
+    - "methodical-debilitations"
+    - "mobility"
+    - "mug-feat"
+    - "nimble-dodge"
+    - "nimble-roll"
+    - "nimble-strike"
+    - "opportune-backstab"
+    - "overextending-feint"
+    - "perfect-distraction"
+    - "plant-evidence"
+    - "poison-weapon"
+    - "powerful-sneak"
+    - "precise-debilitations"
+    - "predictable"
+    - "predictive-purchase"
+    - "preparation"
+    - "quick-draw"
+    - "reactive-distraction"
+    - "reactive-interference"
+    - "reactive-pursuit"
+    - "reconstruct-the-scene"
+    - "ricochet-feint"
+    - "ricochet-stance-rogue"
+    - "sabotage"
+    - "scoundrel-s-surprise"
+    - "scout-s-warning"
+    - "sense-the-unseen"
+    - "shove-down"
+    - "sidestep"
+    - "skirmish-strike"
+    - "sly-disarm"
+    - "sly-striker"
+    - "sneak-adept"
+    - "spring-from-the-shadows"
+    - "stay-down"
+    - "strong-arm"
+    - "swift-elusion"
+    - "swipe-souvenir"
+    - "tactical-debilitations"
+    - "tactical-entry"
+    - "the-harder-they-fall"
+    - "trap-finder"
+    - "tumble-behind"
+    - "twin-distraction"
+    - "twin-feint"
+    - "twist-the-knife"
+    - "unbalancing-blow"
+    - "underhanded-assault"
+    - "vicious-debilitations"
+    - "watch-your-back"
+    - "you-re-next"
+- chapter: "classes"
+  parser: "classes"
+  target: "subclass"
+  entries: 4
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "mastermind"
+    - "ruffian"
+    - "scoundrel"
+    - "thief"
+- chapter: "classes"
+  parser: "rules"
+  target: "rule"
+  entries: 7
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  redactionRows: [258, 259, 260, 261, 262, 263, 264, 265]
+  ids:
+    - "advancement-table"
+    - "class-entries"
+    - "class-features"
+    - "class-key-attribute"
+    - "hit-points"
+    - "initial-proficiencies"
+    - "playing-the-class"
 - chapter: "conditions"
   parser: "entries"
   target: "condition"
@@ -365,7 +607,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 0
   pageReferencesLeft: 0
-  redactionRows: [110]
+  redactionRows: [109]
   ids:
     - "breastplate"
     - "chain-mail"
@@ -386,7 +628,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 0
   pageReferencesLeft: 0
-  redactionRows: [106, 107, 108, 109]
+  redactionRows: [105, 106, 107, 108]
   ids:
     - "buckler"
     - "steel-shield"
@@ -399,7 +641,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 0
   pageReferencesLeft: 0
-  redactionRows: [141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154]
+  redactionRows: [140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153]
   ids:
     - "adventurer-s-pack"
     - "alchemist-s-lab"
@@ -555,7 +797,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 0
   pageReferencesLeft: 0
-  redactionRows: [129, 130, 133]
+  redactionRows: [128, 129, 132]
   ids:
     - "arbalest"
     - "bastard-sword"
@@ -647,7 +889,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
-  redactionRows: [116]
+  redactionRows: [115]
   ids:
     - "equipment"
 - chapter: "equipment"
@@ -657,7 +899,7 @@
   droppedSidebarBlocks: 20
   droppedOpenerBlocks: 0
   pageReferencesLeft: 0
-  redactionRows: [115, 117, 118, 119]
+  redactionRows: [114, 116, 117, 118]
   ids:
     - "bulk"
     - "bulk-conversions-for-different-sizes"
@@ -698,7 +940,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
-  redactionRows: [111, 112, 120, 121, 122, 123, 124, 125, 126, 134]
+  redactionRows: [110, 111, 119, 120, 121, 122, 123, 124, 125, 133]
   ids:
     - "armor-statistics"
     - "shield-statistics"
@@ -710,7 +952,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
-  redactionRows: [114, 131, 132]
+  redactionRows: [113, 130, 131]
   ids:
     - "attacking-with-a-shield"
     - "critical-hits"
@@ -727,7 +969,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 0
   pageReferencesLeft: 0
-  redactionRows: [113, 127, 128]
+  redactionRows: [112, 126, 127]
   ids:
     - "attack-rolls"
     - "weapon-traits"
@@ -738,7 +980,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
-  redactionRows: [135, 136, 137, 138, 139, 140]
+  redactionRows: [134, 135, 136, 137, 138, 139]
   ids:
     - "alchemical-gear"
     - "animals"
@@ -1030,7 +1272,7 @@
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
   readPastBlocks: 5
-  redactionRows: [239, 240, 241, 242, 246, 247]
+  redactionRows: [238, 239, 240, 241, 245, 246]
   ids:
     - "languages"
 - chapter: "languages"
@@ -1051,7 +1293,7 @@
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
   readPastBlocks: 5
-  redactionRows: [39, 41, 44, 61, 62]
+  redactionRows: [39, 41, 44, 61]
   ids:
     - "decipher-writing"
     - "earn-income"
@@ -1067,7 +1309,7 @@
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
   readPastBlocks: 11
-  redactionRows: [35, 36, 37, 38, 40, 42, 43, 45, 46, 47, 48, 49, 50, 53, 54, 55, 60, 63]
+  redactionRows: [35, 36, 37, 38, 40, 42, 43, 45, 46, 47, 48, 49, 50, 53, 54, 55, 60, 62]
   ids:
     - "administer-first-aid"
     - "balance"
@@ -1230,7 +1472,7 @@
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
   readPastBlocks: 3
-  redactionRows: [72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88]
+  redactionRows: [71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87]
   ids:
     - "acid-grip"
     - "aerial-form"
@@ -1563,7 +1805,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
-  redactionRows: [91, 94, 95, 99, 100, 101, 102, 103, 104, 105]
+  redactionRows: [90, 93, 94, 98, 99, 100, 101, 102, 103, 104]
   ids:
     - "agile-feet"
     - "allegro"
@@ -1719,7 +1961,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 0
   pageReferencesLeft: 0
-  redactionRows: [89, 90, 92, 93, 97, 98]
+  redactionRows: [88, 89, 91, 92, 96, 97]
   ids:
     - "animate-object"
     - "atone"
@@ -1757,7 +1999,7 @@
   droppedSidebarBlocks: 30
   droppedOpenerBlocks: 0
   pageReferencesLeft: 0
-  redactionRows: [64, 65, 66, 67, 68, 69, 70, 71]
+  redactionRows: [63, 64, 65, 66, 67, 68, 69, 70]
   ids:
     - "areas"
     - "basic-saving-throws"
@@ -1798,7 +2040,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
-  redactionRows: [96]
+  redactionRows: [95]
   ids:
     - "casting-rituals"
     - "checks"
@@ -1823,7 +2065,7 @@
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
-  redactionRows: [208, 209, 210, 211]
+  redactionRows: [207, 208, 209, 210]
   ids:
     - "heritage-limits"
     - "playing-a-versatile-heritage"
@@ -1888,7 +2130,7 @@
   droppedOpenerBlocks: 0
   pageReferencesLeft: 0
   readPastBlocks: 34
-  redactionRows: [187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 245]
+  redactionRows: [186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 244]
   ids:
     - "changeling-heritage"
     - "half-elf"

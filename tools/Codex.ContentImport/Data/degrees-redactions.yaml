@@ -430,13 +430,6 @@ rows:
     text: "The GM might change these depending on the circumstances, but the most common performance-based traits are listed below."
     reason: "A word lost its hyphen at a line end in the extraction; the sentence is restored."
   - book: pc
-    entry: recall-knowledge
-    field: description
-    span: { sha256: "d652132927c3de69dbd52b001c8fc0cc6d33a21b80ee404e1fbe35130fded23b", length: 129 }
-    action: replace
-    text: "The GM answers your question truthfully and either tells you additional information or context, or answers one follow-up question."
-    reason: "A word lost its hyphen at a line end in the extraction; the sentence is restored."
-  - book: pc
     entry: practicing-a-trade
     field: description
     span: { sha256: "97774a2adb43504d326fd1c589d9fe425d499c75b2afcb5e95eacafef047ea18", length: 117 }
@@ -1705,3 +1698,145 @@ rows:
     action: replace
     text: "Ask your GM if there's a language you want to select."
     reason: "A sentence that pointed to lists the pack does not hold; the mechanic (the GM decides) is kept."
+  # Chapter 8a (the class framework, fighter, rogue): sentences that point to a page, a chapter or another book. The mechanic is kept; the pointer goes.
+  - book: pc
+    entry: fighter-class
+    field: feature:ancestry-and-background
+    span: { sha256: "33d3f1c986823c419e2fd26746e1bbf26fba610230f0664d10a579cb4f40bc2f", length: 33 }
+    action: cut
+    reason: "A sentence that sent the reader to another chapter; the mechanic (the ancestry and background give their benefits) is kept."
+  - book: pc
+    entry: rogue-class
+    field: feature:ancestry-and-background
+    span: { sha256: "33d3f1c986823c419e2fd26746e1bbf26fba610230f0664d10a579cb4f40bc2f", length: 33 }
+    action: cut
+    reason: "A sentence that sent the reader to another chapter; the mechanic (the ancestry and background give their benefits) is kept."
+  - book: pc
+    entry: fighter-class
+    field: feature:fighter-feats
+    span: { sha256: "5389bfc2462fc43e11ab9fd58eec21fd45900de5ed3b438780a9ffe73808399d", length: 24 }
+    action: cut
+    reason: "A sentence that pointed to a page; the mechanic (a class feat at 1st level and every even level) is kept."
+  - book: pc
+    entry: rogue-class
+    field: feature:rogue-feats
+    span: { sha256: "2138976321a99a401864d9b5b909789fce6f80aea05611ad43ee5bc4efd50763", length: 24 }
+    action: cut
+    reason: "A sentence that pointed to a page; the mechanic (a class feat at 1st level and every even level) is kept."
+  - book: pc
+    entry: fighter-class
+    field: feature:shield-block
+    span: { sha256: "0ee87604d504a54734b8edd1eb710990577d7c0e90d05706335703e892c526fc", length: 116 }
+    action: replace
+    text: "You gain the Shield Block general feat, a reaction that lets you reduce damage with your shield."
+    reason: "A sentence that pointed to a page for a feat the pack holds; the feat is named, and the mechanic is kept."
+  - book: pc
+    entry: fighter-class
+    field: feature:skill-feats
+    span: { sha256: "d2612a12d3af5206b9b6a16e920834304e4d2a150f3bc63f7092adcb41c71664", length: 63 }
+    action: replace
+    text: "Skill feats have the skill trait."
+    reason: "A sentence that pointed to another chapter; what makes a feat a skill feat is kept."
+  - book: pc
+    entry: rogue-class
+    field: feature:skill-feats
+    span: { sha256: "d2612a12d3af5206b9b6a16e920834304e4d2a150f3bc63f7092adcb41c71664", length: 63 }
+    action: replace
+    text: "Skill feats have the skill trait."
+    reason: "A sentence that pointed to another chapter; what makes a feat a skill feat is kept."
+  - book: pc
+    entry: fighter-class
+    field: feature:general-feats
+    span: { sha256: "851b1a2beca02ef8d7fff42eee569bbf638cbe2b6fd132e38072d27274393e0f", length: 38 }
+    action: cut
+    reason: "A sentence that pointed to another chapter; the mechanic (a general feat at 3rd level and every 4 levels) is kept."
+  - book: pc
+    entry: rogue-class
+    field: feature:general-feats
+    span: { sha256: "851b1a2beca02ef8d7fff42eee569bbf638cbe2b6fd132e38072d27274393e0f", length: 38 }
+    action: cut
+    reason: "A sentence that pointed to another chapter; the mechanic (a general feat at 3rd level and every 4 levels) is kept."
+  - book: pc
+    entry: fighter-class
+    field: feature:ancestry-feats
+    span: { sha256: "0248c47acce847af41fcdc57e922a39605fe2041f46237c1cdc7cd043b466ae6", length: 95 }
+    action: replace
+    text: "The ancestry feats available to you are those of your ancestry."
+    reason: "A sentence that pointed to another chapter; the mechanic (the feats are the ancestry's) is kept."
+  - book: pc
+    entry: rogue-class
+    field: feature:ancestry-feats
+    span: { sha256: "0248c47acce847af41fcdc57e922a39605fe2041f46237c1cdc7cd043b466ae6", length: 95 }
+    action: replace
+    text: "The ancestry feats available to you are those of your ancestry."
+    reason: "A sentence that pointed to another chapter; the mechanic (the feats are the ancestry's) is kept."
+  - book: pc
+    entry: class-features
+    field: description
+    span: { sha256: "dda9470a7feb5b075c5201e2de283fc5da7aceb9f7f9e621473efed28d9c2dde", length: 124 }
+    action: replace
+    text: "Unless the specific ability states otherwise, such decisions can't be changed without retraining."
+    reason: "A parenthesis that pointed to a page; the mechanic is kept."
+  - book: pc
+    entry: class-features
+    field: description
+    span: { sha256: "698ac8334bafdf01d8453d971a7a4b47f1db20f139a0da52ae8ed0dd1ffc443d", length: 68 }
+    action: cut
+    reason: "A sentence that only pointed to another chapter and a page."
+  - book: pc
+    entry: class-features
+    field: description
+    span: { sha256: "45eb880108fe460826128757ab84198a01134384bf23dde3b5264e54758b68ed", length: 50 }
+    action: cut
+    reason: "A sentence that only pointed to another chapter."
+  - book: pc
+    entry: class-features
+    field: description
+    span: { sha256: "0599481e5ba813d0e06514dc4cad9156792c42304b24c5f2289d6988186c8b42", length: 101 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: class-features
+    field: description
+    span: { sha256: "80823901af68619ba271ce71546d6240d563f60f63ca7af40454fe37a53a251c", length: 90 }
+    action: replace
+    text: "Ancestry feats are detailed in each ancestry entry."
+    reason: "A sentence that pointed to a chapter and a page; the mechanic is kept."
+  - book: pc
+    entry: class-key-attribute
+    field: description
+    span: { sha256: "bf150843be6b821d2d5710034c133f3343867d70ee53306985f710e6ad469e6f", length: 45 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: hit-points
+    field: description
+    span: { sha256: "ccf23e43b0ff56578bacddc07573cac94697129a96cac32227d5a25dd366b9b3", length: 112 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: initial-proficiencies
+    field: description
+    span: { sha256: "76f9f83cf2475cd90547e3bcf4a77bd2259840cb71cb4a85bf4b5554c011fa6a", length: 46 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: dual-handed-assault
+    field: description
+    span: { sha256: "f69f5e8ab4133d7c31f68e38c53111ba631bef3805966c8df128f12da8f3fa10", length: 50 }
+    action: cut
+    reason: "A parenthesis that only pointed to a page."
+  - book: pc
+    entry: poison-weapon
+    field: description
+    span: { sha256: "29b17ecb722ea8dba29c951d99d98653f2f55de79e5dc430a8e52ba1628166ac", length: 178 }
+    action: replace
+    text: "This poison can be one of the simple injury poisons you can create due to this feat (see Special), or another contact or injury poison you've acquired."
+    reason: "A parenthesis that named another book; the mechanic is kept."
+  - book: pc
+    entry: poison-weapon
+    field: special
+    span: { sha256: "62db5c8344376fd4790ce18709e580d1349e9b5310b052236b6e5ecd08b5842a", length: 124 }
+    action: replace
+    text: "These follow the rules for injury poisons, except that they deal 1d4 poison damage with no saving throw."
+    reason: "A parenthesis that named another book and a page; the mechanic is kept."

@@ -54,7 +54,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Theory]
     [InlineData("condition", 42)] // 46 bookmark children minus 4 sidebars, and 42 entry headers in the taken range
     [InlineData("gear", 124)]     // chapter 6b: 124 rows of the gear tables (counted again in EveryGearEntryCarriesItsStatisticsAndTheCountsAreThePinnedOnes)
-    [InlineData("rule", 140)]     // chapter 7b adds 7 (the versatile heritages' own text, its two sections about limits and about playing one, the mixed-ancestry introduction, the backgrounds' introduction, the languages' own text and the sign language); chapter 7a adds 1 (the general rules of an ancestry's entry: its nine children are paragraphs of one rule); chapter 6b adds 16 (the gear's section texts, price tables and the one sidebar the take-list names: 15 sections and the wheelchair rules); chapter 6a adds 38 (see EveryArmorShieldAndWeaponCarriesItsStatisticsAndTheCountsAreThePinnedOnes): the chapter's own text, 7 more sections' own text (5 with children, Shields and Attack Rolls), 12 of their
+    [InlineData("rule", 147)]     // chapter 8a adds 7 (how a class entry is read: its own text and the sections Playing the Class, Key Attribute (named Class Key Attribute: the skills chapter has a rule of that title), Hit Points, Initial Proficiencies, Advancement Table and Class Features; the class summaries are left out); chapter 7b adds 7 (the versatile heritages' own text, its two sections about limits and about playing one, the mixed-ancestry introduction, the backgrounds' introduction, the languages' own text and the sign language); chapter 7a adds 1 (the general rules of an ancestry's entry: its nine children are paragraphs of one rule); chapter 6b adds 16 (the gear's section texts, price tables and the one sidebar the take-list names: 15 sections and the wheelchair rules); chapter 6a adds 38 (see EveryArmorShieldAndWeaponCarriesItsStatisticsAndTheCountsAreThePinnedOnes): the chapter's own text, 7 more sections' own text (5 with children, Shields and Attack Rolls), 12 of their
                                   // children, Price, Item Level and Shoddy Items, 3 armor rules, the 3 statistics sections (their children are paragraphs), 6 of the weapon rules, the weapon traits and the kinds of ammunition. Before that: chapter 1: the appendix's own intro rule, condition values, overriding conditions (3); chapter 4: the chapter's own introduction, the checks' own text, 4 sections of the checks,
                                   // 17 skills' descriptions, the lead of the skills, 2 subsections of Performance, 4 of the general actions, one of Crafting and the income table (33); chapter 7: the chapter's
                                   // own introduction, the 15 spellcasting sections (6 of them with their own text before their children), their 17 children, and two boxes among the spells (35); and the
@@ -67,7 +67,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [InlineData("weapon", 83)]    // chapter 6a: 84 rows of the weapon tables, less the alchemical bomb (the gear chapter's) = 83; 87 descriptions, less the bomb and the 4 kinds of ammunition, plus the fist's row, which has none = 83
     [InlineData("background", 40)] // chapter 7b: 40 headings that end in the background word, 40 sentences that open a background's rules and 40 that grant a skill feat; the chapter prints no list of them
     [InlineData("heritage", 49)]  // chapter 7b adds the 4 versatile heritages (two kinds, and the two of the mixed-ancestry section: 4 lore bookmark pairs, 4 heritage bookmarks); chapter 7a: the bookmark children of the eight heritages sections (5, 6, 5, 5, 6, 2, 9 and 7) are the heritage headings of their ranges, and the entries parsed
-    [InlineData("feat", 312)]     // chapter 7b adds the 43 feats of the versatile heritages (EveryVersatileHeritageHasItsFeats_AndEveryBackgroundItsFields); chapter 7a adds the 143 ancestry feats (EveryAncestryFeatSitsUnderItsLevelBand_AndTheCountsAreThePinnedOnes); chapter 3: Chapter 5 of the book has no child bookmarks, so its entries are counted from the document three ways: the 126 header-font blocks that end in the
+    [InlineData("feat", 485)]     // chapter 8a adds the 173 class feats of the fighter (92) and the rogue (81): feat headers = trait lines = level markers = the printed list of the class's feats (EveryClassCarriesItsStatisticsAndFeatureRows_AndTheCountsAreThePinnedOnes); chapter 7b adds the 43 feats of the versatile heritages (EveryVersatileHeritageHasItsFeats_AndEveryBackgroundItsFields); chapter 7a adds the 143 ancestry feats (EveryAncestryFeatSitsUnderItsLevelBand_AndTheCountsAreThePinnedOnes); chapter 3: Chapter 5 of the book has no child bookmarks, so its entries are counted from the document three ways: the 126 header-font blocks that end in the
                                   // type's word and a level, the 126 trait-line blocks (one follows each header) and the 126 level markers read line by line. They agree, so no countsDiffer reason.
     [InlineData("trait", 125)]    // chapter 2: the glossary's trait definitions. The importer finds 129 definitions and 24 trait lines that only point to a page or another book
                                   // (153), and reads 153 occurrences of the trait mark in the range: the two counts agree, so no countsDiffer reason is needed.
@@ -767,10 +767,96 @@ public class DegreesRulesPackTests : IAsyncLifetime
         Assert.DoesNotContain("Golarion", string.Join(' ', rules.Select(r => r.Description)));
     }
 
+    /// <summary>
+    /// The class framework, the fighter and the rogue (chapter 8a). A class's numbers are the statistics box and initial proficiencies the book prints (a choice of two key attributes is written a|b; the rogue's box says
+    /// "Dexterity or other", and its subclasses, the rackets, hold the other options), its feature rows are the class features under their own headings (the advancement table agrees with them, which the importer checks:
+    /// 24 and 28 rows), and its feats are counted from the document four ways (headers, trait lines, level markers and the printed list of the class's feats; 92 and 81). Each class is named like a shipped trait, so it takes
+    /// the suffix of its type; two feats are named like one of the other class's and take their class as a suffix. Every grant to a ranked list names a list and entries the sheet has.
+    /// </summary>
+    [Fact]
+    public void EveryClassCarriesItsStatisticsAndFeatureRows_AndTheCountsAreThePinnedOnes()
+    {
+        var classes = Entries("class", PackId).OrderBy(c => c.Id, StringComparer.Ordinal).ToList();
+        Assert.Equal(new[] { "fighter-class", "rogue-class" }, classes.Select(c => c.Id));
+        Assert.All(classes, c => Assert.Matches(@"^pc > Chapter 3: Classes > (Fighter|Rogue)$", c.Source!));
+        Assert.Equal(new long[] { 10, 8 }, classes.Select(c => Convert.ToInt64(c.Properties["hp"])));
+        Assert.Equal(new[] { "str|dex", "dex" }, classes.Select(c => (string)c.Properties["keyAttribute"]));
+        Assert.Equal(new[] { "str|dex" }, Words(classes[0], "boosts"));
+        Assert.Equal(new[] { "dex" }, Words(classes[1], "boosts"));
+        Assert.Equal(new[] { "wis" }, Words(classes[0], "savingThrows"));
+        Assert.Equal(new[] { "con" }, Words(classes[1], "savingThrows"));
+        Assert.Equal(new long[] { 3, 7 }, classes.Select(c => Convert.ToInt64(c.Properties["extraSkills"])));
+
+        // The feature rows: 24 and 28 (the advancement table lists 20 levels for each), at the levels the headings give; each has a name, a level and a text.
+        var rows = classes.Select(c => ((IEnumerable<object>)c.Properties["features"]).Cast<IDictionary<string, object>>().ToList()).ToList();
+        Assert.Equal(new[] { 24, 28 }, rows.Select(r => r.Count));
+        Assert.All(rows.SelectMany(r => r), r =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace((string)r["name"]));
+            Assert.InRange(Convert.ToInt64(r["level"]), 1, 20);
+            Assert.False(string.IsNullOrWhiteSpace((string)r["description"]));
+            Assert.DoesNotMatch(@"\bpages? \d|Chapter \d", (string)r["description"]);
+        });
+        Assert.Equal(new[] { 1, 1, 1, 1, 1, 1, 2, 3, 3, 3, 5, 5, 7, 7, 9, 9, 11, 11, 13, 15, 15, 15, 17, 19 }, rows[0].Select(r => (int)Convert.ToInt64(r["level"])));
+        Assert.Equal(new[] { 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 5, 5, 7, 7, 7, 9, 9, 11, 13, 13, 13, 13, 15, 15, 17, 19, 19 }, rows[1].Select(r => (int)Convert.ToInt64(r["level"])));
+
+        // Every grant names a ranked list of the sheet and entries the list has, and a rank of the system's four (a skill grant names a skill of the sheet).
+        var lists = _system.SheetRules!.Ranked.ToDictionary(l => l.Key, l => l.Keys().Select(k => k.Key).ToList(), StringComparer.Ordinal);
+        var grants = rows.SelectMany(r => r).Concat(Entries("subclass", PackId).SelectMany(s => ((IEnumerable<object>)s.Properties["features"]).Cast<IDictionary<string, object>>()))
+            .Where(r => r.ContainsKey("adds")).SelectMany(r => ((IEnumerable<object>)r["adds"]).Cast<IDictionary<string, object>>()).ToList();
+        Assert.NotEmpty(grants);
+        Assert.All(grants, g =>
+        {
+            Assert.Contains((string)g["rank"], new[] { "trained", "expert", "master", "legendary" });
+            var to = (string)g["to"];
+            var entries = g.TryGetValue("entries", out var e) ? ((IEnumerable<object>)e).Select(x => (string)x).ToList() : new List<string>();
+            if (to == "skills") Assert.All(entries, k => Assert.Contains(k, SkillKeys));
+            else if (to == "saves") Assert.All(entries, k => Assert.Contains(k, AttributeWords));
+            else
+            {
+                Assert.Contains(to, lists.Keys);
+                Assert.All(entries, k => Assert.Contains(k, lists[to]));
+            }
+        });
+
+        // The rackets (subclasses): four, each naming the rogue; the three that print another key attribute hold it, the thief prints none.
+        var rackets = Entries("subclass", PackId).OrderBy(s => s.Id, StringComparer.Ordinal).ToList();
+        Assert.Equal(new[] { "mastermind", "ruffian", "scoundrel", "thief" }, rackets.Select(s => s.Id));
+        Assert.All(rackets, s => Assert.Equal("rogue-class", (string)s.Properties["class"]));
+        Assert.All(rackets, s => Assert.Equal("pc > Chapter 3: Classes > Rogue > Rogue's Racket", s.Source));
+        Assert.Equal(new[] { "int", "str", "cha" }, rackets.Where(s => s.Properties.ContainsKey("keyAttribute")).Select(s => (string)s.Properties["keyAttribute"]));
+        Assert.Equal(new[] { 1, 3, 1, 1 }, rackets.Select(s => ((IEnumerable<object>)s.Properties["features"]).Count()));
+
+        // The class feats: 92 and 81, by level (1, 2, 4, ... 20), each carrying its class's key, and the labelled fields as the book prints them.
+        var feats = Entries("feat", PackId).Where(f => f.Source!.StartsWith("pc > Chapter 3: Classes", StringComparison.Ordinal)).ToList();
+        Assert.Equal(173, feats.Count);
+        Assert.All(feats, f => Assert.Matches(@"^pc > Chapter 3: Classes > (Fighter|Rogue) > (Fighter|Rogue) Feats$", f.Source!));
+        var levels = new long[] { 1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 };
+        foreach (var (key, perLevel) in new[] { ("fighter", new[] { 8, 11, 10, 12, 10, 13, 8, 8, 6, 3, 3 }), ("rogue", new[] { 7, 8, 11, 10, 13, 6, 8, 5, 7, 3, 3 }) })
+        {
+            var own = feats.Where(f => Words(f, "traits").Contains(key)).ToList();
+            Assert.Equal(perLevel.Sum(), own.Count);
+            Assert.Equal(perLevel, levels.Select(l => own.Count(f => (long)f.Properties["level"] == l)));
+        }
+
+        Assert.Equal(new[] { 66, 3, 27, 51, 0, 7 }, new[] { "prerequisites", "frequency", "trigger", "requirements", "cost", "special" }.Select(k => feats.Count(f => f.Properties.ContainsKey(k))));
+        Assert.Equal(109, feats.Count(f => f.Properties.ContainsKey("actions")));
+        // The trait line names shipped traits, except three words the glossary has no definition for (the glossary's list of traits does not hold them, so they stay as written).
+        var traitKeys = Entries("trait", PackId).Select(t => t.Id).ToHashSet();
+        Assert.Equal(new[] { "flourish", "press", "stance" }, feats.SelectMany(f => Words(f, "traits")).Where(t => !traitKeys.Contains(t)).Distinct().Order());
+        Assert.All(feats, f => Assert.Single(Words(f, "traits").Intersect(new[] { "fighter", "rogue" })));
+        Assert.Equal(new[] { "blind-fight-fighter", "blind-fight-rogue", "ricochet-stance-fighter", "ricochet-stance-rogue" }, feats.Where(f => f.Id.EndsWith("-fighter") || f.Id.EndsWith("-rogue")).Select(f => f.Id).Order());
+        Assert.All(feats, f => Assert.False(Entries("feat", PackId).Any(o => o != f && o.Id == f.Id)));
+        // One class feat takes the suffix of its type, because a gear entry has its plain id (the first feat of the pack to do so).
+        Assert.Equal(new[] { "mug-feat" }, feats.Where(f => f.Id.EndsWith("-feat", StringComparison.Ordinal)).Select(f => f.Id));
+        // A feat that gives a reaction of its own sets it out as the class features' actions are: its name with the action word, a traits line, and a labelled line each.
+        Assert.Contains("**Inspired Stratagem (reaction).**\n**Traits.** fortune linguistic\n**Trigger.**", feats.Single(f => f.Id == "inspired-stratagem").Description);
+    }
+
     [Fact]
     public void ThePackHoldsNothingElse_AndTheReportAgrees()
     {
-        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83 + 16 + 124 + 1 + 8 + 45 + 143 + 4 + 43 + 7 + 40; // 16 gear rules and 124 gear entries (chapter 6b); then the ancestry rules, 8 ancestries, 45 heritages and 143 ancestry feats (chapter 7a); then 4 versatile heritages, their 43 feats, 7 rules and 40 backgrounds (chapter 7b)
+        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83 + 16 + 124 + 1 + 8 + 45 + 143 + 4 + 43 + 7 + 40 + 7 + 2 + 4 + 173; // 16 gear rules and 124 gear entries (chapter 6b); then the ancestry rules, 8 ancestries, 45 heritages and 143 ancestry feats (chapter 7a); then 4 versatile heritages, their 43 feats, 7 rules and 40 backgrounds (chapter 7b); then 7 rules, 2 classes, 4 subclasses and 173 class feats (chapter 8a)
         Assert.Equal(total, AllEntries(PackId).Count());
 
         // import-report.yaml holds counts and ids only; its totals are the importer's own and must match what loaded.

@@ -399,5 +399,68 @@ tanning lore
 telling lore
 theater lore
 underworld lore
+# Chapter 8a review (the class framework, fighter, rogue): the left-out sample characters' sidebars list feats and skills by name, so a left-out section capitalizes them too.
+# Each word is an ordinary word of a feat's name or of a skill's subject, and each pair is a feat's name, a class feature's name or a game term (a difficulty class, a pair of skills); none names a person, place, faith or people.
+slam
+accounting
+furious
+stomp
+multishot
+rebounding
+skirmish
+snagging
+blank stance
+brutal beating
+brutal finish
+class dc
+class feats
+debilitating shot
+deny advantage
+difficulty class
+diplomacy intimidation
+disarming stance
+double shot
+dueling dance
+dueling parry
+general feats
+impossible volley
+many styles
+opening stance
+point blank
+positioning assault
+powerful sneak
+rogue racket
+savage critical
+skill feats
+skill increases
+stay down
+sudden charge
+triple shot
+vicious swing
+furious focus
+head stomp
+multishot stance
+slam down
+snagging strike
+# The feat lists that sample sidebars leave beside the planned classes' pages are left-out text for the pairs too now. Each pair is a feat's name, a game term (a skill's difficulty class, a duration), or a label word that the book's layout puts
+# before the next sentence's first word (a trigger or an outcome label followed by a sentence); none names a person, place, faith or people.
+blind fight
+concentrate exploration
+deception dc
+either step
+expeditious search
+gm you
+maximum duration
+point you
+skirmish strike
+speed you
+stealth dcs
+success if
+success you
+this strike
+you sustain
+# Chapter 8a review: one word stays on the denylist, because the book also capitalizes it in a multi-word name of a place that the pack must never say. It is allowed only as the first word of the one feat's name that uses it
+# (a compound line: the word, then the word that must follow it); anywhere else the word gate still fires.
+compound dread striker
 # Retired pairs: a pair hash that nothing produces any more, which `denylist --fresh` may drop (and says so). A hash and a one-line reason, no words.
 retired-pair 284c34fb2cf8624689826b6ea7f3087e367fa08578a85c9fb246c392047bf662 cross-span artifact of an intermediate build; both words denied singly

@@ -47,6 +47,9 @@ public sealed class ParsedEntry
     [JsonIgnore]
     public ParsedEntry? TraitOwner { get; set; }
 
+    /// <summary>For a class feat: the slug of its class. A class feat whose id another feat has takes it as a suffix (several classes have a feat of one name).</summary>
+    public string? ClassKey { get; set; }
+
     /// <summary>For a spell: the traditions its labelled line lists, in lowercase, in the book's order.</summary>
     public List<string> Traditions { get; set; } = new();
 
@@ -81,20 +84,36 @@ public sealed class ParsedEntry
     /// </summary>
     public List<LabelledText> Raw { get; set; } = new();
 
-    public string Render() =>
-        string.Join('\n', Parts.Select(p =>
+    /// <summary>For a class or a subclass: its feature rows (a name, the level it applies from, its text and the grants to the sheet's ranked lists), in source order.</summary>
+    public List<ClassFeature> Features { get; set; } = new();
+
+    public string Render() => RenderParts(Parts);
+
+    public static string RenderParts(IEnumerable<LabelledText> parts) =>
+        string.Join('\n', parts.Select(p =>
             p.Label.Length == 0 ? p.Text
             // A bold run-in heading that starts with a bullet is a list item.
             : p.Label.StartsWith("• ", StringComparison.Ordinal) ? $"- **{p.Label[2..].TrimEnd('.', ':', ' ')}.** {p.Text}".TrimEnd()
             : $"**{p.Label.TrimEnd('.', ':', ' ')}.** {p.Text}".TrimEnd()));
 
-    /// <summary>The text fields the redaction rows may name: the name and description, and any extracted field (its key is the field name).</summary>
+    /// <summary>The key of a redaction field that names one feature row's text (<c>feature:</c> and the slug of its name).</summary>
+    public static string FeatureField(ClassFeature feature) => "feature:" + EntriesStage.Slug(feature.Name);
+
+    /// <summary>The text fields the redaction rows may name: the name and description, any extracted field (its key is the field name), and each feature row's text (<see cref="FeatureField"/>).</summary>
     public Dictionary<string, string> RedactionFields()
     {
         var fields = new Dictionary<string, string> { ["name"] = Name, ["description"] = Render() };
         foreach (var e in Extracted)
         {
             fields[e.Label] = e.Text;
+        }
+
+        foreach (var f in Features)
+        {
+            if (!fields.TryAdd(FeatureField(f), f.Render()))
+            {
+                throw new DegreesException("Two feature rows of one entry share a name, so a redaction row could not tell them apart.");
+            }
         }
 
         return fields;
@@ -134,7 +153,29 @@ public sealed class FinalEntry
 
     /// <summary>A table's statistics for an item, by field key, as the YAML value the pack writes (see <see cref="ParsedEntry.Raw"/>).</summary>
     public List<LabelledText> Raw { get; set; } = new();
+
+    /// <summary>A class's or a subclass's feature rows after redaction.</summary>
+    public List<FinalFeature> Features { get; set; } = new();
 }
+
+/// <summary>A feature row of a class or a subclass as the parser reads it: the book's own heading (a name and the level it is gained at), its text and the grants it makes to the sheet's ranked lists.</summary>
+public sealed class ClassFeature
+{
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>The level the feature applies from; 1 when the heading names none.</summary>
+    public int Level { get; set; } = 1;
+
+    public List<LabelledText> Parts { get; set; } = new();
+
+    /// <summary>Grants to ranked lists, each one the flow-map YAML of an <c>adds</c> row.</summary>
+    public List<string> Adds { get; set; } = new();
+
+    public string Render() => ParsedEntry.RenderParts(Parts);
+}
+
+/// <summary>A feature row after redaction: what the pack file holds.</summary>
+public sealed record FinalFeature(string Name, int Level, string Description, List<string> Adds);
 
 /// <summary>
 /// Stage 4. Reads the blocks of each taken range into entries: the header by the entry-header font, then the trait line, labelled fields and degree sections.
@@ -154,7 +195,7 @@ public static partial class EntriesStage
     /// <summary>Field labels that start a paragraph even when the line before it ran to the edge. Other bold runs start one only after a short line.</summary>
     private static readonly HashSet<string> KnownLabels = new(StringComparer.Ordinal)
     {
-        "critical success", "success", "failure", "critical failure", "trigger", "requirements", "frequency", "effect", "cost", "prerequisites",
+        "critical success", "success", "failure", "critical failure", "trigger", "requirements", "frequency", "effect", "cost", "prerequisites", "prerequisite",
         "access", "special", "duration", "range", "area", "targets", "defense", "saving throw", "heightened",
     };
 
@@ -184,6 +225,7 @@ public static partial class EntriesStage
                 "ancestries" => ParseAncestries(range, slice, book, compounds),
                 "versatile" => ParseVersatile(range, slice, book, compounds),
                 "backgrounds" => ParseBackgrounds(range, slice, book, compounds),
+                "classes" => ParseClasses(range, slice, book, compounds),
                 // The tradition lists make no entry: they are read past, and counted against the spells (ImportPipeline.CheckSpellCounts).
                 "spelllists" => new List<ParsedEntry>(),
                 _ => ParseEntries(range, slice, book, compounds),
@@ -199,6 +241,15 @@ public static partial class EntriesStage
         // The same holds for a spell, named like a feat, a condition, a trait, a rule or an action more than once. Which of two entries that share a slug keeps it: the one whose folder holds
         // that id in the pack already committed (`shipped`, id to folder), since an id that has shipped is never renamed, whatever a later chapter brings. With nothing shipped under the id,
         // the entry of the type that is neither an action nor a spell keeps it, and an action keeps it against a spell. Every other entry of the group takes the suffix of its type.
+        // Several classes have a feat of one name, and a class feat may be named like a general feat: each class feat in such a group takes its class as a suffix (every other kind of repeat still fails below).
+        foreach (var same in entries.Where(e => e.Type == "feat").GroupBy(e => e.Id, StringComparer.Ordinal).Where(g => g.Count() > 1).ToList())
+        {
+            foreach (var classFeat in same.Where(e => e.ClassKey != null))
+            {
+                classFeat.Id += "-" + classFeat.ClassKey;
+            }
+        }
+
         foreach (var group in entries.GroupBy(e => e.Id, StringComparer.Ordinal).Where(g => g.Select(e => e.Type).Distinct().Count() > 1).ToList())
         {
             var folders = group.Select(e => e.Folder).Distinct().ToList();
@@ -220,6 +271,12 @@ public static partial class EntriesStage
         foreach (var heritage in entries.Where(e => e.Type == "heritage" && e.Owner != null))
         {
             heritage.Raw.Add(new LabelledText("ancestry", "\"" + heritage.Owner!.Id + "\""));
+        }
+
+        // A subclass names its class by id too, final only now (a class named like a shipped trait took a suffix above).
+        foreach (var subclass in entries.Where(e => e.Type == "subclass" && e.Owner != null))
+        {
+            subclass.Raw.Insert(0, new LabelledText("class", "\"" + subclass.Owner!.Id + "\""));
         }
 
         // The redaction rows name an entry by id alone, so an id may not repeat even across types.
@@ -929,7 +986,9 @@ public static partial class EntriesStage
     {
         foreach (var key in keys ?? FeatFieldKeys)
         {
-            var found = entry.Parts.Where(p => p.Label.Length > 0 && p.Label.TrimEnd('.', ':', ' ').Equals(key, StringComparison.OrdinalIgnoreCase)).ToList();
+            // The book prints the singular label on one feat; it is the same field.
+            var found = entry.Parts.Where(p => p.Label.Length > 0 && (p.Label.TrimEnd('.', ':', ' ').Equals(key, StringComparison.OrdinalIgnoreCase)
+                || (key == "prerequisites" && p.Label.TrimEnd('.', ':', ' ').Equals("prerequisite", StringComparison.OrdinalIgnoreCase)))).ToList();
             if (found.Count > 1)
             {
                 throw new DegreesException($"An entry of chapter {entry.Chapter} has the field label for '{key}' more than once.");
@@ -1204,7 +1263,8 @@ public static partial class EntriesStage
                 if (_runOn && _parts.Count > 0 && _parts[^1].Label.Length > 0 && !text.StartsWith('•'))
                 {
                     // A labelled paragraph wraps with a hanging indent: its lines after the first are set in from the edge, and a line at the edge is the next paragraph.
-                    startsParagraph = info.Left - block.Left <= Indent;
+                    // In text set ragged or slanted (the lines start at four or more places) a hanging indent means nothing: only a line set short before this one ends the paragraph.
+                    startsParagraph = raggedLeft ? _previousShort : info.Left - block.Left <= Indent;
                 }
 
                 if ((_runOn || _tableRows) && startsParagraph && !indented && _parts.Count > 0 && text.Length > 0 && char.IsLower(text[0]) && !text.StartsWith('•')

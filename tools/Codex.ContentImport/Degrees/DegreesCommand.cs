@@ -195,6 +195,13 @@ public static class DegreesCommand
                 string.Join("; ", versatile.Select(v => $"{v.LoreHeadings}, {v.Heritages}, {v.Lineages}, {v.Bands}, {v.Feats}")) + $"; feat headers = trait lines = level markers in each ({versatile.Sum(v => v.FeatHeaders)} in all); the overview lists one kind for each range");
         }
 
+        if (result.Ranges.Any(r => r.Row.Parser == "classes"))
+        {
+            var classes = ImportPipeline.CheckClassCounts(spine, blocks, result.Ranges, result.Parsed);
+            output.WriteLine($"classes: {classes.Count} read; per class (flavor headings, features, subclasses, level bands, feats, feats in the printed list): " +
+                string.Join("; ", classes.Select(c => $"{c.LoreHeadings}, {c.Features}, {c.Subclasses}, {c.Bands}, {c.Feats}, {c.Listed}")) + $"; feat headers = trait lines = level markers in each ({classes.Sum(c => c.FeatHeaders)} in all); the advancement table agrees with the feature rows");
+        }
+
         if (ImportPipeline.CheckBackgroundCounts(blocks, result.Ranges, result.Parsed) is { } backgrounds)
         {
             output.WriteLine($"backgrounds: {backgrounds.Headers} headings = {backgrounds.BoostSentences} boost sentences = {backgrounds.FeatSentences} feat sentences = {backgrounds.Entries} entries (the chapter prints no list)");

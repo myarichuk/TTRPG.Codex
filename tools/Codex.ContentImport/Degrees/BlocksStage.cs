@@ -73,6 +73,9 @@ public sealed class BlocksOptions
     /// </summary>
     public IReadOnlyDictionary<int, double> PinnedGutters { get; init; } = new Dictionary<int, double>();
 
+    /// <summary>Pages where a sidebar fills a whole column (<see cref="TakeRow.SidebarFillsColumn"/>): the text that opens the next column is the page's own, not the sidebar's continuation.</summary>
+    public IReadOnlySet<int> SidebarFillsColumn { get; init; } = new HashSet<int>();
+
     /// <summary>The pages whose gear tables are carved out (see <see cref="GearTables"/>), with the column label lists a header row there may carry and whether the table is set in two panels.</summary>
     public IReadOnlyDictionary<int, GearPage> GearTablePages { get; init; } = new Dictionary<int, GearPage>();
 }
@@ -179,6 +182,22 @@ public static class BlocksStage
 
                 if ((key.Length >= 8 && title.Length >= 8 && Distance(key, title) <= 2)
                     || (key.Length >= 4 && key.Length < title.Length && (title.StartsWith(key, StringComparison.Ordinal) || title.EndsWith(key, StringComparison.Ordinal))))
+                {
+                    _matched.Add(i);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Like <see cref="Match"/> but only by the whole title: for a heading in a font that is not the sidebar headings' own, which a part of a title could match by chance.</summary>
+        public bool MatchWhole(Block heading)
+        {
+            var key = Key(string.Join(' ', heading.Lines));
+            for (var i = 0; i < _keys.Count; i++)
+            {
+                if (key == _keys[i])
                 {
                     _matched.Add(i);
                     return true;
@@ -296,7 +315,7 @@ public static class BlocksStage
                 var endedInside = false;
                 foreach (var found in pageColumns)
                 {
-                    var split = SplitSidebars(found, endedInside, by, options.TakenSidebarKeys.GetValueOrDefault(page.Number), takenHere);
+                    var split = SplitSidebars(found, endedInside && !options.SidebarFillsColumn.Contains(page.Number), by, options.TakenSidebarKeys.GetValueOrDefault(page.Number), takenHere);
                     endedInside = split.EndsInside;
                     gone.AddRange(split.Dropped);
                     runs += split.Runs;
@@ -686,6 +705,7 @@ public static class BlocksStage
         var left = double.NaN;
 
         var inside = false;
+        var afterEntryTitle = false;
 
         // A sidebar the take-list takes (see TakeRow.Sidebars) is not dropped: its blocks, its title among them, are kept apart under the title's key.
         string? takingKey = null;
@@ -729,6 +749,29 @@ public static class BlocksStage
             // With the sidebars' titles known, a heading is a sidebar's only when it matches one of them. Any other heading in the block-header font is the page's own: an action's
             // (an action icon in the line, or a trait line right below), a table's or a subsection's. A sidebar's own subheadings are not title matches but sit inside it.
             var next = i + 1 < blocks.Count ? blocks[i + 1].Role : string.Empty;
+            if (b.Role == "entry-header" && titles.MatchWhole(b))
+            {
+                // A sidebar whose title is set in the entry-header font (the sample characters of a class's pages): it starts at the heading that is its whole title.
+                inside = true;
+                left = double.NaN;
+                var key = SidebarTitleSet.Key(string.Join(' ', b.Lines));
+                takingKey = takenKeys != null && takenKeys.Contains(key) ? key : null;
+                Drop(b);
+                afterEntryTitle = true;
+                continue;
+            }
+
+            if (afterEntryTitle)
+            {
+                // The line under such a title names the sample's build, set in capitals in the block-header font: part of the sidebar, though it matches no title.
+                afterEntryTitle = false;
+                if (b.Role == "block-header" && !IsActionHeader(blocks, i))
+                {
+                    Drop(b);
+                    continue;
+                }
+            }
+
             if (b.Role == "block-header")
             {
                 // An action's heading is the page's own whatever its letters are: tested before the titles, so a short action name that is part of a sidebar's title is not taken for it.
