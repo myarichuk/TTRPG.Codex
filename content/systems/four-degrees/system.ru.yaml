@@ -145,6 +145,37 @@ entityTypes:
       keyAttribute: { label: Ключевая характеристика }
       tradition: { label: Традиция }
       features: { label: Умения }
+  companion:
+    label: Животный спутник
+    pluralLabel: Животные спутники
+    fields:
+      size: { label: Размер }
+      str: { label: Сила }
+      dex: { label: Ловкость }
+      con: { label: Телосложение }
+      int: { label: Интеллект }
+      wis: { label: Мудрость }
+      cha: { label: Харизма }
+      hp: { label: Очки здоровья }
+      skill: { label: Навык }
+      senses: { label: Чувства }
+      speed: { label: Скорость }
+      attacks: { label: Безоружные атаки }
+      special: { label: Особое }
+      access: { label: Доступ }
+      supportBenefit: { label: Польза от поддержки }
+      advancedManeuver: { label: Продвинутый приём }
+      traits: { label: Свойства }
+  familiar-ability:
+    label: Способность фамильяра
+    pluralLabel: Способности фамильяров
+    fields:
+      kind: { label: Вид }
+  archetype:
+    label: Архетип
+    pluralLabel: Архетипы
+    fields:
+      class: { label: Класс }
   faith:
     label: Вера
     pluralLabel: Веры
@@ -156,7 +187,11 @@ entityTypes:
       favoredWeapon: { label: Любимое оружие }
       domains: { label: Домены }
       features: { label: Умения }
-  feat: { label: Черта, pluralLabel: Черты }
+  feat:
+    label: Черта
+    pluralLabel: Черты
+    fields:
+      archetype: { label: Архетип }
   condition: { label: Состояние, pluralLabel: Состояния }
   trait: { label: Свойство, pluralLabel: Свойства }
   rule: { label: Правило, pluralLabel: Правила }

@@ -145,6 +145,37 @@ entityTypes:
       keyAttribute: { label: תכונת מפתח }
       tradition: { label: מסורת }
       features: { label: יכולות }
+  companion:
+    label: בן לוויה חייתי
+    pluralLabel: בני לוויה חייתיים
+    fields:
+      size: { label: גודל }
+      str: { label: כוח }
+      dex: { label: זריזות }
+      con: { label: חוסן }
+      int: { label: תבונה }
+      wis: { label: חוכמה }
+      cha: { label: כריזמה }
+      hp: { label: נקודות חיים }
+      skill: { label: מיומנות }
+      senses: { label: חושים }
+      speed: { label: מהירות }
+      attacks: { label: התקפות ללא נשק }
+      special: { label: מיוחד }
+      access: { label: גישה }
+      supportBenefit: { label: יתרון התמיכה }
+      advancedManeuver: { label: תמרון מתקדם }
+      traits: { label: תכונות }
+  familiar-ability:
+    label: יכולת של יצור קשור
+    pluralLabel: יכולות של יצורים קשורים
+    fields:
+      kind: { label: סוג }
+  archetype:
+    label: ארכיטיפ
+    pluralLabel: ארכיטיפים
+    fields:
+      class: { label: מקצוע }
   faith:
     label: אמונה
     pluralLabel: אמונות
@@ -156,7 +187,11 @@ entityTypes:
       favoredWeapon: { label: נשק מועדף }
       domains: { label: תחומים }
       features: { label: יכולות }
-  feat: { label: כשרון, pluralLabel: כשרונות }
+  feat:
+    label: כשרון
+    pluralLabel: כשרונות
+    fields:
+      archetype: { label: ארכיטיפ }
   condition: { label: מצב, pluralLabel: מצבים }
   trait: { label: מאפיין, pluralLabel: מאפיינים }
   rule: { label: חוק, pluralLabel: חוקים }

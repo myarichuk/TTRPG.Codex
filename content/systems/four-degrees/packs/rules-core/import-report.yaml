@@ -296,6 +296,106 @@
   ids:
     - "backgrounds"
 - chapter: "classes"
+  parser: "archetypes"
+  target: "archetype"
+  entries: 8
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 8
+  redactionRows: [368, 369, 370, 371, 372, 373, 374, 377, 378, 379, 380, 381, 382, 383, 384]
+  ids:
+    - "bard-archetype"
+    - "cleric-archetype"
+    - "druid-archetype"
+    - "fighter-archetype"
+    - "ranger-archetype"
+    - "rogue-archetype"
+    - "witch-archetype"
+    - "wizard-archetype"
+- chapter: "classes"
+  parser: "archetypes"
+  target: "feat"
+  entries: 57
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "advanced-arcana"
+    - "advanced-dogma"
+    - "advanced-hunter-s-trick"
+    - "advanced-maneuver"
+    - "advanced-muse-s-whispers"
+    - "advanced-trickery"
+    - "advanced-wilding"
+    - "advanced-witchcraft"
+    - "anthemic-performance"
+    - "arcane-school-spell"
+    - "arcane-scope"
+    - "bard-dedication"
+    - "basic-arcana"
+    - "basic-bard-spellcasting"
+    - "basic-cleric-spellcasting"
+    - "basic-dogma"
+    - "basic-druid-spellcasting"
+    - "basic-hunter-s-trick"
+    - "basic-maneuver"
+    - "basic-muse-s-whispers"
+    - "basic-trickery"
+    - "basic-wilding"
+    - "basic-witch-spellcasting"
+    - "basic-witchcraft"
+    - "basic-wizard-spellcasting"
+    - "cleric-dedication"
+    - "counter-perform"
+    - "diverse-weapon-expert"
+    - "divine-scope"
+    - "druid-dedication"
+    - "evasiveness"
+    - "expert-bard-spellcasting"
+    - "expert-cleric-spellcasting"
+    - "expert-druid-spellcasting"
+    - "expert-witch-spellcasting"
+    - "expert-wizard-spellcasting"
+    - "fighter-dedication"
+    - "fighter-resiliency"
+    - "master-bard-spellcasting"
+    - "master-cleric-spellcasting"
+    - "master-druid-spellcasting"
+    - "master-spotter"
+    - "master-witch-spellcasting"
+    - "master-wizard-spellcasting"
+    - "occult-scope"
+    - "order-spell"
+    - "patron-s-scope"
+    - "primal-scope"
+    - "ranger-dedication"
+    - "ranger-resiliency"
+    - "reactive-striker"
+    - "rogue-dedication"
+    - "skill-mastery"
+    - "sneak-attacker"
+    - "uncanny-dodge"
+    - "witch-dedication"
+    - "wizard-dedication"
+- chapter: "classes"
+  parser: "archetypes"
+  target: "rule"
+  entries: 7
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "additional-feats"
+    - "archetypes"
+    - "dedication-details"
+    - "feats-that-grant-feats"
+    - "multiclass-dedications"
+    - "special-archetypes"
+    - "spellcasting-archetypes"
+- chapter: "classes"
   parser: "classes"
   target: "class"
   entries: 1
@@ -1065,6 +1165,104 @@
     - "school-of-protean-form"
     - "school-of-the-boundary"
     - "school-of-unified-magical-theory"
+- chapter: "classes"
+  parser: "companions"
+  target: "companion"
+  entries: 16
+  droppedSidebarBlocks: 2
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  redactionRows: [366, 376, 385]
+  ids:
+    - "ape"
+    - "arboreal-sapling"
+    - "badger"
+    - "bat"
+    - "bear"
+    - "bird"
+    - "boar"
+    - "cat"
+    - "crocodile"
+    - "dromaeosaur"
+    - "horse"
+    - "riding-drake"
+    - "scorpion"
+    - "shark"
+    - "snake"
+    - "wolf"
+- chapter: "classes"
+  parser: "companions"
+  target: "rule"
+  entries: 9
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "animal-companions"
+    - "companion-advancement"
+    - "companion-types"
+    - "companions"
+    - "mature-animal-companions"
+    - "nimble-animal-companions"
+    - "savage-animal-companions"
+    - "specialized-animal-companions"
+    - "young-animal-companions"
+- chapter: "classes"
+  parser: "familiars"
+  target: "familiar-ability"
+  entries: 31
+  droppedSidebarBlocks: 4
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: [367, 375]
+  ids:
+    - "absorb-familiar"
+    - "accompanist"
+    - "cantrip-connection"
+    - "construct-familiar-ability"
+    - "damage-avoidance"
+    - "dragon-familiar-ability"
+    - "elemental-familiar-ability"
+    - "familiar-focus"
+    - "focused-rejuvenation"
+    - "fungus-familiar-ability"
+    - "independent"
+    - "innate-surge"
+    - "kinspeech"
+    - "lifelink"
+    - "major-resistance"
+    - "master-s-form"
+    - "partner-in-crime"
+    - "plant-familiar-ability"
+    - "plant-form-familiar-ability"
+    - "recall-familiar"
+    - "resistance"
+    - "restorative-familiar"
+    - "share-senses"
+    - "skilled"
+    - "speech"
+    - "spell-battery"
+    - "spell-delivery"
+    - "spellcasting-familiar-ability"
+    - "toolbearer"
+    - "touch-telepathy"
+    - "valet"
+- chapter: "classes"
+  parser: "familiars"
+  target: "rule"
+  entries: 6
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "communication"
+    - "familiar-abilities"
+    - "familiars"
+    - "master-abilities"
+    - "modifiers-and-ac"
+    - "selecting-familiar-and-master-abilities"
 - chapter: "classes"
   parser: "rules"
   target: "rule"

@@ -34,6 +34,12 @@ public sealed class RedactionRow
     public string? Text { get; set; }
     public string Reason { get; set; } = string.Empty;
 
+    /// <summary>
+    /// For a row that takes a setting's name of more than one word out of a sentence: the phrase hashes of that name (the lowercase words, single spaces, as <see cref="Denylist.PhraseHash"/> hashes them), so the file never
+    /// holds the name. They go on the phrase list with the names that rows rename or drop.
+    /// </summary>
+    public List<string> Phrases { get; set; } = new();
+
     /// <summary>True when the row names the entry with this id, by id or by the hash of it.</summary>
     public bool Names(string id) => string.IsNullOrEmpty(EntryHash) ? Entry == id : EntryHash == SpanText.Sha256(id);
 

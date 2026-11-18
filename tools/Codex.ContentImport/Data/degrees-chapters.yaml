@@ -858,6 +858,44 @@ rows:
       Will: wis
     paths:
       - ["Chapter 3: Classes", Wizard]
+  # The end of the classes chapter (8d): the animal companions, the familiars and the archetypes. A companion type is a unit with a stat line labelled Size; every other heading is a rule.
+  - chapter: classes
+    book: pc
+    parser: companions
+    target: companion
+    folder: companions
+    category: Classes
+    approved: true
+    countsDiffer: The book bookmarks three of the four options of the advancement section (the heading of one option has no bookmark of its own), so the headings are one more than the bookmarks. Every other heading is a bookmark.
+    # A page whose left column's lines run to the same x as the right column's text: the gutter search cut it at a wrong gap and read the end of some lines in the next column.
+    gutterAt:
+      209: 314
+    paths:
+      - ["Chapter 3: Classes", Companions]
+  - chapter: classes
+    book: pc
+    parser: familiars
+    target: familiar-ability
+    folder: familiar-abilities
+    category: Classes
+    approved: true
+    abilityKinds:
+      Familiar Abilities: familiar
+      Master Abilities: master
+    paths:
+      - ["Chapter 3: Classes", Familiars]
+  - chapter: classes
+    book: pc
+    parser: archetypes
+    target: archetype
+    folder: archetypes
+    category: Classes
+    approved: true
+    # The page of the witch archetype: the left column's lines run to the same x as the right column's text (the level of the dedication feat's heading was read in the next column).
+    gutterAt:
+      223: 314
+    paths:
+      - ["Chapter 3: Classes", Archetypes]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
@@ -866,7 +904,4 @@ planned:
       - ["Chapter 1: Introduction", Basics of Play]
       - ["Chapter 1: Introduction", Playing the Game]
       - ["Chapter 1: Introduction", Character Creation]
-      - ["Chapter 3: Classes", Companions]
-      - ["Chapter 3: Classes", Familiars]
-      - ["Chapter 3: Classes", Archetypes]
       - ["Chapter 8: Playing the Game"]

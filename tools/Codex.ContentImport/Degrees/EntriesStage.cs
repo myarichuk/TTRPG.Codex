@@ -50,6 +50,10 @@ public sealed class ParsedEntry
     /// <summary>For a class feat: the slug of its class. A class feat whose id another feat has takes it as a suffix (several classes have a feat of one name).</summary>
     public string? ClassKey { get; set; }
 
+    /// <summary>For a feat of an archetype: the archetype entry it belongs to. The feat names it by id once the ids are final, and an id it shares with another feat takes the archetype's slug as a suffix.</summary>
+    [JsonIgnore]
+    public ParsedEntry? ArchetypeOwner { get; set; }
+
     /// <summary>For a spell: the traditions its labelled line lists, in lowercase, in the book's order.</summary>
     public List<string> Traditions { get; set; } = new();
 
@@ -223,9 +227,11 @@ public static partial class EntriesStage
             var keeper = shipped != null && shipped.TryGetValue(same.Key, out var shippedFolder) && same.Any(e => e.Folder == shippedFolder)
                 ? same.Where(e => e.Folder == shippedFolder).OrderBy(e => e.RowNumber).First()
                 : null;
-            foreach (var classFeat in same.Where(e => e.ClassKey != null && e != keeper))
+            // With nothing shipped under the id, a feat of an archetype is the one that takes the suffix: the earliest row's other feat (a class's or a general one) keeps the plain id, as the rows are taken in shipping order.
+            keeper ??= same.Any(e => e.ArchetypeOwner != null) ? same.Where(e => e.ArchetypeOwner == null).OrderBy(e => e.RowNumber).FirstOrDefault() : null;
+            foreach (var classFeat in same.Where(e => (e.ClassKey != null || e.ArchetypeOwner != null) && e != keeper))
             {
-                classFeat.Id += "-" + classFeat.ClassKey;
+                classFeat.Id += classFeat.ClassKey != null ? "-" + classFeat.ClassKey : "-" + Slug(classFeat.ArchetypeOwner!.Name) + "-archetype";
             }
         }
     }
@@ -248,6 +254,9 @@ public static partial class EntriesStage
                 "versatile" => ParseVersatile(range, slice, book, compounds),
                 "backgrounds" => ParseBackgrounds(range, slice, book, compounds),
                 "classes" => ParseClasses(range, slice, book, compounds),
+                "companions" => ParseCompanions(range, slice, book, compounds),
+                "familiars" => ParseFamiliars(range, slice, book, compounds),
+                "archetypes" => ParseArchetypes(range, slice, book, compounds),
                 // The tradition lists make no entry: they are read past, and counted against the spells (ImportPipeline.CheckSpellCounts).
                 "spelllists" => new List<ParsedEntry>(),
                 _ => ParseEntries(range, slice, book, compounds),
@@ -293,6 +302,12 @@ public static partial class EntriesStage
         foreach (var subclass in entries.Where(e => e.Type == "subclass" && e.Owner != null))
         {
             subclass.Raw.Insert(0, new LabelledText("class", "\"" + subclass.Owner!.Id + "\""));
+        }
+
+        // A feat of an archetype names its archetype by id, final only now (an archetype named like a shipped trait took a suffix above).
+        foreach (var archetypeFeat in entries.Where(e => e.Type == "feat" && e.ArchetypeOwner != null))
+        {
+            archetypeFeat.Raw.Add(new LabelledText("archetype", "\"" + archetypeFeat.ArchetypeOwner!.Id + "\""));
         }
 
         // The redaction rows name an entry by id alone, so an id may not repeat even across types.
@@ -1261,6 +1276,7 @@ public static partial class EntriesStage
             {
                 var info = block.Info?[i] ?? new LineInfo(block.Left, block.Right, string.Empty);
                 var text = block.Lines[i];
+                var partsBefore = _parts.Count;
                 var rawLabel = info.Label;
                 if (_stat != null && rawLabel.Length > 0 && !rawLabel.StartsWith("• ", StringComparison.Ordinal)
                     && !_stat.Contains(StatKey(SpanText.Normalize(rawLabel))) && !KnownLabels.Contains(SpanText.Normalize(rawLabel).TrimEnd('.', ':', ' ').ToLowerInvariant()))
@@ -1280,7 +1296,8 @@ public static partial class EntriesStage
                 {
                     // A labelled paragraph wraps with a hanging indent: its lines after the first are set in from the edge, and a line at the edge is the next paragraph.
                     // In text set ragged or slanted (the lines start at four or more places) a hanging indent means nothing: only a line set short before this one ends the paragraph.
-                    startsParagraph = raggedLeft ? _previousShort : info.Left - block.Left <= Indent;
+                    // A page whose lines are shifted by a few points, from one line to the next (the archetype feats, set around art), is read against the line that opened the paragraph, not the block's edge.
+                    startsParagraph = raggedLeft ? _previousShort : info.Left - (HangingFromStart && _startLeft is { } opened ? opened : block.Left) <= Indent;
                 }
 
                 // A list item's wrapped lines are set in beyond its bullet; a line back at the bullet's own edge, with no bullet, after a line that ended a sentence, is the paragraph that follows the list.
@@ -1302,6 +1319,14 @@ public static partial class EntriesStage
                 {
                     startsParagraph = false; // a line set short by the layout, not by the end of a sentence: the text goes on
                 }
+                // With a hanging indent counted from the opener, a labelled line that ends on a connector or a comma goes on with a line that opens with a digit or a sign (a formula, not a sentence): the lines of a block
+                // set around art start a few points apart, so the line's left says nothing. A prerequisites line ends on a number or a skill, never on a connector, so the paragraph after it is never joined to it.
+                if (HangingFromStart && startsParagraph && _parts.Count > 0 && _parts[^1].Label.Length > 0 && text.Length > 0 && (char.IsDigit(text[0]) || text[0] is '+' or '-' or '–')
+                    && Regex.IsMatch(_parts[^1].Text.ToString().TrimEnd(), @"(?:\b(?:than|of|and|or|to|the|a|plus|minus)|,)$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase))
+                {
+                    startsParagraph = false;
+                }
+
                 // A box of prose or a formula in a body block (a row with proseBoxes) wraps with a hanging indent: a line that goes on with an operator, or starts with one, or starts in lowercase after a line
                 // that does not end a sentence, is the same line (a formula is never cut at its plus sign).
                 if (_proseBoxes && block.Role == "body" && _parts.Count > 0 && text.Length > 0 && !text.StartsWith('•') && _parts[^1].Label.Length == 0
@@ -1361,6 +1386,11 @@ public static partial class EntriesStage
                     }
                 }
 
+                if (_parts.Count > partsBefore)
+                {
+                    _startLeft = info.Left;
+                }
+
                 Append(text);
                 _previousShort = info.Right < block.Right - ShortLine;
             }
@@ -1372,6 +1402,15 @@ public static partial class EntriesStage
         public void EndParagraph() => _previousShort = true;
 
         private double? _bulletLeft;
+
+        /// <summary>Where the line that opened the last paragraph started (see <see cref="HangingFromStart"/>).</summary>
+        private double? _startLeft;
+
+        /// <summary>
+        /// True for a reader whose labelled paragraphs wrap with a hanging indent that is counted from the line that opened the paragraph, not from the block's left edge: the lines of a block set around art
+        /// start a few points apart, so a line that is only a point or two in from the label's line is the next paragraph. Set for the archetypes' feats; the earlier chapters' entries read as they did.
+        /// </summary>
+        public bool HangingFromStart { get; init; }
 
         private void Start(string label) => _parts.Add((label, new StringBuilder()));
 

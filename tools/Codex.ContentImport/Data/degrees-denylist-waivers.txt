@@ -650,3 +650,20 @@ witch bottle
 # Two retired pairs: a level band heading read as its ordinal suffix and the word Level (the heading is split at its digit), and the title of another book glued to the next sentence's first word, in a pointer a row now cuts.
 retired-pair a0160252e55b4a35caba246accca0d84d7fdb5595e42d132585d80fe7046ebb0 a level band heading read as its ordinal suffix and the word that follows, on pages now taken
 retired-pair 245dac79c26b3b8129e38235b7927ad350065b5bd347caa48f44ff83ac23a4cb the title of another book glued to the first word of the next sentence, in a pointer that a row now cuts
+# Chapter 8d pairs (named explanations of pairs that the file of the last run held and a regeneration does not make now that their text is taken): the names of two companions' actions, two words of a trait line, and a label word with the next sentence's first word; none names a person, place, faith or people.
+badger rage
+concentrate emotion
+emotion mental
+requirements the
+throw rock
+# Chapter 8d: the pairs that the left-out text makes and the packs now say, each of two ordinary words (a game term and the next sentence's first word, two attributes in a list, the title of a section and a label): none names a person, place, faith or people.
+animal companions
+attribute modifiers
+dcs your
+dexterity constitution
+for perception
+strength dexterity
+strike as
+wisdom you
+# Chapter 8d: archer is an ordinary word of a ranger archetype's text that a left-out heading capitalizes in a pun on a gap; it names no place, group or person.
+archer

@@ -47,6 +47,10 @@ public static class TakeStage
         ["classes"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon" },
         // The backgrounds: each one's heading (block-header) and its text.
         ["backgrounds"] = new[] { "block-header", "rules", "body", "icon" },
+        // The companions, familiars and archetypes of the classes chapter: section and entry headings, an action's or a feat's heading (block-header) with its trait line, and the text.
+        ["companions"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon" },
+        ["familiars"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon" },
+        ["archetypes"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon" },
     };
 
     private static readonly string[] Claimable = { "entry-header", "rules", "body", "tag", "table" };

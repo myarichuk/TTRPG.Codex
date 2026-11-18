@@ -124,6 +124,53 @@ entityTypes:
       # A class whose choice decides the tradition (a witch's patron) leaves the class's own `tradition` empty and writes it here; the sheet's spell lists read the class's, else the subclass's.
       - { key: tradition,    label: Tradition,     type: Dropdown, options: [arcane, divine, occult, primal], description: "The tradition of the spells a character of this choice casts, for a class that leaves its own empty. The sheet's spells and cantrips are those whose traditions hold it." }
       - { key: features,     label: Features,      type: Collection, description: "One row per feature: name, level (1 when none), description, and grants (adds) to the sheet's ranked lists." }
+  # An animal companion of one type: what the book prints in the type's block, one field to each line. Nothing on the character sheet reads a companion yet; the entry is a reference to read at the table.
+  # The six modifiers and the hit points are the starting numbers of a young companion; the advancement rules (rule entries) say how they grow.
+  - type: companion
+    label: Animal companion
+    pluralLabel: Animal companions
+    folder: companions
+    icon: paw-print
+    summaryFields: [size, skill]
+    filterFields: [skill]
+    fields:
+      - { key: size,           label: Size,             type: Text, description: "As the book prints it, such as Small or Medium or Large." }
+      - { key: str,            label: Strength,         type: Number, description: "The starting modifier." }
+      - { key: dex,            label: Dexterity,        type: Number, description: "The starting modifier." }
+      - { key: con,            label: Constitution,     type: Number, description: "The starting modifier." }
+      - { key: int,            label: Intelligence,     type: Number, description: "The starting modifier." }
+      - { key: wis,            label: Wisdom,           type: Number, description: "The starting modifier." }
+      - { key: cha,            label: Charisma,         type: Number, description: "The starting modifier." }
+      - { key: hp,             label: Hit points,       type: Number, description: "The hit points the companion's type gives it." }
+      - { key: skill,          label: Skill,            type: Dropdown, options: [acrobatics, arcana, athletics, crafting, deception, diplomacy, intimidation, lore, medicine, nature, occultism, performance, religion, society, stealth, survival, thievery], description: "The skill the type adds to its trained ones." }
+      - { key: senses,         label: Senses,           type: Text, description: "As the book prints them, with the ranges." }
+      - { key: speed,          label: Speed,            type: Text, description: "Every Speed the type has, as printed (a type may have no land Speed)." }
+      - { key: attacks,        label: Unarmed attacks,  type: Collection, description: "One row per attack: kind (melee or ranged), name, traits, damage (the dice), damageType and, when the book adds to the damage, extra (text)." }
+      - { key: special,        label: Special,          type: Text, description: "A special ability of the type, such as serving as a mount." }
+      - { key: access,         label: Access,           type: Text, description: "What a character must be to choose the type, for a type that is not open to all." }
+      - { key: supportBenefit, label: Support benefit,  type: LongText, description: "What the owner gains when the companion uses the Support action." }
+      - { key: advancedManeuver, label: Advanced maneuver, type: Text, description: "The name of the action the type learns when it becomes nimble or savage; its text is in the description." }
+      - { key: traits,         label: Traits,           type: TagList, description: "Trait keys beyond the animal and minion ones every companion has (a rarity word, a creature type that replaces animal)." }
+  # One ability of the familiars' two lists: a familiar ability changes the familiar itself, a master ability changes its master or the magic between them. Nothing on the character sheet reads a familiar yet.
+  - type: familiar-ability
+    label: Familiar ability
+    pluralLabel: Familiar abilities
+    folder: familiar-abilities
+    icon: bird
+    summaryFields: [kind]
+    filterFields: [kind]
+    fields:
+      - { key: kind, label: Kind, type: Dropdown, options: [familiar, master], description: "Familiar: it changes the familiar. Master: it changes you or the magic between you and the familiar." }
+  # A multiclass archetype: the choice of training in another class's specialties through feats. The dedication feat and the archetype feats are feat entries that name the archetype (their `archetype` field).
+  - type: archetype
+    label: Archetype
+    pluralLabel: Archetypes
+    folder: archetypes
+    icon: layers
+    summaryFields: [class]
+    filterFields: [class]
+    fields:
+      - { key: class, label: Class, type: EntityReference, targetEntityType: class, description: "The class whose specialties the archetype trains. A character cannot take the dedication feat of the class they already have." }
   # A deity-like choice with no names built in. A faith entry holds the same two free lines the sheet has; picking one is optional.
   - type: faith
     label: Faith
@@ -157,6 +204,7 @@ entityTypes:
       - { key: requirements,  label: Requirements,  type: LongText }
       - { key: cost,          label: Cost,          type: Text }
       - { key: special,       label: Special,       type: LongText }
+      - { key: archetype,     label: Archetype,     type: EntityReference, targetEntityType: archetype, description: "The archetype the feat belongs to (its dedication feat or one of its other feats). Empty on any other feat." }
   # A skill action: what a skill lets a character do with a roll. `skill` is the skill the action belongs to; empty is a general skill action that several skills can use.
   # `proficiency` is the least rank the action needs. The entry's text holds the rest, with its degrees of success.
   - type: action

@@ -2488,3 +2488,141 @@ rows:
     action: replace
     text: "Your patron's true identity might be a powerful entity, or perhaps multiple such figures working in tandem, but that identity is for you to attempt to discover as you learn more of your patron's lessons."
     reason: "A sentence whose list of examples named the setting's kinds of powerful beings (creatures and ranks of its cosmology); the mystery of the patron's identity is kept in plain words."
+  - book: pc
+    entry: young-animal-companions
+    field: description
+    span: { sha256: "427e7bd1cdf58069e36a4e355dbcb20e36a1a3e743685a4a1febb3ae686e5a24", length: 111 }
+    action: replace
+    text: "As you gain levels, you might be able to make your companion stronger by advancing it."
+    reason: "A sentence that pointed to a page; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: familiar-abilities
+    field: description
+    span: { sha256: "3f5bcaa5dc0274520dc5ef15439b53c17f876829440c61d6d342e8e32fc35f4e", length: 213 }
+    action: replace
+    text: "You can choose a pet ability (from the Pet feat) as a familiar ability: amphibious, burrower, climber, darkvision, echolocation, fast movement, flier, manual dexterity, scent, or tough."
+    reason: "A sentence that pointed to a page; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: additional-feats
+    field: description
+    span: { sha256: "dd471a11495e553000a95209c751a21db7c4a8749b75cdf2c2936478f6a82947", length: 82 }
+    action: replace
+    text: "Some archetypes include a list of \"Additional Feats\"."
+    reason: "A sentence that pointed to other books; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: special-archetypes
+    field: description
+    span: { sha256: "c1ce2eed209fca887252d64c6fc937e2730d57562d019864357d389ecdd8ec63", length: 134 }
+    action: replace
+    text: "Some archetype feats have the skill trait, allowing you to take them in place of a skill feat rather than a class feat."
+    reason: "A sentence that pointed to other books; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: multiclass-dedications
+    field: description
+    span: { sha256: "df7d9b57d97bea3b2b675d6298b0a3a1a50e387520c14e998014eefa051b13f8", length: 54 }
+    action: replace
+    text: "All of these archetypes have the multiclass trait."
+    reason: "A sentence that said where the archetypes are printed; the mechanic (they all have the multiclass trait) is kept."
+  - book: pc
+    entry: counter-perform
+    field: description
+    span: { sha256: "01a931e01c046b84c93da26ad0df7cafb9183c280dffd24ed4f58c04e6cacff8", length: 41 }
+    action: cut
+    reason: "A sentence that pointed to a page; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: order-spell
+    field: description
+    span: { sha256: "01a931e01c046b84c93da26ad0df7cafb9183c280dffd24ed4f58c04e6cacff8", length: 41 }
+    action: cut
+    reason: "A sentence that pointed to a page; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: reactive-striker
+    field: description
+    span: { sha256: "440e0cff77d89bc5a20f7fd432ea739544b56ef6fe70dca89b3f3d32ee255819", length: 57 }
+    action: replace
+    text: "You gain the Reactive Strike reaction."
+    reason: "A sentence that pointed to a page; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: witch-dedication
+    field: description
+    span: { sha256: "950894126f0b4e1b820527e686bd362e24e8b610f26240b939b7670e3ef0f7f2", length: 37 }
+    action: cut
+    reason: "A sentence that pointed to a page; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: absorb-familiar
+    field: description
+    span: { sha256: "a817adf3953bc3fd49df39c83e2cfa719a6ed745d8e830ee73c56271ecbfc3a0", length: 95 }
+    action: replace
+    text: "Creatures must attempt a DC 20 Perception check to Seek to realize it is actually a familiar."
+    reason: "A sentence with a typo in the book (a stray article); the mechanic is kept."
+  - book: pc
+    entry: arboreal-sapling
+    field: description
+    span: { sha256: "80edcf037b1ce29a114e8f4a7f4441343dbc16a8f0e14f7215fe591da7fc7067", length: 85 }
+    action: replace
+    text: "Your companion is a walking tree, a cousin of the great tree wardens."
+    reason: "A sentence whose comparison named two kinds of beings of the setting (their names are guarded as phrases by hash). One ordinary word of it stays, because an earlier entry says it; the sentence says only what the companion is."
+    phrases: ["69441a2cc5ed16265f954f7e68ae24993156540918967382a07496489d3b61c2", "f93b0adcdb9b858d3886657e0758002660cca0576cc3bfe8896c4ae212dfd55f"]
+  - book: pc
+    entry: ranger-archetype
+    field: description
+    span: { sha256: "b6ffa9e17ae5e4c94fc79bab8868819cbf94718a728848a07e05467f0e9b5b59", length: 35 }
+    action: cut
+    reason: "A sentence that named a figure of the setting (a deity, a creature or a language); the mechanic is kept without the name."
+  - book: pc
+    entry: rogue-archetype
+    field: description
+    span: { sha256: "903dd15332b46e625d9a35760522ba8bd984a2cfc637f2d42a6a31e794311fc1", length: 130 }
+    action: replace
+    text: "- Cleric rogues often follow gods that support trickery in combat, learning a combat style that fits their god."
+    reason: "A sentence that named a figure of the setting (a deity, a creature or a language); the mechanic is kept without the name."
+  - book: pc
+    entry: druid-dedication
+    field: description
+    span: { sha256: "5315d44e17d02f661deba864aca05453336220e9738619116212544380e75958", length: 75 }
+    action: replace
+    text: "You learn the Druid Language, and you are bound by the druid's anathema."
+    reason: "A sentence that named the secret language of the class with the setting's word; the pack calls it by its plain name."
+  - book: pc
+    entryHash: "76369ec704fa9e1cc1710f7a7037c16a7b8f5a7056d06e822764d93082af7cea"
+    field: name
+    span: { sha256: "df8672df40bf5d883710d8f55a2ef4c98418e3fa5f30ebc73f0e789e55be7eb7", length: 14 }
+    action: replace
+    text: "Arcane Scope"
+    reason: "A word of the name that a sentence an earlier row removed also held (a word the denylist keeps for good); the feat is named with another word of the same meaning, and the mechanic stands."
+  - book: pc
+    entryHash: "136fcc71545e942484c25b2fbfc77aa3e9cfcbb09d77bc9724c47b5d5580719c"
+    field: name
+    span: { sha256: "8591ed9fad3b4c9e83755b3d363bdbbfe64865731c8572ae09a24350bcc0fb89", length: 14 }
+    action: replace
+    text: "Divine Scope"
+    reason: "A word of the name that a sentence an earlier row removed also held (a word the denylist keeps for good); the feat is named with another word of the same meaning, and the mechanic stands."
+  - book: pc
+    entryHash: "7f94836296f958f8c5d75f0141f9e3216017a4d890cbbe1407748fc2036cb595"
+    field: name
+    span: { sha256: "828f435c77285752b812f71abdfc0b9e5407188c0524fdf275866d3ac3f3b158", length: 14 }
+    action: replace
+    text: "Occult Scope"
+    reason: "A word of the name that a sentence an earlier row removed also held (a word the denylist keeps for good); the feat is named with another word of the same meaning, and the mechanic stands."
+  - book: pc
+    entryHash: "67fb81f2fbbfd7026875bf63394a1bc8f18edb7a3100e77f1b3e661f72f19e56"
+    field: name
+    span: { sha256: "6be7e7aae2d81d114e00ba07b109c289d1f91cf6c33786c7b7e705af730a06df", length: 14 }
+    action: replace
+    text: "Primal Scope"
+    reason: "A word of the name that a sentence an earlier row removed also held (a word the denylist keeps for good); the feat is named with another word of the same meaning, and the mechanic stands."
+  - book: pc
+    entryHash: "ffcffb812c474bd8e910d197f80212004118ec8a5563ed5cee7dae9e5f50a99d"
+    field: name
+    span: { sha256: "3b9405d1fc5198be6c32ad45e7a5fad9599de54ec27973c67d11c9a26a6a6aeb", length: 16 }
+    action: replace
+    text: "Patron's Scope"
+    reason: "A word of the name that a sentence an earlier row removed also held (a word the denylist keeps for good); the feat is named with another word of the same meaning, and the mechanic stands."
+  - book: pc
+    entry: shark
+    field: description
+    span: { sha256: "bca7e8b27885255ddc54831cb125f6febd5a563076b506b25f158940ecfae636", length: 90 }
+    action: replace
+    text: "Your companion is a shark of any kind, such as a hammerhead or a great white shark."
+    reason: "A sentence whose list of examples named a kind of shark from the setting's own bestiary (its name is guarded as a phrase by hash); the examples are kept without it."
+    phrases: ["d14301563826e6f9d9594712b5e4f7b9ac2b7b3618db5cc1467b61b59cf73a53"]

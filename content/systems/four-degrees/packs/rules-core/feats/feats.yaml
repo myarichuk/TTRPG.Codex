@@ -58,6 +58,26 @@
   properties:
     level: 1
     traits: ["general"]
+- id: "advanced-arcana"
+  name: "Advanced Arcana"
+  source: "pc > Chapter 3: Classes > Archetypes > Wizard"
+  description: "You gain one wizard feat. For the purpose of meeting its prerequisites, your wizard level is equal to half your character level."
+  properties:
+    level: 6
+    traits: ["archetype"]
+    prerequisites: "Basic Arcana"
+    special: "You can select this feat more than once. Each time you select it, you gain another wizard feat."
+    archetype: "wizard-archetype"
+- id: "advanced-dogma"
+  name: "Advanced Dogma"
+  source: "pc > Chapter 3: Classes > Archetypes > Cleric"
+  description: "You gain one cleric feat. For the purpose of meeting its prerequisites, your cleric level is equal to half your character level."
+  properties:
+    level: 6
+    traits: ["archetype"]
+    prerequisites: "Basic Dogma"
+    special: "You can select this feat more than once. Each time you select it, you gain another cleric feat."
+    archetype: "cleric-archetype"
 - id: "advanced-domain"
   name: "Advanced Domain"
   source: "pc > Chapter 3: Classes > Cleric > Cleric Feats"
@@ -83,6 +103,36 @@
     level: 13
     traits: ["human"]
     special: "You can select this feat multiple times, choosing a different feat each time."
+- id: "advanced-hunter-s-trick"
+  name: "Advanced Hunter's Trick"
+  source: "pc > Chapter 3: Classes > Archetypes > Ranger"
+  description: "You gain one ranger feat. For the purpose of meeting its prerequisites, your ranger level is equal to half your character level."
+  properties:
+    level: 6
+    traits: ["archetype"]
+    prerequisites: "Basic Hunter's Trick"
+    special: "You can select this feat more than once. Each time you select it, you gain another ranger feat."
+    archetype: "ranger-archetype"
+- id: "advanced-maneuver"
+  name: "Advanced Maneuver"
+  source: "pc > Chapter 3: Classes > Archetypes > Fighter"
+  description: "You gain a fighter feat. For the purpose of meeting its prerequisites, your fighter level is equal to half your character level."
+  properties:
+    level: 6
+    traits: ["archetype"]
+    prerequisites: "Basic Maneuver"
+    special: "You can select this feat more than once. Each time you select it, you gain another fighter feat."
+    archetype: "fighter-archetype"
+- id: "advanced-muse-s-whispers"
+  name: "Advanced Muse's Whispers"
+  source: "pc > Chapter 3: Classes > Archetypes > Bard"
+  description: "You gain one bard feat. For the purpose of meeting its prerequisites, your bard level is equal to half your character level."
+  properties:
+    level: 6
+    traits: ["archetype"]
+    prerequisites: "Basic Muse's Whispers"
+    special: "You can select this feat more than once. Each time you select it, you gain another bard feat."
+    archetype: "bard-archetype"
 - id: "advanced-school-spell"
   name: "Advanced School Spell"
   source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
@@ -90,6 +140,16 @@
   properties:
     level: 8
     traits: ["wizard"]
+- id: "advanced-trickery"
+  name: "Advanced Trickery"
+  source: "pc > Chapter 3: Classes > Archetypes > Rogue"
+  description: "You gain one rogue feat. For the purpose of meeting its prerequisites, your rogue level is equal to half your character level."
+  properties:
+    level: 6
+    traits: ["archetype"]
+    prerequisites: "Basic Trickery"
+    special: "You can select this feat more than once. Each time you select it, you gain another rogue feat."
+    archetype: "rogue-archetype"
 - id: "advanced-warden"
   name: "Advanced Warden"
   source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
@@ -106,6 +166,26 @@
   properties:
     level: 6
     traits: ["fighter"]
+- id: "advanced-wilding"
+  name: "Advanced Wilding"
+  source: "pc > Chapter 3: Classes > Archetypes > Druid"
+  description: "You gain one druid feat. For the purpose of meeting its prerequisites, your druid level is equal to half your character level."
+  properties:
+    level: 6
+    traits: ["archetype"]
+    prerequisites: "Basic Wilding"
+    special: "You can select this feat more than once. Each time you select it, you gain another druid feat."
+    archetype: "druid-archetype"
+- id: "advanced-witchcraft"
+  name: "Advanced Witchcraft"
+  source: "pc > Chapter 3: Classes > Archetypes > Witch"
+  description: "You gain one witch feat. For the purpose of meeting its prerequisites, your witch level is equal to half your character level."
+  properties:
+    level: 6
+    traits: ["archetype"]
+    prerequisites: "Basic Witchcraft"
+    special: "You can select this feat more than once. Each time you select it, you gain another witch feat."
+    archetype: "witch-archetype"
 - id: "advantageous-assault"
   name: "Advantageous Assault"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -271,6 +351,15 @@
   properties:
     level: 10
     traits: ["bard", "exploration", "linguistic"]
+- id: "anthemic-performance"
+  name: "Anthemic Performance"
+  source: "pc > Chapter 3: Classes > Archetypes > Bard"
+  description: "Your music, speech, or other performance inspires your allies to dive into battle. You gain the courageous anthem composition cantrip."
+  properties:
+    level: 8
+    traits: ["archetype"]
+    prerequisites: "Bard Dedication"
+    archetype: "bard-archetype"
 - id: "anthropomorphic-shape"
   name: "Anthropomorphic Shape"
   source: "pc > Chapter 3: Classes > Druid > Druid Feats"
@@ -287,6 +376,24 @@
     level: 6
     traits: ["exploration", "rogue"]
     prerequisites: "expert in Stealth"
+- id: "arcane-school-spell"
+  name: "Arcane School Spell"
+  source: "pc > Chapter 3: Classes > Archetypes > Wizard"
+  description: "You gain your school's initial school spell. If you don't already have one, you gain a focus pool of 1 Focus Point, which you can Refocus by studying."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Wizard Dedication"
+    archetype: "wizard-archetype"
+- id: "arcane-scope"
+  name: "Arcane Scope"
+  source: "pc > Chapter 3: Classes > Archetypes > Wizard"
+  description: "Your thorough studies allow you to cast more arcane spells each day. Increase the spell slots you gain from wizard archetype feats by 1 for each spell rank other than your two highest wizard spell slots."
+  properties:
+    level: 8
+    traits: ["archetype"]
+    prerequisites: "Basic Wizard Spellcasting"
+    archetype: "wizard-archetype"
 - id: "arcane-sense"
   name: "Arcane Sense"
   source: "pc > Chapter 5: Feats"
@@ -365,6 +472,17 @@
     traits: ["elf", "fortune"]
     frequency: "once every 10 minutes"
     requirements: "You are within 30 feet of an ally with the dying condition."
+- id: "bard-dedication"
+  name: "Bard Dedication"
+  source: "pc > Chapter 3: Classes > Archetypes > Bard"
+  description: |-
+    You cast spells like a bard and gain the Cast a Spell activity. You gain a spell repertoire with two common cantrips from the occult spell list or any other occult cantrips you've learned or discovered. You're trained in the spell attack modifier and spell DC statistics. Your key spellcasting attribute for bard archetype spells is Charisma, and they are occult bard spells. You become trained in Occultism and Performance; for each of these skills in which you were already trained, you instead become trained in a skill of your choice.
+    Choose a muse as you would if you were a bard. You can take that muse's feats, but you don't gain the starting feat, spell or any other abilities the choice of muse grants.
+  properties:
+    level: 2
+    traits: ["archetype", "dedication", "multiclass"]
+    prerequisites: "Charisma +2"
+    archetype: "bard-archetype"
 - id: "bardic-lore"
   name: "Bardic Lore"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -397,6 +515,60 @@
     actions: "two"
     traits: ["fighter", "flourish"]
     prerequisites: "trained in Athletics"
+- id: "basic-arcana"
+  name: "Basic Arcana"
+  source: "pc > Chapter 3: Classes > Archetypes > Wizard"
+  description: "You gain a 1st- or 2nd-level wizard feat of your choice."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Wizard Dedication"
+    archetype: "wizard-archetype"
+- id: "basic-bard-spellcasting"
+  name: "Basic Bard Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Bard"
+  description: "You gain the basic spellcasting benefits. Each time you gain a spell slot of a new rank from the bard archetype, add a common occult spell of the appropriate rank, or another appropriate occult spell you learned or discovered, to your repertoire."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Bard Dedication"
+    archetype: "bard-archetype"
+- id: "basic-cleric-spellcasting"
+  name: "Basic Cleric Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Cleric"
+  description: "You gain the basic spellcasting benefits. You can prepare your deity's spells in your spell slots of the appropriate rank from the cleric archetype."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Cleric Dedication"
+    archetype: "cleric-archetype"
+- id: "basic-dogma"
+  name: "Basic Dogma"
+  source: "pc > Chapter 3: Classes > Archetypes > Cleric"
+  description: "You gain a 1st- or 2nd-level cleric feat."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Cleric Dedication"
+    archetype: "cleric-archetype"
+- id: "basic-druid-spellcasting"
+  name: "Basic Druid Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Druid"
+  description: "You gain the basic spellcasting benefits."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Druid Dedication"
+    archetype: "druid-archetype"
+- id: "basic-hunter-s-trick"
+  name: "Basic Hunter's Trick"
+  source: "pc > Chapter 3: Classes > Archetypes > Ranger"
+  description: "You gain a 1st- or 2nd-level ranger feat."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Ranger Dedication"
+    archetype: "ranger-archetype"
 - id: "basic-lesson"
   name: "Basic Lesson"
   source: "pc > Chapter 3: Classes > Witch > Witch Feats"
@@ -404,6 +576,71 @@
   properties:
     level: 2
     traits: ["witch"]
+- id: "basic-maneuver"
+  name: "Basic Maneuver"
+  source: "pc > Chapter 3: Classes > Archetypes > Fighter"
+  description: "You gain a 1st- or 2nd-level fighter feat."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Fighter Dedication"
+    archetype: "fighter-archetype"
+- id: "basic-muse-s-whispers"
+  name: "Basic Muse's Whispers"
+  source: "pc > Chapter 3: Classes > Archetypes > Bard"
+  description: "You gain a 1st- or 2nd-level bard feat."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Bard Dedication"
+    archetype: "bard-archetype"
+- id: "basic-trickery"
+  name: "Basic Trickery"
+  source: "pc > Chapter 3: Classes > Archetypes > Rogue"
+  description: "You gain a 1st- or 2nd-level rogue feat."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Rogue Dedication"
+    archetype: "rogue-archetype"
+- id: "basic-wilding"
+  name: "Basic Wilding"
+  source: "pc > Chapter 3: Classes > Archetypes > Druid"
+  description: "You gain a 1st- or 2nd-level druid feat."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Druid Dedication"
+    archetype: "druid-archetype"
+- id: "basic-witch-spellcasting"
+  name: "Basic Witch Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Witch"
+  description: "You gain the basic spellcasting benefits. Each time you gain a spell slot of a new rank from the witch archetype, add two common spells of that rank to your familiar."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Witch Dedication"
+    archetype: "witch-archetype"
+- id: "basic-witchcraft"
+  name: "Basic Witchcraft"
+  source: "pc > Chapter 3: Classes > Archetypes > Witch"
+  description: |-
+    You gain a 1st- or 2nd-level witch feat of your choice.
+    You can select three familiar abilities for your familiar each day, instead of two.
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Witch Dedication"
+    archetype: "witch-archetype"
+- id: "basic-wizard-spellcasting"
+  name: "Basic Wizard Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Wizard"
+  description: "You gain the basic spellcasting benefits. Each time you gain a spell slot of a new rank from the wizard archetype, add two common spells of that rank to your spellbook."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Wizard Dedication"
+    archetype: "wizard-archetype"
 - id: "battle-cry"
   name: "Battle Cry"
   source: "pc > Chapter 5: Feats"
@@ -877,6 +1114,17 @@
     level: 1
     traits: ["goblin"]
     special: "If you have the strong-stomached goblin heritage, increase the bonuses to +2."
+- id: "cleric-dedication"
+  name: "Cleric Dedication"
+  source: "pc > Chapter 3: Classes > Archetypes > Cleric"
+  description: |-
+    You cast spells like a cleric. You gain the Cast a Spell activity. You can prepare two common cantrips each day from the divine spell list or any other divine cantrips you have access to. You're trained in the spell attack modifier and spell DC statistics. Your key spellcasting attribute for cleric archetype spells is Wisdom, and they are divine cleric spells.
+    Choose a deity as you would if you were a cleric. You become bound by that deity's anathema and can receive that deity's divine sanctification. You become trained in Religion and your deity's associated skill; for each of these skills in which you were already trained, you instead become trained in a skill of your choice. You don't gain any other abilities from your choice of deity.
+  properties:
+    level: 2
+    traits: ["archetype", "dedication", "multiclass"]
+    prerequisites: "Wisdom +2"
+    archetype: "cleric-archetype"
 - id: "clever-counterspell"
   name: "Clever Counterspell"
   source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
@@ -1070,6 +1318,15 @@
   properties:
     level: 9
     traits: ["human"]
+- id: "counter-perform"
+  name: "Counter Perform"
+  source: "pc > Chapter 3: Classes > Archetypes > Bard"
+  description: "You gain the counter performance composition spell. This is a focus spell, granting you a focus pool or expanding that pool. You can Refocus by engaging your muse."
+  properties:
+    level: 6
+    traits: ["archetype"]
+    prerequisites: "Bard Dedication"
+    archetype: "bard-archetype"
 - id: "counterspell-witch"
   name: "Counterspell"
   source: "pc > Chapter 3: Classes > Witch > Witch Feats"
@@ -1506,6 +1763,15 @@
   properties:
     level: 12
     traits: ["ranger"]
+- id: "diverse-weapon-expert"
+  name: "Diverse Weapon Expert"
+  source: "pc > Chapter 3: Classes > Archetypes > Fighter"
+  description: "Your proficiency ranks for simple weapons and martial weapons increase to expert, and your proficiency rank for advanced weapons increases to trained."
+  properties:
+    level: 12
+    traits: ["archetype"]
+    prerequisites: "Fighter Dedication, expert in any kind of weapon or unarmed attack"
+    archetype: "fighter-archetype"
 - id: "divine-apex"
   name: "Divine Apex"
   source: "pc > Chapter 3: Classes > Cleric > Cleric Feats"
@@ -1570,6 +1836,15 @@
     traits: ["cleric", "divine"]
     trigger: "Your ally is about to roll a saving throw against a magical ability of a creature you're adjacent to."
     requirements: "You are wielding your deity's favored weapon."
+- id: "divine-scope"
+  name: "Divine Scope"
+  source: "pc > Chapter 3: Classes > Archetypes > Cleric"
+  description: "As your understanding increases, your god grants you more divine spells each day. Increase the spell slots you gain from cleric archetype feats by 1 for each spell rank other than your two highest cleric spell slots."
+  properties:
+    level: 8
+    traits: ["archetype"]
+    prerequisites: "Basic Cleric Spellcasting"
+    archetype: "cleric-archetype"
 - id: "divine-weapon"
   name: "Divine Weapon"
   source: "pc > Chapter 3: Classes > Cleric > Cleric Feats"
@@ -1657,6 +1932,18 @@
   properties:
     level: 4
     traits: ["rogue"]
+- id: "druid-dedication"
+  name: "Druid Dedication"
+  source: "pc > Chapter 3: Classes > Archetypes > Druid"
+  description: |-
+    You cast spells like a druid. You gain the Cast a Spell activity. You can prepare two common cantrips each day from the primal spell list or any other primal cantrips you learn or discover. You're trained in the spell attack modifier and spell DC statistics. Your key spellcasting attribute for druid archetype spells is Wisdom, and they are primal druid spells.
+    You learn the Druid Language, and you are bound by the druid's anathema.
+    Choose a druidic order. You become a member of that order and are also bound by its specific anathema, allowing you to take the order's feats. You become trained in Nature and your order's associated skill; for each of these skills in which you were already trained, you become trained in a skill of your choice. You don't gain any other abilities from your choice of order.
+  properties:
+    level: 2
+    traits: ["archetype", "dedication", "multiclass"]
+    prerequisites: "Wisdom +2"
+    archetype: "druid-archetype"
 - id: "dual-handed-assault"
   name: "Dual-Handed Assault"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -2028,6 +2315,15 @@
     level: 17
     traits: ["nephilim"]
     prerequisites: "Divine Wings"
+- id: "evasiveness"
+  name: "Evasiveness"
+  source: "pc > Chapter 3: Classes > Archetypes > Rogue"
+  description: "Your proficiency rank for Reflex saves increases to master."
+  properties:
+    level: 12
+    traits: ["archetype"]
+    prerequisites: "Rogue Dedication, expert in Reflex saves"
+    archetype: "rogue-archetype"
 - id: "exacting-strike"
   name: "Exacting Strike"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -2070,6 +2366,33 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Survival"
+- id: "expert-bard-spellcasting"
+  name: "Expert Bard Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Bard"
+  description: "You gain the expert spellcasting benefits."
+  properties:
+    level: 12
+    traits: ["archetype"]
+    prerequisites: "Basic Bard Spellcasting, master in Occultism"
+    archetype: "bard-archetype"
+- id: "expert-cleric-spellcasting"
+  name: "Expert Cleric Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Cleric"
+  description: "You gain the expert spellcasting benefits."
+  properties:
+    level: 12
+    traits: ["archetype"]
+    prerequisites: "Basic Cleric Spellcasting, master in Religion"
+    archetype: "cleric-archetype"
+- id: "expert-druid-spellcasting"
+  name: "Expert Druid Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Druid"
+  description: "You gain the expert spellcasting benefits."
+  properties:
+    level: 12
+    traits: ["archetype"]
+    prerequisites: "Basic Druid Spellcasting, master in Nature"
+    archetype: "druid-archetype"
 - id: "expert-longevity"
   name: "Expert Longevity"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Elf > Ancestry Feats"
@@ -2080,6 +2403,24 @@
     level: 9
     traits: ["elf"]
     prerequisites: "Ancestral Longevity"
+- id: "expert-witch-spellcasting"
+  name: "Expert Witch Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Witch"
+  description: "You gain the expert spellcasting benefits."
+  properties:
+    level: 12
+    traits: ["archetype"]
+    prerequisites: "Basic Witch Spellcasting, master in the skill associated with your patron's tradition"
+    archetype: "witch-archetype"
+- id: "expert-wizard-spellcasting"
+  name: "Expert Wizard Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Wizard"
+  description: "You gain the expert spellcasting benefits."
+  properties:
+    level: 12
+    traits: ["archetype"]
+    prerequisites: "Basic Wizard Spellcasting, master in Arcana"
+    archetype: "wizard-archetype"
 - id: "explosive-arrival"
   name: "Explosive Arrival"
   source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
@@ -2290,6 +2631,24 @@
     level: 9
     traits: ["nephilim"]
     prerequisites: "Soul-Eater Blood, Demon Blood, Devil Blood, or another lineage feat associated with fiends"
+- id: "fighter-dedication"
+  name: "Fighter Dedication"
+  source: "pc > Chapter 3: Classes > Archetypes > Fighter"
+  description: "You become trained in martial weapons. You become trained in your choice of Acrobatics or Athletics; if you are already trained in both of these skills, you instead become trained in a skill of your choice. You become trained in fighter class DC."
+  properties:
+    level: 2
+    traits: ["archetype", "dedication", "multiclass"]
+    prerequisites: "Strength +2, Dexterity +2"
+    archetype: "fighter-archetype"
+- id: "fighter-resiliency"
+  name: "Fighter Resiliency"
+  source: "pc > Chapter 3: Classes > Archetypes > Fighter"
+  description: "You gain 3 additional Hit Points for each fighter archetype class feat you have. As you continue selecting fighter archetype class feats, you continue to gain additional Hit Points in this way."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Fighter Dedication, class granting no more Hit Points per level than 8 + your Constitution modifier"
+    archetype: "fighter-archetype"
 - id: "fleet"
   name: "Fleet"
   source: "pc > Chapter 5: Feats"
@@ -3673,6 +4032,33 @@
     level: 8
     actions: "one"
     traits: ["cleric", "spellshape"]
+- id: "master-bard-spellcasting"
+  name: "Master Bard Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Bard"
+  description: "You gain the master spellcasting benefits."
+  properties:
+    level: 18
+    traits: ["archetype"]
+    prerequisites: "Expert Bard Spellcasting, legendary in Occultism"
+    archetype: "bard-archetype"
+- id: "master-cleric-spellcasting"
+  name: "Master Cleric Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Cleric"
+  description: "You gain the master spellcasting benefits."
+  properties:
+    level: 18
+    traits: ["archetype"]
+    prerequisites: "Expert Cleric Spellcasting, legendary in Religion"
+    archetype: "cleric-archetype"
+- id: "master-druid-spellcasting"
+  name: "Master Druid Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Druid"
+  description: "You gain the master spellcasting benefits."
+  properties:
+    level: 18
+    traits: ["archetype"]
+    prerequisites: "Expert Druid Spellcasting, legendary in Nature"
+    archetype: "druid-archetype"
 - id: "master-monster-hunter"
   name: "Master Monster Hunter"
   source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
@@ -3691,6 +4077,33 @@
     traits: ["fighter"]
     prerequisites: "Opening Stance"
     trigger: "Your turn begins."
+- id: "master-spotter"
+  name: "Master Spotter"
+  source: "pc > Chapter 3: Classes > Archetypes > Ranger"
+  description: "Your proficiency rank in Perception increases to master."
+  properties:
+    level: 12
+    traits: ["archetype"]
+    prerequisites: "Ranger Dedication, expert in Perception"
+    archetype: "ranger-archetype"
+- id: "master-witch-spellcasting"
+  name: "Master Witch Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Witch"
+  description: "You gain the master spellcasting benefits."
+  properties:
+    level: 18
+    traits: ["archetype"]
+    prerequisites: "Expert Witch Spellcasting, legendary in the skill associated with your patron's tradition"
+    archetype: "witch-archetype"
+- id: "master-wizard-spellcasting"
+  name: "Master Wizard Spellcasting"
+  source: "pc > Chapter 3: Classes > Archetypes > Wizard"
+  description: "You gain the master spellcasting benefits."
+  properties:
+    level: 18
+    traits: ["archetype"]
+    prerequisites: "Expert Wizard Spellcasting, legendary in Arcana"
+    archetype: "wizard-archetype"
 - id: "masterful-companion"
   name: "Masterful Companion"
   source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
@@ -4034,6 +4447,15 @@
     level: 9
     traits: ["changeling"]
     prerequisites: "expert in Occultism"
+- id: "occult-scope"
+  name: "Occult Scope"
+  source: "pc > Chapter 3: Classes > Archetypes > Bard"
+  description: "Your repertoire expands, and you can cast more occult spells each day. Increase the number of spells in your repertoire and the number of spell slots you gain from bard archetype feats by 1 for each spell rank other than your two highest bard spell slots."
+  properties:
+    level: 8
+    traits: ["archetype"]
+    prerequisites: "Basic Bard Spellcasting"
+    archetype: "bard-archetype"
 - id: "oddity-identification"
   name: "Oddity Identification"
   source: "pc > Chapter 5: Feats"
@@ -4130,6 +4552,15 @@
     traits: ["druid"]
     prerequisites: "Order Explorer"
     special: "You can take this feat multiple times. Each time you do, you must choose a different order you have selected with Order Explorer."
+- id: "order-spell"
+  name: "Order Spell"
+  source: "pc > Chapter 3: Classes > Archetypes > Druid"
+  description: "You gain the initial order spell from your order. This is a focus spell, granting you a focus pool or expanding that pool. You can Refocus by being one with nature."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Druid Dedication"
+    archetype: "druid-archetype"
 - id: "otherworldly-acumen"
   name: "Otherworldly Acumen"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Elf > Ancestry Feats"
@@ -4238,6 +4669,15 @@
   properties:
     level: 14
     traits: ["witch"]
+- id: "patron-s-scope"
+  name: "Patron's Scope"
+  source: "pc > Chapter 3: Classes > Archetypes > Witch"
+  description: "You can cast more spells each day. Increase the spell slots you gain from witch archetype feats by 1 for each spell rank other than your two highest spell ranks."
+  properties:
+    level: 8
+    traits: ["archetype"]
+    prerequisites: "Basic Witch Spellcasting"
+    archetype: "witch-archetype"
 - id: "patron-s-truth"
   name: "Patron's Truth"
   source: "pc > Chapter 3: Classes > Witch > Witch Feats"
@@ -4549,6 +4989,15 @@
     level: 10
     traits: ["druid"]
     prerequisites: "Incredible Companion"
+- id: "primal-scope"
+  name: "Primal Scope"
+  source: "pc > Chapter 3: Classes > Archetypes > Druid"
+  description: "Increase the spell slots you gain from druid archetype feats by 1 for each spell rank other than your two highest druid spell slots."
+  properties:
+    level: 8
+    traits: ["archetype"]
+    prerequisites: "Basic Druid Spellcasting"
+    archetype: "druid-archetype"
 - id: "primal-summons-feat"
   name: "Primal Summons"
   source: "pc > Chapter 3: Classes > Druid > Druid Feats"
@@ -4768,6 +5217,27 @@
     traits: ["orc"]
     prerequisites: "Orc Ferocity"
     trigger: "You use Orc Ferocity."
+- id: "ranger-dedication"
+  name: "Ranger Dedication"
+  source: "pc > Chapter 3: Classes > Archetypes > Ranger"
+  description: |-
+    You become trained in Survival; if you were already trained in Survival, you instead become trained in another skill of your choice. You become trained in ranger class DC.
+    If you gain a warden spell through this archetype, you become trained in spell attacks and spell DCs. Your spellcasting attribute is Wisdom.
+    You can use the Hunt Prey action.
+  properties:
+    level: 2
+    traits: ["archetype", "dedication", "multiclass"]
+    prerequisites: "Dexterity +2"
+    archetype: "ranger-archetype"
+- id: "ranger-resiliency"
+  name: "Ranger Resiliency"
+  source: "pc > Chapter 3: Classes > Archetypes > Ranger"
+  description: "You gain 3 additional Hit Points for each ranger archetype class feat you have. As you continue selecting ranger archetype class feats, you continue to gain additional Hit Points in this way."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Ranger Dedication, class granting no more Hit Points per level than 8 + your Constitution modifier"
+    archetype: "ranger-archetype"
 - id: "rapid-mantel"
   name: "Rapid Mantel"
   source: "pc > Chapter 5: Feats"
@@ -4874,6 +5344,15 @@
     traits: ["fighter"]
     trigger: "An enemy hits you with a melee Strike."
     requirements: "You are wielding a shield."
+- id: "reactive-striker"
+  name: "Reactive Striker"
+  source: "pc > Chapter 3: Classes > Archetypes > Fighter"
+  description: "You gain the Reactive Strike reaction."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Fighter Dedication"
+    archetype: "fighter-archetype"
 - id: "reactive-transformation"
   name: "Reactive Transformation"
   source: "pc > Chapter 3: Classes > Druid > Druid Feats"
@@ -5164,6 +5643,15 @@
   properties:
     level: 1
     traits: ["dwarf"]
+- id: "rogue-dedication"
+  name: "Rogue Dedication"
+  source: "pc > Chapter 3: Classes > Archetypes > Rogue"
+  description: "You gain a skill feat and the rogue's surprise attack class feature. You become trained in light armor. In addition, you become trained in Stealth or Thievery plus one skill of your choice; if you are already trained in both Stealth and Thievery, you become trained in an additional skill of your choice. You become trained in rogue class DC."
+  properties:
+    level: 2
+    traits: ["archetype", "dedication", "multiclass"]
+    prerequisites: "Dexterity +2"
+    archetype: "rogue-archetype"
 - id: "rough-rider"
   name: "Rough Rider"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Goblin > Ancestry Feats"
@@ -5576,6 +6064,16 @@
     frequency: "once per day"
     requirements: "You haven't acted yet on your turn."
     special: "This feat has the trait corresponding to the tradition of spells you cast (arcane, divine, occult, or primal)."
+- id: "skill-mastery"
+  name: "Skill Mastery"
+  source: "pc > Chapter 3: Classes > Archetypes > Rogue"
+  description: "Increase your proficiency rank in one of your skills from expert to master and in another of your skills from trained to expert. You gain a skill feat associated with one of the skills you chose; you must meet all its prerequisites."
+  properties:
+    level: 8
+    traits: ["archetype"]
+    prerequisites: "Rogue Dedication, trained in at least one skill and expert in at least one skill"
+    special: "You can select this feat up to five times."
+    archetype: "rogue-archetype"
 - id: "skill-training"
   name: "Skill Training"
   source: "pc > Chapter 5: Feats"
@@ -5702,6 +6200,15 @@
     level: 10
     traits: ["rogue"]
     prerequisites: "master in Stealth"
+- id: "sneak-attacker"
+  name: "Sneak Attacker"
+  source: "pc > Chapter 3: Classes > Archetypes > Rogue"
+  description: "You gain the sneak attack class feature, except it deals 1d4 damage, increasing to 1d6 at 6th level. You don't increase the number of dice as you gain levels."
+  properties:
+    level: 4
+    traits: ["archetype"]
+    prerequisites: "Rogue Dedication"
+    archetype: "rogue-archetype"
 - id: "snowdrift-spell"
   name: "Snowdrift Spell"
   source: "pc > Chapter 3: Classes > Druid > Druid Feats"
@@ -6661,6 +7168,15 @@
   properties:
     level: 1
     traits: ["dwarf"]
+- id: "uncanny-dodge"
+  name: "Uncanny Dodge"
+  source: "pc > Chapter 3: Classes > Archetypes > Rogue"
+  description: "You gain the deny advantage class feature."
+  properties:
+    level: 10
+    traits: ["archetype"]
+    prerequisites: "Rogue Dedication"
+    archetype: "rogue-archetype"
 - id: "unconventional-weaponry"
   name: "Unconventional Weaponry"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Human > Human Ancestry Feats"
@@ -7096,6 +7612,17 @@
     level: 8
     traits: ["druid"]
     prerequisites: "storm order"
+- id: "witch-dedication"
+  name: "Witch Dedication"
+  source: "pc > Chapter 3: Classes > Archetypes > Witch"
+  description: |-
+    You cast spells like a witch. Choose a patron; you gain a familiar with two common cantrips of your choice from your chosen patron's tradition, but aside from the tradition, you don't gain any other effects the patron would usually grant. Your familiar gains the normal number of abilities for a familiar instead of those a witch familiar normally gets.
+    You gain the Cast a Spell activity. You can prepare one cantrip each day from your familiar. You're trained in the spell attack modifier and spell DC statistics. Your key spellcasting attribute for witch archetype spells is Intelligence, and they are witch spells of your patron's tradition. You become trained in the skill associated with the patron's tradition; if you were already trained in it, you instead become trained in a skill of your choice.
+  properties:
+    level: 2
+    traits: ["archetype", "dedication", "multiclass"]
+    prerequisites: "Intelligence +2"
+    archetype: "witch-archetype"
 - id: "witch-s-armaments"
   name: "Witch's Armaments"
   source: "pc > Chapter 3: Classes > Witch > Witch Feats"
@@ -7159,6 +7686,17 @@
   properties:
     level: 20
     traits: ["witch"]
+- id: "wizard-dedication"
+  name: "Wizard Dedication"
+  source: "pc > Chapter 3: Classes > Archetypes > Wizard"
+  description: |-
+    You cast spells like a wizard, gaining a spellbook with four common arcane cantrips of your choice. You gain the Cast a Spell activity. You can prepare two cantrips each day from your spellbook. You're trained in the spell attack modifier and spell DC statistics. Your key spellcasting attribute for wizard archetype spells is Intelligence, and they are arcane wizard spells.
+    You become trained in Arcana; if you were already trained in Arcana, you instead become trained in a skill of your choice. Select a school; you don't gain any abilities from your choice of school, but qualify for feats as a member.
+  properties:
+    level: 2
+    traits: ["archetype", "dedication", "multiclass"]
+    prerequisites: "Intelligence +2"
+    archetype: "wizard-archetype"
 - id: "you-re-next"
   name: "You're Next"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
