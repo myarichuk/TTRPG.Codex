@@ -44,6 +44,11 @@ public sealed class ClassScan
     public List<Block> ByName { get; } = new();
 
     public int ByNameHeaders { get; set; }
+
+    /// <summary>For a spellcaster: how many "spells per day" table headings the features hold, and the blocks of the table (its two halves, the ranks 1 to 4 and 5 to 10, and the notes under them).</summary>
+    public int SpellTableHeaders { get; set; }
+
+    public List<Block> SpellTable { get; } = new();
 }
 
 /// <summary>What a class's statistics box prints: the key attribute (or a choice of two, or one more option the subclasses give) and the hit points gained at each level.</summary>
@@ -73,7 +78,54 @@ public static partial class EntriesStage
 {
     private static readonly Regex ClassFeatureHeader = new(@"^(?<name>.+?)(?:\s+(?<n>\d+)(?:st|nd|rd|th))?$", RegexOptions.CultureInvariant);
 
+    /// <summary>The start of a run of a subclass's text that is gained at a level: a name of two capitalized words and the level in parentheses, then a colon (<c>Second Doctrine (3rd):</c>).</summary>
+    private static readonly Regex LevelledMarker = new(@"(?<![A-Za-z])(?<name>[A-Z][a-z]+ [A-Z][a-z]+) \((?<n>\d+)(?:st|nd|rd|th)\):\s*", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// Cuts a subclass's paragraphs at the markers of the runs it gains at a later level. What comes before the first marker, and the run of the 1st level, stay with the subclass's own row (as paragraphs);
+    /// each run after the 1st level is a row of its own: its name, its level and its text.
+    /// </summary>
+    public static (List<LabelledText> Kept, List<(string Name, int Level, string Text)> Rows) SplitLevelledParagraphs(IEnumerable<LabelledText> parts)
+    {
+        var kept = new List<LabelledText>();
+        var rows = new List<(string, int, string)>();
+        foreach (var part in parts)
+        {
+            var markers = part.Label.Length == 0 ? LevelledMarker.Matches(part.Text) : null;
+            if (markers is not { Count: > 0 })
+            {
+                kept.Add(part);
+                continue;
+            }
+
+            if (markers[0].Index > 0)
+            {
+                kept.Add(part with { Text = part.Text[..markers[0].Index].Trim() });
+            }
+
+            for (var i = 0; i < markers.Count; i++)
+            {
+                var end = i + 1 < markers.Count ? markers[i + 1].Index : part.Text.Length;
+                var level = int.Parse(markers[i].Groups["n"].Value, CultureInfo.InvariantCulture);
+                var text = part.Text[(markers[i].Index + markers[i].Length)..end].Trim();
+                if (level > 1)
+                {
+                    rows.Add((markers[i].Groups["name"].Value, level, text));
+                }
+                else
+                {
+                    kept.Add(new LabelledText(markers[i].Groups["name"].Value + " (1st)", text));
+                }
+            }
+        }
+
+        return (kept, rows);
+    }
+
     private static readonly string[] InitialLabels = { "PERCEPTION", "SAVING THROWS", "SKILLS", "ATTACKS", "DEFENSES", "CLASS DC" };
+
+    /// <summary>The seventh label of a spellcaster's initial proficiencies: the spell attack modifier and the spell DC, which share one rank.</summary>
+    private const string SpellsLabel = "SPELLS";
 
     private static readonly string[] RankWords = { "trained", "expert", "master", "legendary" };
 
@@ -90,11 +142,21 @@ public static partial class EntriesStage
         SubclassScan? subclass = null;
         FeatScan? feat = null;
         var band = 0;
+        var lastWasTable = false;
+        var listTitleSeen = false;
         foreach (var b in slice)
         {
             var text = BlockText(b);
+            var afterTable = lastWasTable;
+            lastWasTable = false;
+            var afterListTitle = listTitleSeen;
+            listTitleSeen = false;
             switch (b.Role)
             {
+                // The printed list's column labels may sit alone in a block between its title and its body (a column break): they belong to the list.
+                case "body" when afterListTitle && Regex.IsMatch(text, @"^Feat\s+Level$", RegexOptions.CultureInvariant):
+                    scan.ByName.Add(b);
+                    break;
                 case "entry-header" when mode == 'B':
                     if (text == "KEY ATTRIBUTE HIT POINTS")
                     {
@@ -128,7 +190,7 @@ public static partial class EntriesStage
                     {
                         pending = 'A';
                     }
-                    else if (InitialLabels.Contains(text, StringComparer.Ordinal) && scan.Initial.All(i => i.Label != text))
+                    else if ((InitialLabels.Contains(text, StringComparer.Ordinal) || text == SpellsLabel) && scan.Initial.All(i => i.Label != text))
                     {
                         scan.Initial.Add((text, new List<Block>()));
                         pending = 'L';
@@ -143,6 +205,19 @@ public static partial class EntriesStage
                     if (feature == null)
                     {
                         throw new DegreesException($"A class's features hold a heading on page {b.Page}, column {b.Column}, before the first feature.");
+                    }
+
+                    if (text.EndsWith(" FEATS BY NAME", StringComparison.Ordinal))
+                    {
+                        scan.ByNameHeaders++; // the printed list of the class's feats may sit among the features (a page's column of the spellcasters' classes): the same independent count
+                        listTitleSeen = true;
+                        break;
+                    }
+
+                    if (text.EndsWith(" SPELLS PER DAY", StringComparison.Ordinal))
+                    {
+                        scan.SpellTableHeaders++; // a spellcaster's table of cantrips and spell slots: read as a table, not as the feature's text
+                        break;
                     }
 
                     if (row.SubclassFeature != null && Slug(feature.Name) == Slug(row.SubclassFeature) && !text.Contains('['))
@@ -164,6 +239,7 @@ public static partial class EntriesStage
                     if (text.EndsWith(" FEATS BY NAME", StringComparison.Ordinal))
                     {
                         scan.ByNameHeaders++; // the printed list of the class's feats (name and level): the independent count, not an entry
+                        listTitleSeen = true;
                     }
                     else if (AncestryBand.Match(text) is { Success: true } bandMatch)
                     {
@@ -210,7 +286,7 @@ public static partial class EntriesStage
                 case "tag" when mode == 'F' && feat != null && feat.Body.Count == 0:
                     feat.Tags.Add(b);
                     break;
-                case "body" when mode == 'F' && scan.ByNameHeaders > 0 && IsByNameList(b):
+                case "body" when mode != 'B' && scan.ByNameHeaders > 0 && IsByNameList(b):
                     scan.ByName.Add(b);
                     break;
                 case "rules" or "body" or "icon":
@@ -237,7 +313,12 @@ public static partial class EntriesStage
                     }
                     else if (mode == 'C')
                     {
-                        if (feature == null)
+                        if (b.Role == "body" && scan.SpellTableHeaders > 0 && IsSpellTableBlock(b, afterTable))
+                        {
+                            scan.SpellTable.Add(b);
+                            lastWasTable = true;
+                        }
+                        else if (feature == null)
                         {
                             scan.Flavor.Add(b); // the introduction of the features
                         }
@@ -270,7 +351,7 @@ public static partial class EntriesStage
             }
         }
 
-        if (scan.StatsBox == null || scan.AdvancementTable == null || scan.Initial.Count != InitialLabels.Length || scan.FeatsTitle == null || scan.Features.Count == 0)
+        if (scan.StatsBox == null || scan.AdvancementTable == null || scan.Initial.Count(i => i.Label != SpellsLabel) != InitialLabels.Length || scan.FeatsTitle == null || scan.Features.Count == 0)
         {
             throw new DegreesException("A class's range lacks its statistics box, its proficiencies, its advancement table, its features or its feats.");
         }
@@ -346,7 +427,7 @@ public static partial class EntriesStage
         var statements = new List<string>();
         foreach (var line in body.SelectMany(b => b.Lines).Select(l => Clean(l)).Where(l => l.Length > 0))
         {
-            if (Regex.IsMatch(line, @"^(?:Trained|Expert|Master|Legendary) in\b", RegexOptions.CultureInvariant) || statements.Count == 0)
+            if (Regex.IsMatch(line, @"^(?:Untrained|Trained|Expert|Master|Legendary) in\b", RegexOptions.CultureInvariant) || statements.Count == 0)
             {
                 statements.Add(line);
             }
@@ -362,7 +443,7 @@ public static partial class EntriesStage
     /// <summary>Where a word the book uses for something with a proficiency rank lands: the sheet's ranked list and its entry keys (none for a list of one).</summary>
     private static (string List, string[] Entries)[] RankTargets(string what, TakeRow row)
     {
-        var w = Regex.Replace(what.Trim().ToLowerInvariant(), @"^your\s+", string.Empty);
+        var w = Regex.Replace(Regex.Replace(what.Trim().ToLowerInvariant(), @"^(?:your|the)\s+", string.Empty), @"\s+statistics?$", string.Empty);
         if (w == "perception")
         {
             return new[] { ("perception", Array.Empty<string>()) };
@@ -377,6 +458,16 @@ public static partial class EntriesStage
             && row.SaveAttributes.FirstOrDefault(kv => kv.Key.Equals(save.Groups["s"].Value, StringComparison.OrdinalIgnoreCase)) is { Value: { } attribute })
         {
             return new[] { ("saves", new[] { attribute }) };
+        }
+
+        if (Regex.IsMatch(w, @"^spell attack(?: modifier| roll)?s?$"))
+        {
+            return new[] { ("spellAttack", Array.Empty<string>()) };
+        }
+
+        if (Regex.IsMatch(w, @"^spell dcs?$"))
+        {
+            return new[] { ("spellDc", Array.Empty<string>()) };
         }
 
         return w switch
@@ -436,7 +527,7 @@ public static partial class EntriesStage
             result.Statements.Add((label, string.Join(' ', statements.Select(s => s.TrimEnd('.') + "."))));
             foreach (var s in statements)
             {
-                var m = Regex.Match(s, @"^(?<rank>Trained|Expert|Master|Legendary) in (?<what>.+)$", RegexOptions.CultureInvariant);
+                var m = Regex.Match(s, @"^(?<rank>Untrained|Trained|Expert|Master|Legendary) in (?<what>.+)$", RegexOptions.CultureInvariant);
                 if (!m.Success)
                 {
                     throw new DegreesException($"A statement of a class's initial proficiencies ({label}) does not open with a rank and 'in'.");
@@ -444,6 +535,10 @@ public static partial class EntriesStage
 
                 var rank = m.Groups["rank"].Value.ToLowerInvariant();
                 var what = m.Groups["what"].Value;
+                if (rank == "untrained" || Regex.IsMatch(what, @"^the favored weapon of your deity\b", RegexOptions.CultureInvariant))
+                {
+                    continue; // an untrained statement gives nothing; a favored weapon is the faith's (the sheet has no weapon of its own in a ranked list): the text keeps both
+                }
                 if (label == "SKILLS")
                 {
                     var extra = Regex.Match(what, @"\bequal to (?<n>\d+) plus your Intelligence\b", RegexOptions.CultureInvariant);
@@ -455,7 +550,7 @@ public static partial class EntriesStage
                     {
                         result.Adds.Add("{ to: skills, entries: [" + Slug(what) + "], rank: trained }");
                     }
-                    else if (!Regex.IsMatch(what, @"^(?:your choice of |one or more skills determined by your )", RegexOptions.CultureInvariant))
+                    else if (!Regex.IsMatch(what, @"^(?:your choice of |one (?:or more )?skills? determined by your )", RegexOptions.CultureInvariant))
                     {
                         throw new DegreesException("A statement of a class's trained skills has a shape the reader does not know.");
                     }
@@ -493,13 +588,14 @@ public static partial class EntriesStage
     /// Reads the grants a feature's own sentences make: <c>Your proficiency rank for X increases to R</c>, <c>You gain R proficiency in X</c>, <c>Your proficiency ranks increase to R for all X</c>, and
     /// (for a subclass) <c>You are trained in X</c>. A sentence that talks of a proficiency in another shape fails the run, unless it speaks of a weapon group (a choice the sheet does not model).
     /// </summary>
-    internal static List<string> SentenceGrants(string text, TakeRow row, out int notModelled)
+    public static List<string> SentenceGrants(string text, TakeRow row, out int notModelled)
     {
         notModelled = 0;
         var adds = new List<string>();
-        foreach (var raw in Regex.Split(text.Replace('\n', ' '), @"(?<=[.!?])\s+(?=[A-Z])"))
+        // A paragraph's bold label (a name and a full stop) is not part of its first sentence.
+        foreach (var raw in Regex.Split(Regex.Replace(text.Replace('\n', ' '), @"\*\*[^*]+?\*\*\s*", string.Empty), @"(?<=[.!?])\s+(?=[A-Z])"))
         {
-            foreach (var part in Regex.Split(raw.Trim(), @",\s+and (?=your proficiency rank)", RegexOptions.IgnoreCase))
+            foreach (var part in Regex.Split(raw.Trim(), @",\s+and (?=your proficiency rank|you have (?:expert|master|legendary) proficiency in)", RegexOptions.IgnoreCase))
             {
                 var p = part.Trim().TrimEnd('.', '!', '?', ' ').Trim();
                 if (!Regex.IsMatch(p, @"\bproficiency\b|\byou(?:'re| are) trained in\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
@@ -509,7 +605,7 @@ public static partial class EntriesStage
 
                 var rank = string.Empty;
                 string? things = null;
-                if (Regex.Match(p, @"^(?:[Aa]nd )?[Yy]our proficiency ranks? for (?<what>.+?) increases? to (?<rank>expert|master|legendary)$", RegexOptions.CultureInvariant) is { Success: true } a)
+                if (Regex.Match(p, @"^(?:[Aa]nd )?[Yy]our proficiency ranks? (?:for|in) (?<what>.+?) increases? to (?<rank>expert|master|legendary)$", RegexOptions.CultureInvariant) is { Success: true } a)
                 {
                     (rank, things) = (a.Groups["rank"].Value, a.Groups["what"].Value);
                 }
@@ -517,7 +613,7 @@ public static partial class EntriesStage
                 {
                     (rank, things) = (b.Groups["rank"].Value, b.Groups["what"].Value);
                 }
-                else if (Regex.Match(p, @"^You gain (?<rank>expert|master|legendary) proficiency in (?<what>.+)$", RegexOptions.CultureInvariant) is { Success: true } c)
+                else if (Regex.Match(p, @"^You gain (?<rank>expert|master|legendary) proficiency (?:in|with) (?<what>.+)$", RegexOptions.CultureInvariant) is { Success: true } c)
                 {
                     (rank, things) = (c.Groups["rank"].Value, c.Groups["what"].Value);
                 }
@@ -525,11 +621,15 @@ public static partial class EntriesStage
                 {
                     (rank, things) = ("trained", d.Groups["what"].Value);
                 }
-                else if (Regex.IsMatch(p, @"\bwhen you gain\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                else if (Regex.Match(p, @"^[Yy]ou have (?<rank>expert|master|legendary) proficiency in (?<what>.+)$", RegexOptions.CultureInvariant) is { Success: true } e)
+                {
+                    (rank, things) = (e.Groups["rank"].Value, e.Groups["what"].Value);
+                }
+                else if (Regex.IsMatch(p, @"\b(?:when|if) you gain\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
                 {
                     continue; // a later grant of a subclass: read by LaterGrants
                 }
-                else if (p.Contains("group", StringComparison.Ordinal) || Regex.IsMatch(p, @"\bhave (?:trained|expert|master|legendary) proficiency\b", RegexOptions.CultureInvariant))
+                else if (p.Contains("group", StringComparison.Ordinal) || p.Contains("favored weapon", StringComparison.Ordinal) || p.Contains("increase your proficiency rank", StringComparison.Ordinal) || Regex.IsMatch(p, @"\bhave (?:trained|expert|master|legendary) proficiency\b", RegexOptions.CultureInvariant))
                 {
                     // A weapon group the player picks, or a condition on a rank held (the sheet models neither).
                     notModelled++;
@@ -540,7 +640,11 @@ public static partial class EntriesStage
                     throw new DegreesException("A feature's sentence about a proficiency has a shape the reader does not know, and it is not about a weapon group.");
                 }
 
-                var parts = RankedThings(things!).Select(t => rank == "trained" && Regex.IsMatch(t, @"^[A-Z][a-z]+$", RegexOptions.CultureInvariant) ? "skill:" + Slug(t) : t).ToList();
+                // The faith's favored weapon is the faith's (the sheet has no weapon of its own in a ranked list): a sentence that names it among other things grants the others.
+                var named = RankedThings(things!);
+                notModelled += named.Count(t => t.Contains("favored weapon", StringComparison.Ordinal));
+                var parts = named.Where(t => !t.Contains("favored weapon", StringComparison.Ordinal))
+                    .Select(t => rank == "trained" && Regex.IsMatch(t, @"^[A-Z][a-z]+$", RegexOptions.CultureInvariant) ? "skill:" + Slug(t) : t).ToList();
                 var skills = parts.Where(t => t.StartsWith("skill:", StringComparison.Ordinal)).Select(t => t[6..]).ToList();
                 if (skills.Count > 0)
                 {
@@ -555,9 +659,33 @@ public static partial class EntriesStage
     }
 
     /// <summary>The grants a subclass makes at a later level (<c>When you gain F, you also gain R proficiency in X</c>): the class feature's name, the rank and what.</summary>
-    internal static List<(string Feature, string Rank, string What)> LaterGrants(string text) =>
-        Regex.Matches(text.Replace('\n', ' '), @"[Ww]hen you gain (?<f>[^,]+), you also gain (?<r>expert|master|legendary) proficiency in (?<w>[^,.]+?)(?=,|\.|$)", RegexOptions.CultureInvariant)
-            .Select(m => (m.Groups["f"].Value.Trim(), m.Groups["r"].Value, m.Groups["w"].Value.Trim())).ToList();
+    public static List<(string Feature, string Rank, string What)> LaterGrants(string text) =>
+        Regex.Matches(text.Replace('\n', ' '), @"(?:[Ww]hen|[Ii]f) you gain (?<f>[^,]+), you also gain (?<r>expert|master|legendary) proficiency in (?<w>[^,.]+?(?:,? and (?!when |if )[^,.]+?)?)(?=,|\.|$)", RegexOptions.CultureInvariant)
+            .Select(m => (Regex.Replace(Regex.Replace(m.Groups["f"].Value.Trim(), @"^the\s+", string.Empty), @"\s+class feature$", string.Empty), m.Groups["r"].Value, m.Groups["w"].Value.Trim())).ToList();
+
+    /// <summary>
+    /// What a row maps a name to: the map's key is the name (compared without case, and for the advancement table as the table's names are normalized) or, for a name that a row must not spell
+    /// (a word the setting coined), the lowercase hex SHA-256 of the lowercase name, so the take-list never holds it.
+    /// </summary>
+    private static string? MappedName(IReadOnlyDictionary<string, string> map, string name, bool normalized = false)
+    {
+        var lower = name.ToLowerInvariant();
+        var hash = Denylist.Hash(lower);
+        foreach (var (key, value) in map)
+        {
+            if (normalized ? NormalizeAdvancementName(key) == lower : key.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                return value;
+            }
+
+            if (key.Length == 64 && key.Equals(hash, StringComparison.OrdinalIgnoreCase))
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
 
     private static string NormalizeAdvancementName(string name)
     {
@@ -594,7 +722,7 @@ public static partial class EntriesStage
             foreach (var name in text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
             {
                 var norm = NormalizeAdvancementName(name);
-                result.Add((level, row.AdvancementNames.FirstOrDefault(kv => NormalizeAdvancementName(kv.Key) == norm) is { Value: { } alias } ? NormalizeAdvancementName(alias) : norm));
+                result.Add((level, MappedName(row.AdvancementNames, norm, true) is { } alias ? NormalizeAdvancementName(alias) : norm));
             }
         }
 
@@ -610,12 +738,14 @@ public static partial class EntriesStage
     /// Compares the table's (level, name) rows with the feature rows': every feature row must be in the table at its level, and any other table row must be a feature the class gained at an earlier
     /// level again (a feat every second level). Any other difference fails the run.
     /// </summary>
-    public static void CheckAdvancement(List<(int Level, string Name)> table, IEnumerable<ClassFeature> features, string className)
+    public static void CheckAdvancement(List<(int Level, string Name)> table, IEnumerable<ClassFeature> features, string className, bool spellRankRows = false, IEnumerable<(int Level, string Name)>? subclassRows = null)
     {
-        var rows = features.Select(f => (f.Level, Name: NormalizeAdvancementName(f.Name))).ToList();
+        // The rows the class's subclasses gain at a level (each subclass the same ones) are named once in the table, as the class's own features are.
+        var rows = features.Select(f => (f.Level, Name: NormalizeAdvancementName(f.Name))).Concat(subclassRows ?? Enumerable.Empty<(int, string)>()).ToList();
         var inTable = table.ToHashSet();
         var missing = rows.Where(r => !inTable.Contains(r)).ToList();
-        var extra = table.Where(t => !rows.Contains(t) && !rows.Any(r => r.Name == t.Name && r.Level < t.Level)).ToList();
+        // A spellcaster's table also says at which level a new spell rank comes; those rows are no features and are checked against the spells-per-day table.
+        var extra = table.Where(t => !rows.Contains(t) && !(spellRankRows && IsSpellRankRow(t.Name)) && !rows.Any(r => r.Name == t.Name && r.Level < t.Level)).ToList();
         if (missing.Count > 0 || extra.Count > 0)
         {
             throw new DegreesException($"The advancement table of the {className} and its feature rows differ: {missing.Count} feature rows are not in the table at their level, and {extra.Count} table rows are no feature of an earlier level again.");
@@ -630,13 +760,20 @@ public static partial class EntriesStage
         return icon.Success ? name + " (" + icon.Groups["i"].Value + ")" : name;
     }
 
-    private static ClassFeature ReadFeature(string name, int level, IEnumerable<Block> blocks, HashSet<string> compounds, string chapter)
+    private static ClassFeature ReadFeature(string name, int level, IEnumerable<Block> blocks, HashSet<string> compounds, string chapter, bool bodyStartsParagraph = false)
     {
         var scratch = new ParsedEntry { Chapter = chapter };
         BodyReader NewReader() => new(scratch, compounds, false, false, null, true);
         var reader = NewReader();
         foreach (var block in blocks)
         {
+            // A subclass's labelled lines (a body block of bold labels) come after its flavor paragraph, which may run to the edge of the column: the block starts a paragraph of its own.
+            if (bodyStartsParagraph && block.Role == "body")
+            {
+                reader.Finish();
+                reader = NewReader();
+            }
+
             if (block.Role == "block-header")
             {
                 reader.Finish();
@@ -683,7 +820,7 @@ public static partial class EntriesStage
     /// <summary>The paragraphs of a subclass's text: the first is its flavor, and the rest are its rules.</summary>
     private static (string Flavor, ClassFeature Rules) ReadSubclass(SubclassScan s, HashSet<string> compounds, string chapter)
     {
-        var read = ReadFeature(TitleCase(Clean(string.Join(' ', s.Header.Lines))), 1, s.Body, compounds, chapter);
+        var read = ReadFeature(TitleCase(Clean(string.Join(' ', s.Header.Lines))), 1, s.Body, compounds, chapter, true);
         if (read.Parts.Count < 2 || read.Parts[0].Label.Length != 0)
         {
             throw new DegreesException($"A subclass (page {s.Header.Page}) does not hold a flavor paragraph and its rules.");
@@ -748,15 +885,43 @@ public static partial class EntriesStage
             }
             else
             {
-                feature = ReadFeature(f.Name, f.Level, f.Body, compounds, cls.Chapter);
-                feature.Adds = SentenceGrants(feature.Render(), row, out _);
+                var plain = MappedName(row.FeatureNames, f.Name);
+                feature = ReadFeature(plain ?? f.Name, f.Level, f.Body, compounds, cls.Chapter);
+                feature.BookName = plain == null ? null : f.Name;
+                try
+                {
+                    feature.Adds = SentenceGrants(feature.Render(), row, out _);
+                    if (row.GrantsByName)
+                    {
+                        feature.Adds.AddRange(NamedGrants(feature.Render()));
+                    }
+                }
+                catch (DegreesException ex)
+                {
+                    throw new DegreesException($"{ex.Message} (class feature at page {f.Header.Page}, column {f.Header.Column})");
+                }
             }
 
             cls.Features.Add(feature);
         }
 
-        CheckAdvancement(ParseAdvancement(scan.AdvancementTable!, row), cls.Features, cls.Name);
+        var advancement = ParseAdvancement(scan.AdvancementTable!, row);
+        var spellcaster = scan.Initial.Any(i => i.Label == SpellsLabel);
+        if (spellcaster != scan.SpellTableHeaders > 0 || scan.SpellTableHeaders > 1)
+        {
+            throw new DegreesException($"The {cls.Name} has {scan.SpellTableHeaders} spells-per-day tables and {(spellcaster ? "a" : "no")} spell proficiency line: a spellcaster has one of each.");
+        }
+
+        if (spellcaster)
+        {
+            var spellRows = ParseSpellTable(scan.SpellTable, cls.Name);
+            CheckSpellRankRows(advancement, spellRows, cls.Features, cls.Name);
+            AddSpellcastingFields(cls, ReadSpellcasting(cls.Features, spellRows, box.KeyAttribute, cls.Name), spellRows);
+        }
+
         var result = new List<ParsedEntry> { cls };
+        var subclassRows = new List<(int Level, string Name)>();
+        var subclassRowSets = new List<HashSet<(int Level, string Name)>>();
 
         foreach (var s in scan.Subclasses)
         {
@@ -764,9 +929,34 @@ public static partial class EntriesStage
             var entry = NewEntry(range, book, title, compounds, "subclass", "subclasses", null, scan.Subclasses.Count > 0 ? row.SubclassFeature : null);
             entry.Owner = cls;
             var (_, rules) = ReadSubclass(s, compounds, cls.Chapter);
+            // A paragraph that opens with a name and a level in parentheses (a doctrine gained at the 3rd level) is a feature row of its own, at that level; the one at the 1st level stays in the row.
+            var (keptParts, levelled) = SplitLevelledParagraphs(rules.Parts);
+            rules.Parts = keptParts;
             var text = rules.Render();
             rules.Adds = SentenceGrants(text, row, out _);
+            if (row.GrantsByName)
+            {
+                rules.Adds.AddRange(NamedGrants(text));
+                rules.Adds.AddRange(LabelledGrants(rules.Parts));
+            }
+
             entry.Features.Add(rules);
+            var own = new HashSet<(int, string)>();
+            foreach (var (name, level, part) in levelled)
+            {
+                var rowFeature = new ClassFeature { Name = name, Level = level, Parts = new List<LabelledText> { new(string.Empty, part) } };
+                rowFeature.Adds = SentenceGrants(rowFeature.Render(), row, out _);
+                if (row.GrantsByName)
+                {
+                    rowFeature.Adds.AddRange(NamedGrants(rowFeature.Render()));
+                }
+
+                entry.Features.Add(rowFeature);
+                own.Add((rowFeature.Level, NormalizeAdvancementName(rowFeature.Name)));
+                text += "\n" + part;
+            }
+
+            subclassRowSets.Add(own);
             if (Regex.Match(text, @"You can choose (?<a>[A-Z][a-z]+) as your key attribute", RegexOptions.CultureInvariant) is { Success: true } key)
             {
                 entry.Raw.Add(new LabelledText("keyAttribute", Quoted(AttributeKeyOf(key.Groups["a"].Value))));
@@ -786,6 +976,13 @@ public static partial class EntriesStage
 
             result.Add(entry);
         }
+
+        if (subclassRowSets.Any(set => !set.SetEquals(subclassRowSets[0])))
+        {
+            throw new DegreesException($"The subclasses of the {cls.Name} do not gain the same levelled rows, so the advancement table could not name them once.");
+        }
+
+        CheckAdvancement(advancement, cls.Features, cls.Name, spellcaster, subclassRowSets.FirstOrDefault());
 
         foreach (var f in scan.Feats)
         {
@@ -816,7 +1013,7 @@ public static partial class EntriesStage
                 entry.Traits.AddRange(Clean(string.Join(' ', tag.Lines)).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => w.ToLowerInvariant()));
             }
 
-            var reader = new BodyReader(entry, compounds, true);
+            var reader = new BodyReader(entry, compounds, true) { LowerContinues = row.GrantsByName };
             foreach (var block in f.Body)
             {
                 reader.Read(block);
@@ -831,31 +1028,48 @@ public static partial class EntriesStage
         return result;
     }
 
-    private static readonly Regex InlineAction = new(@"^\[(?<icon>[^\]]+)\] \((?<traits>[^)]+)\) Trigger (?<trigger>.+?); Effect (?<effect>.+)$", RegexOptions.CultureInvariant);
+    private static readonly Regex InlineAction = new(@"^\[(?<icon>[^\]]+)\] \((?<traits>[^)]+)\) (?<rest>(?:Frequency|Trigger|Requirements|Effect) .+)$", RegexOptions.CultureInvariant);
+
+    private static readonly Regex InlineActionField = new(@";\s+(?=(?:Frequency|Trigger|Requirements|Effect) )", RegexOptions.CultureInvariant);
 
     /// <summary>
-    /// A feat that gives a reaction of its own prints it in running text: a bold name, the icon, the traits in parentheses, then Trigger and Effect. It is set out as the class features' actions are: the name with its action word,
-    /// a traits line, and a labelled line each.
+    /// A feat that gives an action of its own prints it in running text: a bold name, the icon, the traits in parentheses, then its labelled lines (Frequency, Trigger, Requirements, Effect) after semicolons.
+    /// It is set out as the class features' actions are: the name with its action word, a traits line, and a labelled line each. An action's Effect is required. A list item that is a Trigger and its Effect
+    /// (a bullet) is two labelled lines.
     /// </summary>
-    private static void SplitInlineAction(ParsedEntry entry)
+    public static void SplitInlineAction(ParsedEntry entry)
     {
         for (var i = 0; i < entry.Parts.Count; i++)
         {
             var part = entry.Parts[i];
+            if (part.Label.StartsWith("• ", StringComparison.Ordinal) && part.Label[2..].TrimEnd('.', ':', ' ') == "Trigger" && InlineActionField.Split(part.Text) is { Length: 2 } pair && pair[1].StartsWith("Effect ", StringComparison.Ordinal))
+            {
+                entry.Parts[i] = part with { Text = pair[0] };
+                entry.Parts.Insert(i + 1, new LabelledText("Effect", pair[1]["Effect ".Length..]));
+                i++;
+                continue;
+            }
+
             if (part.Label.Length == 0 || InlineAction.Match(part.Text) is not { Success: true } m)
             {
                 continue;
             }
 
-            entry.Parts.RemoveAt(i);
-            entry.Parts.InsertRange(i, new[]
+            var fields = InlineActionField.Split(m.Groups["rest"].Value).Select(f => (Label: f[..f.IndexOf(' ', StringComparison.Ordinal)], Text: f[(f.IndexOf(' ', StringComparison.Ordinal) + 1)..])).ToList();
+            if (fields.All(f => f.Label != "Effect"))
             {
-                new LabelledText(part.Label.TrimEnd('.', ':', ' ') + " (" + m.Groups["icon"].Value + ")", string.Empty),
-                new LabelledText("Traits", string.Join(' ', m.Groups["traits"].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(t => t.ToLowerInvariant()))),
-                new LabelledText("Trigger", m.Groups["trigger"].Value),
-                new LabelledText("Effect", m.Groups["effect"].Value),
-            });
-            return;
+                continue;
+            }
+
+            entry.Parts.RemoveAt(i);
+            var set = new List<LabelledText>
+            {
+                new(part.Label.TrimEnd('.', ':', ' ') + " (" + m.Groups["icon"].Value + ")", string.Empty),
+                new("Traits", string.Join(' ', m.Groups["traits"].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(t => t.ToLowerInvariant()))),
+            };
+            set.AddRange(fields.Select(f => new LabelledText(f.Label, f.Text)));
+            entry.Parts.InsertRange(i, set);
+            i += set.Count - 1;
         }
     }
 

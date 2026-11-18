@@ -171,6 +171,9 @@ public sealed class ClassFeature
     /// <summary>Grants to ranked lists, each one the flow-map YAML of an <c>adds</c> row.</summary>
     public List<string> Adds { get; set; } = new();
 
+    /// <summary>When a row says the feature's heading in other words (<c>featureNames</c>): the book's own heading, whose words are reserved names (with their plurals) for the denylist.</summary>
+    public string? BookName { get; set; }
+
     public string Render() => ParsedEntry.RenderParts(Parts);
 }
 
@@ -1267,7 +1270,7 @@ public static partial class EntriesStage
                     startsParagraph = raggedLeft ? _previousShort : info.Left - block.Left <= Indent;
                 }
 
-                if ((_runOn || _tableRows) && startsParagraph && !indented && _parts.Count > 0 && text.Length > 0 && char.IsLower(text[0]) && !text.StartsWith('•')
+                if ((_runOn || _tableRows) && startsParagraph && (!indented || LowerContinues) && _parts.Count > 0 && text.Length > 0 && char.IsLower(text[0]) && !text.StartsWith('•')
                     && _parts[^1].Text.ToString().TrimEnd() is { Length: > 0 } tail && !".!?:;\"”)".Contains(tail[^1]))
                 {
                     startsParagraph = false; // a line set short by the layout, not by the end of a sentence: the text goes on
@@ -1342,6 +1345,12 @@ public static partial class EntriesStage
         public void EndParagraph() => _previousShort = true;
 
         private void Start(string label) => _parts.Add((label, new StringBuilder()));
+
+        /// <summary>
+        /// A line set in from the block's edge that starts in lowercase, after a sentence that has not ended, goes on the sentence (text set around a piece of art is pushed in line by line). Set for the class
+        /// feats of chapters 8b and after, so the earlier chapters' entries read as they did.
+        /// </summary>
+        public bool LowerContinues { get; init; }
 
         private void Append(string line)
         {

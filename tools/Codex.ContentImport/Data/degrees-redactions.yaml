@@ -1840,3 +1840,325 @@ rows:
     action: replace
     text: "These follow the rules for injury poisons, except that they deal 1d4 poison damage with no saving throw."
     reason: "A parenthesis that named another book and a page; the mechanic is kept."
+
+  # Chapter 8b (the bard, the cleric and the druid): sentences that point to a page, a chapter or another book, and the sentences that named a deity, the book or the secret language of the setting. The mechanic is kept; the name and the pointer go.
+  - book: pc
+    entry: bard-class
+    field: feature:ancestry-and-background
+    span: { sha256: "33d3f1c986823c419e2fd26746e1bbf26fba610230f0664d10a579cb4f40bc2f", length: 33 }
+    action: cut
+    reason: "A sentence that sent the reader to another chapter; the mechanic (the ancestry and background give their benefits) is kept."
+  - book: pc
+    entry: bard-class
+    field: feature:general-feats
+    span: { sha256: "851b1a2beca02ef8d7fff42eee569bbf638cbe2b6fd132e38072d27274393e0f", length: 38 }
+    action: cut
+    reason: "A sentence that pointed to another chapter; the mechanic (a general feat at 3rd level and every 4 levels) is kept."
+  - book: pc
+    entry: bard-class
+    field: feature:ancestry-feats
+    span: { sha256: "0248c47acce847af41fcdc57e922a39605fe2041f46237c1cdc7cd043b466ae6", length: 95 }
+    action: replace
+    text: "The ancestry feats available to you are those of your ancestry."
+    reason: "A sentence that pointed to another chapter; the mechanic (the feats are the ancestry's) is kept."
+  - book: pc
+    entry: bard-class
+    field: feature:bard-feats
+    span: { sha256: "209f21c1b05a6981ce8902af22e36c3bb645eb60f7ffc82c13b98979ff833cae", length: 24 }
+    action: cut
+    reason: "A sentence that pointed to a page; the mechanic (a class feat at 2nd level and every even level) is kept."
+  - book: pc
+    entry: cleric-class
+    field: feature:ancestry-and-background
+    span: { sha256: "33d3f1c986823c419e2fd26746e1bbf26fba610230f0664d10a579cb4f40bc2f", length: 33 }
+    action: cut
+    reason: "A sentence that sent the reader to another chapter; the mechanic (the ancestry and background give their benefits) is kept."
+  - book: pc
+    entry: cleric-class
+    field: feature:general-feats
+    span: { sha256: "851b1a2beca02ef8d7fff42eee569bbf638cbe2b6fd132e38072d27274393e0f", length: 38 }
+    action: cut
+    reason: "A sentence that pointed to another chapter; the mechanic (a general feat at 3rd level and every 4 levels) is kept."
+  - book: pc
+    entry: cleric-class
+    field: feature:ancestry-feats
+    span: { sha256: "0248c47acce847af41fcdc57e922a39605fe2041f46237c1cdc7cd043b466ae6", length: 95 }
+    action: replace
+    text: "The ancestry feats available to you are those of your ancestry."
+    reason: "A sentence that pointed to another chapter; the mechanic (the feats are the ancestry's) is kept."
+  - book: pc
+    entry: cleric-class
+    field: feature:cleric-feats
+    span: { sha256: "b9c4cc265374c447a8378706ff422fc94fc404c0221495b0453c85375e1d6f8d", length: 24 }
+    action: cut
+    reason: "A sentence that pointed to a page; the mechanic (a class feat at 2nd level and every even level) is kept."
+  - book: pc
+    entry: druid-class
+    field: feature:ancestry-and-background
+    span: { sha256: "33d3f1c986823c419e2fd26746e1bbf26fba610230f0664d10a579cb4f40bc2f", length: 33 }
+    action: cut
+    reason: "A sentence that sent the reader to another chapter; the mechanic (the ancestry and background give their benefits) is kept."
+  - book: pc
+    entry: druid-class
+    field: feature:general-feats
+    span: { sha256: "851b1a2beca02ef8d7fff42eee569bbf638cbe2b6fd132e38072d27274393e0f", length: 38 }
+    action: cut
+    reason: "A sentence that pointed to another chapter; the mechanic (a general feat at 3rd level and every 4 levels) is kept."
+  - book: pc
+    entry: druid-class
+    field: feature:ancestry-feats
+    span: { sha256: "0248c47acce847af41fcdc57e922a39605fe2041f46237c1cdc7cd043b466ae6", length: 95 }
+    action: replace
+    text: "The ancestry feats available to you are those of your ancestry."
+    reason: "A sentence that pointed to another chapter; the mechanic (the feats are the ancestry's) is kept."
+  - book: pc
+    entry: druid-class
+    field: feature:druid-feats
+    span: { sha256: "7ba38e56474fafd153ba107130003a3ff6702416009ef71379a4ed08cf625cb6", length: 24 }
+    action: cut
+    reason: "A sentence that pointed to a page; the mechanic (a class feat at 2nd level and every even level) is kept."
+  - book: pc
+    entry: bard-class
+    field: feature:skill-feats
+    span: { sha256: "d2612a12d3af5206b9b6a16e920834304e4d2a150f3bc63f7092adcb41c71664", length: 63 }
+    action: replace
+    text: "Skill feats have the skill trait."
+    reason: "A sentence that pointed to another chapter; what makes a feat a skill feat is kept."
+  - book: pc
+    entry: cleric-class
+    field: feature:skill-feats
+    span: { sha256: "d2612a12d3af5206b9b6a16e920834304e4d2a150f3bc63f7092adcb41c71664", length: 63 }
+    action: replace
+    text: "Skill feats have the skill trait."
+    reason: "A sentence that pointed to another chapter; what makes a feat a skill feat is kept."
+  - book: pc
+    entry: druid-class
+    field: feature:skill-feats
+    span: { sha256: "5bc080feb533f672a76436ba5032ef161c88d8c2c7cc21e2e9a94aff25e98a5b", length: 57 }
+    action: replace
+    text: "Skill feats have the skill trait."
+    reason: "A sentence that pointed to another chapter; what makes a feat a skill feat is kept."
+  - book: pc
+    entry: bard-class
+    field: feature:bard-spellcasting
+    span: { sha256: "44fe7b5527f8c92e4a28d7b5619389f1df7cc1d4767a4b1f13f7c7e52f275a65", length: 131 }
+    action: replace
+    text: "You are a spellcaster and can cast spells of the occult tradition using the Cast a Spell activity."
+    reason: "A sentence with a parenthesis that pointed to a page; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: bard-class
+    field: feature:bard-spellcasting
+    span: { sha256: "45b3e25a08005533112df70e85c124411d858f453845ea3ccdd7dab4175df9f6", length: 179 }
+    action: replace
+    text: "As you increase in level as a bard, your number of spells per day increases, as does the highest rank of spells you can cast, as shown on the Bard Spells per Day table."
+    reason: "A sentence that pointed to a page for a table the class entry holds; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: bard-class
+    field: feature:bard-spellcasting
+    span: { sha256: "03275d1d567dc0f08581f98a045b7cec7413cd8158b9411e0365f90ac6584ad6", length: 59 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: druid-class
+    field: feature:druid-spellcasting
+    span: { sha256: "5f8251fb9d06a193986ac9c317af267e49320f460789e0450dc1cab75666dd9f", length: 131 }
+    action: replace
+    text: "You are a spellcaster and can cast spells of the primal tradition using the Cast a Spell activity."
+    reason: "A sentence with a parenthesis that pointed to a page; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: druid-class
+    field: feature:druid-spellcasting
+    span: { sha256: "b2d0e74e39bc250726372ce3c18172de8a1fb8f8b98a9bb6a4c43d0a496f4f63", length: 197 }
+    action: replace
+    text: "As you increase in level as a druid, the number of spells you can prepare each day increases, as does the highest rank of spell you can cast, as shown in the Druid Spells per Day table."
+    reason: "A sentence that pointed to a page for a table the class entry holds; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: druid-class
+    field: feature:druid-spellcasting
+    span: { sha256: "03275d1d567dc0f08581f98a045b7cec7413cd8158b9411e0365f90ac6584ad6", length: 59 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: cleric-class
+    field: feature:cleric-spellcasting
+    span: { sha256: "03275d1d567dc0f08581f98a045b7cec7413cd8158b9411e0365f90ac6584ad6", length: 59 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: bard-class
+    field: feature:spell-repertoire
+    span: { sha256: "974491edcf22d7d23cc5073fe2e6c142b51c067c44b4846fa029a17290e86624", length: 126 }
+    action: replace
+    text: "Each time you get a spell slot, you add a spell to your spell repertoire of the same rank."
+    reason: "A parenthesis that pointed to the table of the class entry; the mechanic is kept."
+  - book: pc
+    entry: bard-class
+    field: feature:composition-spells
+    span: { sha256: "a35e35d686d5c2f2dde3b75148faa5960bdf677c3a205cd7016eafa7249bb443", length: 51 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: druid-class
+    field: feature:druidic-order
+    span: { sha256: "4d7aa5b63e74eb0073eab6f8e8341a52e3a0282023a6a74cd4f61aa3c0fb206d", length: 54 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: druid-class
+    field: feature:druidic-order
+    span: { sha256: "a9976bdf88cf06242871955a22a0fd709148be4c8dd674b6d4a9efc826cc90da", length: 174 }
+    action: replace
+    text: "Upon becoming a druid, you align yourself with a druidic order, which grants you a class feat, an order spell, and an additional trained skill tied to your order."
+    reason: "A parenthesis that pointed to the text below; the mechanic is kept."
+  - book: pc
+    entry: druid-class
+    field: feature:shield-block
+    span: { sha256: "0ee87604d504a54734b8edd1eb710990577d7c0e90d05706335703e892c526fc", length: 116 }
+    action: replace
+    text: "You gain the Shield Block general feat, a reaction that lets you reduce damage with your shield."
+    reason: "A sentence that pointed to a page for a feat the pack holds; the feat is named, and the mechanic is kept."
+  - book: pc
+    entry: cleric-class
+    field: feature:deity
+    span: { sha256: "2dd78a39d9ea1a816e0c5c7a62f624b722661af27bd75caa5ee6894ceb69c7b1", length: 162 }
+    action: replace
+    text: "Your faith has its own edicts, areas of concern, and the benefits you get for being a cleric of that deity."
+    reason: "A sentence that named the book and the pages of its list of deities; the mechanic (the faith gives its edicts, concerns and benefits) is kept in plain words."
+  - book: pc
+    entry: cleric-class
+    field: feature:deity
+    span: { sha256: "13eb0d68fe9b08e85f3888d1a3e43a578d7cc8a50aadd6fc63af0bf610fcde76", length: 98 }
+    action: replace
+    text: "For example, casting a spell to create undead would be anathema to a deity of death."
+    reason: "A sentence that named a deity of the setting; the example (a spell that makes undead) is kept for a deity of death."
+  - book: pc
+    entry: cleric-class
+    field: feature:divine-font
+    span: { sha256: "35028c7d1fb74fd9783215c875d3dd8b663e2855146dc1e41e8e897c3a305233", length: 107 }
+    action: replace
+    text: "Your faith says which divine font spell your deity provides;"
+    reason: "A clause that sent the reader to the pages of the list of deities; the mechanic (the faith provides the divine font spell) is kept."
+  - book: pc
+    entry: druid-class
+    field: feature:anathema
+    span: { sha256: "69b8b748c6f412bba35df552df77e2fc7623eb164726965547e8ca8ac7b2ce6e", length: 140 }
+    action: replace
+    text: "**Anathema.** despoil natural places, consume more natural resources than you require to live comfortably, teach the druids' secret language to non-druids."
+    reason: "A sentence that named the secret language of the setting; the anathema (teaching it to others) is kept in plain words."
+  - book: pc
+    entry: druid-class
+    field: feature:druid-language
+    span: { sha256: "8a84b8735dcbdac680f186ac4e298c8fbb28e6be054cf0312959779239c1c2c5", length: 133 }
+    action: replace
+    text: "You know a secret language known only within druid orders, in addition to any languages you know through your ancestry."
+    reason: "A sentence that named the secret language of the setting; the mechanic (the class knows it) is kept in plain words."
+  - book: pc
+    entry: druid-class
+    field: feature:druid-language
+    span: { sha256: "1be733c70e2aa19e29f216b781507cf95ac86760da7171648a08ef8512d7dfd7", length: 237 }
+    action: replace
+    text: "It is a melodic and tonal language sounding more like animal calls than a spoken tongue, and its alphabet involves fractals and spirals, like the arrangement of a seashell's chambers, a snowflake's crystals, or a fern's fronds."
+    reason: "A sentence that named the secret language of the setting; the description of its sound and its alphabet is kept in plain words."
+  - book: pc
+    entry: druid-class
+    field: feature:druid-language
+    span: { sha256: "926189ce1c76ac59b4188f54ff622794d91de2d716f0f264682a6ca53c2f3ce9", length: 48 }
+    action: replace
+    text: "Teaching it to non-druids is anathema."
+    reason: "A sentence that named the secret language of the setting; the anathema (teaching it to others) is kept in plain words."
+  - book: pc
+    entry: accompany
+    field: description
+    span: { sha256: "aa458263e9a886ef4f61e5d1c7d88ee5ef41145a58465231a8fe0e41a4426a78", length: 231 }
+    action: replace
+    text: "Attempt a Performance check, using a very high DC for the ally's level, and either spend a Focus Point (if the triggering spell is a focus spell) or expend a spell slot at least 1 rank higher than the triggering spell."
+    reason: "A parenthesis that named another book and a page; the mechanic is kept."
+  - book: pc
+    entry: deadly-simplicity
+    field: description
+    span: { sha256: "1aa055192bff819ff5e5a62e8fe77bb6ce4af7cdf0e165ef479eff28ebc2b183", length: 173 }
+    action: replace
+    text: "If your deity's favored weapon is an unarmed attack and its damage die is smaller than d6, instead increase its damage die size to d6."
+    reason: "A parenthesis that named a deity of the setting; the mechanic is kept."
+  - book: pc
+    entry: divine-apex
+    field: description
+    span: { sha256: "4f73972c11341de0997749077ef05b34c8a13149fab81c4ed67f164e2f3e02e3", length: 121 }
+    action: replace
+    text: "It gains the apex trait until your next preparations, and you choose one of your deity's divine attributes."
+    reason: "A parenthesis that named another book and a page; the mechanic is kept."
+  - book: pc
+    entry: domain-initiate
+    field: description
+    span: { sha256: "e98543eae5924edc688628369d726bb4a904a4639598b0f771432e9cc4fd1a21", length: 81 }
+    action: cut
+    reason: "A sentence that pointed to pages of the book (a domain's theme and its spells); the mechanic is kept."
+  - book: pc
+    entry: domain-initiate
+    field: description
+    span: { sha256: "a35e35d686d5c2f2dde3b75148faa5960bdf677c3a205cd7016eafa7249bb443", length: 51 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: specialized-companion
+    field: description
+    span: { sha256: "9978ae8da730347e6770040f0380ad8d471ceee422272f3f043741104876e7ac", length: 54 }
+    action: replace
+    text: "It gains one specialization of your choice."
+    reason: "A parenthesis that only pointed to a page."
+  - book: pc
+    entryHash: "472252bb4c7b4012a721c1ed9d4461fe6ff721ff79279ca3e87c76f3fec73d4a"
+    field: name
+    span: { sha256: "f4dff92a4e12575a797b8c499f60642ae304a2fe4c7b4fde49f4b93e79f7af6d", length: 17 }
+    action: replace
+    text: "Divine Audience"
+    reason: "A name that held the name of a spell the pack leaves out (it names the setting's deities); the mechanic stands without it, so the feat is said by what it does."
+  - book: pc
+    entryHash: "dc537a031d473d69e7aabb7780f02194f4e3d4dedcc581c3606c6e068f46d689"
+    field: name
+    span: { sha256: "bce733d142f690dd768d39968438dba8cc959a80861f9496dc6c77cab015f069", length: 19 }
+    action: replace
+    text: "Protective Form"
+    reason: "A name that held the name of a spell the pack leaves out (it names the setting's deities); the feat is said by what it does."
+  - book: pc
+    entryHash: "dc537a031d473d69e7aabb7780f02194f4e3d4dedcc581c3606c6e068f46d689"
+    field: description
+    span: { sha256: "5b9e3aab0f08a3b771808282d15cb550c57464f3b7e630c62ab0f1c95be368b9", length: 38 }
+    action: replace
+    text: "You cast the spell that gives you your deity's form from your spell slots."
+    reason: "A sentence that named a spell the pack leaves out; it is said by what it gives."
+  - book: pc
+    entryHash: "dc537a031d473d69e7aabb7780f02194f4e3d4dedcc581c3606c6e068f46d689"
+    field: description
+    span: { sha256: "d9d3c7fdaaf0e50c12ae03beeb2643e1eeadad26db6da774b232ed0072b71fda", length: 136 }
+    action: replace
+    text: "The triggering critical hit is reduced to a normal hit, and its damage is applied after gaining that spell's temporary Hit Points."
+    reason: "A sentence that named a spell the pack leaves out; the mechanic is kept."
+  - book: pc
+    entryHash: "dc537a031d473d69e7aabb7780f02194f4e3d4dedcc581c3606c6e068f46d689"
+    field: requirements
+    span: { sha256: "c4289a780968eed334f58c04dcc8fcc8548812b4b95a02119fc0ba6958e22b85", length: 34 }
+    action: replace
+    text: "You have that spell prepared."
+    reason: "A line that named a spell the pack leaves out; the requirement is kept."
+  - book: pc
+    entry: cleric-class
+    field: feature:deity
+    span: { sha256: "30514d58e2cbbd3be23ecbd3b4a31fe934eb60df1b2e934e3e4b2b8c0c0cc19b", length: 155 }
+    action: replace
+    text: "This gives you the holy or unholy trait, which commits you to one side of a struggle over the souls of the planes and may matter to other abilities."
+    reason: "A sentence with a word that a redaction row of another entry removes; reworded, the mechanic is kept."
+  - book: pc
+    entry: void-siphon
+    field: description
+    span: { sha256: "a3e2961c5fc61fa5c921de4b67ff1d08b09a8167cdf3290f83d6a00c16a0b133", length: 58 }
+    action: replace
+    text: "Raw void energy saps the essence of the living."
+    reason: "A sentence that named a plane of the setting's cosmology where the rules mean the energy; it is said by the energy."
+  - book: pc
+    entry: void-warp
+    field: description
+    span: { sha256: "65b03cde81b49b024b208abf6406aca159dda169e986f947216267ea31a65323", length: 42 }
+    action: replace
+    text: "You call upon void energy to harm life force."
+    reason: "A sentence that named a plane of the setting's cosmology where the rules mean the energy; it is said by the energy."

@@ -76,7 +76,10 @@ public static partial class ImportPipeline
                 bandKids.Count, scan.Bands.Count, headers, traitLines, markers, mine.Count, listed.Count);
             var emptyBands = scan.Bands.Count(b => scan.Feats.All(f => f.Band != b.Level));
             var parsedPairs = mine.Select(e => (EntriesStage.Slug(e.Name), e.Level ?? 0)).ToHashSet();
-            if (count.LoreBookmarks != count.LoreHeadings || !racketNames.SequenceEqual(racketHeadings) || count.Rackets != count.Subclasses || !bandKids.SequenceEqual(bands) || emptyBands != 0
+            // A class whose feats section has no bookmark for its 1st-level band (the muse feats of the bard) says so in its row's countsDiffer: every other band must still be a bookmark, in order.
+            var bandsAgree = bandKids.SequenceEqual(bands)
+                || (!string.IsNullOrWhiteSpace(range.Row.CountsDiffer) && scan.Bands.Count > 1 && scan.Bands[0].Level == 1 && bandKids.SequenceEqual(bands.Skip(1)));
+            if (count.LoreBookmarks != count.LoreHeadings || !racketNames.SequenceEqual(racketHeadings) || count.Rackets != count.Subclasses || !bandsAgree || emptyBands != 0
                 || count.FeatHeaders != count.TraitLines || count.FeatHeaders != count.Markers || count.FeatHeaders != count.Feats || scan.ByNameHeaders != 1
                 || !listed.ToHashSet().SetEquals(parsedPairs) || listed.Count != parsedPairs.Count || count.Listed != count.Feats)
             {
@@ -92,4 +95,57 @@ public static partial class ImportPipeline
     }
 
     private static string BlockTextOf(Block b) => SpanText.Normalize(string.Join(' ', b.Lines)).Trim();
+
+    /// <summary>
+    /// Replaces the names a class's grants hold (<see cref="EntriesStage.GrantToken"/>) by the final ids of the feats and spells they name. A feat that several classes print is the one whose trait line
+    /// carries the granting class's key; a name that matches no entry, or more than one, makes no grant (the text of the feature still says it): it is returned, by the kind and the slug of the name.
+    /// </summary>
+    public static (int Resolved, List<string> Left) ResolveGrantNames(List<FinalEntry> final)
+    {
+        var resolved = 0;
+        var left = new List<string>();
+        var classKeys = final.Where(e => e.Type == "class").ToDictionary(e => e.Id, e => EntriesStage.Slug(e.Name), StringComparer.Ordinal);
+        var byName = final.Where(e => e.Type is "spell" or "feat").GroupBy(e => (e.Type, EntriesStage.Slug(e.Name))).ToDictionary(g => g.Key, g => g.ToList());
+        foreach (var entry in final.Where(e => e.Features.Count > 0))
+        {
+            var classKey = entry.Type == "class" ? EntriesStage.Slug(entry.Name)
+                : entry.Raw.FirstOrDefault(r => r.Label == "class") is { } link && classKeys.TryGetValue(link.Text.Trim('"'), out var key) ? key : string.Empty;
+            foreach (var feature in entry.Features.Where(f => f.Adds.Any(a => EntriesStage.GrantToken.IsMatch(a))))
+            {
+                var adds = new List<string>();
+                foreach (var add in feature.Adds)
+                {
+                    var token = EntriesStage.GrantToken.Match(add);
+                    if (!token.Success)
+                    {
+                        adds.Add(add);
+                        continue;
+                    }
+
+                    var type = token.Groups["kind"].Value == "feat" ? "feat" : "spell";
+                    var slug = EntriesStage.Slug(token.Groups["name"].Value);
+                    var found = byName.TryGetValue((type, slug), out var candidates) ? candidates : new List<FinalEntry>();
+                    if (found.Count > 1 && type == "feat")
+                    {
+                        found = found.Where(f => f.Traits.Contains(classKey)).ToList();
+                    }
+
+                    if (found.Count == 1)
+                    {
+                        adds.Add(add.Replace(token.Value, found[0].Id, StringComparison.Ordinal));
+                        resolved++;
+                    }
+                    else
+                    {
+                        left.Add(type + ":" + slug);
+                    }
+                }
+
+                feature.Adds.Clear();
+                feature.Adds.AddRange(adds);
+            }
+        }
+
+        return (resolved, left);
+    }
 }

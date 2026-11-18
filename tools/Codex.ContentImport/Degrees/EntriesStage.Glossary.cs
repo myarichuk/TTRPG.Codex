@@ -50,6 +50,22 @@ public static partial class EntriesStage
             return;
         }
 
+        // A hyphen at a line end between two capitalized parts of a name ("Alpha-" then "Beta") is the name's own hyphen: no space after it.
+        if (sb[^1] == '-' && sb.Length >= 2 && char.IsLetter(sb[^2]) && char.IsUpper(text[0]))
+        {
+            var start = sb.Length - 1;
+            while (start > 0 && (char.IsLetter(sb[start - 1]) || sb[start - 1] == '-'))
+            {
+                start--;
+            }
+
+            if (char.IsUpper(sb[start]))
+            {
+                sb.Append(text);
+                return;
+            }
+        }
+
         // A hyphen after a number at a line end ("100-" then "foot") is the hyphen of the compound, which stays, with no space after it. A suspended hyphen ("2- and 3-action") is not joined.
         if (sb[^1] == '-' && sb.Length >= 2 && char.IsDigit(sb[^2]) && char.IsLower(text[0]) && !(text.Split(' ')[0] is "and" or "or" or "to"))
         {

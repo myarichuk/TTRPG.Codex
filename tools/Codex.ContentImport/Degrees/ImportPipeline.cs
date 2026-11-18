@@ -54,7 +54,11 @@ public static class Waivers
 }
 
 /// <summary>What stages 3 to 5 made from one book's taken rows.</summary>
-public sealed record PipelineOutput(List<TakenRange> Ranges, List<ParsedEntry> Parsed, List<FinalEntry> Final, RedactionReport Redaction, List<ReportRow> Report);
+public sealed record PipelineOutput(List<TakenRange> Ranges, List<ParsedEntry> Parsed, List<FinalEntry> Final, RedactionReport Redaction, List<ReportRow> Report)
+{
+    /// <summary>The grants of the classes that name a feat or a spell: how many became an id, and which names (kind and slug) the pack has no entry for, so they stay text.</summary>
+    public (int Resolved, List<string> Left) GrantsByName { get; init; } = (0, new List<string>());
+}
 
 /// <summary>The part of the run that needs no PDF: blocks in, entries and report rows out. The tests drive it with synthetic books.</summary>
 public static partial class ImportPipeline
@@ -253,7 +257,9 @@ public static partial class ImportPipeline
             throw new DegreesException("A heritage names an ancestry whose final id is another (a redaction row renamed the ancestry), so the link would match nothing.");
         }
 
-        return new PipelineOutput(ranges, parsed, final, report, ReportRows(blocks, spine, rows, redactions, book, parsed, final, ranges));
+        // A class's grants by name become grants by id, now that every id is final.
+        var named = ResolveGrantNames(final);
+        return new PipelineOutput(ranges, parsed, final, report, ReportRows(blocks, spine, rows, redactions, book, parsed, final, ranges)) { GrantsByName = named };
     }
 
     /// <summary>
@@ -931,7 +937,10 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
             // The name a replace row takes out of an entry's name field is as reserved as a dropped entry's: the words of the old name that the new one does not say, with their plurals.
             // A word the committed pack already says (an ordinary word of an earlier chapter's renamed name) is no coined word: the pack's own word gate would stop it.
             .Concat(spans.Where(s => s.Row.Action == RedactionRow.Replace && s.Row.Field == "name").SelectMany(s => RemovedWords(s.Row, s.Text)).Where(w => !PackSays(w)))
-            .Select(w => w.ToLowerInvariant()).Distinct(StringComparer.Ordinal).OrderBy(w => w, StringComparer.Ordinal).ToList();
+            // The letter after an apostrophe ("Smith's Hammer", the name of a dropped entry) is no word of the name: its hash would sit on the denylist and stop every possessive in the packs.
+            // The book's own heading of a class feature that a row says in other words (a coined word) is a reserved name too, with its plurals.
+            .Concat(parsed.SelectMany(e => e.Features).Where(f => f.BookName != null).SelectMany(f => PackWordCheck.Words(f.BookName!)))
+            .Select(w => w.ToLowerInvariant()).Where(w => w != "s").Distinct(StringComparer.Ordinal).OrderBy(w => w, StringComparer.Ordinal).ToList();
         return (spanWords, names);
     }
 
