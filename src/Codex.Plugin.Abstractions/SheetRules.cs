@@ -1131,6 +1131,10 @@ public class RuleCondition
     /// <summary>Candidate list property contains the display name of the entry a sheet field references.</summary>
     public string? ContainsNameOfField { get; set; }
 
+    /// <summary>Candidate list property contains the value of a property of the entry a sheet field references, by name or id, ignoring case
+    /// (a spell whose <c>traditions</c> hold the <c>tradition</c> of the chosen class). Fails while nothing is chosen.</summary>
+    public FieldProperty? ContainsPropertyOfField { get; set; }
+
     /// <summary>Candidate list property contains this constant (<c>classes</c> contains <c>Warlock</c>), by name or id, ignoring case.
     /// <see cref="ContainsNameOfField"/> does the same with the name of the entry a sheet field references.</summary>
     public string? Contains { get; set; }

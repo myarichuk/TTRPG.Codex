@@ -38,6 +38,7 @@ categories:
   Profile: Профиль
   Defenses: Защита
   Senses: Чувства
+  Spellcasting: Заклинания
   Actions: Действия
   Attribute modifiers: Модификаторы характеристик
   Attributes: Характеристики
@@ -132,6 +133,10 @@ entityTypes:
       savingThrows: { label: Обученные спасброски }
       extraSkills: { label: Дополнительные навыки }
       features: { label: Умения класса }
+      tradition: { label: Традиция }
+      casting: { label: Способ колдовства }
+      focusPool: { label: Запас фокуса }
+      spellcasting: { label: Заклинания на день }
   subclass:
     label: Подкласс
     pluralLabel: Подклассы
@@ -145,6 +150,11 @@ entityTypes:
     fields:
       vows: { label: Обеты }
       taboos: { label: Запреты }
+      font: { label: Божественный источник }
+      sanctification: { label: Освящение }
+      favoredWeapon: { label: Любимое оружие }
+      domains: { label: Домены }
+      features: { label: Умения }
   feat: { label: Черта, pluralLabel: Черты }
   condition: { label: Состояние, pluralLabel: Состояния }
   trait: { label: Свойство, pluralLabel: Свойства }
@@ -266,6 +276,10 @@ entityTypes:
 values:
   Perception: Внимательность
   Class DC: СЛ класса
+  Spell attack: Атака заклинанием
+  Spell DC: СЛ заклинаний
+  Spell slots: Ячейки заклинаний
+  spell slot: ячейка заклинаний
   Armor: Доспехи
   Weapons: Оружие
   Unarmored: Без доспехов
@@ -293,6 +307,15 @@ values:
 sheetRules:
   lists:
     feats: Черты
+    cantrips: Заговоры
+    spells: Заклинания
+    focusSpells: Заклинания фокуса
+    grantedSpells: Дарованные заклинания
+  listDescriptions:
+    cantrips: Только традиция вашего класса, не больше числа из таблицы класса. Заговор фокуса вносится в заклинания, которые даёт умение.
+    spells: Заклинания, которые вы знаете или готовите. Только традиция вашего класса, не выше вашей самой высокой ячейки, не больше числа из таблицы класса.
+    focusSpells: Заклинания фокуса, которые дают умение класса, черта или орден. Они не тратят ячейки; запас фокуса указан у класса.
+    grantedSpells: Заклинания и заговоры, которые умение даёт вам вне списка класса (заклинание музы, заговор сочинения). Они не входят в число ваших заклинаний.
   boostSources:
     ancestry: Происхождение
     background: Предыстория
@@ -305,6 +328,11 @@ sheetRules:
   messages:
     "that heritage belongs to another ancestry.": это наследие принадлежит другому происхождению.
     "that subclass belongs to another class.": этот подкласс принадлежит другому классу.
+    "that is not a cantrip.": это не заговор.
+    "that is not a focus spell.": это не заклинание фокуса.
+    "not on your class's spell list.": нет в списке заклинаний вашего класса.
+    "cantrips go in the cantrips list.": заговоры вносятся в список заговоров.
+    "above the highest spell rank you can cast.": выше самого высокого ранга заклинаний, который вы можете наложить.
   skills:
     acrobatics: Акробатика
     arcana: Магия
@@ -322,6 +350,8 @@ sheetRules:
     stealth: Скрытность
     survival: Выживание
     thievery: Воровство
+  slotPools:
+    slots: Ячейки заклинаний
   ranks:
     trained: Обучен
     expert: Эксперт

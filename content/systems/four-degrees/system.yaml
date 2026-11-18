@@ -106,6 +106,11 @@ entityTypes:
       - { key: savingThrows, label: Saves trained,        type: TagList, description: "The saving throws the class starts trained in, by attribute (con for Fortitude, dex for Reflex, wis for Will). Higher ranks are grants of the features." }
       - { key: extraSkills,  label: Extra skills,         type: Number, description: "How many more skills the class trains, plus the Intelligence modifier when it is positive. Shown, not computed." }
       - { key: features,     label: Class features,       type: Collection, description: "One row per feature: name, level (1 when none), description, and grants (adds) to the sheet's ranked lists." }
+      # A spellcaster's own fields. The spell attack modifier and the spell DC run on the key attribute (the sheet's `spellAttack` and `spellDc`), their rank is a grant of the features.
+      - { key: tradition,    label: Tradition,            type: Dropdown, options: [arcane, divine, occult, primal], description: "The tradition of the spells the class casts: the sheet's spells and cantrips are those whose traditions hold it. Empty: the class casts none." }
+      - { key: casting,      label: Casting,              type: Dropdown, options: [prepared, spontaneous], description: "Prepared: the spells are chosen each day from the tradition's list. Spontaneous: they are a repertoire the class learns." }
+      - { key: focusPool,    label: Focus pool,           type: Number, description: "The focus points the class's own features start a character with. Shown, not computed: a feat that adds focus spells grows it." }
+      - { key: spellcasting, label: Spells per day,       type: Collection, description: "One row per level: cantrips (a number), slots (the slots of each rank from the 1st, such as 3/3/2), maxRank (the highest rank with a slot) and spells (how many spells the class knows or prepares: one for each slot)." }
   # A choice made at 1st level inside a class (a rogue's racket): its own feature rows, read beside the class's. The sheet's subclass choice is limited to the chosen class's (sheetRules.constraints).
   - type: subclass
     label: Subclass
@@ -125,6 +130,13 @@ entityTypes:
     fields:
       - { key: vows,   label: Vows,   type: LongText }
       - { key: taboos, label: Taboos, type: LongText }
+      # What a table's own faith gives a character who is a cleric of it. The pack holds no faith; a table writes its own and fills what it wants. The sheet reads the feature rows (a trained skill is
+      # a grant, as in a class's); the rest is shown beside the faith.
+      - { key: font,          label: Divine font,     type: Dropdown, options: [heal, harm, either], description: "The spells a cleric of the faith prepares in its extra slots: heal, harm, or the player's choice." }
+      - { key: sanctification, label: Sanctification, type: Dropdown, options: [none, holy, unholy, either], description: "Whether a cleric of the faith may or must take the holy or unholy trait." }
+      - { key: favoredWeapon, label: Favored weapon,  type: EntityReference, targetEntityType: weapon, description: "The weapon a cleric of the faith is trained in. Shown, not computed: the sheet's weapon ranks are by category." }
+      - { key: domains,       label: Domains,         type: TagList, description: "The domains a cleric of the faith may take, as words." }
+      - { key: features,      label: Features,        type: Collection, description: "One row per benefit: name, level (1 when none), description, and grants (adds), such as the trained skill the faith gives a cleric." }
   - type: feat
     label: Feat
     pluralLabel: Feats
@@ -477,6 +489,8 @@ conditionEffects:
       - { target: strike,     amount: "-value", type: status }
       - { target: armorClass, amount: "-value", type: status }
       - { target: classDc,    amount: "-value", type: status }
+      - { target: spellAttack, amount: "-value", type: status }
+      - { target: spellDc,    amount: "-value", type: status }
       - { target: perception, amount: "-value", type: status }
       - { target: senseDc,    amount: "-value", type: status }
   Grabbed:
@@ -505,13 +519,15 @@ conditionEffects:
       - { target: strike,     amount: "-value", type: status }
       - { target: armorClass, amount: "-value", type: status }
       - { target: classDc,    amount: "-value", type: status }
+      - { target: spellAttack, amount: "-value", type: status }
+      - { target: spellDc,    amount: "-value", type: status }
       - { target: perception, amount: "-value", type: status }
       - { target: senseDc,    amount: "-value", type: status }
   Slowed:
     value: {}
   Stunned:
     value: {}
-  # Everything that runs on Intelligence, Wisdom or Charisma; here Perception and the sense DC run on Wisdom. Spell attacks and spell DCs wait for the spells chapter.
+  # Everything that runs on Intelligence, Wisdom or Charisma, spell attack modifiers and spell DCs among it (the entry's text names them); here Perception and the sense DC run on Wisdom.
   Stupefied:
     value: {}
     modifiers:
@@ -521,6 +537,8 @@ conditionEffects:
       - { target: check.int,  amount: "-value", type: status }
       - { target: check.wis,  amount: "-value", type: status }
       - { target: check.cha,  amount: "-value", type: status }
+      - { target: spellAttack, amount: "-value", type: status }
+      - { target: spellDc,    amount: "-value", type: status }
       - { target: perception, amount: "-value", type: status }
       - { target: senseDc,    amount: "-value", type: status }
   # Knocked out: blinded and off-guard, and it falls prone, which stays when the condition ends.
@@ -626,6 +644,10 @@ sheetRules:
   ranked:
     - { key: perception, label: Perception, ranksOf: skills, attribute: wis, publish: true }
     - { key: classDc, label: Class DC, ranksOf: skills, base: 10, attributeFrom: { field: class, property: keyAttribute }, publish: true }
+    # A spellcaster's spell attack modifier and spell DC share one rank (the book's classes grant both together) and run on the class's key attribute, which the class's text says. A class that casts
+    # no spells has no rank in them: they show the attribute alone.
+    - { key: spellAttack, label: Spell attack, ranksOf: skills, attributeFrom: { field: class, property: keyAttribute }, publish: true }
+    - { key: spellDc, label: Spell DC, ranksOf: skills, base: 10, attributeFrom: { field: class, property: keyAttribute }, publish: true }
     - key: armor
       label: Armor
       ranksOf: skills
@@ -706,6 +728,49 @@ sheetRules:
     - key: feats
       label: Feats
       targetEntityType: feat
+    # Spellcasting: the cantrips and spells of the class's tradition (the spell's `traditions` hold the class's `tradition`), the spells no higher than the highest rank the class has a slot for at the
+    # character's level, and the counts of the class's table. A class that casts none offers nothing.
+    - key: cantrips
+      label: Cantrips
+      description: Only your class's tradition, up to the number in your class table. A focus cantrip goes in the spells a feature gives you.
+      targetEntityType: spell
+      category: Spellcasting
+      where:
+        - { property: kind, equals: cantrip, message: "that is not a cantrip." }
+        - { property: traditions, containsPropertyOfField: { field: class, property: tradition }, message: "not on your class's spell list." }
+      maxCount: { lookup: { field: class, table: spellcasting, byField: level, column: cantrips } }
+    - key: spells
+      label: Spells
+      description: The spells you know or prepare. Only your class's tradition, no higher than your highest spell slot, up to the number in your class table.
+      targetEntityType: spell
+      category: Spellcasting
+      where:
+        - { property: kind, equals: spell, message: "cantrips go in the cantrips list." }
+        - { property: traditions, containsPropertyOfField: { field: class, property: tradition }, message: "not on your class's spell list." }
+        - { property: rank, lteLookup: { field: class, table: spellcasting, byField: level, column: maxRank }, message: "above the highest spell rank you can cast." }
+      maxCount: { lookup: { field: class, table: spellcasting, byField: level, column: spells } }
+    - key: focusSpells
+      label: Focus spells
+      description: Focus spells a class feature, a feat or an order gives you. They take no slots; the focus pool is on the class.
+      targetEntityType: spell
+      category: Spellcasting
+      where:
+        - { property: kind, equals: focus, message: "that is not a focus spell." }
+    - key: grantedSpells
+      label: Granted spells
+      description: Spells and cantrips a feature gives you outside your class's list (a muse's spell, a composition cantrip). They are not counted against your spells.
+      targetEntityType: spell
+      category: Spellcasting
+
+  # A class's spell slots for each rank, from its table of spells per day; they are tracked at the table as resources (slots_1 for the 1st rank, and so on).
+  slotPools:
+    - key: slots
+      label: Spell slots
+      unit: spell slot
+      field: class
+      byField: level
+      table: spellcasting
+      column: slots
 
   features:
     - { field: ancestry }
@@ -713,6 +778,7 @@ sheetRules:
     - { field: background }
     - { field: class, property: features, byField: level }
     - { field: subclass, property: features, byField: level }
+    - { field: faith, property: features, byField: level }
     - { list: feats }
 
 # The play-time half: a DC and a speed the kind owns, and trinkets whose modifiers reach them through the kind's own feature source.

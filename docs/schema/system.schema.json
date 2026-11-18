@@ -2031,6 +2031,10 @@
           ],
           "description": "Candidate list property contains the display name of the entry a sheet field references."
         },
+        "containsPropertyOfField": {
+          "$ref": "#/$defs/FieldProperty",
+          "description": "Candidate list property contains the value of a property of the entry a sheet field references, by name or id, ignoring case (a spell whose `traditions` hold the `tradition` of the chosen class). Fails while nothing is chosen."
+        },
         "contains": {
           "type": [
             "string",
