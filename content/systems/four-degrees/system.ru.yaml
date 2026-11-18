@@ -143,6 +143,7 @@ entityTypes:
     fields:
       class: { label: Класс }
       keyAttribute: { label: Ключевая характеристика }
+      tradition: { label: Традиция }
       features: { label: Умения }
   faith:
     label: Вера

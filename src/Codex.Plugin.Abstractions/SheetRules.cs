@@ -1165,6 +1165,9 @@ public class FieldProperty
     public string Field { get; set; } = string.Empty;
     /// <summary>The property read from that entry.</summary>
     public string Property { get; set; } = string.Empty;
+    /// <summary>Optional fallback, read only by <c>containsPropertyOfField</c>: when the entry above has no value for its property, this field and property are read instead
+    /// (a witch's spells are of her patron's tradition, a spellcaster's of her class's).</summary>
+    public FieldProperty? Or { get; set; }
 }
 
 /// <summary>

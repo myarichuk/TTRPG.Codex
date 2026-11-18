@@ -527,6 +527,7 @@ A property of the entry a sheet field references: `{ field: background, property
 |---|---|---|
 | `field` | text (a number is text too) | The EntityReference actor field naming the entry. |
 | `property` | text (a number is text too) | The property read from that entry. |
+| `or` | [FieldProperty](#fieldproperty) | Optional fallback, read only by `containsPropertyOfField`: when the entry above has no value for its property, this field and property are read instead (a witch's spells are of her patron's tradition, a spellcaster's of her class's). |
 
 ## LookupRule
 

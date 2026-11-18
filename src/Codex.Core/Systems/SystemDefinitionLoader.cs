@@ -764,12 +764,23 @@ public static class SystemDefinitionLoader
 
         foreach (var condition in rules.Constraints.SelectMany(c => c.Where).Concat(rules.Lists.SelectMany(l => l.Where)))
         {
-            var referencedFields = new[] { condition.EqualsField, condition.ContainsNameOfField, condition.LteField, condition.GteField, condition.EqualsPropertyOfField?.Field, condition.ContainsPropertyOfField?.Field, condition.LteLookup?.Field }
+            var referencedFields = new[] { condition.EqualsField, condition.ContainsNameOfField, condition.LteField, condition.GteField, condition.EqualsPropertyOfField?.Field, condition.ContainsPropertyOfField?.Field, condition.ContainsPropertyOfField?.Or?.Field, condition.LteLookup?.Field }
                 .Where(f => f != null);
             foreach (var field in referencedFields.Where(f => !fieldKeys.Contains(f!)))
             {
                 yield return $"a sheet rule on '{condition.Property}' refers to actor field '{field}', which does not exist.";
             }
+
+            if (condition.EqualsPropertyOfField?.Or != null || condition.ContainsPropertyOfField?.Or?.Or != null)
+            {
+                yield return $"a sheet rule on '{condition.Property}' has an 'or' that nothing reads (only containsPropertyOfField reads one, one level deep).";
+            }
+        }
+
+        var ignoredOr = rules.Ranked.Select(r => r.AttributeFrom).Concat(rules.HitPoints == null ? Array.Empty<FieldProperty?>() : new[] { rules.HitPoints.PerLevelBonus, rules.HitPoints.Once }).Count(p => p?.Or != null);
+        if (ignoredOr > 0)
+        {
+            yield return $"{ignoredOr} sheet field reference(s) have an 'or' that nothing reads (only containsPropertyOfField reads one).";
         }
     }
 

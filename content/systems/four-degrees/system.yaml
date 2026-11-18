@@ -107,7 +107,7 @@ entityTypes:
       - { key: extraSkills,  label: Extra skills,         type: Number, description: "How many more skills the class trains, plus the Intelligence modifier when it is positive. Shown, not computed." }
       - { key: features,     label: Class features,       type: Collection, description: "One row per feature: name, level (1 when none), description, and grants (adds) to the sheet's ranked lists." }
       # A spellcaster's own fields. The spell attack modifier and the spell DC run on the key attribute (the sheet's `spellAttack` and `spellDc`), their rank is a grant of the features.
-      - { key: tradition,    label: Tradition,            type: Dropdown, options: [arcane, divine, occult, primal], description: "The tradition of the spells the class casts: the sheet's spells and cantrips are those whose traditions hold it. Empty: the class casts none." }
+      - { key: tradition,    label: Tradition,            type: Dropdown, options: [arcane, divine, occult, primal], description: "The tradition of the spells the class casts: the sheet's spells and cantrips are those whose traditions hold it. Empty: the class casts none, or its subclass says the tradition (a witch's patron)." }
       - { key: casting,      label: Casting,              type: Dropdown, options: [prepared, spontaneous], description: "Prepared: the spells are chosen each day from the tradition's list. Spontaneous: they are a repertoire the class learns." }
       - { key: focusPool,    label: Focus pool,           type: Number, description: "The focus points the class's own features start a character with. Shown, not computed: a feat that adds focus spells grows it." }
       - { key: spellcasting, label: Spells per day,       type: Collection, description: "One row per level: cantrips (a number), slots (the slots of each rank from the 1st, such as 3/3/2), maxRank (the highest rank with a slot) and spells (how many spells the class knows or prepares: one for each slot)." }
@@ -121,6 +121,8 @@ entityTypes:
     fields:
       - { key: class,        label: Class,         type: EntityReference, targetEntityType: class, description: "The class this choice belongs to." }
       - { key: keyAttribute, label: Key attribute, type: Text, description: "A key attribute the choice allows besides the class's (the class DC and the boost do not read it)." }
+      # A class whose choice decides the tradition (a witch's patron) leaves the class's own `tradition` empty and writes it here; the sheet's spell lists read the class's, else the subclass's.
+      - { key: tradition,    label: Tradition,     type: Dropdown, options: [arcane, divine, occult, primal], description: "The tradition of the spells a character of this choice casts, for a class that leaves its own empty. The sheet's spells and cantrips are those whose traditions hold it." }
       - { key: features,     label: Features,      type: Collection, description: "One row per feature: name, level (1 when none), description, and grants (adds) to the sheet's ranked lists." }
   # A deity-like choice with no names built in. A faith entry holds the same two free lines the sheet has; picking one is optional.
   - type: faith
@@ -737,7 +739,7 @@ sheetRules:
       category: Spellcasting
       where:
         - { property: kind, equals: cantrip, message: "that is not a cantrip." }
-        - { property: traditions, containsPropertyOfField: { field: class, property: tradition }, message: "not on your class's spell list." }
+        - { property: traditions, containsPropertyOfField: { field: class, property: tradition, or: { field: subclass, property: tradition } }, message: "not on your class's spell list." }
       maxCount: { lookup: { field: class, table: spellcasting, byField: level, column: cantrips } }
     - key: spells
       label: Spells
@@ -746,7 +748,7 @@ sheetRules:
       category: Spellcasting
       where:
         - { property: kind, equals: spell, message: "cantrips go in the cantrips list." }
-        - { property: traditions, containsPropertyOfField: { field: class, property: tradition }, message: "not on your class's spell list." }
+        - { property: traditions, containsPropertyOfField: { field: class, property: tradition, or: { field: subclass, property: tradition } }, message: "not on your class's spell list." }
         - { property: rank, lteLookup: { field: class, table: spellcasting, byField: level, column: maxRank }, message: "above the highest spell rank you can cast." }
       maxCount: { lookup: { field: class, table: spellcasting, byField: level, column: spells } }
     - key: focusSpells

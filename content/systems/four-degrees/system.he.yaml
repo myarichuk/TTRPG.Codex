@@ -143,6 +143,7 @@ entityTypes:
     fields:
       class: { label: מקצוע }
       keyAttribute: { label: תכונת מפתח }
+      tradition: { label: מסורת }
       features: { label: יכולות }
   faith:
     label: אמונה
