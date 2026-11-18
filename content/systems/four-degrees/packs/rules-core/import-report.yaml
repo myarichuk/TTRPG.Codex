@@ -352,6 +352,39 @@
     - "druid-class"
 - chapter: "classes"
   parser: "classes"
+  target: "class"
+  entries: 1
+  droppedSidebarBlocks: 15
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 16
+  redactionRows: [317, 318, 319, 320, 329, 344, 345, 346, 347, 348, 349]
+  ids:
+    - "ranger-class"
+- chapter: "classes"
+  parser: "classes"
+  target: "class"
+  entries: 1
+  droppedSidebarBlocks: 28
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 23
+  redactionRows: [321, 322, 323, 324, 331, 332, 333, 334, 335, 350, 351, 352, 353, 355, 356, 357, 358, 359, 360, 361, 362, 364, 365]
+  ids:
+    - "witch-class"
+- chapter: "classes"
+  parser: "classes"
+  target: "class"
+  entries: 1
+  droppedSidebarBlocks: 28
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 23
+  redactionRows: [325, 326, 327, 328, 330, 336, 337, 338, 339, 340, 341, 342, 343, 354, 363]
+  ids:
+    - "wizard-class"
+- chapter: "classes"
+  parser: "classes"
   target: "feat"
   entries: 92
   droppedSidebarBlocks: 0
@@ -771,6 +804,187 @@
     - "wind-caller"
 - chapter: "classes"
   parser: "classes"
+  target: "feat"
+  entries: 61
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "additional-recollection"
+    - "advanced-warden"
+    - "animal-companion-ranger"
+    - "animal-empathy-ranger"
+    - "blind-fight-ranger"
+    - "camouflage"
+    - "companion-s-cry"
+    - "crossbow-ace"
+    - "deadly-aim"
+    - "disrupt-prey"
+    - "distracting-shot"
+    - "double-prey"
+    - "far-shot"
+    - "favored-prey"
+    - "favored-terrain"
+    - "greater-distracting-shot"
+    - "hazard-finder"
+    - "hunted-shot"
+    - "hunter-s-aim"
+    - "impossible-flurry"
+    - "impossible-volley-ranger"
+    - "improved-twin-riposte-ranger"
+    - "incredible-companion-ranger"
+    - "initiate-warden"
+    - "legendary-monster-hunter"
+    - "legendary-shot"
+    - "manifold-edge"
+    - "master-monster-hunter"
+    - "masterful-companion"
+    - "masterful-warden"
+    - "mature-animal-companion-ranger"
+    - "monster-hunter"
+    - "monster-warden"
+    - "peerless-warden"
+    - "penetrating-shot"
+    - "perfect-shot"
+    - "quick-draw-ranger"
+    - "running-reload"
+    - "scout-s-warning-ranger"
+    - "second-sting"
+    - "sense-the-unseen-ranger"
+    - "shadow-hunter"
+    - "shared-prey"
+    - "side-by-side-ranger"
+    - "skirmish-strike-ranger"
+    - "snap-shot"
+    - "specialized-companion-ranger"
+    - "stealthy-companion"
+    - "swift-tracker"
+    - "terrain-master"
+    - "to-the-ends-of-the-earth"
+    - "triple-threat"
+    - "twin-parry-ranger"
+    - "twin-riposte-ranger"
+    - "twin-takedown"
+    - "ultimate-skirmisher"
+    - "warden-s-boon"
+    - "warden-s-focus"
+    - "warden-s-guidance"
+    - "warden-s-reload"
+    - "warden-s-step"
+- chapter: "classes"
+  parser: "classes"
+  target: "feat"
+  entries: 39
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "basic-lesson"
+    - "cackle-feat"
+    - "cantrip-expansion-witch"
+    - "cauldron"
+    - "ceremonial-knife"
+    - "conceal-spell-witch"
+    - "counterspell-witch"
+    - "coven-spell"
+    - "double-double"
+    - "effortless-concentration-witch"
+    - "enhanced-familiar-witch"
+    - "familiar-s-language"
+    - "greater-lesson"
+    - "hex-focus"
+    - "hex-master"
+    - "incredible-familiar"
+    - "major-lesson"
+    - "murksight"
+    - "patron-s-claim"
+    - "patron-s-presence"
+    - "patron-s-truth"
+    - "quickened-casting-witch"
+    - "reach-spell-witch"
+    - "reflect-spell-witch"
+    - "rites-of-convocation"
+    - "rites-of-transfiguration"
+    - "siphon-power"
+    - "spirit-familiar"
+    - "split-hex"
+    - "steady-spellcasting-witch"
+    - "stitched-familiar"
+    - "sympathetic-strike"
+    - "widen-spell-witch"
+    - "witch-s-armaments"
+    - "witch-s-bottle"
+    - "witch-s-broom"
+    - "witch-s-charge"
+    - "witch-s-communion"
+    - "witch-s-hut"
+- chapter: "classes"
+  parser: "classes"
+  target: "feat"
+  entries: 44
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "advanced-school-spell"
+    - "archwizard-s-might"
+    - "bespell-strikes"
+    - "bond-conservation"
+    - "bonded-focus"
+    - "call-wizardly-tools"
+    - "cantrip-expansion-wizard"
+    - "clever-counterspell"
+    - "conceal-spell-wizard"
+    - "convincing-illusion"
+    - "counterspell-wizard"
+    - "effortless-concentration-wizard"
+    - "energy-ablation"
+    - "enhanced-familiar-wizard"
+    - "explosive-arrival"
+    - "familiar"
+    - "forcible-energy"
+    - "form-retention"
+    - "infinite-possibilities"
+    - "irresistible-magic"
+    - "keen-magical-detection"
+    - "knowledge-is-power"
+    - "linked-focus"
+    - "magic-sense"
+    - "nonlethal-spell"
+    - "overwhelming-energy-wizard"
+    - "quickened-casting-wizard"
+    - "reach-spell-wizard"
+    - "reflect-spell-wizard"
+    - "reprepare-spell"
+    - "scintillating-spell"
+    - "scroll-adept"
+    - "second-thoughts"
+    - "secondary-detonation-array"
+    - "spell-combination"
+    - "spell-mastery"
+    - "spell-protection-array"
+    - "spell-tinker"
+    - "spellbook-prodigy"
+    - "spellshape-mastery"
+    - "split-slot"
+    - "steady-spellcasting-wizard"
+    - "superior-bond"
+    - "widen-spell-wizard"
+- chapter: "classes"
+  parser: "classes"
+  target: "rule"
+  entries: 1
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "witch-lessons"
+- chapter: "classes"
+  parser: "classes"
   target: "subclass"
   entries: 4
   droppedSidebarBlocks: 0
@@ -819,6 +1033,38 @@
     - "leaf"
     - "storm"
     - "untamed"
+- chapter: "classes"
+  parser: "classes"
+  target: "subclass"
+  entries: 7
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "patron-of-curses"
+    - "patron-of-faith"
+    - "patron-of-fate"
+    - "patron-of-glyphs"
+    - "patron-of-night"
+    - "patron-of-the-wilds"
+    - "patron-of-winter"
+- chapter: "classes"
+  parser: "classes"
+  target: "subclass"
+  entries: 7
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "school-of-ars-grammatica"
+    - "school-of-battle-magic"
+    - "school-of-civic-wizardry"
+    - "school-of-mentalism"
+    - "school-of-protean-form"
+    - "school-of-the-boundary"
+    - "school-of-unified-magical-theory"
 - chapter: "classes"
   parser: "rules"
   target: "rule"

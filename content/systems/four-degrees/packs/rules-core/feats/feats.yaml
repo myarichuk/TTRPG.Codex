@@ -42,6 +42,15 @@
     level: 1
     traits: ["general", "skill"]
     special: "You can select this feat more than once. Each time you must select a new subcategory of Lore and you gain the additional skill increases to that subcategory for the listed levels."
+- id: "additional-recollection"
+  name: "Additional Recollection"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You scan the battlefield quickly, remembering critical details about multiple opponents you face. You immediately attempt a check to Recall Knowledge about a different creature you can perceive."
+  properties:
+    level: 6
+    actions: "free"
+    traits: ["ranger"]
+    trigger: "You succeed or critically succeed at a check to Recall Knowledge on your hunted prey."
 - id: "adopted-ancestry"
   name: "Adopted Ancestry"
   source: "pc > Chapter 5: Feats"
@@ -74,6 +83,22 @@
     level: 13
     traits: ["human"]
     special: "You can select this feat multiple times, choosing a different feat each time."
+- id: "advanced-school-spell"
+  name: "Advanced School Spell"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You gain access to the advanced teachings of your arcane institution, learning a powerful new school spell. You gain the advanced school spell for your arcane school."
+  properties:
+    level: 8
+    traits: ["wizard"]
+- id: "advanced-warden"
+  name: "Advanced Warden"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You unlock more powerful primal spells. You gain your choice of one warden spell from the advanced warden spells (or another you have access to)."
+  properties:
+    level: 4
+    traits: ["ranger"]
+    prerequisites: "Initiate Warden"
+    special: "You can take this feat multiple times, choosing a different advanced warden spell each time."
 - id: "advanced-weapon-training"
   name: "Advanced Weapon Training"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -205,6 +230,15 @@
     level: 1
     traits: ["druid"]
     prerequisites: "animal order"
+- id: "animal-companion-ranger"
+  name: "Animal Companion"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: |-
+    You gain the service of a young animal companion that travels with you and obeys simple commands.
+    When you Hunt Prey, your animal companion gains the action's benefits and your hunter's edge benefit if you have one.
+  properties:
+    level: 1
+    traits: ["ranger"]
 - id: "animal-elocutionist"
   name: "Animal Elocutionist"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Gnome > Ancestry Feats"
@@ -219,6 +253,13 @@
   properties:
     level: 1
     traits: ["druid"]
+- id: "animal-empathy-ranger"
+  name: "Animal Empathy"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You have an empathic connection to the creatures of the natural world. You can use Diplomacy to Make an Impression on animals and to make very simple Requests of them. In most cases, wild animals will give you time to make your case."
+  properties:
+    level: 2
+    traits: ["ranger"]
 - id: "annotate-composition"
   name: "Annotate Composition"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -254,6 +295,14 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Arcana"
+- id: "archwizard-s-might"
+  name: "Archwizard's Might"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You have mastered the greatest secrets of arcane magic. You gain an additional 10th-rank spell slot."
+  properties:
+    level: 20
+    traits: ["wizard"]
+    prerequisites: "archwizard's spellcraft"
 - id: "armor-proficiency"
   name: "Armor Proficiency"
   source: "pc > Chapter 5: Feats"
@@ -348,6 +397,13 @@
     actions: "two"
     traits: ["fighter", "flourish"]
     prerequisites: "trained in Athletics"
+- id: "basic-lesson"
+  name: "Basic Lesson"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "Your patron grants you a special lesson, revealing a hidden facet of its nature. Choose a basic lesson from the witch lessons. You gain its associated hex, and your familiar learns the associated spell."
+  properties:
+    level: 2
+    traits: ["witch"]
 - id: "battle-cry"
   name: "Battle Cry"
   source: "pc > Chapter 5: Feats"
@@ -373,6 +429,16 @@
   properties:
     level: 1
     traits: ["orc"]
+- id: "bespell-strikes"
+  name: "Bespell Strikes"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You siphon spell energy into one weapon you're wielding, or into one of your unarmed attacks, such as a fist. Until the end of your turn, the weapon or unarmed attack deals an extra 1d6 force damage and gains the arcane trait if it didn't have it already. If the spell dealt a different type of damage, the Strike deals this type of damage instead (or one type of your choice if the spell could deal multiple types of damage)."
+  properties:
+    level: 4
+    actions: "free"
+    traits: ["wizard"]
+    frequency: "once per turn"
+    requirements: "Your most recent action was to cast a non-cantrip spell."
 - id: "bestial-manifestation"
   name: "Bestial Manifestation"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Nephilim > Feats"
@@ -429,6 +495,16 @@
     level: 8
     traits: ["fighter"]
     prerequisites: "master in Perception"
+- id: "blind-fight-ranger"
+  name: "Blind-Fight"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: |-
+    Your heightened senses allow you to instinctively detect unseen opponents. You don't need to succeed at a flat check to target concealed creatures. You're not off-guard to creatures that are hidden from you (unless you're off-guard to them for reasons other than the hidden condition), and you need only a successful DC 5 flat check to target a hidden creature.
+    While you're adjacent to an undetected creature of your level or lower, it is instead only hidden from you.
+  properties:
+    level: 8
+    traits: ["ranger"]
+    prerequisites: "master in Perception"
 - id: "blind-fight-rogue"
   name: "Blind-Fight"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -456,6 +532,16 @@
     level: 12
     traits: ["rogue"]
     prerequisites: "trained in Medicine, Debilitating Strike"
+- id: "bond-conservation"
+  name: "Bond Conservation"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "By efficiently and carefully manipulating the arcane energies unleashed by your bonded item, you can conserve just enough power to cast another spell, though this second spell is slightly weaker. You gain an extra use of Drain Bonded Item. You can use it to cast a spell 2 or more ranks lower than the previous spell, and must use it before the end of your next turn or you lose it."
+  properties:
+    level: 8
+    actions: "one"
+    traits: ["manipulate", "spellshape", "wizard"]
+    prerequisites: "arcane bond"
+    requirements: "The last action you used was to Cast a Spell enabled by Drain Bonded Item."
 - id: "bonded-animal"
   name: "Bonded Animal"
   source: "pc > Chapter 5: Feats"
@@ -467,6 +553,14 @@
     traits: ["downtime", "general", "skill"]
     prerequisites: "expert in Nature"
     special: "You can't have both a bonded animal and an animal companion (though you can have both a bonded animal and a pet or familiar)."
+- id: "bonded-focus"
+  name: "Bonded Focus"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "Your connection to your bonded item increases your focus pool. Whenever you Refocus while your bonded item is in your possession, you completely refill your focus pool."
+  properties:
+    level: 14
+    traits: ["wizard"]
+    prerequisites: "arcane bond"
 - id: "boulder-roll"
   name: "Boulder Roll"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Dwarf > Ancestry Feats"
@@ -556,6 +650,13 @@
   properties:
     level: 1
     traits: ["goblin"]
+- id: "cackle-feat"
+  name: "Cackle"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "Your patron's power fills you with confidence, letting you sustain a magical working even as a quick burst of laughter leaves your lips. You learn the cackle hex."
+  properties:
+    level: 1
+    traits: ["witch"]
 - id: "call-and-response"
   name: "Call and Response"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -578,6 +679,15 @@
   properties:
     level: 2
     traits: ["druid"]
+- id: "call-wizardly-tools"
+  name: "Call Wizardly Tools"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You're mystically connected to your wizardly tools, ensuring you can always find them when you've misplaced them. You teleport your bonded item or spellbook to you. It arrives in your hand if you have a free hand or at your feet if you don't. The item must be within 1 mile and have 1 Bulk or less."
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["concentrate", "teleportation", "wizard"]
+    prerequisites: "arcane bond"
 - id: "called"
   name: "Called"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Changeling > Feats"
@@ -585,6 +695,14 @@
   properties:
     level: 5
     traits: ["changeling"]
+- id: "camouflage"
+  name: "Camouflage"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You alter your appearance to blend in to the wilderness. In natural terrain, you can Hide and Sneak even without cover or being concealed."
+  properties:
+    level: 10
+    traits: ["ranger"]
+    prerequisites: "master in Stealth"
 - id: "canny-acumen"
   name: "Canny Acumen"
   source: "pc > Chapter 5: Feats"
@@ -606,6 +724,20 @@
   properties:
     level: 2
     traits: ["cleric"]
+- id: "cantrip-expansion-witch"
+  name: "Cantrip Expansion"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "Your patron recognizes your need for flexibility and versatility, and grants you the power to prepare a wider range of simple spells. You can prepare two additional cantrips each day."
+  properties:
+    level: 2
+    traits: ["witch"]
+- id: "cantrip-expansion-wizard"
+  name: "Cantrip Expansion"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "Dedicated study allows you to prepare a wider range of simple spells for every situation. You can prepare two additional cantrips each day."
+  properties:
+    level: 2
+    traits: ["wizard"]
 - id: "cast-down"
   name: "Cast Down"
   source: "pc > Chapter 3: Classes > Cleric > Cleric Feats"
@@ -630,6 +762,15 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Acrobatics"
+- id: "cauldron"
+  name: "Cauldron"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: |-
+    You can brew magic in your cauldron, creating useful magical concoctions. You can use the Craft activity to create oils and potions. You immediately gain the formulas for four common 1st-level oils or potions. At 4th level and every 2 levels beyond that, you gain the formula for a common oil or potion of that level or lower (a 4th-level potion if you're 4th level, a 6th-level potion if you're 6th level, and so on). If you have a familiar, you can have your familiar learn these formulas rather than storing them in a formula book. Your familiar can learn new formulas in the same way it learns new spells, and these formulas are transferred from a slain familiar to a new familiar in the same way spells are.
+    During your daily preparations, you can create one temporary oil or potion using a formula you know. If you have master proficiency in spell DC, you can create a batch of two temporary oils or potions during your daily preparations, and if you have legendary proficiency, you can create a batch of three. Any items you create this way become inert bottles of liquid the next time you make your daily preparations, and any remaining effects of the temporary items end. A temporary oil or potion has no value.
+  properties:
+    level: 1
+    traits: ["witch"]
 - id: "cautious-curiosity"
   name: "Cautious Curiosity"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Gnome > Ancestry Feats"
@@ -671,6 +812,15 @@
     level: 13
     traits: ["nephilim"]
     prerequisites: "Angel Blood, Law Guardian Blood, Freedom Spirit Blood, or another lineage feat associated with celestials"
+- id: "ceremonial-knife"
+  name: "Ceremonial Knife"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: |-
+    You have prepared a special knife to direct energies when spellcasting. During your daily preparations, you and your familiar can perform a short ritual over a weapon in the knife group—typically a dagger. This causes the knife to function as a magic wand, containing any one 1st-rank spell your familiar knows. You, and only you, can Activate the knife to Cast the Spell within it, as normal for a wand. You can attempt to overcharge the knife, and this can break or destroy the knife as normal. You can have only one ceremonial knife at a time.
+    At 8th level, and every 2 levels thereafter, the maximum rank of spell your ceremonial knife can hold increases by 1.
+  properties:
+    level: 6
+    traits: ["witch"]
 - id: "certain-strike"
   name: "Certain Strike"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -727,6 +877,14 @@
     level: 1
     traits: ["goblin"]
     special: "If you have the strong-stomached goblin heritage, increase the bonuses to +2."
+- id: "clever-counterspell"
+  name: "Clever Counterspell"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You creatively apply your prepared spells to Counterspell a much wider variety of your opponents' magic. Instead of being able to counter a foe's spell with Counterspell only if you have that same spell prepared, you can use Counterspell as long as you have the spell the foe is casting in your spellbook. When you use Counterspell in this way, you must still expend a prepared spell; the prepared spell you expend must share a trait with the triggering spell other than concentrate, manipulate, or its tradition trait. The GM might allow you to instead use a spell that has an opposing trait or that otherwise logically would counter the triggering spell (such as using a cold or water spell to counter fireball or using clear mind to counter a fear spell)."
+  properties:
+    level: 12
+    traits: ["wizard"]
+    prerequisites: "Counterspell, Quick Recognition"
 - id: "clever-gambit"
   name: "Clever Gambit"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -847,6 +1005,30 @@
   properties:
     level: 2
     traits: ["cleric", "healing", "vitality"]
+- id: "companion-s-cry"
+  name: "Companion's Cry"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You can urge your companion to do its utmost. You can spend 2 actions to Command an Animal instead of 1 when commanding your animal companion. If you do, your animal companion uses an additional action."
+  properties:
+    level: 4
+    traits: ["ranger"]
+    prerequisites: "an animal companion"
+- id: "conceal-spell-witch"
+  name: "Conceal Spell"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "Through sheer mental effort, you can simplify the incantations and gestures needed to spellcast, leaving them barely noticeable. If the next action you use is to Cast a Spell, the spell gains the subtle trait, hiding the shining runes, sparks of magic, and other manifestations that would usually give away your spellcasting. The trait hides only the spell's spellcasting actions and manifestations, not its effects, so an observer might still see a ray streak out from you or see you vanish into thin air."
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["concentrate", "spellshape", "witch"]
+- id: "conceal-spell-wizard"
+  name: "Conceal Spell"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "By shaping the magical energies and parameters of your spells all in your head through sheer concentration, you can simplify the incantations and gestures needed to spellcast, leaving them barely noticeable. If the next action you use is to Cast a Spell, the spell gains the subtle trait, hiding the shining runes, sparks of magic, and other manifestations that would usually give away your spellcasting. The trait hides only the spell's spellcasting actions and manifestations, not its effects, so an observer might still see a ray streak out from you or see you vanish into thin air."
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["concentrate", "spellshape", "wizard"]
 - id: "confabulator"
   name: "Confabulator"
   source: "pc > Chapter 5: Feats"
@@ -863,6 +1045,17 @@
     level: 2
     traits: ["general", "skill"]
     prerequisites: "expert in Medicine"
+- id: "convincing-illusion"
+  name: "Convincing Illusion"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You use your deceptive skills to make your illusions seem even more real. Attempt a Deception check against the target's Perception DC. If you succeed, the target fails to disbelieve the illusion."
+  properties:
+    level: 6
+    actions: "reaction"
+    traits: ["wizard"]
+    prerequisites: "expert in Deception"
+    trigger: "A creature succeeded, but didn't critically succeed, at a Perception check or Will save to disbelieve an illusion from a spell that you cast."
+    requirements: "You are within 30 feet of the observer and the illusion."
 - id: "cooperative-nature"
   name: "Cooperative Nature"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Human > Human Ancestry Feats"
@@ -877,6 +1070,25 @@
   properties:
     level: 9
     traits: ["human"]
+- id: "counterspell-witch"
+  name: "Counterspell"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "When a foe Casts a Spell and you can see its manifestations, you can use your magic to disrupt it. You expend a prepared spell to counter the triggering creature's casting of that same spell. You lose your spell slot as if you had cast the triggering spell. You then attempt to counteract the triggering spell."
+  properties:
+    level: 1
+    actions: "reaction"
+    traits: ["witch"]
+    trigger: "A creature Casts a Spell that you have prepared."
+    special: "This feat has the trait corresponding to the tradition of spells you cast (arcane, divine, primal, or occult)."
+- id: "counterspell-wizard"
+  name: "Counterspell"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "When a foe Casts a Spell and you can see its manifestations, you can use your own magic to counter it. You expend a prepared spell to counter the triggering creature's casting of that same spell. You lose your spell slot as if you had cast the triggering spell. You then attempt to counteract the triggering spell."
+  properties:
+    level: 1
+    actions: "reaction"
+    traits: ["arcane", "wizard"]
+    trigger: "A creature Casts a Spell that you have prepared."
 - id: "courageous-advance"
   name: "Courageous Advance"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -912,6 +1124,18 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Society"
+- id: "coven-spell"
+  name: "Coven Spell"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: |-
+    You rhyme with your ally's incantations or echo their movements, linking your magic to empower their spell in one of two ways:
+    - If their spell deals damage and doesn't have a duration, you grant that spell a status bonus to damage equal to its rank.
+    - If their spell doesn't have a spellshape effect applied to it, apply the effects of any one spellshape feat you know to the spell. The spellshape feat must be one that can be applied to the triggering spell, and you must be able to use it (for instance, if the spellshape feat is usable only a limited number of times per day).
+  properties:
+    level: 12
+    actions: "reaction"
+    traits: ["spellshape", "witch"]
+    trigger: "An ally within 30 feet Casts a Spell."
 - id: "craft-anything"
   name: "Craft Anything"
   source: "pc > Chapter 5: Feats"
@@ -949,6 +1173,15 @@
     level: 12
     traits: ["incapacitation", "rogue"]
     prerequisites: "Debilitating Strike"
+- id: "crossbow-ace"
+  name: "Crossbow Ace"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your deep understanding of the crossbow allows you to reload efficiently while moving yourself out of the line of return fire. Either Create a Diversion or Take Cover, then Interact to reload. As normal, you must meet the requirements to Take Cover; you must be prone, benefiting from cover, or near a feature that allows you to Take Cover."
+  properties:
+    level: 1
+    actions: "one"
+    traits: ["ranger"]
+    requirements: "You are wielding a crossbow with reload 1 or higher."
 - id: "cuckoo-hag-mother"
   name: "Cuckoo Hag Mother"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Changeling > Feats"
@@ -1014,6 +1247,15 @@
     actions: "one"
     traits: ["fighter", "press"]
     requirements: "You have a creature grabbed."
+- id: "deadly-aim"
+  name: "Deadly Aim"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You aim for your prey's weak spots, making your shot more challenging but dealing more damage if you hit. Make a ranged Strike against your hunted prey at a -2 penalty. You gain a +4 circumstance bonus to damage on that Strike. This bonus increases to +6 at 11th level and +8 at 15th level."
+  properties:
+    level: 8
+    actions: "one"
+    traits: ["flourish", "ranger"]
+    prerequisites: "weapon specialization"
 - id: "deadly-simplicity"
   name: "Deadly Simplicity"
   source: "pc > Chapter 3: Classes > Cleric > Cleric Feats"
@@ -1225,6 +1467,15 @@
     level: 16
     actions: "two"
     traits: ["rogue"]
+- id: "disrupt-prey"
+  name: "Disrupt Prey"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Make a melee Strike against your prey. If the attack is a critical hit, you disrupt the triggering action."
+  properties:
+    level: 4
+    actions: "reaction"
+    traits: ["ranger"]
+    trigger: "Your hunted prey is within your reach, and it uses a manipulate action, uses a move action, or leaves a square during a move action it's using."
 - id: "disruptive-stance"
   name: "Disruptive Stance"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -1248,6 +1499,13 @@
   properties:
     level: 1
     traits: ["halfling"]
+- id: "distracting-shot"
+  name: "Distracting Shot"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "The sheer power of your attacks, or the overwhelming number of them, leaves an enemy flustered. If you critically hit your hunted prey with a ranged weapon, or hit it at least twice on the same turn with a ranged weapon, it's off-guard until the start of your next turn."
+  properties:
+    level: 12
+    traits: ["ranger"]
 - id: "divine-apex"
   name: "Divine Apex"
   source: "pc > Chapter 3: Classes > Cleric > Cleric Feats"
@@ -1349,6 +1607,21 @@
     level: 1
     traits: ["cleric"]
     special: "You can select this feat multiple times, selecting a different domain each time and gaining its domain spell."
+- id: "double-double"
+  name: "Double, Double"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "For each temporary oil or potion you brew during your daily preparations, you brew two copies of it. This allows you to brew two temporary oils or potions each day, four if you have master proficiency in spell DC, or six if you have legendary proficiency."
+  properties:
+    level: 10
+    traits: ["witch"]
+    prerequisites: "Cauldron"
+- id: "double-prey"
+  name: "Double Prey"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You can focus on two foes at once, hunting both of them down. When you use the Hunt Prey action, you can pick two creatures as your prey."
+  properties:
+    level: 12
+    traits: ["ranger"]
 - id: "double-shot"
   name: "Double Shot"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -1552,6 +1825,24 @@
     actions: "free"
     traits: ["druid"]
     trigger: "Your turn begins."
+- id: "effortless-concentration-witch"
+  name: "Effortless Concentration"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You maintain your active spells with hardly a thought. You immediately gain the effects of a Sustain action for one of your active witch spells."
+  properties:
+    level: 16
+    actions: "free"
+    traits: ["witch"]
+    trigger: "Your turn begins."
+- id: "effortless-concentration-wizard"
+  name: "Effortless Concentration"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You maintain your active spells with hardly a thought. You immediately gain the effects of a Sustain action for one of your active wizard spells."
+  properties:
+    level: 16
+    actions: "free"
+    traits: ["wizard"]
+    trigger: "Your turn begins."
 - id: "elemental-shape"
   name: "Elemental Shape"
   source: "pc > Chapter 3: Classes > Druid > Druid Feats"
@@ -1653,6 +1944,14 @@
     traits: ["gnome"]
     prerequisites: "focus pool, at least one innate spell from a gnome heritage or ancestry feat that shares a tradition with at least one of your focus spells"
     frequency: "once per day"
+- id: "energy-ablation"
+  name: "Energy Ablation"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "As you direct destructive energy at a foe, you can divert some of its power into a protective barrier that shields you from harm. If your next action is to Cast a Spell that deals at least one type of energy damage (acid, cold, electricity, fire, force, sonic, vitality, or void), you gain resistance to an energy damage type of your choice equal to the spell's rank. The resistance lasts until the end of your next turn. You get the resistance regardless of whether or not your spell dealt damage."
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["spellshape", "wizard"]
 - id: "enhanced-familiar"
   name: "Enhanced Familiar"
   source: "pc > Chapter 3: Classes > Druid > Druid Feats"
@@ -1661,6 +1960,24 @@
     level: 2
     traits: ["druid"]
     prerequisites: "a familiar"
+- id: "enhanced-familiar-witch"
+  name: "Enhanced Familiar"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You infuse your familiar with additional magical energy. You can select four familiar or master abilities each day instead of two."
+  properties:
+    level: 2
+    traits: ["witch"]
+    prerequisites: "a familiar"
+    special: "Add the bonus familiar abilities you gain for being a witch to this amount."
+- id: "enhanced-familiar-wizard"
+  name: "Enhanced Familiar"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You infuse your familiar with additional magical energy. You can select four familiar or master abilities each day, instead of two."
+  properties:
+    level: 2
+    traits: ["wizard"]
+    prerequisites: "a familiar"
+    special: "If your arcane thesis is improved familiar attunement, your familiar's base number of familiar abilities, before adding any extra abilities from the arcane thesis, is four."
 - id: "enigma-s-knowledge"
   name: "Enigma's Knowledge"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -1763,6 +2080,14 @@
     level: 9
     traits: ["elf"]
     prerequisites: "Ancestral Longevity"
+- id: "explosive-arrival"
+  name: "Explosive Arrival"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "Your summoned creature appears in a detonation of arcane runes. If your next action is to Cast a Spell with the summon trait, all creatures in a 10-foot emanation around the creature you summoned take 1d4 fire damage per spell rank. If the creature summoned has the acid, cold, electricity, sonic, or spirit trait, you can deal damage of that type instead."
+  properties:
+    level: 6
+    actions: "free"
+    traits: ["concentrate", "manipulate", "spellshape", "wizard"]
 - id: "extraplanar-supplication"
   name: "Extraplanar Supplication"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Nephilim > Feats"
@@ -1770,6 +2095,22 @@
   properties:
     level: 5
     traits: ["nephilim"]
+- id: "familiar"
+  name: "Familiar"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You make a pact with a creature that serves you and assists your spellcasting. You gain a familiar."
+  properties:
+    level: 1
+    traits: ["wizard"]
+- id: "familiar-s-language"
+  name: "Familiar's Language"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You've learned to speak with your familiar and other creatures like it. You can ask questions of, receive answers from, and use the Diplomacy skill with creatures of the same family of animals as your familiar. For example, if your familiar were a cat, you could gain the effects of speak with animals for any felines (including leopards and tigers, among others). This ability doesn't make them more friendly than normal. If your familiar ever changes to a different creature, you can't use this ability for 1 week while you absorb your new familiar's language."
+  properties:
+    level: 2
+    traits: ["witch"]
+    prerequisites: "a familiar"
+    special: "This feat has the trait corresponding to the tradition of spells you cast (arcane, divine, occult, or primal)."
 - id: "fantastic-leap"
   name: "Fantastic Leap"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -1780,6 +2121,13 @@
     level: 12
     actions: "two"
     traits: ["rogue"]
+- id: "far-shot"
+  name: "Far Shot"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your experience in the field has taught you how to focus your aim at a distance, increasing your accuracy. Double your weapons' range increments."
+  properties:
+    level: 4
+    traits: ["ranger"]
 - id: "far-throw"
   name: "Far Throw"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -1822,6 +2170,30 @@
   properties:
     level: 20
     traits: ["bard"]
+- id: "favored-prey"
+  name: "Favored Prey"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: |-
+    You have studied a specific type of wild creature and can hunt it more easily. When you gain this feat, choose animals, beasts, dragons, or both fungi and plants as your favored prey. When you roll initiative and can see an enemy that belongs to the chosen category, you can Hunt Prey as a free action, designating that enemy.
+    You can use this free action even if you haven't identified the creature yet with Recall Knowledge. The benefit doesn't apply against favored enemies disguised as other creatures, and the GM determines whether it applies against a creature disguised as a favored prey.
+  properties:
+    level: 4
+    traits: ["ranger"]
+- id: "favored-terrain"
+  name: "Favored Terrain"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: |-
+    You have studied a specific terrain to overcome its challenges. Choose aquatic, arctic, desert, forest, mountain, plains, sky, swamp, or underground as your favored terrain. When in that terrain, you can ignore the effects of non-magical difficult terrain. If you have the unimpeded journey class feature, you gain a second benefit while in your favored terrain, depending on your choice:
+    - **Aquatic.** You gain a swim Speed equal to your Speed. If you already had a swim Speed, you instead gain a +10-foot status bonus to your swim Speed.
+    - **Arctic.** You need to eat and drink only one-tenth as much as usual, you aren't affected by severe or extreme cold, and you can walk across ice and snow at full Speed without needing to Balance.
+    - **Desert.** You need to eat and drink only one-tenth as much as usual, you aren't affected by severe or extreme heat, and you can walk along sand at full Speed without needing to Balance.
+    - **Forest, Mountain, or Underground.** You gain a climb Speed equal to your Speed. If you already had a climb Speed, you instead gain a +10-foot status bonus to your climb Speed.
+    - **Plains.** You gain a +10-foot status bonus to your land Speed.
+    - **Sky.** You gain a +10-foot status bonus to your fly Speed, if you have one.
+    - **Swamp.** You can move across bogs at full Speed, even if they are deep enough to be greater difficult terrain or to normally require you to Swim.
+  properties:
+    level: 2
+    traits: ["ranger"]
 - id: "fearsome-brute"
   name: "Fearsome Brute"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -1985,6 +2357,14 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Survival"
+- id: "forcible-energy"
+  name: "Forcible Energy"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You perform complex manipulations to make the energy from your spells so powerful that your enemies remain vulnerable to it afterward. If your next action is to Cast a Spell that deals acid, cold, electricity, fire, or sonic damage, you can select one target that was damaged to gain weakness 5 to that damage type until the end of your next turn. If a spell deals multiple types of energy damage, choose one that the target gains weakness to. This has no effect on creatures with resistance or immunity to the energy type you choose."
+  properties:
+    level: 12
+    actions: "one"
+    traits: ["manipulate", "spellshape", "wizard"]
 - id: "forest-passage"
   name: "Forest Passage"
   source: "pc > Chapter 3: Classes > Druid > Druid Feats"
@@ -2002,6 +2382,13 @@
     actions: "one"
     traits: ["druid", "manipulate", "spellshape"]
     prerequisites: "Untamed Form"
+- id: "form-retention"
+  name: "Form Retention"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You have trained your mind and body to tolerate polymorph magic for longer periods of time, so long as you prepare for the change appropriately. When preparing a polymorph spell that lasts 1 minute and grants a battle form, you can prepare the spell in a slot 2 ranks higher than normal. This doesn't grant any of the normal benefits of heightening a spell, but the spell lasts up to 10 minutes. For example, if you prepared animal form in a 4th-rank slot with Form Retention, you would cast a 2nd-rank animal form that lasts for up to 10 minutes. If the spell can be Dismissed, that doesn't change."
+  properties:
+    level: 8
+    traits: ["wizard"]
 - id: "fortissimo-composition-feat"
   name: "Fortissimo Composition"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -2139,6 +2526,21 @@
   properties:
     level: 1
     traits: ["leshy"]
+- id: "greater-distracting-shot"
+  name: "Greater Distracting Shot"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Even a single missile can throw off your enemy's balance, and more powerful attacks leave it flustered for longer. If you hit your hunted prey with a ranged weapon, it's off-guard until the start of your next turn. If you critically hit your prey or hit it twice on the same turn with a ranged weapon, it's off-guard until the end of your next turn instead."
+  properties:
+    level: 16
+    traits: ["ranger"]
+    prerequisites: "Distracting Shot"
+- id: "greater-lesson"
+  name: "Greater Lesson"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "Your patron grants you greater knowledge. Choose a greater or basic lesson from the witch lessons. You gain its associated hex, and your familiar learns the associated spell."
+  properties:
+    level: 6
+    traits: ["witch"]
 - id: "group-aid"
   name: "Group Aid"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Human > Human Ancestry Feats"
@@ -2308,6 +2710,13 @@
   properties:
     level: 1
     traits: ["human"]
+- id: "hazard-finder"
+  name: "Hazard Finder"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You have an intuitive ability to sense hazards. You gain a +1 circumstance bonus to Perception checks to find traps and hazards, to AC against their attacks, and to saves against their effects. You can find hazards that would normally require you to Search even if you aren't Searching."
+  properties:
+    level: 8
+    traits: ["ranger"]
 - id: "head-stomp"
   name: "Head Stomp"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -2358,6 +2767,20 @@
     actions: "one"
     traits: ["cleric", "concentrate", "spellshape"]
     prerequisites: "healing font"
+- id: "hex-focus"
+  name: "Hex Focus"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "Your patron's teachings have allowed you to achieve a deeper focus. Whenever you Refocus, completely refill your focus pool."
+  properties:
+    level: 12
+    traits: ["witch"]
+- id: "hex-master"
+  name: "Hex Master"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You embody the link to your patron so completely that you can cast your hexes in rapid succession. You are no longer limited to casting only a single hex each turn. In addition, when you cast cackle to sustain a hex, you gain the effects of Sustain for all your active hexes that have a duration of sustained."
+  properties:
+    level: 20
+    traits: ["witch"]
 - id: "hidden-paragon"
   name: "Hidden Paragon"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -2412,6 +2835,23 @@
   properties:
     level: 10
     traits: ["bard"]
+- id: "hunted-shot"
+  name: "Hunted Shot"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You take two quick shots against the one you hunt. Make two Strikes against your hunted prey with the required weapon. If both hit the same creature, combine their damage for the purpose of resistances and weaknesses. Apply your multiple attack penalty to each Strike normally."
+  properties:
+    level: 1
+    actions: "one"
+    traits: ["flourish", "ranger"]
+    requirements: "You are wielding a ranged weapon with reload 0."
+- id: "hunter-s-aim"
+  name: "Hunter's Aim"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "When you focus on aiming, your attack becomes particularly accurate. Make a ranged weapon Strike against your hunted prey. On this Strike, you gain a +2 circumstance bonus to the attack roll and ignore your prey's concealed condition and any lesser cover."
+  properties:
+    level: 2
+    actions: "two"
+    traits: ["concentrate", "ranger"]
 - id: "hymn-of-healing-feat"
   name: "Hymn of Healing"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -2462,6 +2902,15 @@
     level: 18
     traits: ["rogue"]
     prerequisites: "Predictive Purchase"
+- id: "impossible-flurry"
+  name: "Impossible Flurry"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You forgo precision to attack at an impossible speed. Make three melee Strikes with each of the required weapons. Your first attack with each weapon takes the multiple attack penalty as though you had already made one attack this turn. All of the remaining Strikes take the maximum multiple attack penalty."
+  properties:
+    level: 18
+    actions: "three"
+    traits: ["flourish", "ranger"]
+    requirements: "You are wielding two melee weapons, each in a different hand."
 - id: "impossible-polymath"
   name: "Impossible Polymath"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -2490,6 +2939,17 @@
     level: 18
     actions: "three"
     traits: ["fighter", "flourish"]
+    requirements: "You are wielding a ranged weapon with the volley trait and reload 0."
+- id: "impossible-volley-ranger"
+  name: "Impossible Volley"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: |-
+    You fire a volley at all foes in an area. Make one Strike with a -2 penalty against each enemy within a 10-foot burst centered at or beyond your weapon's volley range. Roll the damage only once for all targets.
+    Each attack counts toward your multiple attack penalty, but do not increase your penalty until you have made all your attacks.
+  properties:
+    level: 18
+    actions: "three"
+    traits: ["flourish", "ranger"]
     requirements: "You are wielding a ranged weapon with the volley trait and reload 0."
 - id: "impressive-performance"
   name: "Impressive Performance"
@@ -2539,6 +2999,14 @@
     level: 14
     traits: ["fighter"]
     prerequisites: "Twin Riposte"
+- id: "improved-twin-riposte-ranger"
+  name: "Improved Twin Riposte"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your weapons are a blur, blocking and biting at your foes. You can use Twin Riposte even if you aren't benefiting from Twin Parry (though you must be wielding two melee weapons, one in each hand). At the start of each of your turns, you gain an additional reaction that you can use only to make a Twin Riposte."
+  properties:
+    level: 16
+    traits: ["ranger"]
+    prerequisites: "Twin Riposte"
 - id: "in-tune"
   name: "In Tune"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -2566,6 +3034,23 @@
     level: 8
     traits: ["druid"]
     prerequisites: "Mature Animal Companion"
+- id: "incredible-companion-ranger"
+  name: "Incredible Companion"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your animal companion continues to grow and develop. It becomes a nimble or savage animal companion (your choice), gaining additional capabilities determined by the type of companion."
+  properties:
+    level: 10
+    traits: ["ranger"]
+    prerequisites: "Mature Animal Companion"
+- id: "incredible-familiar"
+  name: "Incredible Familiar"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "Your familiar is imbued with even more magic than other familiars. You can select a base of six familiar or master abilities each day, instead of four."
+  properties:
+    level: 8
+    traits: ["witch"]
+    prerequisites: "Enhanced Familiar"
+    special: "Add the bonus familiar abilities you gain for being a witch to this amount."
 - id: "incredible-ferocity"
   name: "Incredible Ferocity"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Orc > Orc Ancestry Feats"
@@ -2608,6 +3093,21 @@
     actions: "one"
     traits: ["concentrate", "fighter", "press"]
     prerequisites: "Incredible Aim"
+- id: "infinite-possibilities"
+  name: "Infinite Possibilities"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You can prepare a spell slot that exists in your mind as many different possibilities at once. Once during your daily preparations, you can use a spell slot to hold that infinite potential, rather than using it to prepare a spell. You can use this spell slot to cast any spell from your spellbook that's at least 2 ranks lower than the slot you designate; the spell acts in all ways as a spell of 2 ranks lower. You don't have any particular spell prepared in that slot until you cast it."
+  properties:
+    level: 18
+    traits: ["wizard"]
+- id: "initiate-warden"
+  name: "Initiate Warden"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You've trained with one of the ranger sects known as wardens, who practice a specialized type of primal magic. You gain your choice of one warden spell from the initial warden spells (or another you have access to)."
+  properties:
+    level: 1
+    traits: ["ranger"]
+    special: "You can take this feat multiple times, choosing a different initial warden spell each time."
 - id: "insect-shape"
   name: "Insect Shape"
   source: "pc > Chapter 3: Classes > Druid > Druid Feats"
@@ -2741,6 +3241,13 @@
   properties:
     level: 9
     traits: ["halfling"]
+- id: "irresistible-magic"
+  name: "Irresistible Magic"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You've studied ways of overcoming the innate defenses against magic that dragons, otherworldly beings, and certain other powerful creatures have. Any creature that has a status bonus to saving throws against magic reduces that bonus by 1 against your spells."
+  properties:
+    level: 6
+    traits: ["wizard"]
 - id: "junk-tinker"
   name: "Junk Tinker"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Goblin > Ancestry Feats"
@@ -2750,6 +3257,13 @@
   properties:
     level: 1
     traits: ["goblin"]
+- id: "keen-magical-detection"
+  name: "Keen Magical Detection"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You sense magical dangers. When using the Detect Magic exploration activity, you can roll initiative twice and use the better result so long as at least one opponent has a magical effect or magic item and is in range of your detect magic."
+  properties:
+    level: 12
+    traits: ["fortune", "wizard"]
 - id: "kip-up"
   name: "Kip Up"
   source: "pc > Chapter 5: Feats"
@@ -2775,6 +3289,15 @@
     level: 8
     traits: ["bard"]
     prerequisites: "enigma muse"
+- id: "knowledge-is-power"
+  name: "Knowledge Is Power"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: |-
+    Your academic knowledge about a creature allows you to subtly alter your magic to defeat them. When you critically succeed at a Recall Knowledge check about a creature, you can invoke your knowledge to make the creature take a -1 circumstance penalty to either AC and saves against the next attack you make against it, or the next spell you cast that it needs to defend against. The creature takes the same penalty to its attack or DC the next time it attacks against you or causes you to attempt a save against one of its effects.
+    If you share this information with your allies, they gain the benefits as well. If not used, the bonuses end after 1 minute.
+  properties:
+    level: 8
+    traits: ["wizard"]
 - id: "lasting-armament"
   name: "Lasting Armament"
   source: "pc > Chapter 3: Classes > Cleric > Cleric Feats"
@@ -2829,6 +3352,14 @@
     level: 15
     traits: ["general", "skill"]
     prerequisites: "legendary in Medicine"
+- id: "legendary-monster-hunter"
+  name: "Legendary Monster Hunter"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your knowledge of monsters is so incredible that it reveals glaring flaws in your prey. Your bonus from Monster Hunter (and the bonus from Monster Warden if you have it) increases from +1 to +2 for you and any allies who benefit."
+  properties:
+    level: 16
+    traits: ["ranger"]
+    prerequisites: "legendary in Nature, Master Monster Hunter"
 - id: "legendary-negotiation"
   name: "Legendary Negotiation"
   source: "pc > Chapter 5: Feats"
@@ -2854,6 +3385,14 @@
     level: 15
     traits: ["general", "skill"]
     prerequisites: "legendary in Lore"
+- id: "legendary-shot"
+  name: "Legendary Shot"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You focus on your hunted prey, perceiving angles, air resistance, and every variable that would affect your ranged attack. If you have master proficiency with your ranged weapon, you can ignore the penalty for attacking up to five range increments away when attacking your hunted prey."
+  properties:
+    level: 20
+    traits: ["ranger"]
+    prerequisites: "legendary in Perception, Far Shot"
 - id: "legendary-sneak"
   name: "Legendary Sneak"
   source: "pc > Chapter 5: Feats"
@@ -2984,6 +3523,14 @@
     level: 1
     traits: ["bard"]
     prerequisites: "maestro muse"
+- id: "linked-focus"
+  name: "Linked Focus"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You have linked your bonded item to the well of energy that powers your school spells. Once per day when you Drain your Bonded Item to cast one of your arcane school's curriculum spells, you also regain 1 Focus Point."
+  properties:
+    level: 4
+    traits: ["wizard"]
+    prerequisites: "arcane bond, curriculum spells"
 - id: "loremaster-s-etude-feat"
   name: "Loremaster's Etude"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -3042,6 +3589,13 @@
   properties:
     level: 17
     traits: ["elf"]
+- id: "magic-sense"
+  name: "Magic Sense"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You have a literal sixth sense for ambient magic in your vicinity. You can sense the presence of magic auras as though you were always using a 1st-rank detect magic spell. This detects magic in your field of vision only. When you Seek, you gain the benefits of a 3rd-rank detect magic spell on things you see (in addition to the normal benefits of Seeking). You can turn this sense off and on with a free action at the start or the end of your turn."
+  properties:
+    level: 12
+    traits: ["arcane", "detection", "wizard"]
 - id: "magical-crafting"
   name: "Magical Crafting"
   source: "pc > Chapter 5: Feats"
@@ -3060,6 +3614,14 @@
     level: 2
     traits: ["general", "skill"]
     prerequisites: "expert in Arcana, Nature, Occultism, or Religion"
+- id: "major-lesson"
+  name: "Major Lesson"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "Your patron grants you even greater secrets. Choose a major, greater, or basic lesson from the witch lessons. You gain its associated hex, and your familiar learns the associated spell."
+  properties:
+    level: 10
+    traits: ["witch"]
+    special: "You can select this feat a second time if you're 14th level or higher, and a third time if you're 18th level or higher. Choose a different lesson each time."
 - id: "maker-of-miracles"
   name: "Maker of Miracles"
   source: "pc > Chapter 3: Classes > Cleric > Cleric Feats"
@@ -3068,6 +3630,14 @@
     level: 20
     traits: ["cleric"]
     prerequisites: "miraculous spell"
+- id: "manifold-edge"
+  name: "Manifold Edge"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You've learned to leverage every possible edge. When you use Hunt Prey, you can gain a different hunter's edge benefit instead of the one you selected at 1st level. If you do, you don't gain the additional benefit from masterful hunter."
+  properties:
+    level: 18
+    traits: ["ranger"]
+    prerequisites: "hunter's edge, masterful hunter"
 - id: "march-the-mines"
   name: "March the Mines"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Dwarf > Ancestry Feats"
@@ -3103,6 +3673,14 @@
     level: 8
     actions: "one"
     traits: ["cleric", "spellshape"]
+- id: "master-monster-hunter"
+  name: "Master Monster Hunter"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You have a nearly encyclopedic knowledge of all creatures of the world. You can use Nature to Recall Knowledge to identify any creature. In addition, you gain the benefits of Monster Hunter (and Monster Warden, if you have it) on a success as well as a critical success."
+  properties:
+    level: 10
+    traits: ["ranger"]
+    prerequisites: "master in Nature, Monster Hunter"
 - id: "master-of-many-styles"
   name: "Master of Many Styles"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -3113,6 +3691,23 @@
     traits: ["fighter"]
     prerequisites: "Opening Stance"
     trigger: "Your turn begins."
+- id: "masterful-companion"
+  name: "Masterful Companion"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your animal companion shares your incredible hunting skills, allowing it to take down your shared prey with ease. When you Hunt Prey, your animal companion gains the masterful hunter benefit associated with your hunter's edge, rather than just your original hunter's edge benefit."
+  properties:
+    level: 18
+    traits: ["ranger"]
+    prerequisites: "masterful hunter, Animal Companion"
+- id: "masterful-warden"
+  name: "Masterful Warden"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your mastery of warden magic increases. You gain your choice of one warden spell from the master warden spells (or another you have access to)."
+  properties:
+    level: 6
+    traits: ["ranger"]
+    prerequisites: "Initiate Warden"
+    special: "You can take this feat multiple times, choosing a different master warden spell each time."
 - id: "mature-animal-companion"
   name: "Mature Animal Companion"
   source: "pc > Chapter 3: Classes > Druid > Druid Feats"
@@ -3122,6 +3717,16 @@
   properties:
     level: 4
     traits: ["druid"]
+    prerequisites: "Animal Companion"
+- id: "mature-animal-companion-ranger"
+  name: "Mature Animal Companion"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: |-
+    Your animal companion becomes a mature animal companion and gains additional capabilities.
+    Your animal companion has greater independence. During an encounter, even if you don't use the Command an Animal action, your animal companion can still use 1 action that round on your turn to Strike or Stride (or Burrow, Climb, or Swim if it has that Speed). It can do this at any point during your turn, as long as you aren't currently taking an action. If it does, that's all the actions it gets that round—you can't Command it later.
+  properties:
+    level: 6
+    traits: ["ranger"]
     prerequisites: "Animal Companion"
 - id: "melodious-spell"
   name: "Melodious Spell"
@@ -3194,6 +3799,21 @@
     level: 7
     traits: ["general", "skill"]
     prerequisites: "master in Survival"
+- id: "monster-hunter"
+  name: "Monster Hunter"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You quickly assess your prey and apply what you know. As part of the action used to Hunt your Prey, you can attempt a check to Recall Knowledge about your prey. When you critically succeed at identifying your hunted prey with Recall Knowledge, you note a weakness in the creature's defenses in addition to any other benefits. You gain a +1 circumstance bonus to your next attack roll against that prey, and any ally you tell gains the same benefit. You can give bonuses from Monster Hunter only once per day against a particular creature."
+  properties:
+    level: 1
+    traits: ["ranger"]
+- id: "monster-warden"
+  name: "Monster Warden"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You understand how to defend against your prey. When you grant bonuses from Monster Hunter, each creature who benefits also gains a +2 circumstance bonus either to their AC the next time the creature attacks them or to their next saving throw against an effect from that particular creature (whichever comes first.)"
+  properties:
+    level: 2
+    traits: ["ranger"]
+    prerequisites: "Monster Hunter"
 - id: "monstrosity-shape"
   name: "Monstrosity Shape"
   source: "pc > Chapter 3: Classes > Druid > Druid Feats"
@@ -3278,6 +3898,13 @@
   properties:
     level: 9
     traits: ["human"]
+- id: "murksight"
+  name: "Murksight"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "Your vision pierces through non-magical fog, mist, rain, and snow. You don't take circumstance penalties to ranged attacks or Perception checks caused by non-magical precipitation, and your targeted attacks don't require a flat check to succeed against a target concealed only by such effects."
+  properties:
+    level: 8
+    traits: ["witch"]
 - id: "natural-ambition"
   name: "Natural Ambition"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Human > Human Ancestry Feats"
@@ -3391,6 +4018,14 @@
     actions: "three"
     traits: ["auditory", "concentrate", "emotion", "general", "linguistic", "mental", "skill"]
     prerequisites: "trained in Diplomacy"
+- id: "nonlethal-spell"
+  name: "Nonlethal Spell"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You can alter offensive spells to be less deadly. If your next action is to Cast a Spell that deals damage and doesn't have the death or void trait, that spell gains the nonlethal trait."
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["manipulate", "spellshape", "wizard"]
 - id: "occult-resistance"
   name: "Occult Resistance"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Changeling > Feats"
@@ -3547,6 +4182,14 @@
     level: 10
     actions: "one"
     traits: ["druid", "manipulate", "spellshape"]
+- id: "overwhelming-energy-wizard"
+  name: "Overwhelming Energy"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "Multiple circles of runes rotate around your hand as you overcharge your spell to tear through your enemy's defenses. If the next action you use is to Cast a Spell, the spell ignores an amount of the target's resistance to acid, cold, electricity, fire, or sonic damage equal to your level. This applies to all damage the spell deals, including persistent damage and damage caused by an ongoing effect of the spell, such as the wall created by wall of fire. A creature's immunities are unaffected."
+  properties:
+    level: 10
+    actions: "one"
+    traits: ["manipulate", "spellshape", "wizard"]
 - id: "panic-the-dead"
   name: "Panic the Dead"
   source: "pc > Chapter 3: Classes > Cleric > Cleric Feats"
@@ -3572,6 +4215,55 @@
     actions: "two"
     traits: ["fighter"]
     requirements: "You are wielding a loaded ranged weapon or a ranged weapon with reload 0."
+- id: "patron-s-claim"
+  name: "Patron's Claim"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: |-
+    Your patron partially manifests itself through your familiar to claim a foe's power for its own. Your familiar gains the following activity.
+    **Patron's Claim (2 actions).**
+    **Frequency.** once per hour
+    **Effect.** Your familiar's mouth opens impossibly wide before your patron's grasping limb stretches forth from it at a creature within 30 feet, dealing 10d10 spirit damage with a basic Fortitude save against your spell DC. If the creature fails its save and takes damage, it is also drained 2 (or drained 4 on a critical failure) and you regain 1 Focus Point, up to your usual maximum, as your patron grants you additional magic in exchange for your gift of your opponent's spirit.
+  properties:
+    level: 18
+    traits: ["witch"]
+- id: "patron-s-presence"
+  name: "Patron's Presence"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: |-
+    Your patron can direct its attention through your familiar, and its mere presence becomes an ominous weight on the minds of other beings to distract them and blot out their magic. Your familiar gains the following activity.
+    **Patron's Presence (2 actions).**
+    **Traits.** aura
+    **Frequency.** once per hour
+    **Effect.** A palpable weight extends from your familiar in a 15-foot emanation. Enemies who enter or start their turn within the aura must succeed at a Will save against your spell DC or become stupefied 2 as long as they remain within the aura, or stupefied 3 on a critical failure. The aura lasts until the end of your next turn, but the familiar can Sustain it up to 1 minute.
+  properties:
+    level: 14
+    traits: ["witch"]
+- id: "patron-s-truth"
+  name: "Patron's Truth"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You have mastered the greatest secrets of your patron's magic and learned a fundamental truth about your patron, even if their identity still remains a mystery. You gain an additional 10th-rank spell slot."
+  properties:
+    level: 20
+    traits: ["witch"]
+    prerequisites: "patron's gift"
+- id: "peerless-warden"
+  name: "Peerless Warden"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your mastery of primal magic has given you access to the greatest secrets of warden magic. You gain your choice of one warden spell from the peerless warden spells (or another you have access to)."
+  properties:
+    level: 10
+    traits: ["ranger"]
+    prerequisites: "Initiate Warden"
+    special: "You can take this feat multiple times, choosing a different peerless warden spell each time."
+- id: "penetrating-shot"
+  name: "Penetrating Shot"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You shoot clear through an intervening creature to hit your prey. Choose a target that is giving lesser cover to your hunted prey. Make a single ranged Strike with the required weapon against the chosen target and your hunted prey. This attack ignores any lesser cover the chosen target provides your hunted prey. Roll damage only once, and apply it to each creature you hit. A Penetrating Shot counts as two attacks for your multiple attack penalty."
+  properties:
+    level: 10
+    actions: "two"
+    traits: ["ranger"]
+    requirements: "You are wielding a ranged weapon."
 - id: "perfect-distraction"
   name: "Perfect Distraction"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -3597,6 +4289,15 @@
     level: 18
     traits: ["druid"]
     prerequisites: "Form Control, Strength +4"
+- id: "perfect-shot"
+  name: "Perfect Shot"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "After watching the motions of combat with incredible intensity and precision, you fire at your prey at the perfect moment to deliver maximum pain. Make a ranged Strike with the required weapon against your hunted prey. If you hit, the Strike deals maximum damage. After the Strike, your turn ends."
+  properties:
+    level: 18
+    actions: "three"
+    traits: ["flourish", "ranger"]
+    requirements: "You are wielding a loaded ranged weapon with reload 1 or more, and you have not reloaded your weapon since your last turn."
 - id: "pervasive-superstition"
   name: "Pervasive Superstition"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Orc > Orc Ancestry Feats"
@@ -3914,6 +4615,14 @@
     level: 2
     actions: "one"
     traits: ["rogue"]
+- id: "quick-draw-ranger"
+  name: "Quick Draw"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You draw your weapon and attack with the same motion. You Interact to draw a weapon, then Strike with that weapon."
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["ranger"]
 - id: "quick-identification"
   name: "Quick Identification"
   source: "pc > Chapter 5: Feats"
@@ -3995,6 +4704,24 @@
     level: 10
     actions: "free"
     traits: ["bard", "concentrate", "spellshape"]
+    frequency: "once per day"
+- id: "quickened-casting-witch"
+  name: "Quickened Casting"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You accelerate your spellcasting. If your next action is to cast a witch cantrip or a witch spell that is at least 2 ranks lower than the highest-rank witch spell slot you have, reduce the number of actions to cast it by 1 (minimum 1 action)."
+  properties:
+    level: 10
+    actions: "free"
+    traits: ["concentrate", "spellshape", "witch"]
+    frequency: "once per day"
+- id: "quickened-casting-wizard"
+  name: "Quickened Casting"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "Straining your mind, you collapse as much of your spell's formulas as you can, resulting in a shorter but much more complex incantation. If your next action is to cast a wizard cantrip or a wizard spell that is at least 2 ranks lower than the highest-rank wizard spell slot you have, reduce the number of actions to cast it by 1 (minimum 1 action)."
+  properties:
+    level: 10
+    actions: "free"
+    traits: ["concentrate", "spellshape", "wizard"]
     frequency: "once per day"
 - id: "quiet-allies"
   name: "Quiet Allies"
@@ -4092,6 +4819,22 @@
     level: 1
     actions: "one"
     traits: ["concentrate", "druid", "spellshape"]
+- id: "reach-spell-witch"
+  name: "Reach Spell"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You can extend the range of your spells. If the next action you use is to Cast a Spell that has a range, increase that spell's range by 30 feet. As is standard for increasing spell ranges, if the spell normally has a range of touch, you extend its range to 30 feet."
+  properties:
+    level: 1
+    actions: "one"
+    traits: ["concentrate", "spellshape", "witch"]
+- id: "reach-spell-wizard"
+  name: "Reach Spell"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You can extend the range of your spells. If the next action you use is to Cast a Spell that has a range, increase that spell's range by 30 feet. As is standard for increasing spell ranges, if the spell normally has a range of touch, you extend its range to 30 feet."
+  properties:
+    level: 1
+    actions: "one"
+    traits: ["concentrate", "spellshape", "wizard"]
 - id: "reactive-distraction"
   name: "Reactive Distraction"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -4210,6 +4953,22 @@
   properties:
     level: 16
     traits: ["concentrate", "rogue"]
+- id: "reflect-spell-witch"
+  name: "Reflect Spell"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "When you successfully use Counterspell to counteract a spell that affects targeted creatures or an area, you can turn that spell's effect back on its caster. When reflected, the spell affects only the original caster, even if it's an area spell or it would normally affect more than one creature. The original caster can attempt a save and use other defenses against the reflected spell as normal."
+  properties:
+    level: 14
+    traits: ["witch"]
+    prerequisites: "Counterspell"
+- id: "reflect-spell-wizard"
+  name: "Reflect Spell"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "When you successfully use Counterspell to counteract a spell that affects targeted creatures or an area, you can turn that spell's effect back on its caster. When reflected, the spell affects only the original caster, even if it's an area spell or it would normally affect more than one creature. The original caster can attempt a save and use other defenses against the reflected spell as normal."
+  properties:
+    level: 14
+    traits: ["wizard"]
+    prerequisites: "Counterspell"
 - id: "reflexive-courage"
   name: "Reflexive Courage"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -4253,6 +5012,15 @@
     level: 10
     traits: ["cleric"]
     prerequisites: "expert in your deity's favored weapon"
+- id: "reprepare-spell"
+  name: "Reprepare Spell"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: |-
+    You've discovered how to reuse some of your spell slots over and over. You can spend 10 minutes to prepare a spell that you already cast today, regaining access to that spell slot. The spell must be of 4th rank or lower and can't have a duration. You can reprepare a spell in this way even if you've already reprepared that spell previously in the same day.
+    If you have the spell substitution arcane thesis, you can instead prepare a different spell in an expended slot, as long as the new spell doesn't have a duration. You can use spell substitution on that slot again, but you remain restricted to preparing only spells without a duration in that slot until the next time you make your daily preparations.
+  properties:
+    level: 18
+    traits: ["wizard"]
 - id: "resounding-bravery"
   name: "Resounding Bravery"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -4351,6 +5119,20 @@
   properties:
     level: 1
     traits: ["general"]
+- id: "rites-of-convocation"
+  name: "Rites of Convocation"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "Your patron grants you the power to summon other creatures to aid you. Choose one summon spell (such as summon animal, summon construct, and so forth) that appears on the spell list of your spellcasting tradition. You can spend 10 minutes in communion with your familiar to replace one spell you've prepared in one of your witch spell slots with the spell you chose, heightened to the same rank. The spell you replaced must be of at least the summon spell's minimum spell rank."
+  properties:
+    level: 4
+    traits: ["witch"]
+- id: "rites-of-transfiguration"
+  name: "Rites of Transfiguration"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You can adapt your patron's power to transform other creatures into forms more befitting their behavior or your whims. Your familiar learns cursed metamorphosis, even if cursed metamorphosis isn't on your tradition's spell list. By spending 10 minutes in communion with your familiar, you can replace one spell of 6th-rank or higher you've prepared in one of your witch spell slots with a cursed metamorphosis spell of the same rank."
+  properties:
+    level: 14
+    traits: ["witch"]
 - id: "ritual-researcher"
   name: "Ritual Researcher"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -4391,6 +5173,14 @@
   properties:
     level: 1
     traits: ["goblin"]
+- id: "running-reload"
+  name: "Running Reload"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You can reload your weapon on the move. You Stride, Step, or Sneak, then Interact to reload."
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["ranger"]
 - id: "sabotage"
   name: "Sabotage"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -4484,6 +5274,14 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Occultism"
+- id: "scintillating-spell"
+  name: "Scintillating Spell"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "Your spells become a radiant display of light and color. If your next action is to Cast a Spell that doesn't have the darkness trait, has no duration, and requires creatures to attempt a Reflex save, the spell explodes in a spray of scintillating lights, in addition to its other effects. Each creature that failed its Reflex save against the spell is dazzled for 1 round, and those who critically failed are instead blinded for 1 round."
+  properties:
+    level: 16
+    actions: "one"
+    traits: ["concentrate", "light", "spellshape", "wizard"]
 - id: "scion-of-many-planes"
   name: "Scion of Many Planes"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Nephilim > Feats"
@@ -4508,6 +5306,24 @@
     actions: "free"
     traits: ["rogue"]
     trigger: "You are about to roll a Perception, Stealth, or Survival check for initiative."
+- id: "scout-s-warning-ranger"
+  name: "Scout's Warning"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You visually or audibly warn your allies of danger, granting them each a +1 circumstance bonus to their initiative rolls, or a +2 circumstance bonus if you're using the Scout exploration activity. Depending on whether you use gestures or call out, this action gains either the visual or the auditory trait, respectively."
+  properties:
+    level: 4
+    actions: "free"
+    traits: ["ranger"]
+    trigger: "You are about to roll a Perception, Stealth, or Survival check for initiative."
+- id: "scroll-adept"
+  name: "Scroll Adept"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: |-
+    During your daily preparations, you can create two temporary scrolls containing arcane spells from your spellbook. Each scroll must be of a different spell rank, and both spell ranks must be 2 or more ranks lower than your highest-rank spell. Any scrolls you create this way become non-magical the next time you make your daily preparations. A temporary scroll has no value if sold. As normal for a scroll, these are consumable items of light Bulk, and someone holding the item in one hand can Cast the Spell from it if it's on their spell list, using their spell attack modifier and spell DC.
+    If you have master proficiency in spell DC, you can create three temporary scrolls during your daily preparations, and if you have legendary proficiency, you can create four temporary scrolls.
+  properties:
+    level: 10
+    traits: ["wizard"]
 - id: "sea-hag-mother"
   name: "Sea Hag Mother"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Changeling > Feats"
@@ -4523,6 +5339,34 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Alcohol Lore, Cooking Lore, or Crafting"
+- id: "second-sting"
+  name: "Second Sting"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: |-
+    You read your prey's movements and transform them into openings, so failures with one weapon set up glancing blows with the other. Make a melee Strike with one of the required weapons against your hunted prey. The Strike gains the following failure effect.
+    **Failure.** You deal the damage the other required weapon would have dealt on a hit, excluding all damage dice. (This removes dice from weapon runes, spells, and special abilities, not just weapon damage dice.)
+  properties:
+    level: 12
+    actions: "one"
+    traits: ["press", "ranger"]
+    requirements: "You are wielding two melee weapons, each in a different hand."
+- id: "second-thoughts"
+  name: "Second Thoughts"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "When your target proves resilient to your magical deceptions, you can try them again on someone else. You can Cast the triggering Spell a second time, targeting a different creature, without expanding an additional spell slot. You can do so only until the end of your next turn, and you can't use Second Thoughts on it after the second casting of the spell."
+  properties:
+    level: 18
+    actions: "reaction"
+    traits: ["concentrate", "mental", "wizard"]
+    trigger: "You cast a mental spell that targets one creature, and it critically succeeds at its Will save."
+- id: "secondary-detonation-array"
+  name: "Secondary Detonation Array"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You divert some of your spell's energy into an unstable runic array. If your next action is to Cast a Spell that deals damage, has no duration, and affects an area, a glowing magic circle appears in a 5-foot burst within that area. At the beginning of your next turn, the circle detonates, dealing 1d6 force damage per rank of the spell to all creatures within the circle, with a basic Reflex save against your spell DC. If the spell dealt a different type of damage, the circle deals this type of damage instead (or one type of your choice if the spell could deal multiple types of damage)."
+  properties:
+    level: 14
+    actions: "one"
+    traits: ["manipulate", "spellshape", "wizard"]
 - id: "seedpod"
   name: "Seedpod"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Leshy > Leshy Ancestry Feats"
@@ -4553,6 +5397,23 @@
     actions: "reaction"
     traits: ["rogue"]
     trigger: "You fail a check to Seek."
+- id: "sense-the-unseen-ranger"
+  name: "Sense the Unseen"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "When you look for foes, you can catch even the slightest cues, such as their minute movements or the shifting of air currents on your skin. Even though you failed at the triggering check, you automatically sense any undetected creatures in the area where you're Seeking, making them merely hidden to you."
+  properties:
+    level: 14
+    actions: "reaction"
+    traits: ["ranger"]
+    trigger: "You fail a check to Seek."
+- id: "shadow-hunter"
+  name: "Shadow Hunter"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You blend in to your surroundings so well that others have trouble telling you apart from the terrain. While in natural terrain, you're always concealed from all foes if you choose to be, except for your hunted prey."
+  properties:
+    level: 18
+    traits: ["ranger"]
+    prerequisites: "Camouflage"
 - id: "shadow-of-the-wilds"
   name: "Shadow of the Wilds"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Leshy > Leshy Ancestry Feats"
@@ -4602,6 +5463,14 @@
     level: 18
     traits: ["cleric"]
     prerequisites: "Premonition of Clarity"
+- id: "shared-prey"
+  name: "Shared Prey"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Hunting as a duo, you and your ally both single out your prey. When you use Hunt Prey and select only one prey, you can grant your Hunt Prey benefits and hunter's edge to an ally in addition to gaining them yourself. The ally retains these benefits until you use Hunt Prey again."
+  properties:
+    level: 14
+    traits: ["ranger"]
+    prerequisites: "Double Prey, Warden's Boon"
 - id: "shared-replenishment"
   name: "Shared Replenishment"
   source: "pc > Chapter 3: Classes > Cleric > Cleric Feats"
@@ -4669,6 +5538,14 @@
     level: 10
     traits: ["druid"]
     prerequisites: "Animal Companion"
+- id: "side-by-side-ranger"
+  name: "Side by Side"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You and your animal companion fight in tandem. Whenever you and your animal companion are adjacent to the same foe, you are both flanking that foe with each other, regardless of your actual positions."
+  properties:
+    level: 12
+    traits: ["ranger"]
+    prerequisites: "an animal companion"
 - id: "sidestep"
   name: "Sidestep"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -4688,6 +5565,17 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Society"
+- id: "siphon-power"
+  name: "Siphon Power"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You draw upon the reservoir of your patron's magic that resides within your familiar. During your turn, you can cast one spell your familiar knows that was granted by your patron or lessons without spending a spell slot to do so (or even having it prepared). The spell must be at least 1 rank lower than your highest-rank witch spell slot."
+  properties:
+    level: 16
+    actions: "free"
+    traits: ["witch"]
+    frequency: "once per day"
+    requirements: "You haven't acted yet on your turn."
+    special: "This feat has the trait corresponding to the tradition of spells you cast (arcane, divine, occult, or primal)."
 - id: "skill-training"
   name: "Skill Training"
   source: "pc > Chapter 5: Feats"
@@ -4712,6 +5600,14 @@
     level: 6
     actions: "one"
     traits: ["flourish", "rogue"]
+- id: "skirmish-strike-ranger"
+  name: "Skirmish Strike"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your feet and weapon move in tandem. Either Step and then Strike, or Strike and then Step."
+  properties:
+    level: 6
+    actions: "one"
+    traits: ["flourish", "ranger"]
 - id: "skittering-scuttle"
   name: "Skittering Scuttle"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Goblin > Ancestry Feats"
@@ -4791,6 +5687,13 @@
     actions: "one"
     traits: ["fighter"]
     requirements: "You have one hand free, and your target is within reach of that hand."
+- id: "snap-shot"
+  name: "Snap Shot"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You can react with ranged weapons when a creature is in close quarters. You can use a reaction that normally allows you to make a melee weapon Strike to instead make a ranged weapon Strike. You must be Striking an adjacent target. If necessary for the reaction's trigger, you treat your ranged weapon as if it had a reach of 5 feet. If the reaction has other requirements, such as wielding a specific kind of weapon, Snap Shot doesn't allow you to ignore them; it allows you only to replace a melee weapon Strike with a ranged weapon Strike."
+  properties:
+    level: 6
+    traits: ["ranger"]
 - id: "sneak-adept"
   name: "Sneak Adept"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -4885,6 +5788,15 @@
     traits: ["druid"]
     prerequisites: "Incredible Companion"
     special: "You can select this feat up to three times. Each time, add a different specialization to your companion."
+- id: "specialized-companion-ranger"
+  name: "Specialized Companion"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your animal companion continues to grow in power and ability, and it is now cunning enough to become specialized. Your animal companion gains one specialization of your choice."
+  properties:
+    level: 16
+    traits: ["ranger"]
+    prerequisites: "Incredible Companion"
+    special: "You can select this feat up to three times. Each time, add a different specialization to your companion."
 - id: "specialty-crafting"
   name: "Specialty Crafting"
   source: "pc > Chapter 5: Feats"
@@ -4908,6 +5820,15 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Crafting"
+- id: "spell-combination"
+  name: "Spell Combination"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: |-
+    You can merge spells, producing multiple effects with a single casting. One slot of each rank of spell you can cast, except 2nd rank and 1st rank, becomes a spell combination slot (this doesn't apply to cantrips). When you prepare your spells, you can fill a combination slot with a combination of two spells. Each spell in the combination must be 2 or more spell ranks below the slot's rank, and both must target only one creature or object or have the option to target only one creature or object. Each spell in the combination must also have the same means of determining whether it has an effect—both spells must require a ranged spell attack, require the same type of saving throw, or automatically affect the target.
+    When you cast a combined spell, it affects only one target, even if the component spells normally affect more than one. If any spell in the combination has further restrictions (such as targeting only living creatures), you must abide by all restrictions. The combined spell uses the shorter of the component spells' ranges. Resolve a combined spell as if were a single spell, but apply the effects of both component spells. For example, if the spell's target succeeded at the save against a combined spell, it would apply the success effect of each spell, and if it critically failed, it would apply the critical failure effect of both spells.
+  properties:
+    level: 20
+    traits: ["wizard"]
 - id: "spell-devourer"
   name: "Spell Devourer"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Orc > Orc Ancestry Feats"
@@ -4916,6 +5837,39 @@
     level: 13
     traits: ["orc"]
     prerequisites: "Orc Superstition"
+- id: "spell-mastery"
+  name: "Spell Mastery"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You have mastered a handful of spells to such a degree that you can cast them even if you haven't prepared them in advance. Select any four spells of 9th rank or lower that are in your spellbook; each spell you select must be of a different rank. These spells are automatically prepared when you make your daily preparations, and you gain an extra spell slot for each spell. You can select a different combination of spells by spending 1 week of downtime studying your spellbook and retraining your mastered spells."
+  properties:
+    level: 20
+    traits: ["wizard"]
+- id: "spell-protection-array"
+  name: "Spell Protection Array"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You inscribe a circle of arcane runes that dampen enemies' magic. You create a glowing magic circle in a 5-foot burst within 30 feet. Creatures in the circle gain a +1 status bonus to saving throws against magic. The circle lasts until the end of your next turn, and you can Sustain it, to a maximum duration of 1 minute."
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["arcane", "manipulate", "wizard"]
+- id: "spell-tinker"
+  name: "Spell Tinker"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: |-
+    You've learned to alter choices you make when casting spells on yourself. After casting a spell on only yourself that offers several choices of effect (such as resist energy or a polymorph spell that offers several potential forms), you can alter the choice you made when Casting the Spell (for instance, choosing a different type of damage for resist energy).
+    You can't use this feat if the benefits of the spell have already been used up or if the effects of the first choice would persist in any way after switching (for instance, if one of the choices was to create a consumable item you already used, or to heal you), or if the feat would create an effect more powerful than that offered by the base spell. The GM is the final arbiter of what Spell Tinker can be applied to.
+  properties:
+    level: 16
+    actions: "two"
+    traits: ["concentrate", "wizard"]
+- id: "spellbook-prodigy"
+  name: "Spellbook Prodigy"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You are particularly adept at learning spells to add to your spellbook. You gain the Magical Shorthand skill feat without needing to meet its prerequisites. Further, when you roll a critical failure on your check to Learn a Spell, you get a failure instead."
+  properties:
+    level: 1
+    traits: ["wizard"]
+    prerequisites: "trained in Arcana"
 - id: "spellshape-channel"
   name: "Spellshape Channel"
   source: "pc > Chapter 3: Classes > Cleric > Cleric Feats"
@@ -4924,6 +5878,41 @@
     level: 20
     actions: "free"
     traits: ["cleric", "concentrate"]
+- id: "spellshape-mastery"
+  name: "Spellshape Mastery"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "Your mastery of magic ensures that you can alter your spells just as easily as you can cast them normally. You can use spellshape single actions as free actions."
+  properties:
+    level: 20
+    traits: ["wizard"]
+- id: "spirit-familiar"
+  name: "Spirit Familiar"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: |-
+    Your familiar can subsume its body to become pure spirit. Your familiar gains the Shed Spirit activity.
+    **Shed Spirit (2 actions).**
+    **Traits.** spirit
+    **Frequency.** once per 10 minutes
+    **Effect.** Your familiar's spirit exits its body, leaving its empty shell behind, before flying at an enemy within 20 feet and dealing 6d6 spirit damage, with a basic Will save against your spell DC. If the familiar dealt damage, it then flies to an ally within 30 feet of the enemy, restoring Hit Points equal to half the damage dealt. Your familiar then re-forms in its original square. At 9th level, and every 2 levels thereafter, the attack deals an additional 2d6 damage.
+  properties:
+    level: 8
+    traits: ["witch"]
+    prerequisites: "divine or occult patron"
+- id: "split-hex"
+  name: "Split Hex"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You siphon some of the power from an offensive hex you cast to direct it at a second target as well. If the next action you use is to Cast a Spell to cast a harmful hex with a single target, reduce its rank by 2 (making it 2 ranks lower than the maximum spell rank you can cast). If you do, you can select a second target for that hex to affect."
+  properties:
+    level: 18
+    actions: "one"
+    traits: ["concentrate", "spellshape", "witch"]
+- id: "split-slot"
+  name: "Split Slot"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You can prepare two spells in one slot, giving you the freedom to choose the spell when you cast it. When you prepare your spells for the day, you can choose one spell slot at least 1 rank lower than the highest-rank spell you can cast and prepare two spells in that slot. When you Cast a Spell from that slot, choose which spell to cast. Once you've chosen, the unused spell dissipates as though you hadn't prepared it at all—for example, it isn't available for use with Drain Bonded Item."
+  properties:
+    level: 6
+    traits: ["wizard"]
 - id: "spring-from-the-shadows"
   name: "Spring From the Shadows"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -4971,6 +5960,28 @@
   properties:
     level: 6
     traits: ["druid"]
+- id: "steady-spellcasting-witch"
+  name: "Steady Spellcasting"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "Confident in your technique, you don't easily lose your concentration when you Cast a Spell. If another creature's reaction would disrupt your spellcasting action, attempt a DC 15 flat check. If you succeed, your action isn't disrupted."
+  properties:
+    level: 6
+    traits: ["witch"]
+- id: "steady-spellcasting-wizard"
+  name: "Steady Spellcasting"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "Confident in your technique and possessing ironclad concentration, you don't easily lose your concentration when you Cast a Spell. If a reaction would disrupt your spellcasting action, attempt a DC 15 flat check. If you succeed, your action isn't disrupted."
+  properties:
+    level: 6
+    traits: ["wizard"]
+- id: "stealthy-companion"
+  name: "Stealthy Companion"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You've trained your animal companion to blend in to its surroundings. Your animal companion gains the benefit of the Camouflage feat. If your companion is a specialized ambusher, its proficiency rank for Stealth increases to master (or legendary if it was already master)."
+  properties:
+    level: 14
+    traits: ["ranger"]
+    prerequisites: "Animal Companion, Camouflage"
 - id: "step-lively"
   name: "Step Lively"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Halfling > Ancestry Feats"
@@ -4980,6 +5991,18 @@
     actions: "reaction"
     traits: ["halfling"]
     trigger: "A Large or larger enemy ends a move action adjacent to you."
+- id: "stitched-familiar"
+  name: "Stitched Familiar"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: |-
+    Your familiar can shed its material form, becoming a mass of animated magic. Your familiar gains the Stitching Strike activity.
+    **Stitching Strike (2 actions).**
+    **Frequency.** once per 10 minutes
+    **Effect.** Your familiar unravels into magical fibers that encompass an enemy within 30 feet and deal 6d6 slashing damage, with a basic Reflex save against your spell DC. On a failure, the target is also immobilized for 1 round or until it Escapes against your spell DC. Your familiar then re-forms in its original square. At 9th level, and every 2 levels thereafter, the attack deals an additional 2d6 damage.
+  properties:
+    level: 8
+    traits: ["witch"]
+    prerequisites: "arcane or primal patron"
 - id: "stone-bones"
   name: "Stone Bones"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Dwarf > Ancestry Feats"
@@ -5119,6 +6142,14 @@
     level: 13
     traits: ["nephilim"]
     prerequisites: "any nephilim lineage feat"
+- id: "superior-bond"
+  name: "Superior Bond"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "When you draw upon your bonded item, you can leave a bit of energy within it for later use. You can use Drain Bonded Item one additional time per day, but only to cast a spell 2 or more ranks lower than your highest-rank wizard spell slot."
+  properties:
+    level: 14
+    traits: ["wizard"]
+    prerequisites: "arcane bond"
 - id: "supernatural-charm"
   name: "Supernatural Charm"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Mixed Ancestry > Feats"
@@ -5186,6 +6217,16 @@
     level: 7
     traits: ["general", "skill"]
     prerequisites: "master in Stealth"
+- id: "swift-tracker"
+  name: "Swift Tracker"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: |-
+    Your keen eyes catch signs of passage even when you're moving. You can move at your full Speed while you Track. If you have master proficiency in Survival, you don't need to attempt a new Survival check every hour while Tracking. If you have legendary proficiency in Survival, you can use another exploration activity while Tracking.
+    If you roll Survival for initiative while tracking your hunted prey, when you start your first turn of the encounter, you can Stride toward your hunted prey as a free action.
+  properties:
+    level: 6
+    traits: ["ranger"]
+    prerequisites: "expert in Survival, Experienced Tracker"
 - id: "swipe"
   name: "Swipe"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -5205,6 +6246,16 @@
     actions: "two"
     traits: ["rogue"]
     requirements: "You're grabbed or restrained by a creature."
+- id: "sympathetic-strike"
+  name: "Sympathetic Strike"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You collect your patron's magic into one of your witch armaments, causing them to shine with runes, light, or another signifier of your patron. Make an unarmed Strike with one with your witch's armaments. If you hit, you establish a sympathetic link with the target, making it easier for your patron to affect them. Until the beginning of your next turn, the target takes a -1 circumstance penalty to its saves against your hexes, or a -2 penalty if the triggering Strike was a critical hit."
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["witch"]
+    prerequisites: "Witch's Armaments"
+    frequency: "once per round"
 - id: "symphony-of-the-muse"
   name: "Symphony of the Muse"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -5264,6 +6315,14 @@
     traits: ["general", "skill"]
     prerequisites: "trained in Survival"
     special: "You can select this feat more than once, choosing a different type of terrain each time."
+- id: "terrain-master"
+  name: "Terrain Master"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You are able to adapt to your surroundings in any natural terrain. You can spend 1 hour practicing in your current terrain in order to make it your favored terrain, replacing your current favored terrain temporarily. If you spend a full day out of the new favored terrain, your favored terrain reverts back to your original choice when you took the Favored Terrain feat."
+  properties:
+    level: 8
+    traits: ["ranger"]
+    prerequisites: "master in Survival, Favored Terrain"
 - id: "terrain-stalker"
   name: "Terrain Stalker"
   source: "pc > Chapter 5: Feats"
@@ -5329,6 +6388,14 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Athletics"
+- id: "to-the-ends-of-the-earth"
+  name: "To the Ends of the Earth"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your ability to track your prey has surpassed explanation, allowing you to trace your prey's movements and predict its location with ease. When you use Hunt Prey on a creature within 100 feet, you can follow that creature's movements, allowing you to know the creature's exact location no matter how far away it becomes, as long as it remains your prey. You must be legendary in Nature to track your prey's location across teleportation or planar travel. This feat gains the detection and primal traits if you're legendary in Nature."
+  properties:
+    level: 20
+    traits: ["ranger"]
+    prerequisites: "legendary in Survival"
 - id: "toppling-dance"
   name: "Toppling Dance"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Halfling > Ancestry Feats"
@@ -5394,6 +6461,14 @@
     level: 6
     traits: ["fighter"]
     prerequisites: "Double Shot"
+- id: "triple-threat"
+  name: "Triple Threat"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You can divide your attention three ways when hunting. When you use Hunt Prey, you can designate three creatures as prey, designate two creatures as prey and share the effect with one ally (as Shared Prey), or designate one creature as prey and share the effect with two allies."
+  properties:
+    level: 20
+    traits: ["ranger"]
+    prerequisites: "Shared Prey"
 - id: "triple-time-feat"
   name: "Triple Time"
   source: "pc > Chapter 3: Classes > Bard > Bard Feats"
@@ -5475,6 +6550,15 @@
     actions: "one"
     traits: ["fighter"]
     requirements: "You are wielding two melee weapons, one in each hand."
+- id: "twin-parry-ranger"
+  name: "Twin Parry"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You can use two weapons to deflect attacks. You gain a +1 circumstance bonus to AC until the start of your next turn, or a +2 circumstance bonus if either weapon has the parry trait. You lose this circumstance bonus if you no longer meet this feat's requirement."
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["ranger"]
+    requirements: "You are wielding two melee weapons, one in each hand."
 - id: "twin-riposte"
   name: "Twin Riposte"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -5485,6 +6569,26 @@
     traits: ["fighter"]
     trigger: "A creature within your reach critically fails to Strike you."
     requirements: "You are benefiting from Twin Parry."
+- id: "twin-riposte-ranger"
+  name: "Twin Riposte"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "A clever parry with one weapon leaves your opponent open to an attack with the other weapon. Make a melee Strike or use a Disarm action against the triggering opponent."
+  properties:
+    level: 10
+    actions: "reaction"
+    traits: ["ranger"]
+    prerequisites: "Twin Parry"
+    trigger: "A creature within your reach critically fails a Strike against you."
+    requirements: "You are benefiting from Twin Parry"
+- id: "twin-takedown"
+  name: "Twin Takedown"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You swiftly attack your hunted prey with each of your weapons, potentially combining their damage into a single devastating attack. Make two Strikes against your hunted prey, one with each of the required weapons. If both hit the same hunted prey, combine their damage for the purpose of its resistances and weaknesses. Apply your multiple attack penalty to each Strike normally."
+  properties:
+    level: 1
+    actions: "one"
+    traits: ["flourish", "ranger"]
+    requirements: "You are wielding two melee weapons, each in a different hand."
 - id: "twinned-defense"
   name: "Twinned Defense"
   source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
@@ -5532,6 +6636,14 @@
     level: 20
     traits: ["bard"]
     prerequisites: "polymath muse"
+- id: "ultimate-skirmisher"
+  name: "Ultimate Skirmisher"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You are so skilled at navigating the wild, your movement is completely unaffected by terrain. You ignore the effects of all difficult terrain, greater difficult terrain, and hazardous terrain, and you don't trigger traps and hazards that are triggered by moving into an area (such as trip wires and pressure plates), unless you want to."
+  properties:
+    level: 20
+    traits: ["ranger"]
+    prerequisites: "unimpeded journey"
 - id: "unbalancing-blow"
   name: "Unbalancing Blow"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
@@ -5847,6 +6959,47 @@
     level: 2
     traits: ["general", "skill"]
     prerequisites: "expert in Medicine"
+- id: "warden-s-boon"
+  name: "Warden's Boon"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You point out vulnerabilities present in your hunted prey, granting the benefits listed in Hunt Prey and your hunter's edge to an ally until the end of their next turn. Depending on whether you call out or use gestures, this action gains either the auditory or visual trait."
+  properties:
+    level: 8
+    actions: "one"
+    traits: ["ranger"]
+- id: "warden-s-focus"
+  name: "Warden's Focus"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your connection with your surroundings deepens and expands, allowing you to draw in more of nature's primal power as you focus. When you Refocus, you regain all your Focus Points instead of 1."
+  properties:
+    level: 12
+    traits: ["ranger"]
+    prerequisites: "warden spells"
+- id: "warden-s-guidance"
+  name: "Warden's Guidance"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You convey your prey's location to your allies with a series of careful words or gestures. As long as your hunted prey is observed by you, all your allies who roll failures and critical failures when Seeking it get a success instead. Your allies need to be able to see or hear you to gain this benefit. You have to be able to call out or make visible gestures for your allies to get this benefit."
+  properties:
+    level: 14
+    traits: ["ranger"]
+- id: "warden-s-reload"
+  name: "Warden's Reload"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "Your mastery of magic and weapons like the crossbow allow you to wield both with equal ease. Interact to reload a weapon you are currently wielding."
+  properties:
+    level: 16
+    actions: "free"
+    traits: ["ranger"]
+    frequency: "once per round"
+    requirements: "Your last action or activity this turn was to cast a warden spell."
+- id: "warden-s-step"
+  name: "Warden's Step"
+  source: "pc > Chapter 3: Classes > Ranger > Ranger Feats"
+  description: "You can guide your allies to move quietly through the wilderness. When you Avoid Notice during exploration in natural terrain, you can designate any number of your allies to gain the benefits as if they were using that activity during that exploration. This requires no action on their part."
+  properties:
+    level: 10
+    traits: ["ranger"]
+    prerequisites: "master in Stealth"
 - id: "warpriest-s-armor"
   name: "Warpriest's Armor"
   source: "pc > Chapter 3: Classes > Cleric > Cleric Feats"
@@ -5919,6 +7072,22 @@
     level: 1
     actions: "one"
     traits: ["druid", "manipulate", "spellshape"]
+- id: "widen-spell-witch"
+  name: "Widen Spell"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You manipulate the energy of your spell, causing it to affect a wider area. If the next action you use is to Cast a Spell that has an area of a burst, cone, or line and doesn't have a duration, increase the area of that spell. Add 5 feet to the radius of a burst that normally has a radius of at least 10 feet (a burst with a smaller radius isn't affected). Add 5 feet to the length of a cone or line that is normally 15 feet long or smaller, and add 10 feet to the length of a larger cone or line."
+  properties:
+    level: 1
+    actions: "one"
+    traits: ["manipulate", "spellshape", "witch"]
+- id: "widen-spell-wizard"
+  name: "Widen Spell"
+  source: "pc > Chapter 3: Classes > Wizard > Wizard Feats"
+  description: "You manipulate the energy of your spell, causing it to affect a wider area. If the next action you use is to Cast a Spell that has an area of a burst, cone, or line and does not have a duration, increase the area of that spell. Add 5 feet to the radius of a burst that normally has a radius of at least 10 feet (a burst with a smaller radius is not affected). Add 5 feet to the length of a cone or line that is normally 15 feet long or smaller, and add 10 feet to the length of a larger cone or line."
+  properties:
+    level: 1
+    actions: "one"
+    traits: ["concentrate", "spellshape", "wizard"]
 - id: "wind-caller"
   name: "Wind Caller"
   source: "pc > Chapter 3: Classes > Druid > Druid Feats"
@@ -5927,6 +7096,69 @@
     level: 8
     traits: ["druid"]
     prerequisites: "storm order"
+- id: "witch-s-armaments"
+  name: "Witch's Armaments"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: |-
+    Your patron's power changes your body to ensure you are never defenseless. You gain one of the following unarmed attacks.
+    - **Eldritch Nails.** Your nails are supernaturally long and sharp. You gain a nails unarmed attack that deals 1d6 slashing damage, is in the brawling group, and has the agile and unarmed traits.
+    - **Iron Teeth.** With a click of your jaw, your teeth transform into long metallic points. You gain a jaws unarmed attack that deals 1d8 piercing damage and is in the brawling group.
+    - **Living Hair.** You can instantly grow or shrink your hair, eyebrows, beard, or mustache by up to several feet and manipulate your hair for use as a weapon, though your control isn't fine enough for more dexterous tasks. You gain a hair unarmed attack that deals 1d4 bludgeoning damage; is in the brawling group; and has the agile, disarm, finesse, trip, and unarmed traits.
+  properties:
+    level: 1
+    traits: ["witch"]
+    special: "You can take this feat more than once, gaining a different unarmed attack each time."
+- id: "witch-s-bottle"
+  name: "Witch's Bottle"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: |-
+    You spend 10 minutes and 1 Focus Point brewing a special potion containing the power of one of your hexes that targets a creature. A creature that consumes this potion is targeted by the hex. If the hex has a sustained duration and you have cackle, you can cast cackle into the bottle just before you seal it. If you do, the hex's duration is extended as if you had cast cackle the round after the hex was cast (typically this extends the duration by 1 round). Your cackling laugh sounds out when the potion is unsealed.
+    Any potion you create this way loses its power the next time you make your daily preparations. While the potion is in your possession, you can render it inert using a single action that has the concentrate trait. You can't regain the Focus Point you spent to create the potion (or the Focus Point you spent to cast cackle) until the potion is consumed or loses its magic.
+  properties:
+    level: 8
+    traits: ["witch"]
+    prerequisites: "Cauldron"
+- id: "witch-s-broom"
+  name: "Witch's Broom"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: |-
+    A broom is the only steed you need to fly through the night sky. During your daily preparations, you can anoint a single broom, staff, polearm, or similarly shaped object with a flying ointment made of special herbs and oils. Until the next time you make your daily preparations, it gains the magical trait, and you can ride on it while you're holding it with at least 1 hand. It moves at a fly Speed of 20 feet. The broom takes a -10-foot penalty to its Speed if laden with more than 20 Bulk, and crashes to the ground if it carries more than 30 Bulk. The broom can't be controlled by anyone but you. If you anoint a weapon or other held item, you can't ride the broom and wield it at the same time.
+    You can Craft your broomstick into a flying broomstick as though you had the formula for that item. If you anoint an item that's already a flying broomstick, the broom gains a +10-foot status bonus to its Speed and you can choose whether it works for anyone or only you.
+  properties:
+    level: 12
+    traits: ["witch"]
+- id: "witch-s-charge"
+  name: "Witch's Charge"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You forge a magical link with another creature, granting you awareness of that creature's condition and creating a conduit for spellcasting. During your daily preparations, you can designate one willing creature as your charge. You are always aware of your charge's direction from you, its distance from you, and any conditions affecting it. In addition, you can cast spells with a range of touch on your charge from a range of 30 feet. These effects persist until your next daily preparations."
+  properties:
+    level: 6
+    traits: ["detection", "witch"]
+    special: "This feat has the trait corresponding to the tradition of spells you cast (arcane, divine, occult, or primal)."
+- id: "witch-s-communion"
+  name: "Witch's Communion"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: "You can keep watch over multiple charges. Each day during your preparations, you can designate a number of charges equal to your Intelligence modifier instead of just one."
+  properties:
+    level: 10
+    traits: ["witch"]
+    prerequisites: "Witch's Charge"
+- id: "witch-s-hut"
+  name: "Witch's Hut"
+  source: "pc > Chapter 3: Classes > Witch > Witch Feats"
+  description: |-
+    Your home is an animated structure that obeys your commands. By performing a rite that takes 1 day, you create an animated object from a hut, small house, covered wagon, tent, or similar construction of up to Huge size.
+    The hut uses your AC, saving throw modifiers, and Perception modifier and has 150 HP and Hardness 10. It has the construct armor ability, meaning once it's reduced to less than half its Hit Points, or immediately upon being damaged by a critical hit, its AC is reduced by 4 until it is repaired.
+    The hut can't attack or attempt skill checks. You can give the hut a command as a single action, which has the auditory and concentrate traits; after 1 round of reconfiguring itself, the hut then follows that command until you give it a different command.
+    - **Guard.** The hut watches for trespassers within 120 feet using your Perception modifier and screams if it spots any.
+    - **Hide.** The hut appears to be a normal, mundane object of its type. This is a 10th-rank illusion effect.
+    - **Leap.** The hut spins around or leaps into the air, then casts 10th-rank teleport, transporting itself and all creatures within it.
+    - **Lock.** With a slam, each entrance to the hut becomes sealed with a lock spell. You can give this command again to unlock its entrances.
+    - **Move.** The hut gains a Speed of 60 feet, growing giant bird or bone legs, if necessary, and follows an extremely basic movement command you give it, such as "follow me" or "move that direction." While perfectly suitable for overland travel, the hut's broad movements and 1-round delay on response time are too imprecise to predictably direct in a combat encounter or other situation where seconds and precise locations count.
+    You can have only one witch's hut at a time. If you animate a new hut, your previous hut immediately reverts to its original, mundane form. If you die, the hut continues following the last order you gave it indefinitely.
+  properties:
+    level: 20
+    traits: ["witch"]
 - id: "you-re-next"
   name: "You're Next"
   source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"

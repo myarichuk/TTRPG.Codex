@@ -211,6 +211,25 @@ public static partial class EntriesStage
         ["[free-action]"] = ("free", "[free action]"),
     };
 
+    /// <summary>
+    /// Several classes have a feat of one name: each class feat of such a group takes its class as a suffix. A plain id that has shipped (<paramref name="shipped"/>, id to folder) belongs to the feat it was shipped for,
+    /// the one of the class whose row came first, so a later class that prints the same name takes its suffix and the earlier id never changes; a general feat of the same id keeps it against every class feat.
+    /// </summary>
+    public static void SuffixClassFeats(List<ParsedEntry> entries, IReadOnlyDictionary<string, string>? shipped)
+    {
+        foreach (var same in entries.Where(e => e.Type == "feat").GroupBy(e => e.Id, StringComparer.Ordinal).Where(g => g.Count() > 1).ToList())
+        {
+            // The entry that shipped is the earliest row's in the folder that holds the id, whatever its kind; a later general feat of the id is left as it is, and the run fails below on the two ids.
+            var keeper = shipped != null && shipped.TryGetValue(same.Key, out var shippedFolder) && same.Any(e => e.Folder == shippedFolder)
+                ? same.Where(e => e.Folder == shippedFolder).OrderBy(e => e.RowNumber).First()
+                : null;
+            foreach (var classFeat in same.Where(e => e.ClassKey != null && e != keeper))
+            {
+                classFeat.Id += "-" + classFeat.ClassKey;
+            }
+        }
+    }
+
     public static List<ParsedEntry> Run(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, string book, IReadOnlyDictionary<string, string>? shipped = null, IReadOnlyList<SpineNode>? spine = null)
     {
         var compounds = Compounds(blocks, ranges);
@@ -245,13 +264,7 @@ public static partial class EntriesStage
         // that id in the pack already committed (`shipped`, id to folder), since an id that has shipped is never renamed, whatever a later chapter brings. With nothing shipped under the id,
         // the entry of the type that is neither an action nor a spell keeps it, and an action keeps it against a spell. Every other entry of the group takes the suffix of its type.
         // Several classes have a feat of one name, and a class feat may be named like a general feat: each class feat in such a group takes its class as a suffix (every other kind of repeat still fails below).
-        foreach (var same in entries.Where(e => e.Type == "feat").GroupBy(e => e.Id, StringComparer.Ordinal).Where(g => g.Count() > 1).ToList())
-        {
-            foreach (var classFeat in same.Where(e => e.ClassKey != null))
-            {
-                classFeat.Id += "-" + classFeat.ClassKey;
-            }
-        }
+        SuffixClassFeats(entries, shipped);
 
         foreach (var group in entries.GroupBy(e => e.Id, StringComparer.Ordinal).Where(g => g.Select(e => e.Type).Distinct().Count() > 1).ToList())
         {
@@ -1270,6 +1283,20 @@ public static partial class EntriesStage
                     startsParagraph = raggedLeft ? _previousShort : info.Left - block.Left <= Indent;
                 }
 
+                // A list item's wrapped lines are set in beyond its bullet; a line back at the bullet's own edge, with no bullet, after a line that ended a sentence, is the paragraph that follows the list.
+                // Only for the rows that set LowerContinues (the class feats of chapters 8b and after), so the earlier chapters' entries read as they did.
+                var afterItem = _parts.Count > 0 && (_parts[^1].Label.StartsWith("• ", StringComparison.Ordinal) || _parts[^1].Text.ToString().StartsWith('•'));
+                if (LowerContinues && afterItem && !text.StartsWith('•') && !(label.Length > 0 && rawLabel.StartsWith("• ", StringComparison.Ordinal)) && _bulletLeft is { } edge && Math.Abs(info.Left - edge) < 2
+                    && _parts[^1].Text.ToString().TrimEnd() is { Length: > 0 } itemTail && ".!?".Contains(itemTail[^1]))
+                {
+                    startsParagraph = true;
+                }
+
+                if (text.StartsWith('•') || rawLabel.StartsWith("• ", StringComparison.Ordinal))
+                {
+                    _bulletLeft = info.Left;
+                }
+
                 if ((_runOn || _tableRows) && startsParagraph && (!indented || LowerContinues) && _parts.Count > 0 && text.Length > 0 && char.IsLower(text[0]) && !text.StartsWith('•')
                     && _parts[^1].Text.ToString().TrimEnd() is { Length: > 0 } tail && !".!?:;\"”)".Contains(tail[^1]))
                 {
@@ -1343,6 +1370,8 @@ public static partial class EntriesStage
 
         /// <summary>The text read so far ends a paragraph, whatever its last line looked like: the next block starts a new one.</summary>
         public void EndParagraph() => _previousShort = true;
+
+        private double? _bulletLeft;
 
         private void Start(string label) => _parts.Add((label, new StringBuilder()));
 

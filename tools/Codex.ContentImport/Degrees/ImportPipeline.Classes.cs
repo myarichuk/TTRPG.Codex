@@ -47,7 +47,9 @@ public static partial class ImportPipeline
             }
 
             // The feature rows: every other child of the class features, as the headings give them.
-            var featureKids = below.Where(k => k != featsNode[0]).Select(k =>
+            // The sections among the features that are no feature (the subclasses' section, the rule sections) are compared on their own below.
+            var sectionSlugs = range.Row.RuleSections.Concat(range.Row.SubclassSection == null ? Enumerable.Empty<string>() : new[] { range.Row.SubclassSection }).Select(EntriesStage.Slug).ToHashSet();
+            var featureKids = below.Where(k => k != featsNode[0] && !sectionSlugs.Contains(EntriesStage.Slug(k.Title))).Select(k =>
             {
                 var m = BookmarkLevel.Match(k.Title);
                 return (Name: EntriesStage.Slug(m.Groups["name"].Value), Level: m.Groups["n"].Success ? int.Parse(m.Groups["n"].Value, CultureInfo.InvariantCulture) : 1);
@@ -58,8 +60,20 @@ public static partial class ImportPipeline
                 throw new DegreesException($"{where}: the class features differ from their bookmarks ({featureKids.Count} bookmarks, {featureRows.Count} headings; as sequences of name and level they are not equal).");
             }
 
-            var racketKids = range.Row.SubclassFeature == null ? new List<SpineNode>()
+            var racketKids = range.Row.SubclassSection != null ? Children(below.Single(k => EntriesStage.Slug(k.Title) == EntriesStage.Slug(range.Row.SubclassSection)))
+                : range.Row.SubclassFeature == null ? new List<SpineNode>()
                 : Children(below.Single(k => EntriesStage.Slug(BookmarkLevel.Match(k.Title).Groups["name"].Value) == EntriesStage.Slug(range.Row.SubclassFeature)));
+
+            // A rule section: the bookmark children against the children's headings, by name and in order. A choice feature's options: the bookmark children against the headings in the feature's text.
+            var ruleChecks = scan.RuleSections.Select(r => (Name: r.Name, Kids: Children(below.Single(k => EntriesStage.Slug(k.Title) == EntriesStage.Slug(r.Name))).Select(k => EntriesStage.Slug(k.Title)).ToList(),
+                Headings: r.Tiers.Select(t => EntriesStage.Slug(string.Join(' ', t.Header.Lines))).ToList())).ToList();
+            var choiceChecks = range.Row.ChoiceFeatures.Select(name => (Name: name,
+                Kids: Children(below.Single(k => EntriesStage.Slug(BookmarkLevel.Match(k.Title).Groups["name"].Value) == EntriesStage.Slug(name))).Select(k => EntriesStage.Slug(k.Title)).ToList(),
+                Headings: scan.Features.Single(f => EntriesStage.Slug(f.Name) == EntriesStage.Slug(name)).Body.Where(b => b.Role == "block-header").Select(b => EntriesStage.Slug(string.Join(' ', b.Lines))).ToList())).ToList();
+            if (ruleChecks.Any(c => !c.Kids.SequenceEqual(c.Headings)) || choiceChecks.Any(c => c.Kids.Count == 0 || !c.Kids.SequenceEqual(c.Headings)))
+            {
+                throw new DegreesException($"{where}: the children of a rule section or of a choice feature differ from the headings read ({string.Join("; ", ruleChecks.Concat(choiceChecks).Select(c => $"{c.Name}: {c.Kids.Count} bookmarks, {c.Headings.Count} headings"))}).");
+            }
             var racketNames = racketKids.Select(k => EntriesStage.Slug(k.Title)).ToList();
             var racketHeadings = scan.Subclasses.Select(s => EntriesStage.Slug(string.Join(' ', s.Header.Lines))).ToList();
             var bandKids = Children(featsNode[0]).Select(k => EntriesStage.Slug(k.Title)).ToList();
@@ -122,6 +136,7 @@ public static partial class ImportPipeline
                         continue;
                     }
 
+                    var isHex = token.Groups["kind"].Value == "hex";
                     var type = token.Groups["kind"].Value == "feat" ? "feat" : "spell";
                     var slug = EntriesStage.Slug(token.Groups["name"].Value);
                     var found = byName.TryGetValue((type, slug), out var candidates) ? candidates : new List<FinalEntry>();
@@ -132,7 +147,14 @@ public static partial class ImportPipeline
 
                     if (found.Count == 1)
                     {
-                        adds.Add(add.Replace(token.Value, found[0].Id, StringComparison.Ordinal));
+                        var resolvedAdd = add.Replace(token.Value, found[0].Id, StringComparison.Ordinal);
+                        if (isHex)
+                        {
+                            // A hex a patron's lesson gives goes to the list its kind says: a hex cantrip is a cantrip (the spells a feature gives), a hex a focus spell.
+                            resolvedAdd = resolvedAdd.Replace("to: @hex,", "to: " + (found[0].Kind == "focus" ? "focusSpells" : "grantedSpells") + ",", StringComparison.Ordinal);
+                        }
+
+                        adds.Add(resolvedAdd);
                         resolved++;
                     }
                     else
@@ -147,5 +169,59 @@ public static partial class ImportPipeline
         }
 
         return (resolved, left);
+    }
+
+    private static readonly Regex CurriculumSegment = new(@"^(?<rank>cantrips|\d{1,2}(?:st|nd|rd|th)):\s*(?<names>.+)$", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// A subclass's curriculum line (<c>cantrips: a, b; 1st: c, d, e; 2nd: ...</c>) stays text in the pack, but every name in it must be a spell of the pack: a word that the layout set in the list by mistake
+    /// (a stray word from another column) would not be one. The ranks must come in order, cantrips first. Any difference fails the run. Returns the subclasses that have a line and the names they list.
+    /// </summary>
+    public static (int Subclasses, int Names) CheckCurriculum(IReadOnlyList<FinalEntry> final)
+    {
+        var spells = final.Where(e => e.Type == "spell").Select(e => EntriesStage.Slug(e.Name)).ToHashSet(StringComparer.Ordinal);
+        var lines = 0;
+        var names = 0;
+        var problems = new List<string>();
+        foreach (var entry in final.Where(e => e.Type == "subclass"))
+        {
+            foreach (var line in entry.Features.SelectMany(f => f.Description.Split('\n')).Where(l => l.StartsWith("**Curriculum.** ", StringComparison.Ordinal)))
+            {
+                lines++;
+                var ranks = new List<string>();
+                foreach (var segment in line["**Curriculum.** ".Length..].Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var match = CurriculumSegment.Match(segment);
+                    if (!match.Success)
+                    {
+                        problems.Add($"{entry.Id}: a part of the curriculum line has no rank");
+                        continue;
+                    }
+
+                    ranks.Add(match.Groups["rank"].Value);
+                    foreach (var name in match.Groups["names"].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        names++;
+                        if (!spells.Contains(EntriesStage.Slug(name)))
+                        {
+                            problems.Add($"{entry.Id}: '{match.Groups["rank"].Value}' lists a name that is no spell of the pack");
+                        }
+                    }
+                }
+
+                var expected = new[] { "cantrips" }.Concat(Enumerable.Range(1, 9).Select(n => n + (n switch { 1 => "st", 2 => "nd", 3 => "rd", _ => "th" }))).ToList();
+                if (!ranks.SequenceEqual(expected))
+                {
+                    problems.Add($"{entry.Id}: the curriculum's ranks are not the cantrips and the 1st to the 9th in order");
+                }
+            }
+        }
+
+        if (problems.Count > 0)
+        {
+            throw new DegreesException("A subclass's curriculum line does not read as a list of spells of the pack: " + string.Join("; ", problems.Take(8)) + (problems.Count > 8 ? $"; and {problems.Count - 8} more" : string.Empty));
+        }
+
+        return (lines, names);
     }
 }

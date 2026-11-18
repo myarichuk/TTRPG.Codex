@@ -249,6 +249,33 @@ public sealed class TakeRow
     /// </summary>
     public bool GrantsByName { get; set; }
 
+    /// <summary>
+    /// For a <c>classes</c> row: the title of a section among the class features (in the section font, not a feature's heading) whose entry-header children are the class's subclasses (a witch's patrons, a
+    /// wizard's schools). The section's introduction is part of the feature named by <see cref="SubclassFeature"/>, which the section's choice belongs to.
+    /// </summary>
+    public string? SubclassSection { get; set; }
+
+    /// <summary>
+    /// For a <c>classes</c> row: titles of sections among the class features that are rules of their own and no feature (a witch's lessons): the section, with its children's titles as paragraphs, is one
+    /// <c>rule</c> entry of the row's <c>ruleCategory</c>. The bookmark children are counted against the children's titles.
+    /// </summary>
+    public List<string> RuleSections { get; set; } = new();
+
+    /// <summary>For a <c>classes</c> row: the category of the <c>rule</c> entries of <see cref="RuleSections"/>.</summary>
+    public string? RuleSectionCategory { get; set; }
+
+    /// <summary>
+    /// For a <c>classes</c> row: class features whose text lists the options of a choice (a wizard's thesis topics, each a heading in the block-header font). Their sentences make no grant by name (an option
+    /// that says "You gain the N feat" is one choice of several, not a grant of the class), and the headings are counted against the feature's bookmark children.
+    /// </summary>
+    public List<string> ChoiceFeatures { get; set; } = new();
+
+    /// <summary>
+    /// For a <c>classes</c> row: true when the class casts spells of a tradition its subclass decides (a witch's patron). The class entry then has no tradition, every subclass names exactly one, and the
+    /// spell lists read the subclass's.
+    /// </summary>
+    public bool TraditionFromSubclass { get; set; }
+
     /// <summary>True for the row that holds the spells the four tradition lists name: its level words include <c>spell</c>. Only these are counted against the lists.</summary>
     public bool OnTraditionLists => LevelWords.Contains("spell", StringComparer.OrdinalIgnoreCase);
 

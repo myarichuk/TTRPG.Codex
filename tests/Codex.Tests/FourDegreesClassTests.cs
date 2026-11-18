@@ -410,4 +410,188 @@ public class FourDegreesClassTests : IAsyncLifetime
         Assert.False(engine.Holds(condition, none, bard));
         Assert.False(engine.Holds(condition, occult, fighter));
     }
+
+    [Fact]
+    public void TheContainsPropertyOfFieldFallback_ReadsTheSecondFieldOnlyWhenTheFirstEntryHasNoValue()
+    {
+        // The engine's one small change of chapter 8c: a class that has no tradition of its own (a witch's is her patron's) says where else to read it (`or`). A class that has one never reads the fallback.
+        var condition = new RuleCondition
+        {
+            Property = "traditions",
+            ContainsPropertyOfField = new FieldProperty { Field = "class", Property = "tradition", Or = new FieldProperty { Field = "subclass", Property = "tradition" } },
+        };
+        var divine = new ContentEntry { Id = "a", Name = "A", Type = "spell", Properties = { ["traditions"] = new List<object> { "divine" } } };
+        var occult = new ContentEntry { Id = "b", Name = "B", Type = "spell", Properties = { ["traditions"] = new List<object> { "occult" } } };
+        var witch = new Dictionary<string, object> { ["class"] = "witch-class", ["subclass"] = "patron-of-faith" }; // a divine patron
+        var witchWithoutPatron = new Dictionary<string, object> { ["class"] = "witch-class" };
+        var bard = new Dictionary<string, object> { ["class"] = "bard-class", ["subclass"] = "patron-of-faith" }; // an occult class; a subclass of another class does not change it
+        var fighter = new Dictionary<string, object> { ["class"] = "fighter-class" };
+        var engine = Engine();
+
+        Assert.True(engine.Holds(condition, divine, witch));
+        Assert.False(engine.Holds(condition, occult, witch));
+        Assert.False(engine.Holds(condition, divine, witchWithoutPatron));
+        Assert.False(engine.Holds(condition, occult, witchWithoutPatron));
+        Assert.True(engine.Holds(condition, occult, bard));
+        Assert.False(engine.Holds(condition, divine, bard));
+        Assert.False(engine.Holds(condition, divine, fighter));
+    }
+
+    // ---- The ranger, the witch and the wizard (chapter 8c) ----
+
+    [Fact]
+    public void ALevel1Ranger_HasTheClassesNumbers_AndCastsNoSpells()
+    {
+        var ranger = Entry("class", "ranger-class");
+        Assert.Equal("str|dex", (string)ranger.Properties["keyAttribute"]);
+        Assert.False(ranger.Properties.ContainsKey("tradition"));
+
+        var sheet = Character("ranger-class", null, 1, "dex");
+        var evaluation = Engine().Recompute(sheet);
+
+        Assert.Empty(Problems(evaluation));
+        // The class's boost goes to Dexterity (the ancestry's free boost and a free one: +3); Strength has the one free boost of the level (+1).
+        Assert.Equal(3L, sheet["dex"]);
+        Assert.Equal(Number(ranger, "hp") + 2 + Number(Entry("ancestry", "dwarf-ancestry"), "hp"), Convert.ToInt64(sheet["HP_Max"], CultureInfo.InvariantCulture));
+        // Perception expert; Fortitude and Reflex expert, Will trained; nature and survival trained.
+        Assert.Equal(2, Rank(evaluation, "perception", "perception"));
+        Assert.Equal(new[] { 2, 2, 1 }, new[] { Save(evaluation, "con"), Save(evaluation, "dex"), Save(evaluation, "wis") });
+        Assert.Equal(new[] { 1, 1, 0 }, new[] { "nature", "survival", "athletics" }.Select(k => evaluation.Skills.Single(s => s.Key == k).Rank));
+        // Simple, martial and unarmed weapons trained, advanced untrained; light, medium and unarmored trained, heavy untrained; the class DC trained, on the higher of Strength and Dexterity.
+        Assert.Equal(new[] { 1, 1, 0, 1 }, new[] { "simple", "martial", "advanced", "unarmed" }.Select(k => Rank(evaluation, "weapons", k)));
+        Assert.Equal(new[] { 1, 1, 1, 0 }, new[] { "unarmored", "light", "medium", "heavy" }.Select(k => Rank(evaluation, "armor", k)));
+        Assert.Equal(1, Rank(evaluation, "classDc", "classDc"));
+        Assert.Equal(10d + 1 + 2 + 3, Bonus(evaluation, "classDc"));
+        // No spell ranks, no spells, no slots: warden spells come by a feat, and the focus spells list is the sheet's.
+        Assert.Equal(new[] { 0, 0 }, new[] { Rank(evaluation, "spellAttack", "spellAttack"), Rank(evaluation, "spellDc", "spellDc") });
+        Assert.Empty(evaluation.ListOptions["spells"]);
+        Assert.Empty(evaluation.ListOptions["cantrips"]);
+        Assert.Contains(evaluation.ListOptions["focusSpells"], s => (string)s.Properties["kind"] == "focus");
+    }
+
+    [Fact]
+    public void ARangerAtLevels7And9And11_HasTheProficiencyIncreasesOfItsClassFeatures()
+    {
+        var at3 = Engine().Recompute(Character("ranger-class", null, 3, "dex"));
+        var at7 = Engine().Recompute(Character("ranger-class", null, 7, "dex"));
+        var at9 = Engine().Recompute(Character("ranger-class", null, 9, "dex"));
+        var at11 = Engine().Recompute(Character("ranger-class", null, 11, "dex"));
+
+        // Will Expertise (3rd): Will expert. Ranger Weapon Expertise (5th): the weapons expert. Natural Reflexes (7th): Reflex master. Perception Mastery (7th): Perception master.
+        Assert.Equal(new[] { 2, 2, 2, 3, 3 }, new[] { Save(at7, "wis"), Save(at7, "con"), Rank(at7, "weapons", "martial"), Save(at7, "dex"), Rank(at7, "perception", "perception") });
+        Assert.Equal(new[] { 1, 2 }, new[] { Rank(at3, "weapons", "martial"), Save(at3, "wis") }); // the weapons are still trained at the 3rd level, and Will is expert already
+        // Ranger Expertise (9th): the class DC expert (and only the class DC: the spell ranks stay, the text of the feature says they wait on warden spells). Warden's Endurance and Medium Armor Expertise (11th).
+        Assert.Equal(new[] { 1, 2, 0 }, new[] { Rank(at7, "classDc", "classDc"), Rank(at9, "classDc", "classDc"), Rank(at9, "spellDc", "spellDc") });
+        Assert.Equal(new[] { 2, 3 }, new[] { Save(at9, "con"), Save(at11, "con") });
+        Assert.Equal(new[] { 1, 2, 2 }, new[] { Rank(at9, "armor", "medium"), Rank(at11, "armor", "medium"), Rank(at11, "armor", "unarmored") });
+    }
+
+    [Theory]
+    [InlineData("witch-class", "patron-of-faith", "divine", "religion")]
+    [InlineData("witch-class", "patron-of-night", "occult", "occultism")]
+    [InlineData("wizard-class", "school-of-battle-magic", "arcane", "arcana")]
+    public void ALevel1WitchOrWizard_HasTheClassesNumbers_TheSpellRanks_TheCounts_AndTheTradition(string cls, string subclass, string tradition, string skill)
+    {
+        var entry = Entry("class", cls);
+        Assert.Equal("int", (string)entry.Properties["keyAttribute"]);
+        Assert.Equal("prepared", (string)entry.Properties["casting"]);
+        // A witch's class holds no tradition (her patron's is hers); a wizard's holds arcane.
+        Assert.Equal(cls == "wizard-class", entry.Properties.ContainsKey("tradition"));
+
+        var sheet = Character(cls, subclass, 1, string.Empty);
+        var evaluation = Engine().Recompute(sheet);
+
+        Assert.Empty(Problems(evaluation));
+        // The class's boost goes to Intelligence, which the background's boost also takes: +2.
+        Assert.Equal(2L, sheet["int"]);
+        Assert.Equal(Number(entry, "hp") + 2 + Number(Entry("ancestry", "dwarf-ancestry"), "hp"), Convert.ToInt64(sheet["HP_Max"], CultureInfo.InvariantCulture));
+        // Perception, Fortitude and Reflex trained, Will expert; the skill of the patron or the class trained.
+        Assert.Equal(1, Rank(evaluation, "perception", "perception"));
+        Assert.Equal(new[] { 1, 1, 2 }, new[] { Save(evaluation, "con"), Save(evaluation, "dex"), Save(evaluation, "wis") });
+        Assert.Equal(1, evaluation.Skills.Single(s => s.Key == skill).Rank);
+        // Simple weapons and unarmed attacks trained; unarmored trained and every armor untrained; the class DC, the spell attack modifier and the spell DC trained (on Intelligence +2).
+        Assert.Equal(new[] { 1, 0, 0, 1 }, new[] { "simple", "martial", "advanced", "unarmed" }.Select(k => Rank(evaluation, "weapons", k)));
+        Assert.Equal(new[] { 1, 0, 0, 0 }, new[] { "unarmored", "light", "medium", "heavy" }.Select(k => Rank(evaluation, "armor", k)));
+        Assert.Equal(new[] { 1, 1, 1 }, new[] { Rank(evaluation, "classDc", "classDc"), Rank(evaluation, "spellAttack", "spellAttack"), Rank(evaluation, "spellDc", "spellDc") });
+        Assert.Equal(new[] { 1d + 2 + 2, 10d + 1 + 2 + 2 }, new[] { Bonus(evaluation, "spellAttack"), Bonus(evaluation, "spellDc") });
+        // Five cantrips and two 1st-rank spells, and two slots of the 1st rank.
+        Assert.Equal(5, evaluation.ListLimits["cantrips"]);
+        Assert.Equal(2, evaluation.ListLimits["spells"]);
+        Assert.Equal(new Dictionary<int, int> { [1] = 2 }, Slots(evaluation).Where(s => s.Value > 0).ToDictionary(s => s.Key, s => s.Value));
+        Assert.All(evaluation.AllowedOptions["subclass"], o => Assert.Equal(cls, (string)o.Properties["class"]));
+        // The lists offer the spells of the tradition: the witch's patron's, the wizard's arcane; nothing else.
+        Assert.All(evaluation.ListOptions["spells"], s => Assert.True(Says(s, tradition) && Convert.ToInt32(s.Properties["rank"], CultureInfo.InvariantCulture) <= 1));
+        Assert.All(evaluation.ListOptions["cantrips"], s => Assert.True(Says(s, tradition) && (string)s.Properties["kind"] == "cantrip"));
+        Assert.NotEmpty(evaluation.ListOptions["spells"]);
+        Assert.NotEmpty(evaluation.ListOptions["cantrips"]);
+    }
+
+    [Fact]
+    public void AWitchWithNoPatron_HasNoTradition_SoNoSpellsAreOffered_AndTheOtherPatronsOfTheOtherTraditionsDoNotMix()
+    {
+        var none = Engine().Recompute(Character("witch-class", null, 1, string.Empty));
+        Assert.Empty(none.ListOptions["spells"]);
+        Assert.Empty(none.ListOptions["cantrips"]);
+
+        // Two patrons of two traditions offer disjoint lists of the spells that name only one of them; a patron of another class is a warning.
+        var spells = _registry.GetEntries(SystemId, "spell", Packs).ToList();
+        var divineOnly = spells.First(s => (string)s.Properties["kind"] == "spell" && Says(s, "divine") && !Says(s, "occult") && Convert.ToInt32(s.Properties["rank"], CultureInfo.InvariantCulture) == 1);
+        var occultOnly = spells.First(s => (string)s.Properties["kind"] == "spell" && Says(s, "occult") && !Says(s, "divine") && Convert.ToInt32(s.Properties["rank"], CultureInfo.InvariantCulture) == 1);
+        var faith = Engine().Recompute(Character("witch-class", "patron-of-faith", 1, string.Empty));
+        var night = Engine().Recompute(Character("witch-class", "patron-of-night", 1, string.Empty));
+        Assert.Contains(faith.ListOptions["spells"], s => s.Id == divineOnly.Id);
+        Assert.DoesNotContain(faith.ListOptions["spells"], s => s.Id == occultOnly.Id);
+        Assert.Contains(night.ListOptions["spells"], s => s.Id == occultOnly.Id);
+        Assert.DoesNotContain(night.ListOptions["spells"], s => s.Id == divineOnly.Id);
+
+        var sheet = Character("witch-class", "patron-of-night", 1, string.Empty);
+        sheet["spells"] = new List<object> { occultOnly.Id, divineOnly.Id };
+        var problems = Problems(Engine().Recompute(sheet));
+        Assert.Contains(problems, p => p.Contains($"Spells: {divineOnly.Name} - not on your class's spell list", StringComparison.Ordinal));
+        Assert.DoesNotContain(problems, p => p.Contains($"Spells: {occultOnly.Name} -", StringComparison.Ordinal));
+        Assert.Contains(Problems(Engine().Recompute(Character("wizard-class", "patron-of-night", 1, string.Empty))), p => p.Contains("belongs to another class", StringComparison.Ordinal));
+        Assert.Equal(new[] { "patron-of-curses", "patron-of-faith", "patron-of-fate", "patron-of-glyphs", "patron-of-night", "patron-of-the-wilds", "patron-of-winter" }, night.AllowedOptions["subclass"].Select(e => e.Id).Order());
+    }
+
+    [Fact]
+    public void AWitchAtLevels5And7And19_HasTheLaterSlotCounts_AndTheLaterIncreases()
+    {
+        var at5 = Engine().Recompute(Character("witch-class", "patron-of-faith", 5, string.Empty));
+        var at7 = Engine().Recompute(Character("witch-class", "patron-of-faith", 7, string.Empty));
+        var at6 = Engine().Recompute(Character("witch-class", "patron-of-faith", 6, string.Empty));
+        var at17 = Engine().Recompute(Character("witch-class", "patron-of-faith", 17, string.Empty));
+        var at19 = Engine().Recompute(Character("witch-class", "patron-of-faith", 19, string.Empty));
+
+        Assert.Equal(new Dictionary<int, int> { [1] = 3, [2] = 3, [3] = 2 }, Slots(at5).Where(s => s.Value > 0).ToDictionary(s => s.Key, s => s.Value));
+        Assert.Equal(new Dictionary<int, int> { [1] = 3, [2] = 3, [3] = 3, [4] = 2 }, Slots(at7).Where(s => s.Value > 0).ToDictionary(s => s.Key, s => s.Value));
+        Assert.Equal(new[] { 8, 11 }, new[] { at5.ListLimits["spells"]!.Value, at7.ListLimits["spells"]!.Value });
+        // Magical Fortitude (5th): Fortitude expert. Expert Spellcaster (7th): the spell ranks expert. Will of the Pupil (17th): Will master. Legendary Spellcaster (19th) and the one 10th-rank slot of the Patron's Gift.
+        Assert.Equal(new[] { 1, 2 }, new[] { Save(Engine().Recompute(Character("witch-class", "patron-of-faith", 4, string.Empty)), "con"), Save(at5, "con") });
+        Assert.Equal(new[] { 1, 2 }, new[] { Rank(at6, "spellDc", "spellDc"), Rank(at7, "spellDc", "spellDc") });
+        Assert.Equal(new[] { 2, 3 }, new[] { Save(at6, "wis"), Save(at17, "wis") });
+        Assert.Equal(new[] { 3, 4 }, new[] { Rank(at17, "spellAttack", "spellAttack"), Rank(at19, "spellAttack", "spellAttack") });
+        Assert.Equal(new Dictionary<int, int> { [1] = 3, [2] = 3, [3] = 3, [4] = 3, [5] = 3, [6] = 3, [7] = 3, [8] = 3, [9] = 3, [10] = 1 }, Slots(at19).Where(s => s.Value > 0).ToDictionary(s => s.Key, s => s.Value));
+        Assert.Equal(28, at19.ListLimits["spells"]);
+    }
+
+    [Fact]
+    public void AWizardAtLevels5And7And13_HasTheLaterSlotCounts_AndTheLaterIncreases()
+    {
+        var at4 = Engine().Recompute(Character("wizard-class", "school-of-mentalism", 4, string.Empty));
+        var at5 = Engine().Recompute(Character("wizard-class", "school-of-mentalism", 5, string.Empty));
+        var at7 = Engine().Recompute(Character("wizard-class", "school-of-mentalism", 7, string.Empty));
+        var at13 = Engine().Recompute(Character("wizard-class", "school-of-mentalism", 13, string.Empty));
+
+        Assert.Equal(new Dictionary<int, int> { [1] = 3, [2] = 3, [3] = 2 }, Slots(at5).Where(s => s.Value > 0).ToDictionary(s => s.Key, s => s.Value));
+        Assert.Equal(new[] { 8, 11 }, new[] { at5.ListLimits["spells"]!.Value, at7.ListLimits["spells"]!.Value });
+        // Reflex Expertise (5th): Reflex expert. Expert Spellcaster (7th): the spell ranks expert. Defensive Robes (13th): unarmored defense expert.
+        Assert.Equal(new[] { 1, 2 }, new[] { Save(at4, "dex"), Save(at5, "dex") });
+        Assert.Equal(new[] { 1, 2 }, new[] { Rank(at5, "spellAttack", "spellAttack"), Rank(at7, "spellAttack", "spellAttack") });
+        Assert.Equal(new[] { 1, 2 }, new[] { Rank(at7, "armor", "unarmored"), Rank(at13, "armor", "unarmored") });
+        Assert.Equal(0, Rank(at13, "armor", "light")); // the wizard is trained in no armor
+        // The school's initial focus spell is a grant by id (a focus spell of the pack).
+        var school = Entry("subclass", "school-of-mentalism");
+        var grant = ((IEnumerable<object>)school.Properties["features"]).Cast<IDictionary<string, object>>().SelectMany(r => ((IEnumerable<object>)r["adds"]).Cast<IDictionary<string, object>>()).Single(g => (string)g["to"] == "focusSpells");
+        Assert.Equal("focus", (string)Entry("spell", ((IEnumerable<object>)grant["entries"]).Cast<string>().Single()).Properties["kind"]);
+    }
 }

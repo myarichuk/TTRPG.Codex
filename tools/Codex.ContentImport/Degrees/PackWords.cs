@@ -62,6 +62,16 @@ public sealed partial class Denylist
 
     public static string PairHash(string first, string second) => Hash(first.ToLowerInvariant() + " " + second.ToLowerInvariant());
 
+    /// <summary>
+    /// The hashed phrases (<c>Data/degrees-phrases.sha256</c>, the same file shape): the whole of every name of more than one word that a redaction row removes (a renamed name, a dropped entry's name, a class
+    /// feature the take-list says otherwise), lowercased with single spaces between its words. A name of ordinary words has no pair hash when its words are not adjacent capitals ("capital, small word, capital"),
+    /// and a name whose words are all common cannot be denied word by word: the phrase is what a later chapter's entry that says the name again is caught by. `--fresh` never drops one.
+    /// </summary>
+    public static Denylist EmbeddedPhrases() => Parse(BooksConfig.EmbeddedYaml("degrees-phrases.sha256"));
+
+    /// <summary>The hash of a phrase: its words (letter runs, see <see cref="PackWordCheck.Words"/>) lowercased with single spaces.</summary>
+    public static string PhraseHash(IEnumerable<string> words) => Hash(string.Join(' ', words.Select(w => w.ToLowerInvariant())));
+
     /// <summary>The file text for a set of words: sorted unique hashes, minus the words in <paramref name="exclude"/> (game terms the packs may use).</summary>
     public static string Format(IEnumerable<string> words, IReadOnlySet<string>? exclude = null)
     {
@@ -220,7 +230,10 @@ public static partial class PackWordCheck
         }
     }
 
-    public static List<PackFinding> CheckDenylist(string packDir, Denylist denylist, Denylist? pairs = null, IReadOnlySet<(string Word, string Next)>? compounds = null)
+    /// <summary>The longest phrase (in words) the phrase gate looks for in a run of the pack's text.</summary>
+    private const int LongestPhrase = 8;
+
+    public static List<PackFinding> CheckDenylist(string packDir, Denylist denylist, Denylist? pairs = null, IReadOnlySet<(string Word, string Next)>? compounds = null, Denylist? phrases = null)
     {
         var findings = new List<PackFinding>();
         foreach (var file in Load(packDir, denylist))
@@ -241,6 +254,19 @@ public static partial class PackWordCheck
                     }
 
                     var itemWords = Words(item.Text).ToList();
+                    for (var w = 0; phrases != null && w < itemWords.Count; w++)
+                    {
+                        // Every run of two to eight words, hashed as a phrase: a removed name of ordinary words is caught as a whole.
+                        for (var n = 2; n <= LongestPhrase && w + n <= itemWords.Count; n++)
+                        {
+                            var hash = Denylist.PhraseHash(itemWords.GetRange(w, n));
+                            if (phrases.Contains(hash) && seen.Add(hash))
+                            {
+                                findings.Add(new PackFinding(file.Name, entry.Number, item.Path, "phrase on the denylist", hash));
+                            }
+                        }
+                    }
+
                     for (var w = 0; w < itemWords.Count; w++)
                     {
                         var hash = Denylist.Hash(itemWords[w]);

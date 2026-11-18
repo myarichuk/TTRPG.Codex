@@ -26,11 +26,16 @@ public static partial class EntriesStage
 
     private static readonly Regex SpellRowLine = new(@"^(?:\d{1,2}[*†]*|[—–-])(?:\s+(?:\d{1,2}[*†]*|[—–-]))*$", RegexOptions.CultureInvariant);
 
+    private static readonly Regex SpellMarkerLine = new(@"^[*†]+$", RegexOptions.CultureInvariant);
+
     private static readonly Regex SpellHeaderLine = new(@"^(?:Your Spell|Rank|Level Cantrips(?:\s+\d{1,2}(?:st|nd|rd|th))+|\d{1,2}(?:st|nd|rd|th)(?:\s+\d{1,2}(?:st|nd|rd|th))*)$", RegexOptions.CultureInvariant);
 
     private static readonly Regex SpellRankRowName = new(@"^\d{1,2}(?:st|nd|rd|th)-rank spell$", RegexOptions.CultureInvariant);
 
     private static readonly Regex TraditionSentence = new(@"can cast spells of the (?<t>arcane|divine|occult|primal) tradition", RegexOptions.CultureInvariant);
+
+    /// <summary>The sentence of a class whose choice decides the tradition: <c>cast spells of your patron's tradition</c> (the word is the choice's name; the subclasses each say theirs).</summary>
+    private static readonly Regex SubclassTraditionSentence = new(@"spells of your (?<t>[a-z]+)'s tradition", RegexOptions.CultureInvariant);
 
     // The attribute the text names as the key attribute where it speaks of the spell attack, and the attribute its modifier is said to be: both must be the class's.
     private static readonly Regex SpellAttributeSentence = new(@"key attribute is (?<a>[A-Z][a-z]+), your spell attack", RegexOptions.CultureInvariant);
@@ -64,6 +69,11 @@ public static partial class EntriesStage
         var seenText = false;
         foreach (var line in lines)
         {
+            if (SpellMarkerLine.IsMatch(line))
+            {
+                continue; // a note's mark that the layout set on a line of its own, among the rows or the notes: neither a row nor text
+            }
+
             if (SpellRowLine.IsMatch(line) || SpellHeaderLine.IsMatch(line))
             {
                 if (seenText)
@@ -200,13 +210,14 @@ public static partial class EntriesStage
     /// What a spellcaster's feature text says of its casting: the tradition (one of the four), whether it keeps a repertoire (spontaneous) or prepares its spells, the focus pool it starts with, and
     /// the two checks the sheet relies on: that the spell attack modifier and the spell DC use the class's key attribute, and that the text's 1st-level spell and cantrip counts are the table's.
     /// </summary>
-    public static SpellcastingFacts ReadSpellcasting(IReadOnlyList<ClassFeature> features, List<SpellLevelRow> rows, string keyAttribute, string className)
+    public static SpellcastingFacts ReadSpellcasting(IReadOnlyList<ClassFeature> features, List<SpellLevelRow> rows, string keyAttribute, string className, bool traditionFromSubclass = false)
     {
         var text = string.Join('\n', features.Select(f => f.Render())).Replace('‑', '-');
-        var tradition = TraditionSentence.Match(text);
+        // A class whose subclass decides the tradition says so (a witch casts "of your patron's tradition") and has none of its own; any other spellcaster names one.
+        var tradition = traditionFromSubclass ? SubclassTraditionSentence.Match(text) : TraditionSentence.Match(text);
         if (!tradition.Success)
         {
-            throw new DegreesException($"The {className} is a spellcaster whose text does not say the tradition it casts.");
+            throw new DegreesException($"The {className} is a spellcaster whose text does not say the tradition it casts{(traditionFromSubclass ? " as its subclass's" : string.Empty)}.");
         }
 
         var attribute = SpellAttributeSentence.Match(text);
@@ -223,16 +234,20 @@ public static partial class EntriesStage
         }
 
         var casting = features.Any(f => f.Name.Equals("Spell Repertoire", StringComparison.OrdinalIgnoreCase)) ? "spontaneous"
-            : Regex.IsMatch(text, @"you can prepare (?:one|two|three|four|five|six) 1st-rank spells", RegexOptions.CultureInvariant) ? "prepared"
+            : Regex.IsMatch(text, @"you can prepare (?:up to )?(?:one|two|three|four|five|six) 1st-rank spells", RegexOptions.CultureInvariant) ? "prepared"
             : throw new DegreesException($"The {className} neither keeps a spell repertoire nor says it prepares spells.");
         var pool = FocusPoolSentence.Match(text);
-        return new SpellcastingFacts(tradition.Groups["t"].Value, casting, pool.Success ? int.Parse(pool.Groups["n"].Value, CultureInfo.InvariantCulture) : 0);
+        return new SpellcastingFacts(traditionFromSubclass ? string.Empty : tradition.Groups["t"].Value, casting, pool.Success ? int.Parse(pool.Groups["n"].Value, CultureInfo.InvariantCulture) : 0);
     }
 
     /// <summary>The class entry's spellcasting fields: the tradition, how it casts, the focus pool, and one row for each level (cantrips, slots by rank, the highest rank and the spells known or prepared).</summary>
     internal static void AddSpellcastingFields(ParsedEntry cls, SpellcastingFacts facts, List<SpellLevelRow> rows)
     {
-        cls.Raw.Add(new LabelledText("tradition", Quoted(facts.Tradition)));
+        if (facts.Tradition.Length > 0)
+        {
+            cls.Raw.Add(new LabelledText("tradition", Quoted(facts.Tradition)));
+        }
+
         cls.Raw.Add(new LabelledText("casting", Quoted(facts.Casting)));
         if (facts.FocusPool > 0)
         {
