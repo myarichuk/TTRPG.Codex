@@ -163,12 +163,16 @@ public static class BlocksStage
         /// <summary>How many of the page's sidebars no heading was found for.</summary>
         public int Missing => _keys.Count - _matched.Count;
 
+        /// <summary>The key of the title the last heading matched: a title set across a gutter is two headings, each a part of it, and the sidebar is known by the whole.</summary>
+        public string? LastKey { get; private set; }
+
         public bool Match(Block heading)
         {
             var key = Key(string.Join(' ', heading.Lines));
             for (var i = 0; i < _keys.Count; i++)
             {
                 var title = _keys[i];
+                LastKey = title;
                 if (key == title)
                 {
                     _matched.Add(i);
@@ -786,7 +790,7 @@ public static class BlocksStage
                 {
                     inside = true;
                     left = double.NaN;
-                    var key = SidebarTitleSet.Key(string.Join(' ', b.Lines));
+                    var key = titles.LastKey ?? SidebarTitleSet.Key(string.Join(' ', b.Lines));
                     takingKey = takenKeys != null && takenKeys.Contains(key) ? key : null;
                     Drop(b);
                     continue;

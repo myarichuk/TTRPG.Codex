@@ -11,26 +11,23 @@ public static partial class EntriesStage
         var result = new List<ParsedEntry>();
         foreach (var path in range.Row.Sidebars)
         {
-            var node = SpineStage.FindUnique(spine, path) ?? throw new DegreesException($"Chapter {range.Row.Chapter}: a sidebar path of the row is not a bookmark of the book.");
-            var titles = ImportPipeline.SidebarTitles(node.Title).ToList();
-            if (!node.Sidebar || titles.Count != 1)
-            {
-                throw new DegreesException($"Chapter {range.Row.Chapter}: a sidebar path of the row must be one sidebar bookmark.");
-            }
-
-            var key = BlocksStage.SidebarTitleSet.Key(titles[0]);
+            var (node, title) = ImportPipeline.ResolveSidebar(spine, path) ?? throw new DegreesException($"Chapter {range.Row.Chapter}: a sidebar path of the row must be one sidebar of the book.");
+            title = title.TrimStart('=');
+            var key = BlocksStage.SidebarTitleSet.Key(title);
             if (blocks.TakenSidebars == null || !blocks.TakenSidebars.TryGetValue(key, out var taken) || taken.Count == 0)
             {
-                throw new DegreesException($"Chapter {range.Row.Chapter}: the sidebar the row takes was not found among the page's blocks.");
+                throw new DegreesException($"Chapter {range.Row.Chapter}: the sidebar the row takes ({title}) was not found among the page's blocks.");
             }
 
-            var entry = NewEntry(range, book, Clean(titles[0]), compounds);
+            var entry = NewEntry(range, book, Clean(range.Row.EntryNames.TryGetValue(path[^1], out var renamed) || range.Row.EntryNames.TryGetValue(title, out renamed) ? renamed : title), compounds);
             entry.Source = SpanText.Normalize(book + " > " + string.Join(" > ", path)); // the bookmark path as the outline has it, prefix and all
             var reader = new BodyReader(entry, compounds, false, range.Row.TableRows, null, range.Row.Subheadings, range.Row.ProseBoxes);
             foreach (var block in taken)
             {
                 // The sidebar's own heading is its name; its paragraphs are read as running text.
-                if (block.Role == "block-header" && BlocksStage.SidebarTitleSet.Key(string.Join(' ', block.Lines)) == key)
+                // A title set across the gutter is two headings, each a part of the title.
+                var headingKey = BlocksStage.SidebarTitleSet.Key(string.Join(' ', block.Lines));
+                if (block.Role == "block-header" && (headingKey == key || (headingKey.Length >= 4 && key.Length > headingKey.Length && (key.StartsWith(headingKey, StringComparison.Ordinal) || key.EndsWith(headingKey, StringComparison.Ordinal)))))
                 {
                     continue;
                 }

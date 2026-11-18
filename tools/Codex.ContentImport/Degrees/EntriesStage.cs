@@ -311,10 +311,10 @@ public static partial class EntriesStage
         }
 
         // The redaction rows name an entry by id alone, so an id may not repeat even across types.
-        var duplicate = entries.GroupBy(e => e.Id, StringComparer.Ordinal).FirstOrDefault(g => g.Count() > 1);
-        if (duplicate != null)
+        var duplicates = entries.GroupBy(e => e.Id, StringComparer.Ordinal).Where(g => g.Count() > 1).ToList();
+        if (duplicates.Count > 0)
         {
-            throw new DegreesException($"{duplicate.Count()} entries ({string.Join(", ", duplicate.Select(e => e.Type).Distinct())}) share one id ({duplicate.Key}); ids come from names, so a name is repeated.");
+            throw new DegreesException($"{duplicates.Count} ids are shared by entries ({string.Join("; ", duplicates.Select(g => $"{g.Count()} {string.Join("/", g.Select(e => e.Type).Distinct())} entries share one id ({g.Key})"))}); ids come from names, so a name is repeated.");
         }
 
         return entries.OrderBy(e => e.Type, StringComparer.Ordinal).ThenBy(e => e.Id, StringComparer.Ordinal).ToList();
@@ -322,7 +322,9 @@ public static partial class EntriesStage
 
     private static List<ParsedEntry> ParseRule(TakenRange range, List<Block> slice, string book, HashSet<string> compounds)
     {
-        var name = range.Own ? range.Row.OwnName ?? range.Row.PathOf(range)[^1] : range.Row.PathOf(range)[^1];
+        // A path named by a hash (a reserved title) takes the bookmark's own title as the entry's name until a redaction row renames it.
+        var last = SpineStage.IsHashSegment(range.Row.PathOf(range)[^1]) ? range.Node.Title : range.Row.PathOf(range)[^1];
+        var name = range.Own ? range.Row.OwnName ?? last : last;
         if (range.Row.EntryNames.TryGetValue(range.Row.PathOf(range)[^1], out var renamed))
         {
             name = renamed;
@@ -340,12 +342,12 @@ public static partial class EntriesStage
         foreach (var block in slice)
         {
             // A stat table is the items rows' (see StatTables), and the caption under a picture of an item is no text.
-            if (block.Role == StatTables.Role || (range.Row.ArtLabels && IsArtLabel(block)))
+            if (block.Role == StatTables.Role || (range.Row.ArtLabels && IsArtLabel(block)) || IsArtPageLabel(range.Row, block))
             {
                 continue;
             }
 
-            if (range.Row.FoldChildren && block.Role == "entry-header")
+            if ((range.Row.FoldChildren && block.Role == "entry-header") || (range.Row.FoldSections && block.Role == "section"))
             {
                 // A child section whose title is in the entry-header font is a paragraph of the entry (its title, then its text), or is read past when the row names it.
                 var title = Clean(string.Join(' ', block.Lines));
@@ -985,12 +987,45 @@ public static partial class EntriesStage
             finished.Finish();
         }
 
+        // A heading that is followed at once by actions or by another heading (the group of basic actions, whose text is the actions under it) holds no text: no entry.
+        result.RemoveAll(e => e.Type == "rule" && e.Parts.Count == 0);
         foreach (var entry in result.Where(e => e.Type == "action"))
         {
+            SplitLoneFieldParagraph(entry);
             ExtractFields(entry, ActionFieldKeys);
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// An action whose whole text is one paragraph that opens with a field label (a requirements line whose next sentence the layout did not set on a line of its own) has that paragraph cut after
+    /// its first sentence: the field is one sentence, and the rest is the action's text. An entry with other paragraphs, or a field of one sentence, is left as it was.
+    /// </summary>
+    internal static void SplitLoneFieldParagraph(ParsedEntry entry)
+    {
+        if (entry.Parts.Count != 1 || entry.Parts[0].Label.Length == 0
+            || !ActionFieldKeys.Contains(entry.Parts[0].Label.TrimEnd('.', ':', ' ').ToLowerInvariant()))
+        {
+            return;
+        }
+
+        var part = entry.Parts[0];
+        var sentences = SpanText.Sentences(part.Text).ToList();
+        if (sentences.Count < 2)
+        {
+            return;
+        }
+
+        var first = part with { Text = part.Text[..sentences[0].End].TrimEnd() };
+        var at = entry.Fields.IndexOf(part);
+        if (at >= 0)
+        {
+            entry.Fields[at] = first;
+        }
+
+        entry.Parts[0] = first;
+        entry.Parts.Add(new LabelledText(string.Empty, part.Text[sentences[1].Start..].Trim()));
     }
 
     internal static bool IsStrayLabel(Block block, List<Block> slice, TakeRow row)
@@ -1066,7 +1101,8 @@ public static partial class EntriesStage
             Type = type ?? range.Row.Target,
             Folder = folder ?? range.Row.FolderName,
             Chapter = range.Row.Chapter,
-            Source = SpanText.Normalize(book + " > " + string.Join(" > ", range.Row.PathOf(range)) + (sourceTail == null ? string.Empty : " > " + sourceTail)),
+            // A title the take-list names by its hash (a reserved name) is not in the source either.
+            Source = SpanText.Normalize(book + " > " + string.Join(" > ", range.Row.PathOf(range).Where(s => !SpineStage.IsHashSegment(s))) + (sourceTail == null ? string.Empty : " > " + sourceTail)),
             // An actions row's or a spells row's category is for the rule entries it also writes (an action or a spell has no category field).
             Category = type != null ? category : range.Row.Parser == "actions" || range.Row.Boxes.Count > 0 ? null : range.Row.Category,
             Approved = range.Row.Approved,

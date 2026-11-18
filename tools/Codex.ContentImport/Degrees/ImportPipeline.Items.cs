@@ -17,12 +17,13 @@ public static partial class ImportPipeline
     public static List<(int Children, int Headings)> CheckFoldCounts(IReadOnlyList<SpineNode> spine, BlocksResult blocks, IEnumerable<TakenRange> ranges)
     {
         var compared = new List<(int, int)>();
-        foreach (var range in ranges.Where(r => !r.Own && r.Row.Parser == "rules" && r.Row.FoldChildren))
+        foreach (var range in ranges.Where(r => !r.Own && r.Row.Parser == "rules" && (r.Row.FoldChildren || r.Row.FoldSections) && string.IsNullOrWhiteSpace(r.Row.CountsDiffer)))
         {
+            var foldRole = range.Row.FoldSections ? "section" : "entry-header";
             var node = range.Node;
             var children = spine.Where(n => n.Path.Length == node.Path.Length + 1 && n.Path.Take(node.Path.Length).SequenceEqual(node.Path) && !n.Sidebar)
                 .Select(n => BlocksStage.SidebarTitleSet.Key(n.Title)).ToList();
-            var headings = Enumerable.Range(range.Start, Math.Max(0, range.End - range.Start)).Select(i => blocks.Blocks[i]).Where(b => b.Role == "entry-header")
+            var headings = Enumerable.Range(range.Start, Math.Max(0, range.End - range.Start)).Select(i => blocks.Blocks[i]).Where(b => b.Role == foldRole)
                 .Select(b => BlocksStage.SidebarTitleSet.Key(string.Join(' ', b.Lines))).ToList();
             compared.Add((children.Count, headings.Count));
             if (!children.SequenceEqual(headings))

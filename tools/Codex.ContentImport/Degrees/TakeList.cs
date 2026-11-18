@@ -120,6 +120,12 @@ public sealed class TakeRow
     public string? LeadName { get; set; }
 
     /// <summary>
+    /// For an <c>actions</c> row: the section's child bookmarks are groups of actions (each a heading in the entry-header font that holds several action headings), not one action or skill each. The children are
+    /// counted against those group headings.
+    /// </summary>
+    public bool ActionGroups { get; set; }
+
+    /// <summary>
     /// For a <c>rules</c> row: the range ends at the first heading in the block-header font (the caption of a table). The blocks from there to the end of the section (the page's
     /// overview tables) are read past, and are not counted as left out text because they sit in a taken section.
     /// </summary>
@@ -201,6 +207,19 @@ public sealed class TakeRow
     public bool ArtLabels { get; set; }
 
     /// <summary>
+    /// For a <c>rules</c> row: pages whose pictures are labelled with names and numbers set in the body, display and block-header fonts (the figures of the cover, flanking and terrain rules). On these pages a display
+    /// block, a body block of up to five words with no full stop and a block-header of up to four words that opens with a digit are labels of the art, not text: they are skipped and, being no entry's text, hashed
+    /// for the denylist with the other left-out text (see <see cref="EntriesStage.IsArtPageLabel"/>).
+    /// </summary>
+    public List<int> ArtPages { get; set; } = new();
+
+    /// <summary>
+    /// For a <c>rules</c> row: pages where the lines of a sidebar that is not taken run on past the gutter, so the column of the page's own text opens with pieces of them. On these pages every block in the body font
+    /// (the page's own text is in the rules font) is the sidebar's: skipped, and hashed for the denylist with the other left-out text (see <see cref="EntriesStage.IsArtPageLabel"/>).
+    /// </summary>
+    public List<int> SidebarSpill { get; set; } = new();
+
+    /// <summary>
     /// For a <c>rules</c> row with subheadings: a block of body text that opens with a bold heading line is a box of prose (the weapon rules' boxes on damage dice), not a small table, so its ragged lines run on.
     /// </summary>
     public bool ProseBoxes { get; set; }
@@ -213,6 +232,12 @@ public sealed class TakeRow
     /// counted against those titles (see <see cref="ImportPipeline.CheckFoldCounts"/>). The names in <see cref="ReadPastChildren"/> are children whose text is left out of the entry.
     /// </summary>
     public bool FoldChildren { get; set; }
+
+    /// <summary>
+    /// For a <c>rules</c> row: as <see cref="FoldChildren"/>, for a section whose children are titled in the section font (an overview of short paragraphs, or a general rule with its parts). Counted the same way
+    /// (the bookmark children against the headings in the section font). A row folds one font or the other, not both.
+    /// </summary>
+    public bool FoldSections { get; set; }
 
     public List<string> ReadPastChildren { get; set; } = new();
 
@@ -493,6 +518,21 @@ public sealed partial class TakeList
                 throw new DegreesException($"Take-list row {n}: artLabels belong to the items and rules parsers, readPast and foldChildren to the rules parser, and readPastChildren to a foldChildren row.");
             }
 
+            if (r.ActionGroups && r.Parser != "actions")
+            {
+                throw new DegreesException($"Take-list row {n}: actionGroups belongs to the actions parser.");
+            }
+
+            if ((r.ArtPages.Count > 0 || r.SidebarSpill.Count > 0) && r.Parser != "rules")
+            {
+                throw new DegreesException($"Take-list row {n}: artPages belong to the rules parser.");
+            }
+
+            if (r.FoldSections && (r.Parser != "rules" || r.FoldChildren || r.ReadPastChildren.Count > 0))
+            {
+                throw new DegreesException($"Take-list row {n}: foldSections belongs to the rules parser, and a row folds the entry-header font or the section font, not both.");
+            }
+
             if (!itemRow && (r.Undescribed.Count > 0 || r.RuleDescriptions.Count > 0 || r.RuleName != null || r.RuleCategory != null))
             {
                 throw new DegreesException($"Take-list row {n}: undescribed, ruleDescriptions, ruleName and ruleCategory belong to the items parser.");
@@ -523,9 +563,11 @@ public sealed partial class TakeList
                 throw new DegreesException($"Take-list row {n}: a leadRules path must be one of the row's paths, and a twoUp path one of its tables.");
             }
 
-            if (r.EntryNames.Count > 0 && (r.Parser != "rules" || r.EntryNames.Any(e => string.IsNullOrWhiteSpace(e.Value) || !r.Paths.Concat(r.Own).Any(p => p[^1].Equals(e.Key, StringComparison.OrdinalIgnoreCase)))))
+            if (r.EntryNames.Count > 0 && (r.Parser != "rules" || r.EntryNames.Any(e => string.IsNullOrWhiteSpace(e.Value) || !r.Paths.Concat(r.Own).Any(p => p[^1].Equals(e.Key, StringComparison.OrdinalIgnoreCase))
+                    && !r.Sidebars.Any(p => p[^1].Equals(e.Key, StringComparison.OrdinalIgnoreCase)
+                        || System.Text.RegularExpressions.Regex.Replace(p[^1], @"^Sidebars?:\s*", string.Empty).Equals(e.Key, StringComparison.OrdinalIgnoreCase)))))
             {
-                throw new DegreesException($"Take-list row {n}: entryNames belongs to the rules parser, each key being the last title of one of the row's paths or own-text paths, with a name for a value.");
+                throw new DegreesException($"Take-list row {n}: entryNames belongs to the rules parser, each key being the last title of one of the row's paths, own-text paths or sidebars (without its prefix), with a name for a value.");
             }
 
             if (r.Exclude.Count > 0 && string.IsNullOrWhiteSpace(r.CountsDiffer))

@@ -71,13 +71,27 @@ public static class SpineStage
         return counts;
     }
 
+    /// <summary>
+    /// The take-list's name for a bookmark title it must not hold (a title that is a reserved name): <c>#</c> and the lowercase hex SHA-256 of the title's slug, which is also the <c>entryHash</c> a redaction row
+    /// gives for the entry made from it.
+    /// </summary>
+    public static string HashSegment(string title) => "#" + SpanText.Sha256(EntriesStage.Slug(title));
+
+    /// <summary>True for a path segment written as a hash (see <see cref="HashSegment"/>).</summary>
+    public static bool IsHashSegment(string segment) => segment.Length == 65 && segment[0] == '#';
+
+    /// <summary>Whether a path segment of the take-list names a bookmark title: by the title (case and edge spaces aside), or by its hash.</summary>
+    public static bool SegmentIs(string segment, string title) =>
+        IsHashSegment(segment.Trim()) ? string.Equals(segment.Trim(), HashSegment(title), StringComparison.Ordinal)
+            : string.Equals(title.Trim(), segment.Trim(), StringComparison.OrdinalIgnoreCase);
+
     public static SpineNode? Find(IEnumerable<SpineNode> nodes, IReadOnlyList<string> path) =>
-        nodes.FirstOrDefault(n => n.Path.Length == path.Count && n.Path.Zip(path).All(p => string.Equals(p.First.Trim(), p.Second.Trim(), StringComparison.OrdinalIgnoreCase)));
+        nodes.FirstOrDefault(n => n.Path.Length == path.Count && n.Path.Zip(path).All(p => SegmentIs(p.Second, p.First)));
 
     /// <summary>The bookmark with exactly this path, or null. A path that two bookmarks share fails the run: the taken range would silently be the first one's.</summary>
     public static SpineNode? FindUnique(IReadOnlyList<SpineNode> nodes, IReadOnlyList<string> path)
     {
-        var found = nodes.Where(n => n.Path.Length == path.Count && n.Path.Zip(path).All(p => string.Equals(p.First.Trim(), p.Second.Trim(), StringComparison.OrdinalIgnoreCase))).Take(2).ToList();
+        var found = nodes.Where(n => n.Path.Length == path.Count && n.Path.Zip(path).All(p => SegmentIs(p.Second, p.First))).Take(2).ToList();
         return found.Count > 1 ? throw new DegreesException($"{found.Count} bookmarks have one path that the take-list names, so the taken range is ambiguous.") : found.FirstOrDefault();
     }
 
