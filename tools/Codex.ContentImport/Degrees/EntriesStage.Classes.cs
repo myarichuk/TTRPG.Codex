@@ -1127,51 +1127,8 @@ public static partial class EntriesStage
 
         foreach (var f in scan.Feats)
         {
-            var header = Clean(string.Join(' ', f.Header.Lines));
-            string? actions = null;
-            foreach (var (_, icon) in Icons)
-            {
-                if (header.Contains(icon.Text, StringComparison.Ordinal))
-                {
-                    actions = icon.Actions;
-                    header = header.Replace(icon.Text, string.Empty, StringComparison.Ordinal);
-                }
-            }
-
-            var m = AncestryFeatHeader.Match(Regex.Replace(header, " {2,}", " ").Trim());
-            var level = int.Parse(m.Groups["level"].Value, CultureInfo.InvariantCulture);
-            if (level != f.Band)
-            {
-                throw new DegreesException($"A feat of a class (page {f.Header.Page}) has level {level} under the band for level {f.Band}.");
-            }
-
-            var entry = NewEntry(range, book, TitleCase(m.Groups["name"].Value), compounds, "feat", "feats", null, scan.FeatsTitle);
-            entry.Level = level;
-            entry.Actions = actions;
+            var entry = BuildFeat(range, book, f, compounds, scan.FeatsTitle, row.GrantsByName, "a class");
             entry.ClassKey = Slug(cls.Name);
-            foreach (var tag in f.Tags)
-            {
-                entry.Traits.AddRange(Clean(string.Join(' ', tag.Lines)).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => w.ToLowerInvariant()));
-            }
-
-            var reader = new BodyReader(entry, compounds, true) { LowerContinues = row.GrantsByName };
-            foreach (var block in f.Body)
-            {
-                reader.Read(block);
-            }
-
-            reader.Finish();
-            ExtractFields(entry);
-            SplitInlineAction(entry);
-            // A list of items with no bold name (each a bullet) is set out as the lists with names are: a dash.
-            for (var i = 0; i < entry.Parts.Count; i++)
-            {
-                if (entry.Parts[i].Label.Length == 0 && entry.Parts[i].Text.StartsWith("• ", StringComparison.Ordinal))
-                {
-                    entry.Parts[i] = entry.Parts[i] with { Text = "- " + entry.Parts[i].Text[2..] };
-                }
-            }
-
             result.Add(entry);
         }
 

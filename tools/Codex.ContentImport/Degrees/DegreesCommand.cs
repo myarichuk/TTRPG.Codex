@@ -208,6 +208,24 @@ public static class DegreesCommand
             output.WriteLine($"backgrounds: {backgrounds.Headers} headings = {backgrounds.BoostSentences} boost sentences = {backgrounds.FeatSentences} feat sentences = {backgrounds.Entries} entries (the chapter prints no list)");
         }
 
+        if (ImportPipeline.CheckCompanionCounts(spine, blocks, result.Ranges, result.Parsed) is { } companions)
+        {
+            output.WriteLine($"companions: {companions.Bookmarks} bookmarks, {companions.Headings} headings ({(companions.Bookmarks == companions.Headings ? "agree" : "differ by the row's reason")}); {companions.CompanionHeadings} headings open a companion = {companions.SizeLines} size lines = {companions.HitPointLines} hit point lines = " +
+                $"{companions.AttributeLines} attribute lines = {companions.SupportLines} support benefit lines = {companions.ManeuverLines} advanced maneuver lines = {companions.Companions} entries; {companions.Rules} rules");
+        }
+
+        if (ImportPipeline.CheckFamiliarCounts(spine, blocks, result.Ranges, result.Parsed) is { } familiars)
+        {
+            output.WriteLine($"familiars: {familiars.Bookmarks} bookmarks = {familiars.Headings} headings; abilities (bold names, lines of the shape, entries) by kind: " +
+                string.Join("; ", familiars.Kinds.Select(k => $"{k.Key} {k.Value.Bold}, {k.Value.Shape}, {k.Value.Entries}")) + $"; {familiars.Rules} rules");
+        }
+
+        if (ImportPipeline.CheckArchetypeCounts(spine, blocks, result.Ranges, result.Parsed) is { } archetypes)
+        {
+            output.WriteLine($"archetypes: {archetypes.Bookmarks} bookmarks = {archetypes.Headings} headings ({archetypes.Headings - archetypes.Archetypes.Count} rules sections and {archetypes.Archetypes.Count} archetypes; {archetypes.Rules} rules in all); per archetype (feat headers, trait lines, level markers, feats): " +
+                string.Join("; ", archetypes.Archetypes.Select(a => $"{a.Feats}")) + $"; feat headers = trait lines = level markers in each ({archetypes.Archetypes.Sum(a => a.Feats)} in all); one dedication feat each");
+        }
+
         if (packDir != null)
         {
             // An imported id may not equal an id of the homebrew pack beside it (in any type): the run fails, the ids are named (they are our own invented ids or a book's item names, never a reserved word).
@@ -305,9 +323,9 @@ public static class DegreesCommand
         var blocks = BlocksStage.Run(layout.Pages, ImportPipeline.OptionsFor(spine, rows));
         var ranges = TakeStage.Resolve(spine, blocks, rows);
         var planned = TakeStage.PlannedRanges(spine, blocks, options.Book, take.Planned);
-        var redacted = ImportPipeline.RedactedWords(blocks, ranges, RedactionTable.Embedded(), options.Book, spine, StableIds(options.Pack));
+        var redacted = ImportPipeline.RedactedWords(blocks, ranges, RedactionTable.Embedded(), options.Book, spine, StableIds(options.Pack), options.Pack);
         var redactedPairs = ImportPipeline.RedactedPairs(blocks, ranges, RedactionTable.Embedded(), options.Book, spine, StableIds(options.Pack));
-        var (words, excluded) = ImportPipeline.DenylistWords(blocks, ranges, Waivers.Embedded(), 3, planned, redacted);
+        var (words, excluded) = ImportPipeline.DenylistWords(blocks, ranges, Waivers.Embedded(), 3, planned, redacted, options.Pack);
         var path = options.Out ?? Path.Combine(options.Work, "denylist.sha256");
         if (options.Out == null)
         {
@@ -316,7 +334,7 @@ public static class DegreesCommand
         }
 
         // A waiver lifts a hash only when this book's own left-out text would hash the word without it, and never a reserved name (see ImportPipeline.LiftedWaivers).
-        var withoutWaivers = ImportPipeline.DenylistWords(blocks, ranges, new HashSet<string>(StringComparer.Ordinal), 3, planned, redacted).Words;
+        var withoutWaivers = ImportPipeline.DenylistWords(blocks, ranges, new HashSet<string>(StringComparer.Ordinal), 3, planned, redacted, options.Pack).Words;
         var liftedWords = ImportPipeline.LiftedWaivers(Waivers.Embedded(), redacted.Names, withoutWaivers);
         var liftedPairs = ImportPipeline.LiftedPairWaivers(Waivers.Embedded(), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, new HashSet<string>(StringComparer.Ordinal), redactedPairs));
         // A fresh review counts a gone pair as waived when a named pair waiver hashes to it, whether or not the left-out text still makes it (a pair that a taken range has since said is no longer made, and a person has named it).
@@ -324,13 +342,16 @@ public static class DegreesCommand
         var pairsFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-pairs.sha256");
         var commonFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-common.sha256");
         var phrasesFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-phrases.sha256");
-        var phraseHashes = ImportPipeline.RedactedPhrases(blocks, ranges, RedactionTable.Embedded(), options.Book, spine, StableIds(options.Pack)).Select(Denylist.PhraseHash).Distinct(StringComparer.Ordinal).OrderBy(h => h, StringComparer.Ordinal).ToList();
+        var phraseHashes = ImportPipeline.RedactedPhrases(blocks, ranges, RedactionTable.Embedded(), options.Book, spine, StableIds(options.Pack)).Select(Denylist.PhraseHash)
+            // The multi-word names a row takes out of a sentence are listed on the row as hashes (never words).
+            .Concat(RedactionTable.Embedded().Rows.Where(r => r.Book == null || r.Book == options.Book).SelectMany(r => r.Phrases))
+            .Distinct(StringComparer.Ordinal).OrderBy(h => h, StringComparer.Ordinal).ToList();
         if (options.Fresh)
         {
             // A regeneration from scratch is reviewed before anything is written: it never drops a hash of a redacted word or of a dropped entry's name, never drops a pair a waiver, a title or a
             // denied word does not explain, and says what it removes and what is new.
             ImportPipeline.RefuseFreshWithOtherBooks(take.Rows, options.Book);
-            var never = redacted.SpanWords.Select(Denylist.Hash).Concat(redacted.Names.SelectMany(n => new[] { n, n + "s", n + "es" }).Select(Denylist.Hash)).ToHashSet(StringComparer.Ordinal);
+            var never = redacted.SpanWords.SelectMany(ImportPipeline.WordForms).Where(w => !ImportPipeline.PackSaysExactly(w, options.Pack) || redacted.SpanWords.Contains(w)).Select(Denylist.Hash).Concat(redacted.Names.SelectMany(n => new[] { n, n + "s", n + "es" }).Select(Denylist.Hash)).ToHashSet(StringComparer.Ordinal);
             var reviews = new[]
             {
                 ImportPipeline.ReviewFresh("denylist", ReadHashes(path), words.Select(Denylist.Hash).ToList(), liftedWords, never, null),

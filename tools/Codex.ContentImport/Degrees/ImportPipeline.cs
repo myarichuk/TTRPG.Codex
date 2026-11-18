@@ -188,6 +188,9 @@ public static partial class ImportPipeline
         CheckVersatileCounts(spine, blocks, ranges, parsed);
         CheckClassCounts(spine, blocks, ranges, parsed);
         CheckBackgroundCounts(blocks, ranges, parsed);
+        CheckCompanionCounts(spine, blocks, ranges, parsed);
+        CheckFamiliarCounts(spine, blocks, ranges, parsed);
+        CheckArchetypeCounts(spine, blocks, ranges, parsed);
         CheckActionCounts(spine, blocks, ranges, parsed);
         CheckSpellCounts(blocks, ranges, parsed);
         CheckSpellDegrees(blocks, ranges, parsed);
@@ -259,6 +262,24 @@ public static partial class ImportPipeline
         if (final.Where(e => e.Type == "heritage" && e.Raw.Any(r => r.Label == "ancestry")).Any(h => !ancestryIds.Contains(h.Raw.Single(r => r.Label == "ancestry").Text.Trim('"'))))
         {
             throw new DegreesException("A heritage names an ancestry whose final id is another (a redaction row renamed the ancestry), so the link would match nothing.");
+        }
+
+        // An archetype names its class by id: the class of its own name. A feat names its archetype by the id the archetype had when the stage ran, which a redaction row could have changed since.
+        foreach (var archetype in final.Where(e => e.Type == "archetype"))
+        {
+            var classes = final.Where(e => e.Type == "class" && EntriesStage.Slug(e.Name) == EntriesStage.Slug(archetype.Name)).ToList();
+            if (classes.Count != 1)
+            {
+                throw new DegreesException($"An archetype (entry {archetype.RowNumber}) has {classes.Count} classes of its name, not one, so its class could not be linked.");
+            }
+
+            archetype.Raw.Insert(0, new LabelledText("class", "\"" + classes[0].Id + "\""));
+        }
+
+        var archetypeIds = final.Where(e => e.Type == "archetype").Select(e => e.Id).ToHashSet(StringComparer.Ordinal);
+        if (final.Where(e => e.Type == "feat" && e.Raw.Any(r => r.Label == "archetype")).Any(f => !archetypeIds.Contains(f.Raw.Single(r => r.Label == "archetype").Text.Trim('"'))))
+        {
+            throw new DegreesException("A feat names an archetype whose final id is another (a redaction row renamed the archetype), so the link would match nothing.");
         }
 
         // A class's grants by name become grants by id, now that every id is final.
@@ -918,7 +939,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
     /// only capitalized as a sentence start), and the lowercase words of the name of every entry a drop-entry row removes. A redacted sentence is left-out text by definition, even though
     /// it sits in a taken range.
     /// </summary>
-    public static (List<string> SpanWords, List<string> Names) RedactedWords(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, RedactionTable redactions, string book, IReadOnlyList<SpineNode>? spine = null, IReadOnlyDictionary<string, string>? shippedIds = null)
+    public static (List<string> SpanWords, List<string> Names) RedactedWords(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, RedactionTable redactions, string book, IReadOnlyList<SpineNode>? spine = null, IReadOnlyDictionary<string, string>? shippedIds = null, string? packDir = null)
     {
         var parsed = EntriesStage.Run(blocks, ranges, book, shippedIds, spine);
         var entries = parsed.Select(e => new RedactionEntry(e.Id, e.RedactionFields())).ToList();
@@ -941,7 +962,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
             .SelectMany(s => PackWordCheck.Words(parsed.First(e => e.Id == s.Id).Name))
             // The name a replace row takes out of an entry's name field is as reserved as a dropped entry's: the words of the old name that the new one does not say, with their plurals.
             // A word the committed pack already says (an ordinary word of an earlier chapter's renamed name) is no coined word: the pack's own word gate would stop it.
-            .Concat(spans.Where(s => s.Row.Action == RedactionRow.Replace && s.Row.Field == "name").SelectMany(s => RemovedWords(s.Row, s.Text)).Where(w => !PackSays(w)))
+            .Concat(spans.Where(s => s.Row.Action == RedactionRow.Replace && s.Row.Field == "name").SelectMany(s => RemovedWords(s.Row, s.Text)).Where(w => !PackSays(w, packDir)))
             // The letter after an apostrophe ("Smith's Hammer", the name of a dropped entry) is no word of the name: its hash would sit on the denylist and stop every possessive in the packs.
             // The book's own heading of a class feature that a row says in other words (a coined word) is a reserved name too, with its plurals.
             .Concat(parsed.SelectMany(e => e.Features).Where(f => f.BookName != null).SelectMany(f => PackWordCheck.Words(f.BookName!)))
@@ -986,20 +1007,53 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         return phrases.GroupBy(p => string.Join(' ', p.Select(w => w.ToLowerInvariant()))).Select(g => g.First()).ToList();
     }
 
-    private static HashSet<string>? _packWords;
+    private static readonly Dictionary<string, HashSet<string>> PackWordSets = new(StringComparer.Ordinal);
 
-    /// <summary>Whether the committed rules pack (found beside the program, as <see cref="PackEmitter.CommittedPackDir"/> does) says the lowercase word anywhere, in any case. False when there is no pack.</summary>
-    private static bool PackSays(string word)
+    /// <summary>
+    /// Whether the rules pack says the lowercase word anywhere, in any case: the pack folder the run names (<c>--pack</c>, the one the shipped ids come from), else the committed one (found beside the program, as
+    /// <see cref="PackEmitter.CommittedPackDir"/> does). False when there is no pack.
+    /// </summary>
+    private static bool PackSays(string word, string? packDir = null)
     {
-        if (_packWords == null)
+        var dir = packDir ?? PackEmitter.CommittedPackDir();
+        var key = dir == null ? string.Empty : Path.GetFullPath(dir);
+        if (!PackWordSets.TryGetValue(key, out var words))
         {
-            var dir = PackEmitter.CommittedPackDir();
-            _packWords = dir == null ? new HashSet<string>(StringComparer.Ordinal)
+            words = dir == null || !Directory.Exists(dir) ? new HashSet<string>(StringComparer.Ordinal)
                 : Directory.EnumerateFiles(dir, "*.yaml", SearchOption.AllDirectories).SelectMany(f => PackWordCheck.Words(File.ReadAllText(f))).Select(w => w.ToLowerInvariant()).ToHashSet(StringComparer.Ordinal);
+            PackWordSets[key] = words;
         }
 
         // The plural a name is reserved with (see the denylist step) counts too: a pack that says "giants" may not have the name "giant" reserved.
-        return _packWords.Contains(word) || _packWords.Contains(word + "s") || _packWords.Contains(word + "es");
+        return words.Contains(word) || words.Contains(word + "s") || words.Contains(word + "es");
+    }
+
+    /// <summary>Whether the pack says the lowercase word itself (not a plural or a singular of it).</summary>
+    internal static bool PackSaysExactly(string word, string? packDir)
+    {
+        PackSays(word, packDir); // loads the pack's words
+        var dir = packDir ?? PackEmitter.CommittedPackDir();
+        return PackWordSets.TryGetValue(dir == null ? string.Empty : Path.GetFullPath(dir), out var words) && words.Contains(word);
+    }
+
+    /// <summary>The forms a removed word is denied in: itself, the plural when it is a singular, the singular when it is a plural.</summary>
+    public static IEnumerable<string> WordForms(string word)
+    {
+        yield return word;
+        if (word.EndsWith("es", StringComparison.Ordinal) && word.Length > 3)
+        {
+            yield return word[..^2];
+            yield return word[..^1];
+        }
+        else if (word.EndsWith('s') && word.Length > 2)
+        {
+            yield return word[..^1];
+        }
+        else
+        {
+            yield return word + "s";
+            yield return word + "es";
+        }
     }
 
     /// <summary>The lowercase words of a redacted span that the row takes out: all of them for a cut or a drop, those not in the replacement text for a replace.</summary>
@@ -1075,6 +1129,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         "versatile" => EntriesStage.VersatileFlavor(range.BlocksIn(blocks)),
         "backgrounds" => EntriesStage.BackgroundFlavor(range.BlocksIn(blocks)),
         "classes" => EntriesStage.ClassFlavor(range.BlocksIn(blocks), range.Row),
+        "archetypes" => EntriesStage.ArchetypeFlavor(range.BlocksIn(blocks)),
         _ => new List<Block>(),
     };
 
@@ -1155,7 +1210,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
     }
 
     public static (List<string> Words, int Excluded) DenylistWords(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlySet<string> waivers, int commonAfter = 3, IReadOnlyList<(int Start, int End)>? planned = null,
-        (IReadOnlyList<string> SpanWords, IReadOnlyList<string> Names)? redacted = null)
+        (IReadOnlyList<string> SpanWords, IReadOnlyList<string> Names)? redacted = null, string? packDir = null)
     {
         var leftOut = TakeStage.LeftOut(blocks, ranges, planned).ToList();
 
@@ -1183,7 +1238,10 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         // The names of the entries a drop-entry row removes are reserved: they go on the list whatever their case or how often the book writes them in lowercase, with the plural
         // a trait is written in, so neither gate can pass one that a person once decided to drop.
         var reserved = (redacted?.Names ?? Array.Empty<string>()).SelectMany(n => new[] { n, n + "s", n + "es" }).ToList();
-        words = words.Concat(reserved).Distinct(StringComparer.Ordinal).OrderBy(w => w, StringComparer.Ordinal).ToList();
+        // The words a row takes out of a sentence are guarded in their other number too (a coined plural may turn up where its singular was cut), unless the book writes the form in lowercase often.
+        // A form that an entry of the pack already says (an earlier chapter's) is not added: the word gate would stop that entry, and no entry may change for a form.
+        var forms = (redacted?.SpanWords ?? Array.Empty<string>()).Where(w => !exclude.Contains(w)).SelectMany(WordForms).Where(w => !exclude.Contains(w) && !PackSaysExactly(w, packDir));
+        words = words.Concat(reserved).Concat(forms).Distinct(StringComparer.Ordinal).OrderBy(w => w, StringComparer.Ordinal).ToList();
         return (words, candidates.Count - candidates.Count(w => words.Contains(w)));
     }
 }

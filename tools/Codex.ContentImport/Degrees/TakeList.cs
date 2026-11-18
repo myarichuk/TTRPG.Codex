@@ -276,6 +276,11 @@ public sealed class TakeRow
     /// </summary>
     public bool TraditionFromSubclass { get; set; }
 
+    /// <summary>
+    /// For a <c>familiars</c> row: the titles of the sections whose text is a list of abilities (each opens with a bold name and a colon), by the kind each list gives its entries. A section not named here is a rule.
+    /// </summary>
+    public Dictionary<string, string> AbilityKinds { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>True for the row that holds the spells the four tradition lists name: its level words include <c>spell</c>. Only these are counted against the lists.</summary>
     public bool OnTraditionLists => LevelWords.Contains("spell", StringComparer.OrdinalIgnoreCase);
 
@@ -303,10 +308,10 @@ public sealed class PlannedRow
 
 public sealed partial class TakeList
 {
-    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions", "spelllists", "items", "ancestries", "versatile", "backgrounds", "classes" };
+    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions", "spelllists", "items", "ancestries", "versatile", "backgrounds", "classes", "companions", "familiars", "archetypes" };
 
     /// <summary>The parsers that exist. Any other parser in the list fails the run, so a row cannot silently take nothing.</summary>
-    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions", "spelllists", "items", "ancestries", "versatile", "backgrounds", "classes" };
+    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions", "spelllists", "items", "ancestries", "versatile", "backgrounds", "classes", "companions", "familiars", "archetypes" };
 
     public List<TakeRow> Rows { get; set; } = new();
 
@@ -381,10 +386,11 @@ public sealed partial class TakeList
 
             // The ancestries parser also writes the heritages and the ancestry feats of the ancestries it reads.
             // The versatile parser writes heritages, their feats and the introduction of a section of several as a rule; the backgrounds parser writes backgrounds and the introduction as a rule.
-            if (Rows[i].Parser is "ancestries" or "versatile" or "backgrounds" or "classes")
+            if (Rows[i].Parser is "ancestries" or "versatile" or "backgrounds" or "classes" or "companions" or "familiars" or "archetypes")
             {
                 var needed = Rows[i].Parser switch
                 {
+                    "archetypes" => new[] { ("feat", "feats"), ("rule", "rules") },
                     "classes" => new[] { ("subclass", "subclasses"), ("feat", "feats") },
                     "ancestries" => new[] { ("heritage", "heritages"), ("feat", "feats") },
                     "versatile" => new[] { ("heritage", "heritages"), ("feat", "feats"), ("rule", "rules") },
