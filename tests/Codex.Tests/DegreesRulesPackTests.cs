@@ -54,14 +54,14 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Theory]
     [InlineData("condition", 42)] // 46 bookmark children minus 4 sidebars, and 42 entry headers in the taken range
     [InlineData("gear", 124)]     // chapter 6b: 124 rows of the gear tables (counted again in EveryGearEntryCarriesItsStatisticsAndTheCountsAreThePinnedOnes)
-    [InlineData("rule", 170)]     // chapter 8d adds 22 (9 of the animal companions: the section's lead, the animal companions' own text, the young companions, the types and their Support action, the advancement and its 4 stages; 6 of the familiars: the lead, 3 sections and the intros of the 2 lists of abilities; 7 of the archetypes: the lead and 6 sections, one of them a sub-heading; counted by EveryCompanionFamiliarAbilityAndArchetype_HasItsFields_AndTheCountsArePinned); chapter 8c adds 1 (the witch's lessons: the section's own text and its three tiers, whose headings are paragraphs of the one rule); chapter 8a adds 7 (how a class entry is read: its own text and the sections Playing the Class, Key Attribute (named Class Key Attribute: the skills chapter has a rule of that title), Hit Points, Initial Proficiencies, Advancement Table and Class Features; the class summaries are left out); chapter 7b adds 7 (the versatile heritages' own text, its two sections about limits and about playing one, the mixed-ancestry introduction, the backgrounds' introduction, the languages' own text and the sign language); chapter 7a adds 1 (the general rules of an ancestry's entry: its nine children are paragraphs of one rule); chapter 6b adds 16 (the gear's section texts, price tables and the one sidebar the take-list names: 15 sections and the wheelchair rules); chapter 6a adds 38 (see EveryArmorShieldAndWeaponCarriesItsStatisticsAndTheCountsAreThePinnedOnes): the chapter's own text, 7 more sections' own text (5 with children, Shields and Attack Rolls), 12 of their
+    [InlineData("rule", 257)]     // chapter 9 adds 87 (the rules of play: see TheRulesOfPlay_AndTheBasicAndExplorationActions_CarryTheirCountsPinned); chapter 8d adds 22 (9 of the animal companions: the section's lead, the animal companions' own text, the young companions, the types and their Support action, the advancement and its 4 stages; 6 of the familiars: the lead, 3 sections and the intros of the 2 lists of abilities; 7 of the archetypes: the lead and 6 sections, one of them a sub-heading; counted by EveryCompanionFamiliarAbilityAndArchetype_HasItsFields_AndTheCountsArePinned); chapter 8c adds 1 (the witch's lessons: the section's own text and its three tiers, whose headings are paragraphs of the one rule); chapter 8a adds 7 (how a class entry is read: its own text and the sections Playing the Class, Key Attribute (named Class Key Attribute: the skills chapter has a rule of that title), Hit Points, Initial Proficiencies, Advancement Table and Class Features; the class summaries are left out); chapter 7b adds 7 (the versatile heritages' own text, its two sections about limits and about playing one, the mixed-ancestry introduction, the backgrounds' introduction, the languages' own text and the sign language); chapter 7a adds 1 (the general rules of an ancestry's entry: its nine children are paragraphs of one rule); chapter 6b adds 16 (the gear's section texts, price tables and the one sidebar the take-list names: 15 sections and the wheelchair rules); chapter 6a adds 38 (see EveryArmorShieldAndWeaponCarriesItsStatisticsAndTheCountsAreThePinnedOnes): the chapter's own text, 7 more sections' own text (5 with children, Shields and Attack Rolls), 12 of their
                                   // children, Price, Item Level and Shoddy Items, 3 armor rules, the 3 statistics sections (their children are paragraphs), 6 of the weapon rules, the weapon traits and the kinds of ammunition. Before that: chapter 1: the appendix's own intro rule, condition values, overriding conditions (3); chapter 4: the chapter's own introduction, the checks' own text, 4 sections of the checks,
                                   // 17 skills' descriptions, the lead of the skills, 2 subsections of Performance, 4 of the general actions, one of Crafting and the income table (33); chapter 7: the chapter's
                                   // own introduction, the 15 spellcasting sections (6 of them with their own text before their children), their 17 children, and two boxes among the spells (35); and the
                                   // rules of casting a ritual: the section's own text, its 5 children (the checks section holds the secondary checks) and the box of costs by creature level among the rituals (7)
     [InlineData("spell", 490)]    // chapter 7: 325 spell headers = 325 trait lines = 325 traditions lines, and the four tradition lists name the same (name, rank) pairs; one spell is dropped by a redaction row (324);
                                   // 147 focus spells and focus cantrips (147 headers = 147 trait lines = 147 level markers, 59 group headings = 59 bookmarks); 19 rituals (19 headers, and the book's list by rank names them)
-    [InlineData("action", 50)]    // chapter 4: the 23 bookmark children (6 general actions and 17 skills) are the 6 action headings and 17 skill headings of their ranges; 50 action headings in all,
+    [InlineData("action", 86)]    // chapter 9 adds 36 (16 basic actions, 10 specialty basic actions and 10 exploration activities, each a heading with an action icon or a trait line); chapter 4: the 23 bookmark children (6 general actions and 17 skills) are the 6 action headings and 17 skill headings of their ranges; 50 action headings in all,
                                   // 48 trait lines and 29 action icons (two jumps have no trait line, the activities have no icon), and the overview table of actions lists the same 50 (name, proficiency) pairs
     [InlineData("armor", 16)]     // chapter 6a: 12 suits of armor (13 rows of the two armor tables, less the row for wearing none, against 12 descriptions) and 4 shields (4 rows, 4 descriptions)
     [InlineData("weapon", 83)]    // chapter 6a: 84 rows of the weapon tables, less the alchemical bomb (the gear chapter's) = 83; 87 descriptions, less the bomb and the 4 kinds of ammunition, plus the fist's row, which has none = 83
@@ -347,7 +347,8 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Fact]
     public void EveryActionCarriesItsProficiency_AndItsSkillOrNone_AndTheCountsAreThePinnedOnes()
     {
-        var actions = Entries("action", PackId).ToList();
+        // The 50 actions of chapter 4; the basic actions and the exploration activities of chapter 9 have their own test (they have no skill and take every action cost).
+        var actions = Entries("action", PackId).Where(a => a.Source!.StartsWith("pc > Chapter 4", StringComparison.Ordinal)).ToList();
         var traitKeys = Entries("trait", PackId).Select(e => e.Id).ToHashSet();
         var skillKeys = _system.SheetRules!.Skills!.List.Select(s => s.Key).ToHashSet();
 
@@ -1212,9 +1213,66 @@ public class DegreesRulesPackTests : IAsyncLifetime
     }
 
     [Fact]
+    public void TheRulesOfPlay_AndTheBasicAndExplorationActions_CarryTheirCountsPinned()
+    {
+        // Chapter 9, the rules of "Playing the Game": each section titled in the section font is a rule (its own text, or its whole range with its children folded as paragraphs), a sidebar that states rules is a rule too.
+        var rules = Entries("rule", PackId).Where(r => r.Source!.StartsWith("pc > Chapter 8: Playing the Game", StringComparison.Ordinal)).ToList();
+        Assert.Equal(87, rules.Count);
+        Assert.All(rules, r => Assert.Equal("Playing the Game", (string)r.Properties["category"]));
+        var perSection = rules.GroupBy(r => r.Source!.Split(" > ").ElementAtOrDefault(2) ?? "(the chapter)").ToDictionary(g => g.Key, g => g.Count());
+        Assert.Equal(new Dictionary<string, int>
+        {
+            ["(the chapter)"] = 2, ["Making Choices"] = 1, ["Rules Overview"] = 2, ["Checks"] = 14, ["Damage Rolls"] = 5, ["Immunity, Weakness, and Resistance"] = 4, ["Hit Points, Healing, and Dying"] = 5,
+            ["Hero Points"] = 2, ["Actions"] = 11, ["Movement"] = 8, ["Effects"] = 1, ["Area"] = 5, ["Afflictions"] = 6, ["Perception and Detection"] = 6, ["Encounter Mode"] = 5, ["Exploration Mode"] = 4, ["Downtime Mode"] = 6,
+        }, perSection);
+
+        // 12 sidebars state rules and are taken (12 more are left out: examples, advice and lists that repeat other entries); each is named by its bookmark's path.
+        var sidebars = rules.Where(r => r.Source!.Contains("Sidebar", StringComparison.Ordinal)).Select(r => r.Id).Order().ToList();
+        Assert.Equal(new[]
+        {
+            "aid-details", "counteract-checks", "damage-types", "detecting-with-other-senses", "flat-checks", "fortune-and-misfortune", "game-conventions", "in-depth-action-rules",
+            "reactions-to-movement", "secret-check-rolls", "speaking", "tiny-creatures-and-flanking",
+        }, sidebars);
+        Assert.Equal("pc > Chapter 8: Playing the Game > Checks > Sidebars: Flat Checks & Secret Checks > Flat Checks", rules.Single(r => r.Id == "flat-checks").Source);
+        Assert.Equal("pc > Chapter 8: Playing the Game > Checks > Sidebars: Flat Checks & Secret Checks > Secret Checks", rules.Single(r => r.Id == "secret-check-rolls").Source);
+
+        // The ids: a name that is a shipped trait, condition, spell or familiar ability takes the suffix, and a name that is another rule's takes a name of its own (5 sections, 2 sidebars, the section of the checks).
+        Assert.Equal(new[] { "death-rule", "dying-rule", "light-rule", "resistance-rule", "structure-rule" }, rules.Where(r => r.Id.EndsWith("-rule", StringComparison.Ordinal)).Select(r => r.Id).Order());
+        Assert.Equal(new[] { "armor-class-and-saving-throws", "counteract-checks", "hit-points-and-healing", "how-checks-work", "how-damage-works", "making-attack-rolls", "secret-check-rolls" },
+            rules.Where(r => r.Id is "armor-class-and-saving-throws" or "counteract-checks" or "hit-points-and-healing" or "how-checks-work" or "how-damage-works" or "making-attack-rolls" or "secret-check-rolls").Select(r => r.Id).Order());
+
+        // The section that held the product line's name is called by a plain word, and nothing of the chapter says the name, a page, a chapter or another book.
+        var baseline = rules.Single(r => r.Name == "Baseline");
+        Assert.Equal("baseline", baseline.Id);
+        Assert.Equal("pc > Chapter 8: Playing the Game", baseline.Source);
+        Assert.All(rules, r => Assert.DoesNotMatch(@"\bpages? \d|Chapter \d|\bsidebar\b|\bother books\b|\bthis book\b|\bGM Core\b|\(\d{3}\)", r.Description));
+        Assert.All(rules, r => Assert.DoesNotMatch("(?i)path" + "finder", r.Id + " " + r.Name + " " + r.Description + " " + r.Source));
+
+        // The actions: 16 basic (a heading each, in one group), 10 specialty basic (the other group) and 10 exploration activities; the exploration activities have no icon and the basic ones all have one.
+        var actions = Entries("action", PackId).Where(a => a.Source!.StartsWith("pc > Chapter 8: Playing the Game", StringComparison.Ordinal)).ToList();
+        Assert.Equal(36, actions.Count);
+        var basic = new[] { "aid", "crawl", "delay", "drop-prone", "escape", "interact", "leap", "ready", "release", "seek", "sense-motive", "stand", "step", "stride", "strike", "take-cover" };
+        var specialty = new[] { "arrest-a-fall", "avert-gaze", "burrow", "dismiss", "fly-action", "grab-an-edge", "mount", "point-out", "raise-a-shield", "sustain" };
+        var exploration = new[] { "avoid-notice", "defend", "detect-magic-action", "follow-the-expert", "hustle", "investigate", "repeat-a-spell", "scout-action", "search", "sustain-an-effect" };
+        Assert.Equal(basic.Concat(specialty).Order(), actions.Where(a => a.Source!.EndsWith("Actions > Basic Actions", StringComparison.Ordinal)).Select(a => a.Id).Order());
+        Assert.Equal(exploration.Order(), actions.Where(a => a.Source!.EndsWith("Exploration Mode > Exploration Activities", StringComparison.Ordinal)).Select(a => a.Id).Order());
+        Assert.Equal(new[] { "detect-magic-action", "fly-action", "scout-action" }, actions.Where(a => a.Id.EndsWith("-action", StringComparison.Ordinal)).Select(a => a.Id).Order()); // named like a spell, a trait or a spell's cast: the suffix
+        Assert.All(actions, a => Assert.False(a.Properties.ContainsKey("skill"), a.Id)); // a basic action belongs to no skill
+        Assert.All(actions, a => Assert.Equal("untrained", (string)a.Properties["proficiency"])); // anyone can use it
+        Assert.Equal(new[] { 20, 1, 3, 2, 10 }, new[] { "one", "two", "reaction", "free", null }.Select(c => actions.Count(a => (a.Properties.TryGetValue("actions", out var v) ? (string)v : null) == c)));
+        Assert.Equal(new[] { 4, 11, 0 }, new[] { "trigger", "requirements", "frequency" }.Select(k => actions.Count(a => a.Properties.ContainsKey(k))));
+        // 36 headings, 30 of them with a trait line and 26 with an action icon (the importer counts them from the document; the exploration activities have no icon, six basic ones no trait line).
+        Assert.Equal(30, actions.Count(a => a.Properties.ContainsKey("traits")));
+        Assert.Equal(26, actions.Count(a => a.Properties.ContainsKey("actions")));
+        Assert.Equal(18, actions.Sum(a => a.Description!.Split('\n').Count(l => Regex.IsMatch(l, @"^\*\*(Critical Success|Success|Failure|Critical Failure)\.\*\*"))));
+        var traitKeys = Entries("trait", PackId).Select(e => e.Id).ToHashSet();
+        Assert.All(actions.SelectMany(TraitsOf), key => Assert.Contains(key, traitKeys));
+    }
+
+    [Fact]
     public void ThePackHoldsNothingElse_AndTheReportAgrees()
     {
-        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83 + 16 + 124 + 1 + 8 + 45 + 143 + 4 + 43 + 7 + 40 + 7 + 2 + 4 + 173 + 3 + 10 + 201 + 1 + 3 + 14 + 144 + 22 + 16 + 31 + 8 + 57; // 22 rules, 16 companions, 31 familiar abilities, 8 archetypes and their 57 feats (chapter 8d); the lessons rule, 3 classes, 14 subclasses and 144 class feats (chapter 8c); 16 gear rules and 124 gear entries (chapter 6b); then the ancestry rules, 8 ancestries, 45 heritages and 143 ancestry feats (chapter 7a); then 4 versatile heritages, their 43 feats, 7 rules and 40 backgrounds (chapter 7b); then 7 rules, 2 classes, 4 subclasses and 173 class feats (chapter 8a)
+        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83 + 16 + 124 + 1 + 8 + 45 + 143 + 4 + 43 + 7 + 40 + 7 + 2 + 4 + 173 + 3 + 10 + 201 + 1 + 3 + 14 + 144 + 22 + 16 + 31 + 8 + 57 + 87 + 36; // chapter 9: 87 rules (50 of sections, 12 of sidebars...) and 36 actions (see TheRulesOfPlay_AndTheBasicAndExplorationActions_CarryTheirCountsPinned); 22 rules, 16 companions, 31 familiar abilities, 8 archetypes and their 57 feats (chapter 8d); the lessons rule, 3 classes, 14 subclasses and 144 class feats (chapter 8c); 16 gear rules and 124 gear entries (chapter 6b); then the ancestry rules, 8 ancestries, 45 heritages and 143 ancestry feats (chapter 7a); then 4 versatile heritages, their 43 feats, 7 rules and 40 backgrounds (chapter 7b); then 7 rules, 2 classes, 4 subclasses and 173 class feats (chapter 8a)
         Assert.Equal(total, AllEntries(PackId).Count());
 
         // import-report.yaml holds counts and ids only; its totals are the importer's own and must match what loaded.
@@ -1229,9 +1287,9 @@ public class DegreesRulesPackTests : IAsyncLifetime
     {
         Assert.All(AllEntries(PackId), e =>
         {
-            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9:& ]+( > [A-Za-z: ,'!-]+){0,4})$", e.Source!); // chapters 1 to 7b (a title may end in an exclamation mark) (the ancestries chapter's title has an ampersand) (the chapter title is the book's, with its number, then up to a section and a skill or a child section, and the rituals' rules are four deep; a title may have a comma or a hyphen); a later chapter widens this
+            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9:& ]+( > [A-Za-z0-9: ,'!&-]+){0,5})$", e.Source!); // chapters 1 to 7b (a title may end in an exclamation mark) (the ancestries chapter's title has an ampersand) (the chapter title is the book's, with its number, then up to a section and a skill or a child section, and the rituals' rules are four deep; a title may have a comma or a hyphen); a later chapter widens this
             Assert.DoesNotContain("homebrew", e.Tags);
-            Assert.DoesNotMatch(@"(?<!Chapter )\d", e.Source!); // no page numbers (a chapter's own number is not one)
+            Assert.DoesNotMatch(@"(?<!Chapter )(?<!Step )(?<!D)(?<!\d)\d", e.Source!); // no page numbers (a chapter's own number, a step's and the d20's are not one)
         });
     }
 

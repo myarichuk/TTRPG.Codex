@@ -2027,6 +2027,219 @@
   redactionRows: []
   ids:
     - "sign-language-rule"
+- chapter: "playing"
+  parser: "actions"
+  target: "action"
+  entries: 26
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: [388, 389, 460, 461]
+  ids:
+    - "aid"
+    - "arrest-a-fall"
+    - "avert-gaze"
+    - "burrow"
+    - "crawl"
+    - "delay"
+    - "dismiss"
+    - "drop-prone"
+    - "escape"
+    - "fly-action"
+    - "grab-an-edge"
+    - "interact"
+    - "leap"
+    - "mount"
+    - "point-out"
+    - "raise-a-shield"
+    - "ready"
+    - "release"
+    - "seek"
+    - "sense-motive"
+    - "stand"
+    - "step"
+    - "stride"
+    - "strike"
+    - "sustain"
+    - "take-cover"
+- chapter: "playing"
+  parser: "actions"
+  target: "action"
+  entries: 10
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "avoid-notice"
+    - "defend"
+    - "detect-magic-action"
+    - "follow-the-expert"
+    - "hustle"
+    - "investigate"
+    - "repeat-a-spell"
+    - "scout-action"
+    - "search"
+    - "sustain-an-effect"
+- chapter: "playing"
+  parser: "actions"
+  target: "rule"
+  entries: 2
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "specialty-basic-actions"
+    - "using-basic-actions"
+- chapter: "playing"
+  parser: "actions"
+  target: "rule"
+  entries: 1
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "exploration-activities"
+- chapter: "playing"
+  parser: "rules"
+  target: "rule"
+  entries: 1
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  redactionRows: [421, 422, 423, 424, 425]
+  ids:
+    - "playing-the-game"
+- chapter: "playing"
+  parser: "rules"
+  target: "rule"
+  entries: 2
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  redactionRows: [403, 404, 405, 406, 407, 427, 428, 429, 430, 431, 432, 433, 434, 435]
+  ids:
+    - "game-conventions"
+    - "rules-overview"
+- chapter: "playing"
+  parser: "rules"
+  target: "rule"
+  entries: 0
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 5
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+- chapter: "playing"
+  parser: "rules"
+  target: "rule"
+  entries: 1
+  droppedSidebarBlocks: 3
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  redactionRows: [399, 400, 401]
+  ids:
+    - "effects"
+- chapter: "playing"
+  parser: "rules"
+  target: "rule"
+  entries: 5
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  redactionRows: [395, 480]
+  ids:
+    - "area"
+    - "burst"
+    - "cone"
+    - "emanation"
+    - "line"
+- chapter: "playing"
+  parser: "rules"
+  target: "rule"
+  entries: 75
+  droppedSidebarBlocks: 35
+  droppedOpenerBlocks: 7
+  pageReferencesLeft: 0
+  redactionRows: [386, 387, 390, 391, 392, 393, 394, 396, 397, 398, 402, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 419, 420, 426, 436, 437, 438, 439, 440, 441, 442, 443, 444, 445, 446, 447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494]
+  ids:
+    - "actions"
+    - "actions-with-triggers"
+    - "activities"
+    - "activities-in-encounters"
+    - "aid-details"
+    - "armor-class-and-saving-throws"
+    - "baseline"
+    - "counteract-checks"
+    - "cover"
+    - "damage-and-conditions"
+    - "damage-types"
+    - "death-rule"
+    - "describing-heroic-deeds"
+    - "detecting-creatures"
+    - "detecting-with-other-senses"
+    - "disrupting-actions"
+    - "downtime-mode"
+    - "dying-rule"
+    - "earning-income"
+    - "exploration-mode"
+    - "falling"
+    - "flanking"
+    - "flat-checks"
+    - "format"
+    - "fortune-and-misfortune"
+    - "gaining-and-losing-actions"
+    - "getting-knocked-out"
+    - "hero-points"
+    - "hit-points-and-healing"
+    - "how-checks-work"
+    - "how-damage-works"
+    - "immunity"
+    - "in-depth-action-rules"
+    - "instant-death"
+    - "light-rule"
+    - "long-term-rest"
+    - "making-attack-rolls"
+    - "making-choices"
+    - "movement-types"
+    - "multiple-exposures"
+    - "other-actions"
+    - "other-activities"
+    - "perception"
+    - "perception-and-detection"
+    - "reactions-in-encounters"
+    - "reactions-to-movement"
+    - "removing-afflictions"
+    - "resistance-rule"
+    - "rest-and-daily-preparations"
+    - "retraining"
+    - "secret-check-rolls"
+    - "senses"
+    - "shopping-and-crafting"
+    - "skill-checks"
+    - "speaking"
+    - "special-battles"
+    - "special-senses"
+    - "spell-attack-rolls"
+    - "spell-dc"
+    - "step-1-roll-d20"
+    - "step-1-roll-damage-dice"
+    - "step-2-calculate-result"
+    - "step-2-damage-type"
+    - "step-3-apply-immunities-weaknesses-and-resistances"
+    - "step-3-compare-to-dc"
+    - "step-4-degree-of-success"
+    - "step-4-reduce-hit-points"
+    - "structure-rule"
+    - "tactical-movement"
+    - "terrain"
+    - "tiny-creatures-and-flanking"
+    - "travel-speed"
+    - "turns"
+    - "virulent-afflictions"
+    - "weakness"
 - chapter: "skills"
   parser: "actions"
   target: "action"
