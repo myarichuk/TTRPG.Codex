@@ -106,6 +106,14 @@ public sealed class TakeRow
     public bool RunsToTitleFor(IReadOnlyList<string> path) => RunsToTitle.Any(p => p.SequenceEqual(path, StringComparer.OrdinalIgnoreCase));
 
     /// <summary>
+    /// The bookmark paths whose next section starts on a page of its own that opens with no block of that section's title (the book's class summaries open with a list of entries): the section ends where its
+    /// own last page does. For any other path a missing title still fails the run, since the end of the range is then unknown.
+    /// </summary>
+    public List<List<string>> EndsAtPage { get; set; } = new();
+
+    public bool EndsAtPageFor(IReadOnlyList<string> path) => EndsAtPage.Any(p => p.SequenceEqual(path, StringComparer.OrdinalIgnoreCase));
+
+    /// <summary>
     /// For the <c>actions</c> parser: the name, in our own words, of the one rule entry made from the section's own prose, the text between the start of the range and its first
     /// skill or subsection heading. Without it that text must be a table (the proficiency table of the general skill actions), which is read past.
     /// </summary>
@@ -208,6 +216,27 @@ public sealed class TakeRow
 
     public List<string> ReadPastChildren { get; set; } = new();
 
+    /// <summary>
+    /// Pages of the row where a sidebar fills a whole column, so the text that opens the next column is the page's own going on from the page before and not the sidebar's continuation (the blocks stage
+    /// flags any column that opens with body text after one that ended inside a sidebar).
+    /// </summary>
+    public List<int> SidebarFillsColumn { get; set; } = new();
+
+    /// <summary>
+    /// For a <c>classes</c> row: the title of the class feature whose children (headings in the block-header font, with no action icon) are the class's subclasses. Each becomes a <c>subclass</c> entry.
+    /// Left out, the class has none, and such a heading fails the run.
+    /// </summary>
+    public string? SubclassFeature { get; set; }
+
+    /// <summary>For a <c>classes</c> row: the attribute key (<c>con</c>) each saving throw's name is on, by name, as the book's own rules say it. A saving throw the table lacks fails the run.</summary>
+    public Dictionary<string, string> SaveAttributes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// For a <c>classes</c> row: a name the class's advancement table prints that the feature's heading says otherwise, by the table's name (the book names one feature two ways). The reason goes in
+    /// <see cref="CountsDiffer"/>. Any other difference between the table and the feature rows fails the run.
+    /// </summary>
+    public Dictionary<string, string> AdvancementNames { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>True for the row that holds the spells the four tradition lists name: its level words include <c>spell</c>. Only these are counted against the lists.</summary>
     public bool OnTraditionLists => LevelWords.Contains("spell", StringComparer.OrdinalIgnoreCase);
 
@@ -235,10 +264,10 @@ public sealed class PlannedRow
 
 public sealed partial class TakeList
 {
-    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions", "spelllists", "items", "ancestries", "versatile", "backgrounds" };
+    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions", "spelllists", "items", "ancestries", "versatile", "backgrounds", "classes" };
 
     /// <summary>The parsers that exist. Any other parser in the list fails the run, so a row cannot silently take nothing.</summary>
-    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions", "spelllists", "items", "ancestries", "versatile", "backgrounds" };
+    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions", "spelllists", "items", "ancestries", "versatile", "backgrounds", "classes" };
 
     public List<TakeRow> Rows { get; set; } = new();
 
@@ -313,10 +342,11 @@ public sealed partial class TakeList
 
             // The ancestries parser also writes the heritages and the ancestry feats of the ancestries it reads.
             // The versatile parser writes heritages, their feats and the introduction of a section of several as a rule; the backgrounds parser writes backgrounds and the introduction as a rule.
-            if (Rows[i].Parser is "ancestries" or "versatile" or "backgrounds")
+            if (Rows[i].Parser is "ancestries" or "versatile" or "backgrounds" or "classes")
             {
                 var needed = Rows[i].Parser switch
                 {
+                    "classes" => new[] { ("subclass", "subclasses"), ("feat", "feats") },
                     "ancestries" => new[] { ("heritage", "heritages"), ("feat", "feats") },
                     "versatile" => new[] { ("heritage", "heritages"), ("feat", "feats"), ("rule", "rules") },
                     _ => new[] { ("rule", "rules") },

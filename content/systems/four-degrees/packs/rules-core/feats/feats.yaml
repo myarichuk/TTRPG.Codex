@@ -56,6 +56,23 @@
     level: 13
     traits: ["human"]
     special: "You can select this feat multiple times, choosing a different feat each time."
+- id: "advanced-weapon-training"
+  name: "Advanced Weapon Training"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You've studied the art of wielding an advanced weapon. Choose a weapon group. You gain proficiency with all advanced weapons in that group as if they were martial weapons of their weapon group."
+  properties:
+    level: 6
+    traits: ["fighter"]
+- id: "advantageous-assault"
+  name: "Advantageous Assault"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    After compromising your enemy's movement, you deliver a more deadly blow. Make a Strike against a creature that is grabbed, prone, or restrained. You gain a circumstance bonus to damage on this Strike equal to the number of weapon damage dice, or that number + 2 if you're wielding the weapon in two hands. The Strike gains the following failure effect.
+    **Failure.** You deal damage to the target equal to the number of weapon damage dice, or that number + 2 if you're wielding the weapon in two hands. This damage has the same damage type as the weapon.
+  properties:
+    level: 6
+    actions: "one"
+    traits: ["fighter", "press"]
 - id: "ageless-patience"
   name: "Ageless Patience"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Elf > Ancestry Feats"
@@ -65,6 +82,22 @@
   properties:
     level: 5
     traits: ["elf"]
+- id: "aggressive-block"
+  name: "Aggressive Block"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You push back as you block, knocking your foe away or off balance. You use your shield to push the triggering creature, either automatically Shoving it 5 feet or causing it to become off-guard until the start of your next turn. The triggering creature chooses whether to be moved or become off-guard. If it chooses to be moved, you choose the direction. If the Shove would cause it to hit a solid object, enter a square of difficult terrain, or enter another creature's space, it must become off-guard instead of being moved."
+  properties:
+    level: 2
+    actions: "free"
+    traits: ["fighter"]
+    trigger: "You use the Shield Block reaction, and the opponent that triggered Shield Block is adjacent to you and is your size or smaller."
+- id: "agile-grace"
+  name: "Agile Grace"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Your graceful moves with agile weapons are beyond compare. Your multiple attack penalty with agile weapons and agile unarmed attacks becomes -3 for your second attack and -6 for subsequent attacks (rather than -4 and -8)."
+  properties:
+    level: 10
+    traits: ["fighter"]
 - id: "alchemical-crafting"
   name: "Alchemical Crafting"
   source: "pc > Chapter 5: Feats"
@@ -73,6 +106,18 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Crafting"
+- id: "analyze-weakness"
+  name: "Analyze Weakness"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    Your knowledge of a creature's physiology helps you attack with pinpoint accuracy. You carefully study a creature that you've identified to scope out particularly weak points in its positioning or physical form. The next time you deal sneak attack damage to the chosen creature with a Strike before the end of your turn, add an additional 2d6 precision damage.
+    At 11th level, the additional damage becomes 3d6, and at 17th level it becomes 4d6.
+  properties:
+    level: 6
+    actions: "one"
+    traits: ["rogue"]
+    prerequisites: "sneak attack 2d6"
+    requirements: "You have identified a creature with Recall Knowledge."
 - id: "ancestral-longevity"
   name: "Ancestral Longevity"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Elf > Ancestry Feats"
@@ -125,6 +170,14 @@
   properties:
     level: 1
     traits: ["gnome"]
+- id: "anticipate-ambush"
+  name: "Anticipate Ambush"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You keep watch for any hidden creatures or dangerous sites, moving at half your travel Speed. If you're Anticipating an Ambush at the start of an encounter, you roll a Perception check for initiative, and all enemies rolling Stealth for initiative take a -2 circumstance penalty to their Stealth checks."
+  properties:
+    level: 6
+    traits: ["exploration", "rogue"]
+    prerequisites: "expert in Stealth"
 - id: "arcane-sense"
   name: "Arcane Sense"
   source: "pc > Chapter 5: Feats"
@@ -141,6 +194,15 @@
     level: 1
     traits: ["general"]
     special: "You can select this feat more than once. Each time, you become trained in the next type of armor, as detailed above."
+- id: "assisting-shot"
+  name: "Assisting Shot"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Using your last shot to gauge your accuracy, you can fire off a quick shot to interfere with a foe in combat. Make a Strike with a ranged weapon. If the Strike hits, the next creature other than you to attack the same target before the start of your next turn gains a +1 circumstance bonus to their roll, or a +2 circumstance bonus if your Strike was a critical hit."
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["fighter", "press"]
+    requirements: "You are wielding a ranged weapon."
 - id: "assurance"
   name: "Assurance"
   source: "pc > Chapter 5: Feats"
@@ -191,6 +253,15 @@
   properties:
     level: 9
     traits: ["leshy"]
+- id: "barreling-charge"
+  name: "Barreling Charge"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You rush forward, moving enemies aside to reach your foe. You Stride, attempting to move through your enemies' spaces. Roll an Athletics check and compare the result to the Fortitude DC of each creature whose space you attempt to move through during your Stride, moving through its space on a success but ending your movement before entering its space on a failure. You can then Strike, regardless of how your Stride ended. You can use Barreling Charge to Burrow, Climb, Fly, or Swim instead of Stride if you have the corresponding movement type."
+  properties:
+    level: 4
+    actions: "two"
+    traits: ["fighter", "flourish"]
+    prerequisites: "trained in Athletics"
 - id: "battle-cry"
   name: "Battle Cry"
   source: "pc > Chapter 5: Feats"
@@ -237,6 +308,24 @@
     level: 7
     traits: ["general", "skill"]
     prerequisites: "master in Occultism"
+- id: "blade-brake"
+  name: "Blade Brake"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You plow your weapon into a floor, wall, or another sturdy surface, anchoring yourself in place. If you would be moved 20 feet or more, you are moved only 5 feet. Otherwise, you don't move at all."
+  properties:
+    level: 2
+    actions: "reaction"
+    traits: ["fighter", "manipulate"]
+    trigger: "You would be moved by a forced movement effect."
+    requirements: "You are wielding a melee weapon and are within reach of a hard surface."
+- id: "blank-slate"
+  name: "Blank Slate"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Your deceptions confound even the most powerful magic that could spy on you. Detection, revelation, and scrying effects pass right over you, your possessions, and your auras, detecting nothing unless the detecting effect has a counteract rank of 10 or higher. For example, detect magic would still detect other magic in the area but not any magic on you, truesight wouldn't reveal you, locate or scrying wouldn't find you, and so on."
+  properties:
+    level: 16
+    traits: ["rogue"]
+    prerequisites: "legendary in Deception"
 - id: "blessed-blood"
   name: "Blessed Blood"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Nephilim > Feats"
@@ -244,6 +333,26 @@
   properties:
     level: 5
     traits: ["nephilim"]
+- id: "blind-fight-fighter"
+  name: "Blind-Fight"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    Your battle instincts make you more aware of concealed and invisible opponents. You don't need to succeed at a flat check to target concealed creatures. You're not off-guard to creatures that are hidden from you (unless you're off-guard to them for reasons other than the hidden condition), and you need only a successful DC 5 flat check to target a hidden creature.
+    While you're adjacent to an undetected creature of your level or lower, it is instead only hidden from you.
+  properties:
+    level: 8
+    traits: ["fighter"]
+    prerequisites: "master in Perception"
+- id: "blind-fight-rogue"
+  name: "Blind-Fight"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    Your battle instincts make you more aware of concealed and invisible opponents. You don't need to succeed at a flat check to target concealed creatures. You're not off-guard to creatures that are hidden from you (unless you're off-guard to them for reasons other than the hidden condition), and you need only a successful DC 5 flat check to target a hidden creature.
+    While you're adjacent to an undetected creature of your level or lower, it is instead only hidden from you.
+  properties:
+    level: 8
+    traits: ["rogue"]
+    prerequisites: "master in Perception"
 - id: "bloody-blows"
   name: "Bloody Blows"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Orc > Orc Ancestry Feats"
@@ -251,6 +360,16 @@
   properties:
     level: 5
     traits: ["orc"]
+- id: "bloody-debilitation"
+  name: "Bloody Debilitation"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    Your attacks slice arteries and veins. Add the following debilitation to the list you can choose from when you use Debilitating Strike.
+    - **Debilitation.** The target takes 3d6 persistent bleed damage.
+  properties:
+    level: 12
+    traits: ["rogue"]
+    prerequisites: "trained in Medicine, Debilitating Strike"
 - id: "bonded-animal"
   name: "Bonded Animal"
   source: "pc > Chapter 5: Feats"
@@ -283,6 +402,13 @@
     traits: ["human"]
     frequency: "once per day"
     trigger: "You lose the dying condition."
+- id: "boundless-reprisals"
+  name: "Boundless Reprisals"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "With a sixth sense for the flow of combat, you can quickly react to any situation as required. At the start of each enemy's turn, you gain a reaction you can use only during that turn for any reaction from a fighter feat or class feature."
+  properties:
+    level: 20
+    traits: ["fighter"]
 - id: "break-curse"
   name: "Break Curse"
   source: "pc > Chapter 5: Feats"
@@ -298,6 +424,45 @@
   properties:
     level: 1
     traits: ["general"]
+- id: "brutal-beating"
+  name: "Brutal Beating"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Your critical hits shakes your foes' confidence. Whenever your Strike is a critical hit and deals damage, the target is frightened 1."
+  properties:
+    level: 2
+    traits: ["emotion", "fear", "mental", "rogue"]
+    prerequisites: "ruffian racket"
+- id: "brutal-finish"
+  name: "Brutal Finish"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    Your final blow can make an impact even if it rebounds off a foe's defenses. Make a Strike with a melee weapon you're wielding in two hands. After the Strike, your turn ends. The Strike deals one additional weapon damage die, or two additional weapon damage dice if you're at least 18th level. The Strike also gains the following failure effect.
+    **Failure.** You deal damage equal to one weapon damage die of the required weapon. Increase this to two dice if you're at least 18th level.
+  properties:
+    level: 12
+    actions: "one"
+    traits: ["fighter", "press"]
+    requirements: "You are wielding a melee weapon in two hands."
+- id: "brutish-shove"
+  name: "Brutish Shove"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    Using the momentum of your last attack to throw your weight into another, you make your opponent stumble back. Make a Strike with a two-handed melee weapon. If you hit a target that is your size or smaller, that creature is off-guard until the end of your current turn, and you can automatically Shove it, with the same benefits as the Shove action (including the critical success effect, if your Strike was a critical hit). If you move to follow the target, your movement doesn't trigger reactions.
+    This Strike has the following failure effect.
+    **Failure.** The target becomes off-guard until the end of your current turn.
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["fighter", "press"]
+    requirements: "You are wielding a two-handed melee weapon."
+- id: "bullseye"
+  name: "Bullseye"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You carefully take aim to avoid your foe's concealment and cover. On your next Strike with a thrown weapon before the end of your turn, you gain a +1 circumstance bonus to your attack roll and ignore your target's concealed condition, as well as the target's lesser cover or standard cover; if the target had greater cover, they instead have only standard cover against the Strike."
+  properties:
+    level: 8
+    actions: "one"
+    traits: ["rogue"]
 - id: "burn-it"
   name: "Burn It!"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Goblin > Ancestry Feats"
@@ -375,6 +540,16 @@
     level: 13
     traits: ["nephilim"]
     prerequisites: "Angel Blood, Law Guardian Blood, Freedom Spirit Blood, or another lineage feat associated with celestials"
+- id: "certain-strike"
+  name: "Certain Strike"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    Even when you don't hit squarely, you can still score a glancing blow. Make a melee Strike. It gains the following failure effect.
+    **Failure.** Your attack deals any damage it would have dealt on a hit, excluding all damage dice. (This removes damage dice from weapon runes, spells, and special abilities, in addition to weapon damage dice.)
+  properties:
+    level: 10
+    actions: "one"
+    traits: ["fighter", "press"]
 - id: "changeling-lore"
   name: "Changeling Lore"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Changeling > Feats"
@@ -402,6 +577,16 @@
     level: 1
     traits: ["goblin"]
     special: "If you have the strong-stomached goblin heritage, increase the bonuses to +2."
+- id: "clever-gambit"
+  name: "Clever Gambit"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Your battle tactics are aided by assessing your foe's capabilities and range. You Step or Stride; this movement doesn't trigger reactions from the triggering creature."
+  properties:
+    level: 2
+    actions: "reaction"
+    traits: ["rogue"]
+    prerequisites: "mastermind racket"
+    trigger: "Your Strike critically hits and deals damage to a creature you've identified with Recall Knowledge."
 - id: "clever-improviser"
   name: "Clever Improviser"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Human > Human Ancestry Feats"
@@ -438,6 +623,33 @@
     level: 15
     traits: ["general", "skill"]
     prerequisites: "legendary in Athletics"
+- id: "cloud-step"
+  name: "Cloud Step"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Using fantastic acrobatic skill, you can walk for brief stretches across insubstantial surfaces. When you Stride, you can move across water, air, and solid surfaces that can hold only limited weight as if they were normal ground. If you Stride over a trap with a weight-sensitive pressure plate, you don't trigger it. At the end of your turn, you sink, fall, break fragile surfaces, or trigger traps as normal for your current location."
+  properties:
+    level: 16
+    traits: ["rogue"]
+    prerequisites: "legendary in Acrobatics"
+- id: "cognitive-loophole"
+  name: "Cognitive Loophole"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You can find a loophole in a mental effect to temporarily overcome it. Until the end of your next turn, you ignore a single mental effect. You can suppress a particular effect using Cognitive Loophole only once. You can't use Cognitive Loophole to suppress an effect you chose to have affect you."
+  properties:
+    level: 16
+    actions: "reaction"
+    traits: ["rogue"]
+    trigger: "Your turn ends."
+    requirements: "You are currently affected by a mental effect."
+    special: "You can use this reaction even if the mental effect is preventing you from using reactions."
+- id: "combat-assessment"
+  name: "Combat Assessment"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You make a telegraphed attack to learn about your foe. Make a melee Strike. On a hit, you can immediately attempt a check to Recall Knowledge about the target. On a critical hit, you gain a +2 circumstance bonus to the check to Recall Knowledge. The target is temporarily immune to Combat Assessment for 1 day."
+  properties:
+    level: 1
+    actions: "one"
+    traits: ["fighter"]
 - id: "combat-climber"
   name: "Combat Climber"
   source: "pc > Chapter 5: Feats"
@@ -446,6 +658,15 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Athletics"
+- id: "combat-grab"
+  name: "Combat Grab"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Using your prior attack to shift your opponent's guard, you take another swing and grab them. Make a melee Strike while keeping one hand free. If the Strike hits, you grab the target using your free hand. The creature remains grabbed until the end of your next turn or until it Escapes, whichever comes first."
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["fighter", "press"]
+    requirements: "You have one hand free, and your target is within reach of that hand."
 - id: "communal-crafting"
   name: "Communal Crafting"
   source: "pc > Chapter 5: Feats"
@@ -503,6 +724,28 @@
     level: 15
     traits: ["general", "skill"]
     prerequisites: "legendary in Crafting"
+- id: "crashing-slam"
+  name: "Crashing Slam"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You can dash your foe to the ground with a single blow. If the Strike you make with Slam Down hits, you can automatically get a critical success on your Trip instead of rolling a check. (Both the Strike and Trip still count toward your multiple attack penalty.) If you used a two-handed melee weapon for the Strike, you can use the weapon's damage die size instead of the regular die size for the damage from a critical Trip."
+  properties:
+    level: 10
+    traits: ["fighter"]
+    prerequisites: "Slam Down"
+- id: "critical-debilitation"
+  name: "Critical Debilitation"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    Your debilitations are especially effective on your most powerful attacks. Whenever you critically succeed at an attack roll against an enemy and use Debilitating Strike, add the following debilitation to the list you can choose from.
+    - **Debilitation.** The target attempts a Fortitude save against your class DC with the following effects.
+    **Critical Success.** The target is unaffected.
+    **Success.** The target is slowed 1 until the end of your next turn.
+    **Failure.** The target is slowed 2 until the end of your next turn.
+    **Critical Failure.** The target is paralyzed until the end of your next turn.
+  properties:
+    level: 12
+    traits: ["incapacitation", "rogue"]
+    prerequisites: "Debilitating Strike"
 - id: "cuckoo-hag-mother"
   name: "Cuckoo Hag Mother"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Changeling > Feats"
@@ -519,6 +762,16 @@
   properties:
     level: 5
     traits: ["halfling"]
+- id: "cut-from-the-air"
+  name: "Cut From the Air"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You can knock aside ranged attacks. You gain a +4 circumstance bonus to AC against the triggering attack. If the attack misses, you knocked or cut it out of the air."
+  properties:
+    level: 10
+    actions: "reaction"
+    traits: ["fighter"]
+    trigger: "You are the target of a physical ranged Strike."
+    requirements: "You're aware of the attack, not off-guard against it, and either have a hand free or are wielding a melee weapon."
 - id: "dance-underfoot"
   name: "Dance Underfoot"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Halfling > Ancestry Feats"
@@ -527,6 +780,47 @@
     level: 9
     traits: ["halfling"]
     prerequisites: "Step Lively"
+- id: "dashing-strike"
+  name: "Dashing Strike"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Springing away from one foe, you Strike at another. Stride up to your Speed, but you must end that movement within melee reach of a different enemy. At the end of your movement, make a melee Strike against an enemy now within reach. You can use Dashing Strike while Burrowing, Climbing, Flying, or Swimming instead of Striding if you have the corresponding movement type."
+  properties:
+    level: 12
+    actions: "one"
+    traits: ["fighter", "press"]
+    requirements: "You are adjacent to an enemy."
+- id: "dazing-blow"
+  name: "Dazing Blow"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    You pummel a held foe, hoping to stagger them. Make a melee Strike against a creature you have grabbed. The weapon damage from this Strike is bludgeoning damage. If the Strike hits, the creature must attempt a Fortitude save against your class DC; this is an incapacitation effect.
+    **Critical Success.** The creature is unaffected.
+    **Success.** The creature is stunned 1.
+    **Failure.** The creature is stunned 2.
+    **Critical Failure.** The creature is stunned 3.
+  properties:
+    level: 6
+    actions: "one"
+    traits: ["fighter", "press"]
+    requirements: "You have a creature grabbed."
+- id: "debilitating-shot"
+  name: "Debilitating Shot"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Aiming for a weak point, you impede your foe with a precise shot. Make a ranged weapon Strike. If it hits and deals damage, the target is slowed 1 until the end of its next turn."
+  properties:
+    level: 10
+    actions: "two"
+    traits: ["fighter", "flourish"]
+- id: "defensive-roll"
+  name: "Defensive Roll"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Dropping into a roll to disperse the force of the blow, you can partially evade a lethal attack and stay conscious. You take half damage from the triggering attack."
+  properties:
+    level: 14
+    actions: "free"
+    traits: ["rogue"]
+    frequency: "once per 10 minutes"
+    trigger: "A physical attack would reduce you to 0 Hit Points."
 - id: "defy-death"
   name: "Defy Death"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Orc > Orc Ancestry Feats"
@@ -543,6 +837,20 @@
     level: 5
     traits: ["dwarf"]
     prerequisites: "darkvision"
+- id: "delay-trap"
+  name: "Delay Trap"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    You try to jam the workings of a trap to delay its effects. Attempt a Thievery check to Disable a Device on the trap with the following results instead of the normal ones for the action.
+    **Critical Success.** You either prevent the trap from being triggered or delay the activation until the start or end of your next turn.
+    **Success.** As above, but the GM chooses whichever is worse for you.
+    **Failure.** No effect.
+    **Critical Failure.** You're off-guard until the start of your next turn.
+  properties:
+    level: 8
+    actions: "reaction"
+    traits: ["rogue"]
+    trigger: "A trap within your reach is triggered."
 - id: "demon-blood"
   name: "Demon Blood"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Nephilim > Feats"
@@ -552,6 +860,26 @@
   properties:
     level: 1
     traits: ["lineage", "nephilim"]
+- id: "desperate-finisher"
+  name: "Desperate Finisher"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You throw everything you have into one last, reckless press. Use a single action that you know with the press trait. You forgo the ability to use reactions until the start of your next turn. This press uses your multiple attack penalty, as normal."
+  properties:
+    level: 14
+    actions: "reaction"
+    traits: ["fighter", "press"]
+    trigger: "You complete the last action on your turn, and your turn has not ended yet."
+- id: "determination"
+  name: "Determination"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    Your training allows you to shrug off your foes' spells and conditions when the need is dire. Choose a single nonpermanent condition, spell, or magical effect that is affecting you. If you chose a condition, its effect on you ends. If you chose a spell or other magical effect, attempt to counteract the spell (your counteract rank is equal to half your level, rounded up, and you attempt a Will save as your counteract check).
+    This doesn't remove any Hit Point damage you already took from the spell or condition, and it removes the effect from only you, not from other creatures or the environment around you. It can't remove an ongoing affliction or prevent such an affliction from inflicting conditions on you later. It can't remove conditions occurring automatically due to your situation or positioning (such as prone or flanked).
+  properties:
+    level: 14
+    actions: "one"
+    traits: ["concentrate", "fighter"]
+    frequency: "once per day"
 - id: "devil-blood"
   name: "Devil Blood"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Nephilim > Feats"
@@ -566,6 +894,61 @@
   properties:
     level: 1
     traits: ["general"]
+- id: "disarming-stance"
+  name: "Disarming Stance"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You adopt a fencing stance that improves your control over your weapon. While you are in this stance, you gain a +1 circumstance bonus to Athletics checks to Disarm and a +2 circumstance bonus to your Reflex DC when defending against checks to Disarm you. In addition, you can attempt to Disarm creatures up to two sizes larger than you."
+  properties:
+    level: 6
+    actions: "one"
+    traits: ["fighter", "stance"]
+    prerequisites: "trained in Athletics"
+    requirements: "You are wielding a single one-handed melee weapon and hold nothing else in your hands."
+- id: "disarming-twist"
+  name: "Disarming Twist"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    After your initial attack redirects your foe's defenses, your follow-up wrests their weapon from their grasp. Make a melee Strike with a one-handed melee weapon. In addition to its other effects, this Strike gains the success and critical success effects of the Disarm action. The Strike also has the following failure effect.
+    **Failure.** The target is off-guard until the end of your current turn.
+  properties:
+    level: 10
+    actions: "one"
+    traits: ["fighter", "press"]
+    prerequisites: "trained in Athletics"
+    requirements: "You are wielding a single one-handed melee weapon and hold nothing else in your hands."
+    special: "If you're in Disarming Stance, you gain a +1 circumstance bonus to the attack roll."
+- id: "disorienting-opening"
+  name: "Disorienting Opening"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You use your foes' openings to expose even greater weaknesses. When you hit a creature as part of a Reactive Strike, that creature becomes off-guard until the start of your next turn."
+  properties:
+    level: 8
+    traits: ["fighter"]
+    prerequisites: "Reactive Strike"
+- id: "dispelling-slice"
+  name: "Dispelling Slice"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Your sneak attack slices through the threads binding magic to a target. Make a Strike against an off-guard creature. If your Strike deals sneak attack damage, you attempt to counteract a single spell of your choice active on the target. Your counteract rank is equal to half your level (rounded up), and your counteract check modifier is equal to your class DC - 10."
+  properties:
+    level: 16
+    actions: "two"
+    traits: ["rogue"]
+- id: "disruptive-stance"
+  name: "Disruptive Stance"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "The slightest distraction can provoke your wrath, and you're prepared to foil enemies' actions. As long as you are in this stance, you can use Reactive Strike when a creature within your reach uses a concentrate action, in addition to manipulate and move actions. Furthermore, you disrupt a triggering concentrate or manipulate action if your Strike hits (not only if it's a critical hit)."
+  properties:
+    level: 10
+    actions: "one"
+    traits: ["fighter", "stance"]
+- id: "distracting-feint"
+  name: "Distracting Feint"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Your Feints are far more distracting than normal. While a creature is off-guard by your Feint, it also takes a -2 circumstance penalty to Perception checks and Reflex saves."
+  properties:
+    level: 2
+    traits: ["rogue"]
+    prerequisites: "scoundrel racket"
 - id: "distracting-shadows"
   name: "Distracting Shadows"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Halfling > Ancestry Feats"
@@ -604,6 +987,42 @@
     actions: "two"
     traits: ["divine", "morph", "nephilim"]
     frequency: "once per day"
+- id: "double-shot"
+  name: "Double Shot"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You shoot twice in blindingly fast succession. Make two Strikes, each against a separate target and with a -2 penalty. Both attacks count toward your multiple attack penalty, but the penalty doesn't increase until after you've made both of them."
+  properties:
+    level: 4
+    actions: "two"
+    traits: ["fighter", "flourish"]
+    requirements: "You are wielding a ranged weapon with reload 0."
+- id: "double-slice"
+  name: "Double Slice"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    You lash out at your foe with both weapons. Make two Strikes, one with each of your two melee weapons, each using your current multiple attack penalty. Both Strikes must have the same target. If the second Strike is made with a weapon that doesn't have the agile trait, it takes a -2 penalty.
+    If both attacks hit, combine their damage, and then add any other applicable effects from both weapons. You add any precision damage only once, to the attack of your choice. Combine the damage from both Strikes and apply resistances and weaknesses only once. This counts as two attacks when calculating your multiple attack penalty.
+  properties:
+    level: 1
+    actions: "two"
+    traits: ["fighter"]
+    requirements: "You are wielding two melee weapons, each in a different hand."
+- id: "dread-striker"
+  name: "Dread Striker"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You capitalize on your enemies' fear to slip past their defenses. Any creature that has the frightened condition is also off-guard against your attacks."
+  properties:
+    level: 4
+    traits: ["rogue"]
+- id: "dual-handed-assault"
+  name: "Dual-Handed Assault"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You snap your free hand over to grip your weapon just long enough to add momentum and deliver a more powerful blow to your opponent. Make a Strike with the required weapon. You quickly switch your grip during the Strike in order to make the attack with two hands. If the weapon doesn't normally have the two-hand trait, increase its weapon damage die by one step for this attack. If the weapon has the two-hand trait, you gain the benefit of that trait and a circumstance bonus to damage equal to the weapon's number of damage dice. When the Strike is complete, you resume gripping the weapon with only one hand. This action doesn't end any stance or fighter feat effect that requires you to have one hand free."
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["fighter", "flourish"]
+    requirements: "You are wielding a one-handed melee weapon and have a free hand."
 - id: "dubious-knowledge"
   name: "Dubious Knowledge"
   source: "pc > Chapter 5: Feats"
@@ -612,6 +1031,36 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in a skill with the Recall Knowledge action"
+- id: "dueling-dance"
+  name: "Dueling Dance"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Using a free hand as pivot and balance, you both attack and defend with your weapon. While you are in this stance, you constantly have the benefits of Dueling Parry."
+  properties:
+    level: 12
+    actions: "one"
+    traits: ["fighter", "stance"]
+    prerequisites: "Dueling Parry"
+    requirements: "You are wielding a single one-handed melee weapon and hold nothing else in your hands."
+- id: "dueling-parry"
+  name: "Dueling Parry"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You can parry attacks against you with your one-handed weapon. You gain a +2 circumstance bonus to AC until the start of your next turn as long as you continue to meet the requirements."
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["fighter"]
+    requirements: "You are wielding a single one-handed melee weapon and hold nothing else in your hands."
+- id: "dueling-riposte"
+  name: "Dueling Riposte"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You elegantly counterattack against your flailing enemy. Make a melee Strike against or attempt to Disarm the triggering creature."
+  properties:
+    level: 8
+    actions: "reaction"
+    traits: ["fighter"]
+    prerequisites: "Dueling Parry"
+    trigger: "A creature within your reach critically fails a Strike against you."
+    requirements: "You are benefiting from Dueling Parry."
 - id: "dwarven-doughtiness"
   name: "Dwarven Doughtiness"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Dwarf > Ancestry Feats"
@@ -715,6 +1164,16 @@
     level: 17
     traits: ["nephilim"]
     prerequisites: "Divine Wings"
+- id: "exacting-strike"
+  name: "Exacting Strike"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    You make a controlled follow-up attack, fully accounting for your momentum. Make a Strike. The Strike gains the following failure effect.
+    **Failure.** This attack doesn't count toward your multiple attack penalty.
+  properties:
+    level: 1
+    actions: "one"
+    traits: ["fighter", "press"]
 - id: "expeditious-search"
   name: "Expeditious Search"
   source: "pc > Chapter 5: Feats"
@@ -764,6 +1223,23 @@
   properties:
     level: 5
     traits: ["nephilim"]
+- id: "fantastic-leap"
+  name: "Fantastic Leap"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    You launch yourself through the air at a foe. Attempt a High Jump or Long Jump. If you attempt a High Jump, determine the height of your jump as though determining the length of a Long Jump. At the end of your jump, you can make a melee Strike.
+    After your Strike, you fall to the ground if you're in the air. If the distance of your fall is no more than the height of your jump, you take no damage and land upright.
+  properties:
+    level: 12
+    actions: "two"
+    traits: ["rogue"]
+- id: "far-throw"
+  name: "Far Throw"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "When you Strike with a thrown weapon, you take only a -1 penalty for each additional range increment between you and the target, rather than a -2 penalty."
+  properties:
+    level: 6
+    traits: ["rogue"]
 - id: "fascinating-performance"
   name: "Fascinating Performance"
   source: "pc > Chapter 5: Feats"
@@ -782,6 +1258,15 @@
     level: 1
     traits: ["general"]
     prerequisites: "Constitution +2"
+- id: "fearsome-brute"
+  name: "Fearsome Brute"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    Fear makes your foes weak and more vulnerable to your attacks. You gain a circumstance bonus to damage rolls for Strikes against frightened creatures. The bonus is equal to double the target's frightened value.
+    If you're a master in Intimidation, increase the bonus to triple the target's frightened value.
+  properties:
+    level: 10
+    traits: ["fighter"]
 - id: "feather-step"
   name: "Feather Step"
   source: "pc > Chapter 5: Feats"
@@ -790,6 +1275,28 @@
     level: 1
     traits: ["general"]
     prerequisites: "Dexterity +2"
+- id: "felling-shot"
+  name: "Felling Shot"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    Your ranged attacks can shoot an unprepared foe right out of the air. Make a ranged Strike against an off-guard creature. If the Strike is a success and deals damage, the target must attempt a Reflex save against your class DC.
+    **Success.** The target is unaffected.
+    **Failure.** The target falls up to 120 feet. If it hits the ground, it takes no damage from the fall.
+    **Critical Failure.** As failure, and the target can't fly, jump, levitate, or otherwise leave the ground until the end of your next turn.
+  properties:
+    level: 12
+    actions: "two"
+    traits: ["rogue"]
+- id: "felling-strike"
+  name: "Felling Strike"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    Your attack can ground an airborne foe. Make a Strike. If it hits and deals damage to a flying target, the target falls up to 120 feet. The fall is gradual enough that if it causes the target to hit the ground, the target takes no damage from the fall.
+    If the attack is a critical hit, the target can't Fly, Leap, levitate, or otherwise leave the ground until the end of your next turn.
+  properties:
+    level: 8
+    actions: "two"
+    traits: ["fighter"]
 - id: "ferocious-beasts"
   name: "Ferocious Beasts"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Orc > Orc Ancestry Feats"
@@ -839,6 +1346,22 @@
   properties:
     level: 1
     traits: ["general"]
+- id: "flinging-charge"
+  name: "Flinging Charge"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You throw a weapon to distract your opponent as you close the gap to begin your assault. You Stride twice; at any point during this movement, you can make a ranged Strike with a thrown weapon. If the Strike hits, the target is off-guard against the next melee attack that you attempt against it before the end of your current turn."
+  properties:
+    level: 10
+    actions: "two"
+    traits: ["fighter", "flourish"]
+- id: "flinging-shove"
+  name: "Flinging Shove"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Whether you're shoving opponents with a shield or a large weapon, you've learned to push them even further. Increase the distance you Shove your opponent with Aggressive Block or Brutish Shove to 10 feet on a success or 20 feet on a critical success. When you use Aggressive Block, you can choose whether the target is off-guard or Shoved. When you make a Brutish Shove, you also Shove the target 5 feet on a failure."
+  properties:
+    level: 12
+    traits: ["fighter"]
+    prerequisites: "Aggressive Block or Brutish Shove"
 - id: "flourish-and-ruin"
   name: "Flourish and Ruin"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Leshy > Leshy Ancestry Feats"
@@ -878,6 +1401,21 @@
   properties:
     level: 1
     traits: ["lineage", "nephilim"]
+- id: "furious-focus"
+  name: "Furious Focus"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You've learned to maintain your balance even when swinging furiously. When you make a Vicious Swing with a melee weapon you're wielding in two hands, it counts as one attack toward your multiple attack penalty instead of two."
+  properties:
+    level: 6
+    traits: ["fighter"]
+    prerequisites: "Vicious Swing"
+- id: "gang-up"
+  name: "Gang Up"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You and your allies harry an opponent in concert. You can flank an enemy if it's within reach of both of you and an ally—you and your ally don't have to be on opposite sides. This benefits your allies as well as you, but only if they're flanking with you, not each other. The other requirements for flanking must still be met."
+  properties:
+    level: 6
+    traits: ["rogue"]
 - id: "general-training"
   name: "General Training"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Human > Human Ancestry Feats"
@@ -950,6 +1488,15 @@
   properties:
     level: 1
     traits: ["goblin"]
+- id: "graceful-poise"
+  name: "Graceful Poise"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "With the right positioning, your off-hand weapon can strike like a scorpion's stinger. While you are in this stance, if you make your second Strike from Double Slice with an agile weapon, Double Slice counts as one attack when calculating your multiple attack penalty."
+  properties:
+    level: 16
+    actions: "one"
+    traits: ["fighter", "stance"]
+    prerequisites: "Double Slice"
 - id: "grasping-reach"
   name: "Grasping Reach"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Leshy > Leshy Ancestry Feats"
@@ -984,6 +1531,27 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Diplomacy"
+- id: "guardian-s-deflection"
+  name: "Guardian's Deflection"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You use your weapon to deflect the attack against your ally, granting a +2 circumstance bonus to their Armor Class against the triggering attack. This turns the triggering critical hit into a hit, or the triggering hit into a miss."
+  properties:
+    level: 6
+    actions: "reaction"
+    traits: ["fighter"]
+    trigger: "An ally within your melee reach is hit by an attack, you can see the attacker, and the ally gaining a +2 circumstance bonus to AC would turn the critical hit into a hit or the hit into a miss."
+    requirements: "You are wielding a single one-handed melee weapon and hold nothing else in your hands."
+- id: "guiding-finish"
+  name: "Guiding Finish"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    Using your weapon as a lever, you force your opponent to end up right where you want them. Make a Strike with a one-handed melee weapon. If the Strike hits, you can Reposition the target up to 10 feet. You can move the target through your space during this movement. Your Strike gains the following failure effect.
+    **Failure.** You can force the creature to move as you would on a success, but you can move the target only 5 feet.
+  properties:
+    level: 14
+    actions: "one"
+    traits: ["fighter", "press"]
+    requirements: "You are wielding a single one-handed melee weapon and hold nothing else in your hands."
 - id: "guiding-luck"
   name: "Guiding Luck"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Halfling > Ancestry Feats"
@@ -992,6 +1560,14 @@
     level: 9
     traits: ["halfling"]
     prerequisites: "Halfling Luck"
+- id: "guiding-riposte"
+  name: "Guiding Riposte"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "By shifting your weight and angling your weapon, you guide your opponent to a more favorable position. When you use Dueling Riposte to Strike and you hit, you can Reposition up to 10 feet."
+  properties:
+    level: 14
+    traits: ["fighter"]
+    prerequisites: "Dueling Riposte"
 - id: "hag-claws"
   name: "Hag Claws"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Changeling > Feats"
@@ -1072,6 +1648,14 @@
   properties:
     level: 1
     traits: ["human"]
+- id: "head-stomp"
+  name: "Head Stomp"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Make an unarmed melee Strike against a prone target. If it hits, until the end of your next turn the target is stupefied 1 (or stupefied 2 on a critical hit) and off-guard."
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["rogue"]
 - id: "hefty-hauler"
   name: "Hefty Hauler"
   source: "pc > Chapter 5: Feats"
@@ -1089,6 +1673,17 @@
     actions: "one"
     traits: ["emotion", "human", "mental"]
     frequency: "once per day"
+- id: "hidden-paragon"
+  name: "Hidden Paragon"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "When you slip out of sight, you disappear. You become invisible for 1 minute, even if you use a hostile action. Not even revealing light, see the unseen, or similar effects can reveal you, though creatures can still use the Seek action to locate you as normal."
+  properties:
+    level: 20
+    actions: "reaction"
+    traits: ["rogue"]
+    prerequisites: "legendary in Stealth"
+    frequency: "once per hour"
+    trigger: "You successfully use Stealth to Hide and become hidden from all of your current foes, or use Stealth to Sneak and become undetected to all your current foes."
 - id: "hobnobber"
   name: "Hobnobber"
   source: "pc > Chapter 5: Feats"
@@ -1135,6 +1730,43 @@
     level: 7
     traits: ["general", "skill"]
     prerequisites: "master in Crafting, Specialty Crafting"
+- id: "implausible-infiltration"
+  name: "Implausible Infiltration"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You find tiny imperfections and somehow fit yourself through them, possibly moving directly through the wall or floor. Your movement attempt fails if the wall or floor is made of something other than wood, plaster, or stone; is thicker than 10 feet; or contains even a thin layer of metal. If you have a climb Speed, you can use this ability to attempt to move through a ceiling."
+  properties:
+    level: 18
+    actions: "two"
+    traits: ["magical", "move", "rogue"]
+    prerequisites: "legendary in Acrobatics, Quick Squeeze"
+    requirements: "You are adjacent to a floor or vertical wall."
+- id: "implausible-purchase"
+  name: "Implausible Purchase"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You can use Prescient Planner even if you have already used it after purchasing goods, and you can Interact to draw the item as a single action instead of a 2-action activity. In addition, five times per day, you can use Prescient Planner to pull out a common consumable item up to 6 levels lower than your level."
+  properties:
+    level: 18
+    traits: ["rogue"]
+    prerequisites: "Predictive Purchase"
+- id: "impossible-striker"
+  name: "Impossible Striker"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Nothing can prevent you from making a sneak attack, even if your opponent can see every blow coming. Instead of dealing the damage from Sly Striker, you can deal your full sneak attack damage to a target even if the target isn't off-guard."
+  properties:
+    level: 20
+    traits: ["rogue"]
+    prerequisites: "Sly Striker"
+- id: "impossible-volley"
+  name: "Impossible Volley"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    You fire a volley at all foes in an area. Make one Strike with a -2 penalty against each enemy within a 10-foot-radius burst centered at or beyond your weapon's volley range. Roll the damage only once for all targets.
+    Each attack counts toward your multiple attack penalty, but do not increase your penalty until you have made all your attacks.
+  properties:
+    level: 18
+    actions: "three"
+    traits: ["fighter", "flourish"]
+    requirements: "You are wielding a ranged weapon with the volley trait and reload 0."
 - id: "impressive-performance"
   name: "Impressive Performance"
   source: "pc > Chapter 5: Feats"
@@ -1143,6 +1775,46 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Performance"
+- id: "improved-dueling-riposte"
+  name: "Improved Dueling Riposte"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Your weapon whirls and darts, striking foes whenever the slightest opening or moment of weakness presents itself. You can use Dueling Riposte even if you aren't benefiting from Dueling Parry (though you must be wielding a single one-handed weapon and nothing else). At the start of each of your turns, you gain an additional reaction that you can use only to make a Dueling Riposte."
+  properties:
+    level: 12
+    traits: ["fighter"]
+    prerequisites: "Dueling Riposte"
+- id: "improved-poison-weapon"
+  name: "Improved Poison Weapon"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You deliver poisons in ways that maximize their harmful effects. When you apply a simple poison with Poison Weapon, the poison deals 2d4 poison damage instead of 1d4 poison damage. You don't waste a poison you apply with Poison Weapon on a critically failed attack roll."
+  properties:
+    level: 8
+    traits: ["rogue"]
+    prerequisites: "Poison Weapon"
+- id: "improved-reflexive-shield"
+  name: "Improved Reflexive Shield"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Your shield can help save nearby allies. When you use Shield Block against damage resulting from a Reflex save, adjacent allies who would take damage due to Reflex saves against the same effect also benefit from the damage reduction."
+  properties:
+    level: 16
+    traits: ["fighter"]
+    prerequisites: "Reflexive Shield"
+- id: "improved-twin-riposte"
+  name: "Improved Twin Riposte"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Your weapons are a blur, blocking and biting at your foes. You can use Twin Riposte even if you aren't benefiting from Twin Parry (though you must be wielding two melee weapons, one in each hand). At the start of each of your turns, you gain an additional reaction that you can use only to make a Twin Riposte."
+  properties:
+    level: 14
+    traits: ["fighter"]
+    prerequisites: "Twin Riposte"
+- id: "incredible-aim"
+  name: "Incredible Aim"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "By spending a moment to focus, you can ensure your attack strikes true. Make a ranged weapon Strike. On this Strike, you gain a +2 circumstance bonus to the attack roll and ignore the target's concealed condition."
+  properties:
+    level: 8
+    actions: "two"
+    traits: ["concentrate", "fighter"]
 - id: "incredible-ferocity"
   name: "Incredible Ferocity"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Orc > Orc Ancestry Feats"
@@ -1176,6 +1848,15 @@
     level: 11
     traits: ["general"]
     prerequisites: "Charisma +3"
+- id: "incredible-ricochet"
+  name: "Incredible Ricochet"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "After your first shot singles out your opponent's position, you direct another that ricochets around obstacles and strikes unerringly. Make a ranged weapon Strike against a creature you previously attacked this turn. You ignore the target's concealed condition and all cover."
+  properties:
+    level: 12
+    actions: "one"
+    traits: ["concentrate", "fighter", "press"]
+    prerequisites: "Incredible Aim"
 - id: "inspire-imitation"
   name: "Inspire Imitation"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Mixed Ancestry > Feats"
@@ -1183,6 +1864,26 @@
   properties:
     level: 5
     traits: ["half-elf"]
+- id: "inspired-stratagem"
+  name: "Inspired Stratagem"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    During your daily preparations, you can review stratagems for the day's adventures with up to five allies. Later, you can quickly advise them on your schemes using the below reaction.
+    **Inspired Stratagem (reaction).**
+    **Traits.** fortune linguistic
+    **Trigger.** An ally you reviewed stratagems with is about to attempt an attack roll or skill check
+    **Effect.** The ally rolls the triggering check twice and takes the better of the two results. That ally then becomes temporarily immune to your Inspired Stratagem until your next daily preparations.
+  properties:
+    level: 8
+    traits: ["rogue"]
+- id: "instant-opening"
+  name: "Instant Opening"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You distract your opponent with a few choice words or a rude gesture. Choose a target within 30 feet. It's off-guard against your attacks until the end of your next turn. Depending on the way you describe your distraction, this action gains either the auditory or visual trait."
+  properties:
+    level: 14
+    actions: "one"
+    traits: ["concentrate", "rogue"]
 - id: "instinctive-obfuscation"
   name: "Instinctive Obfuscation"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Gnome > Ancestry Feats"
@@ -1210,6 +1911,14 @@
     level: 2
     traits: ["general", "skill"]
     prerequisites: "Strength +3, expert in Intimidation"
+- id: "intimidating-strike"
+  name: "Intimidating Strike"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Your blow not only wounds creatures but also shatters their confidence. Make a melee Strike. If you hit and deal damage, the target is frightened 1, or frightened 2 on a critical hit."
+  properties:
+    level: 2
+    actions: "two"
+    traits: ["emotion", "fear", "fighter", "mental"]
 - id: "inventor"
   name: "Inventor"
   source: "pc > Chapter 5: Feats"
@@ -1282,6 +1991,13 @@
   properties:
     level: 1
     traits: ["lineage", "nephilim"]
+- id: "leave-an-opening"
+  name: "Leave an Opening"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "When you hit hard enough, you leave an opening so your ally can jump in on the action. Whenever you critically hit an off-guard opponent with a melee attack and deal damage, the target triggers a Reactive Strike reaction from one ally of your choice who has that reaction, as if the enemy had used a manipulate action."
+  properties:
+    level: 14
+    traits: ["rogue"]
 - id: "legendary-codebreaker"
   name: "Legendary Codebreaker"
   source: "pc > Chapter 5: Feats"
@@ -1409,6 +2125,21 @@
     actions: "one"
     traits: ["gnome", "move", "teleportation"]
     requirements: "You must be adjacent to a living creature."
+- id: "light-step"
+  name: "Light Step"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You aren't bothered by tricky footing. When you Stride or Step, you can ignore difficult terrain."
+  properties:
+    level: 6
+    traits: ["rogue"]
+- id: "lightning-swap"
+  name: "Lightning Swap"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You have practiced quickly switching between combat styles and the equipment needed for them. You Interact to stow any number of items from your hands, then draw up to two weapons or a shield and a weapon."
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["fighter", "flourish"]
 - id: "loud-singer"
   name: "Loud Singer"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Goblin > Ancestry Feats"
@@ -1425,6 +2156,25 @@
     level: 9
     traits: ["leshy"]
     prerequisites: "Leshy Superstition"
+- id: "lunge"
+  name: "Lunge"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You attack an enemy at the edge of your reach. Make a Strike with a melee weapon, increasing your reach by 5 feet for that Strike. If the weapon has the disarm, shove, or trip trait, you can use the corresponding action instead of a Strike."
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["fighter"]
+    requirements: "You are wielding a melee weapon."
+- id: "lunging-stance"
+  name: "Lunging Stance"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Your body coiled to strike, you can lash out at distant enemies. While you are in this stance, you can use Reactive Strike against a creature that is outside your reach but within the reach you would have with a Lunge. If you do, you increase your range with the Strike by 5 feet."
+  properties:
+    level: 12
+    actions: "one"
+    traits: ["fighter", "stance"]
+    prerequisites: "Lunge, Reactive Strike"
+    requirements: "You are wielding a melee weapon."
 - id: "magic-rider"
   name: "Magic Rider"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Elf > Ancestry Feats"
@@ -1467,6 +2217,37 @@
   properties:
     level: 5
     traits: ["elf"]
+- id: "master-of-many-styles"
+  name: "Master of Many Styles"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You move fluidly between stances, using your mastery of combat to always adopt the best tactics. You use an action with the stance trait."
+  properties:
+    level: 16
+    actions: "free"
+    traits: ["fighter"]
+    prerequisites: "Opening Stance"
+    trigger: "Your turn begins."
+- id: "methodical-debilitations"
+  name: "Methodical Debilitations"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    You strategically craft your debilitations to lessen or negate an enemy's tactical advantages. Add the following debilitations to the list you can choose from when you use Debilitating Strike.
+    - **Debilitation.** The target can't flank or contribute to allies' flanking.
+    - **Debilitation.** The target doesn't gain a circumstance bonus to AC from Raising a Shield, lesser cover, or standard cover; it gains a +2 circumstance bonus to AC only from greater cover or Taking Cover.
+  properties:
+    level: 10
+    traits: ["rogue"]
+    prerequisites: "mastermind racket, Debilitating Strike"
+- id: "mirror-shield"
+  name: "Mirror Shield"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You reflect the spell back against its caster. Make a ranged attack against the attacker using your highest proficiency with a ranged weapon. If you can cast spells, you can choose to make a spell attack roll instead. If you succeed, your opponent takes the effects of a successful spell attack roll for their own spell (or the effects of a critical success if your attack roll was a critical success)."
+  properties:
+    level: 10
+    actions: "reaction"
+    traits: ["fighter"]
+    trigger: "An opponent casting a spell that targets you critically fails a spell attack roll against your AC."
+    requirements: "You have a shield raised."
 - id: "mist-child"
   name: "Mist Child"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Changeling > Feats"
@@ -1474,6 +2255,22 @@
   properties:
     level: 5
     traits: ["changeling"]
+- id: "mobile-shot-stance"
+  name: "Mobile Shot Stance"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Your shots become nimble and deadly. While you're in this stance, your ranged Strikes don't trigger Reactive Strike or other reactions that are triggered by a ranged attack."
+  properties:
+    level: 8
+    actions: "one"
+    traits: ["fighter", "stance"]
+    special: "If you have Reactive Strike, you can use it with a loaded ranged weapon you're wielding. The triggering creature must be within 5 feet of you for you to do so."
+- id: "mobility"
+  name: "Mobility"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You move without leaving an opening. When you Stride and move half your Speed or less, that movement does not trigger reactions. You can use Mobility when Climbing, Flying, or Swimming instead of Striding if you have the corresponding movement type."
+  properties:
+    level: 2
+    traits: ["rogue"]
 - id: "monster-crafting"
   name: "Monster Crafting"
   source: "pc > Chapter 5: Feats"
@@ -1517,6 +2314,14 @@
   properties:
     level: 1
     traits: ["elf"]
+- id: "mug-feat"
+  name: "Mug"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You make a quick attack and rob your foe in the process. Make a melee Strike against an adjacent enemy. If you hit and deal sneak attack damage, you can also attempt to Steal from the target, even if the target is in combat."
+  properties:
+    level: 4
+    actions: "two"
+    traits: ["rogue"]
 - id: "multilingual"
   name: "Multilingual"
   source: "pc > Chapter 5: Feats"
@@ -1526,6 +2331,17 @@
     traits: ["general", "skill"]
     prerequisites: "trained in Society"
     special: "You can select this feat multiple times. Each time, you learn additional languages."
+- id: "multishot-stance"
+  name: "Multishot Stance"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You lock yourself in a stable position so you can fire swiftly and accurately. While you are in this stance, your penalty for Double Shot is reduced to -1. If you move from your position, this stance ends."
+  properties:
+    level: 16
+    actions: "one"
+    traits: ["fighter", "stance"]
+    prerequisites: "Double Shot"
+    requirements: "You are wielding a ranged weapon with reload 0."
+    special: "If you have Triple Shot, when you use Double Shot to make three Strikes, the penalty is -2."
 - id: "multitalented"
   name: "Multitalented"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Human > Human Ancestry Feats"
@@ -1591,6 +2407,16 @@
     level: 2
     traits: ["general", "skill"]
     prerequisites: "expert in Acrobatics"
+- id: "nimble-dodge"
+  name: "Nimble Dodge"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You deftly dodge out of the way, gaining a +2 circumstance bonus to AC against the triggering attack."
+  properties:
+    level: 1
+    actions: "reaction"
+    traits: ["rogue"]
+    trigger: "A creature targets you with an attack and you can see the attacker."
+    requirements: "You are not encumbered."
 - id: "nimble-elf"
   name: "Nimble Elf"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Elf > Ancestry Feats"
@@ -1606,6 +2432,24 @@
     level: 1
     traits: ["nephilim"]
     special: "The Speed increase from this feat isn't cumulative with any Speed increase from other ancestry feats."
+- id: "nimble-roll"
+  name: "Nimble Roll"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    You throw yourself into a roll to escape imminent danger. You can use Nimble Dodge before attempting a Reflex save in addition to its original trigger. If you do, the circumstance bonus applies to your Reflex save against the triggering effect.
+    When you use Nimble Dodge and the triggering attack fails or critically fails, or when you succeed or critically succeed at the saving throw, you can also Stride up to 10 feet as part of the reaction. If you do, the reaction gains the move trait. You can use Nimble Roll while Flying or Swimming instead of Striding if you have the corresponding movement type.
+  properties:
+    level: 8
+    traits: ["rogue"]
+    prerequisites: "Nimble Dodge"
+- id: "nimble-strike"
+  name: "Nimble Strike"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You're cunning enough to find an opening in an opponent's attack. When you use your Nimble Dodge reaction, you can make a melee Strike against the triggering creature. This Strike doesn't count toward your multiple attack penalty, and your multiple attack penalty doesn't apply to this Strike. If you use the Nimble Roll feat, you can make this Strike at any point during your roll."
+  properties:
+    level: 10
+    traits: ["rogue"]
+    prerequisites: "Nimble Roll"
 - id: "no-cause-for-alarm"
   name: "No Cause for Alarm"
   source: "pc > Chapter 5: Feats"
@@ -1634,6 +2478,24 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Occultism"
+- id: "opening-stance"
+  name: "Opening Stance"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "At the first sign of trouble, often before you consciously realize the danger, you drop into a stance with a mere thought. Use an action that has the stance trait."
+  properties:
+    level: 14
+    actions: "free"
+    traits: ["fighter"]
+    trigger: "You roll initiative."
+- id: "opportune-backstab"
+  name: "Opportune Backstab"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "When your enemy is hit by your ally, you capitalize upon the distraction. Make a Strike against the triggering creature."
+  properties:
+    level: 8
+    actions: "reaction"
+    traits: ["rogue"]
+    trigger: "A creature within your melee reach is hit by a melee attack from one of your allies."
 - id: "orc-ferocity"
   name: "Orc Ferocity"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Orc > Orc Ancestry Feats"
@@ -1697,6 +2559,60 @@
   properties:
     level: 1
     traits: ["elf"]
+- id: "overextending-feint"
+  name: "Overextending Feint"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    You goad a foe into overextending. On a successful Feint, you can use the following success and critical success effects instead of any other effects that would occur when you Feint.
+    **Critical Success.** The target takes a -2 circumstance penalty to all attack rolls against you before the end of its next turn.
+    **Success.** The target takes a -2 circumstance penalty to its next attack roll against you before the end of its next turn.
+  properties:
+    level: 1
+    traits: ["rogue"]
+    prerequisites: "trained in Deception"
+- id: "overpowering-charge"
+  name: "Overpowering Charge"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You trample foes as you charge past. When you use Barreling Charge and successfully move through a creature's space, that creature takes bludgeoning damage equal to your Strength modifier. On a critical success, the creature takes double damage and is off-guard until the end of your next turn."
+  properties:
+    level: 10
+    traits: ["fighter"]
+    prerequisites: "Barreling Charge"
+- id: "overwhelming-blow"
+  name: "Overwhelming Blow"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You throw your weight into a powerful attack that leaves you vulnerable. Make a melee Strike. This counts as three attacks when calculating your multiple attack penalty. If this Strike hits, you get a critical hit. If you roll a critical hit, your weapon or unarmed attack also gains the deadly d12 trait (this replaces any deadly trait it already has). Whether or not you hit, you become stunned 1 and are off-guard until the start of your next turn."
+  properties:
+    level: 16
+    actions: "three"
+    traits: ["fighter"]
+- id: "paragon-s-guard"
+  name: "Paragon's Guard"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Once you've had a moment to set your stance, you always have your shield ready without a thought. While you are in this stance, you constantly have your shield raised as if you'd used the Raise a Shield action."
+  properties:
+    level: 12
+    actions: "one"
+    traits: ["fighter", "stance"]
+    requirements: "You are wielding a shield."
+- id: "parting-shot"
+  name: "Parting Shot"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You jump back and make a quick shot that catches your opponent by surprise. You Step and then make a ranged Strike with the required weapon. Your target is off-guard against the attack."
+  properties:
+    level: 4
+    actions: "two"
+    traits: ["fighter"]
+    requirements: "You are wielding a loaded ranged weapon or a ranged weapon with reload 0."
+- id: "perfect-distraction"
+  name: "Perfect Distraction"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You use clever tactics to mislead your foes as you sneak away. You Sneak while leaving a decoy behind. The decoy acts as the spell mislead, though you aren't invisible, just undetected. You can continue to concentrate to move your decoy, as with the spell, whether or not you remain hidden throughout the duration. Once you use Perfect Distraction, you need to spend 10 minutes to set up another decoy before you can use it again."
+  properties:
+    level: 16
+    actions: "one"
+    traits: ["rogue"]
+    prerequisites: "legendary in Deception"
 - id: "pervasive-superstition"
   name: "Pervasive Superstition"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Orc > Orc Ancestry Feats"
@@ -1746,6 +2662,43 @@
     level: 7
     traits: ["general", "skill"]
     prerequisites: "master in Survival"
+- id: "plant-evidence"
+  name: "Plant Evidence"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You can put a single item you're holding of light or negligible Bulk onto a person without them noticing by succeeding at a Thievery check against their Perception DC. If you have the ruffian racket, you can do this as a free action when you successfully Shove a target."
+  properties:
+    level: 1
+    actions: "one"
+    traits: ["rogue"]
+    prerequisites: "Pickpocket"
+- id: "point-blank-stance"
+  name: "Point Blank Stance"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You take aim to pick off nearby enemies quickly. When using a ranged volley weapon while you are in this stance, you don't take the penalty to your attack rolls from the volley trait. When using a ranged weapon that doesn't have the volley trait, you gain a +2 circumstance bonus to damage rolls on attacks against targets within the weapon's first range increment."
+  properties:
+    level: 1
+    actions: "one"
+    traits: ["fighter", "stance"]
+    requirements: "You are wielding a ranged weapon."
+- id: "poison-weapon"
+  name: "Poison Weapon"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You apply a contact poison or injury poison to the required weapon; if you have a free hand, you can Interact to draw a poison as part of this action. This poison can be one of the simple injury poisons you can create due to this feat (see Special), or another contact or injury poison you've acquired."
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["manipulate", "rogue"]
+    requirements: "You are wielding a weapon."
+    special: "During your daily preparations, you can prepare a number of simple injury poisons equal to your level. These follow the rules for injury poisons, except that they deal 1d4 poison damage with no saving throw. Only you can apply these poisons properly, and they expire the next time you prepare."
+- id: "positioning-assault"
+  name: "Positioning Assault"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "With punishing blows, you force your opponent into position. Make a Strike with the required weapon. If you hit, you Reposition the target 5 feet."
+  properties:
+    level: 8
+    actions: "two"
+    traits: ["fighter", "flourish"]
+    requirements: "You are wielding a two-handed melee weapon and your target is within your reach."
 - id: "powerful-leap"
   name: "Powerful Leap"
   source: "pc > Chapter 5: Feats"
@@ -1754,6 +2707,23 @@
     level: 2
     traits: ["general", "skill"]
     prerequisites: "expert in Athletics"
+- id: "powerful-shove"
+  name: "Powerful Shove"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    You can push larger foes around with your attack. You can use Aggressive Block or Brutish Shove against a creature up to two sizes larger than you.
+    When a creature you Shove or knock back with a shield, polearm, or club's critical specialization effect has to stop moving because it would hit an object, it takes damage equal to your Strength modifier (minimum 1).
+  properties:
+    level: 4
+    traits: ["fighter"]
+    prerequisites: "Aggressive Block or Brutish Shove"
+- id: "powerful-sneak"
+  name: "Powerful Sneak"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You've learned to exploit your enemies' openings. Your sneak attack damage ignores any immunity or resistance the target has to precision damage. In addition, when you Sneak, you can designate one creature you're undetected by at the end of that action. On the next attack you make against that creature before the end of your next turn, any sneak attack die you roll that's less than 3 is a 3 instead. This has no benefit if your next attack against the creature doesn't deal sneak attack damage, and if you designate a new creature you lose the benefit on any previous one."
+  properties:
+    level: 18
+    traits: ["rogue"]
 - id: "prairie-rider"
   name: "Prairie Rider"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Halfling > Ancestry Feats"
@@ -1761,6 +2731,45 @@
   properties:
     level: 1
     traits: ["halfling"]
+- id: "precise-debilitations"
+  name: "Precise Debilitations"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    You attack with great precision. Add the following debilitations to the list you can choose from when you use Debilitating Strike.
+    - **Debilitation.** The target takes an additional 2d6 precision damage from your attacks.
+    - **Debilitation.** The target becomes off-guard.
+  properties:
+    level: 10
+    traits: ["rogue"]
+    prerequisites: "thief racket, Debilitating Strike"
+- id: "predictable"
+  name: "Predictable!"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    By observing an opponent, you can get a sense of their next move and prepare to counter or resist it. Choose one target and attempt a Perception check to Sense Motive against the foe's Deception DC or a hard DC of the foe's level, whichever is higher.
+    **Critical Success.** You precisely discern the target's strategy, gaining a +2 circumstance bonus to AC against the creature until the start of your next turn and a +2 circumstance bonus to your next saving throw against the creature before the start of your next turn.
+    **Success.** You deduce the gist of the target's strategy; as critical success, except the circumstance bonus is only +1.
+    **Failure.** You fail to discern the target's strategy and gain no benefit.
+    **Critical Failure.** You misinterpret the target's strategy and take a -1 circumstance penalty to AC against the creature until the start of your next turn, and a -1 circumstance penalty to your next saving throw against the creature before the start of your next turn.
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["rogue"]
+- id: "predictive-purchase"
+  name: "Predictive Purchase"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You somehow manage to have just the thing for the situation. You gain the Prescient Planner and Prescient Consumable feats. When using Prescient Planner, you can draw the item from your backpack (or a similar container) as a 2-action activity, instead of taking 1 minute to do so."
+  properties:
+    level: 8
+    traits: ["rogue"]
+- id: "preparation"
+  name: "Preparation"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You survey the battlefield, calculating the possibilities. You gain one additional reaction, which you can use before the beginning of your next turn for any rogue reaction."
+  properties:
+    level: 12
+    actions: "one"
+    traits: ["flourish", "rogue"]
 - id: "prescient-consumable"
   name: "Prescient Consumable"
   source: "pc > Chapter 5: Feats"
@@ -1810,6 +2819,14 @@
     level: 2
     traits: ["general", "skill"]
     prerequisites: "expert in Deception"
+- id: "quick-draw"
+  name: "Quick Draw"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You draw your weapon and attack with the same motion. You Interact to draw a weapon, then Strike with that weapon."
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["rogue"]
 - id: "quick-identification"
   name: "Quick Identification"
   source: "pc > Chapter 5: Feats"
@@ -1842,6 +2859,23 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Crafting"
+- id: "quick-reversal"
+  name: "Quick Reversal"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You turn your foes' flanking against them with a quick reverse. Make a melee Strike against one of the flanking enemies and make a second Strike with the same weapon or unarmed attack against a different enemy that is flanking you. This second Strike has the same multiple attack penalty of the initial attack and doesn't count toward your multiple attack penalty."
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["fighter", "flourish", "press"]
+    requirements: "You are flanked by at least two enemies."
+- id: "quick-shield-block"
+  name: "Quick Shield Block"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You can bring your shield into place with hardly a thought. At the start of each of your turns, you gain an additional reaction that you can use only to Shield Block."
+  properties:
+    level: 8
+    traits: ["fighter"]
+    prerequisites: "Shield Block"
 - id: "quick-squeeze"
   name: "Quick Squeeze"
   source: "pc > Chapter 5: Feats"
@@ -1902,6 +2936,45 @@
     traits: ["gnome"]
     frequency: "once per hour"
     trigger: "You blind or dazzle a creature."
+- id: "reactive-distraction"
+  name: "Reactive Distraction"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You reactively switch with your decoy to foil your foe. You use Perfect Distraction, even if you were observed, as long as you end the movement of your Sneak while concealed or in a location with cover or greater cover. Your decoy is targeted by the attack or effect instead of you. In the case of an area effect, if your Sneak doesn't move you out of the area, both you and the decoy are targeted by the effect."
+  properties:
+    level: 20
+    actions: "reaction"
+    traits: ["concentrate", "manipulate", "rogue"]
+    prerequisites: "legendary in Deception, Perfect Distraction"
+    trigger: "You would be hit by an attack or targeted by an effect, or you are within an effect's area."
+    requirements: "You have Perfect Distraction ready to use."
+- id: "reactive-interference"
+  name: "Reactive Interference"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Grabbing a sleeve, swiping with your weapon, or creating another obstruction, you reflexively foil an enemy's response. If the triggering creature's level is equal to or lower than yours, you disrupt the triggering reaction. If the triggering creature's level is higher than yours, you must make an attack roll against its AC. On a success, you disrupt the reaction."
+  properties:
+    level: 12
+    actions: "reaction"
+    traits: ["rogue"]
+    trigger: "An adjacent enemy begins to use a reaction."
+- id: "reactive-pursuit"
+  name: "Reactive Pursuit"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You keep pace with a retreating foe. You Stride, but you must end your movement adjacent to the triggering enemy. Your move does not trigger reactions from the triggering enemy. You can use Reactive Pursuit to Burrow, Climb, Fly, or Swim instead of Stride if you have the corresponding movement type."
+  properties:
+    level: 4
+    actions: "reaction"
+    traits: ["rogue"]
+    trigger: "An adjacent foe moves away from you, and you can reach at least one space adjacent to the foe with a Stride action."
+- id: "reactive-shield"
+  name: "Reactive Shield"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You can snap your shield into place just as you would take a blow, avoiding the hit at the last second. You immediately use the Raise a Shield action and gain your shield's bonus to AC. The circumstance bonus from the shield applies to your AC when you're determining the outcome of the triggering attack."
+  properties:
+    level: 1
+    actions: "reaction"
+    traits: ["fighter"]
+    trigger: "An enemy hits you with a melee Strike."
+    requirements: "You are wielding a shield."
 - id: "read-lips"
   name: "Read Lips"
   source: "pc > Chapter 5: Feats"
@@ -1910,6 +2983,15 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Society"
+- id: "rebounding-toss"
+  name: "Rebounding Toss"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You bounce your weapon off one foe to strike another. Make a ranged Strike with a thrown weapon. If this Strike hits, the weapon rebounds toward an enemy within 10 feet of the original target. Make an additional Strike against this second target. Both attacks count toward your multiple attack penalty, but the penalty doesn't increase until after you've made both attacks."
+  properties:
+    level: 2
+    actions: "two"
+    traits: ["fighter", "flourish"]
+    requirements: "You are wielding a thrown weapon."
 - id: "reckless-abandon"
   name: "Reckless Abandon"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Goblin > Ancestry Feats"
@@ -1936,6 +3018,21 @@
     traits: ["general", "secret", "skill"]
     prerequisites: "trained in Arcana, Nature, Occultism, or Religion"
     trigger: "A creature within line of sight casts a spell that you don't have prepared or in your spell repertoire, or a trap or similar object casts such a spell. You must be aware of the casting."
+- id: "reconstruct-the-scene"
+  name: "Reconstruct the Scene"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You spend 1 minute surveying a small location (such as a single room) to get an impression of events that occurred there in the last day. This involves moving about the area and studying footprints, spilled drinks or blood, and so forth. You get an indistinct mental impression of significant events that happened there. This gives you clues and details of the past, including the overall events and their time frame, but it's not a perfect record. This also isn't enough to identify who was involved in these events if you weren't already aware the person was there. As determined by the GM, you also pick out various seemingly small details that could serve as important clues, like a memorable weapon someone used for a murder or the type of cloak someone wore when passing through."
+  properties:
+    level: 16
+    traits: ["concentrate", "rogue"]
+- id: "reflexive-shield"
+  name: "Reflexive Shield"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You can use your shield to fend off explosions and the like. When you Raise your Shield, you gain your shield's circumstance bonus to Reflex saves."
+  properties:
+    level: 6
+    traits: ["fighter"]
+    special: "If you have the Shield Block reaction, damage you take as a result of a Reflex save can trigger that reaction, even if the damage isn't physical damage."
 - id: "regrowth"
   name: "Regrowth"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Leshy > Leshy Ancestry Feats"
@@ -1943,6 +3040,49 @@
   properties:
     level: 17
     traits: ["leshy"]
+- id: "resounding-bravery"
+  name: "Resounding Bravery"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Even your fears serve as fuel for your fighting spirit. When you critically succeed at a Will save against a foe's ability, you gain a +1 status bonus to saves and a number of temporary Hit Points equal to half your level for 1 minute. These benefits are doubled if you critically succeed against a fear effect."
+  properties:
+    level: 8
+    traits: ["fighter"]
+    prerequisites: "bravery"
+- id: "revealing-stab"
+  name: "Revealing Stab"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    You drive your piercing weapon into an imperceptible foe, revealing its location to your allies. Make a Strike with a piercing melee weapon. If the target is concealed, you don't need to attempt a flat check to target it, and if it's hidden, the DC of the flat check to target it is 5. If you hit and deal damage, you can drive the weapon you attacked with into the target (if it's corporeal), revealing its current position. You Release the weapon, and it becomes lodged in the target. If the target is concealed, no flat check is needed to target it, and if it's hidden, the DC of the flat check to target it is 5, and the creature can't become undetected. These benefits apply only for observers who can see your weapon stuck in the target. If the target is invisible, the weapon remains visible while lodged in it.
+    This benefit lasts until the weapon is removed from the creature. An adjacent creature or the target can remove the weapon with two Interact actions.
+  properties:
+    level: 6
+    actions: "two"
+    traits: ["fighter"]
+    requirements: "You are wielding a melee weapon that can deal piercing damage."
+- id: "ricochet-feint"
+  name: "Ricochet Feint"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "While in Ricochet Stance, you can bounce a thrown weapon off a foe to distract them. You can attempt a Feint against a creature within the first range increment of a thrown weapon you are wielding, rather than only creatures within your melee reach."
+  properties:
+    level: 12
+    traits: ["rogue"]
+    prerequisites: "Ricochet Stance"
+- id: "ricochet-stance-fighter"
+  name: "Ricochet Stance"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You adopt a stance to rebound your thrown weapons toward you. While you are in this stance, any thrown weapons you use as part of a ranged Strike to deal bludgeoning or slashing damage immediately return to your hand, enabling you to use them for additional Strikes. You must be within the weapon's listed range increment and have a hand free to catch the weapon. If you make a ranged Strike with a thrown weapon outside of its listed range increment, it instead flies back toward you a number of feet equal to its listed range increment and then falls to the ground."
+  properties:
+    level: 6
+    actions: "one"
+    traits: ["fighter", "stance"]
+- id: "ricochet-stance-rogue"
+  name: "Ricochet Stance"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You adopt a stance to rebound your thrown weapons toward you. While you are in this stance, any thrown weapons you use as part of a ranged Strike to deal bludgeoning or slashing damage immediately return to your hand, enabling you to use them for additional Strikes. You must be within the weapon's listed range increment and have a hand free to catch the weapon. If you make a ranged Strike with a thrown weapon outside of its listed range increment, it instead flies back toward you a number of feet equal to its listed range increment and then falls to the ground."
+  properties:
+    level: 8
+    actions: "one"
+    traits: ["rogue", "stance"]
 - id: "ride"
   name: "Ride"
   source: "pc > Chapter 5: Feats"
@@ -1982,6 +3122,26 @@
   properties:
     level: 1
     traits: ["goblin"]
+- id: "sabotage"
+  name: "Sabotage"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    You subtly damage others' equipment. Choose one item that a creature within your reach wields or carries. The item must have moving parts that you could possibly sabotage (a shortbow could be sabotaged, but a longsword could not). Attempt a Thievery check against the Reflex DC of the creature. Damage dealt by Sabotage can't take the item below its Broken Threshold.
+    **Critical Success.** You deal damage equal to 4 x your Thievery proficiency bonus.
+    **Success.** You deal damage equal to double your Thievery proficiency bonus.
+    **Critical Failure.** The item is temporarily immune to your Sabotage for 1 day.
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["incapacitation", "rogue"]
+    requirements: "You have a free hand."
+- id: "savage-critical"
+  name: "Savage Critical"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "The wounds you inflict are grievous. When you Strike with a weapon or unarmed attack for which you have legendary proficiency, you critically succeed if you roll a 19 on the die as long as that result would be a success. This has no effect on a 19 if the result would be a failure."
+  properties:
+    level: 18
+    traits: ["fighter"]
 - id: "scar-thick-skin"
   name: "Scar-Thick Skin"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Orc > Orc Ancestry Feats"
@@ -2020,6 +3180,23 @@
   properties:
     level: 5
     traits: ["nephilim"]
+- id: "scoundrel-s-surprise"
+  name: "Scoundrel's Surprise"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You drop your disguise at the right moment and surprise your target. After you Impersonate someone else using a disguise kit, you can remove your disguise with a dramatic gesture. Any creatures that previously failed to see through your disguise are off-guard against the next attack you make before the end of your turn."
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["manipulate", "rogue"]
+- id: "scout-s-warning"
+  name: "Scout's Warning"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You visually or audibly warn your allies of danger, granting them each a +1 circumstance bonus to their initiative rolls, or a +2 circumstance bonus if you're using the Scout exploration activity. Depending on whether you use gestures or call out, this action gains either the visual or auditory trait, respectively."
+  properties:
+    level: 4
+    actions: "free"
+    traits: ["rogue"]
+    trigger: "You are about to roll a Perception, Stealth, or Survival check for initiative."
 - id: "sea-hag-mother"
   name: "Sea Hag Mother"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Changeling > Feats"
@@ -2049,6 +3226,15 @@
   properties:
     level: 5
     traits: ["human"]
+- id: "sense-the-unseen"
+  name: "Sense the Unseen"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "When you look for foes, you catch the slightest of cues. Even though you failed at the triggering check, you automatically sense any undetected creatures in the area where you're Seeking, making them merely hidden to you."
+  properties:
+    level: 14
+    actions: "reaction"
+    traits: ["rogue"]
+    trigger: "You fail a check to Seek."
 - id: "shadow-of-the-wilds"
   name: "Shadow of the Wilds"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Leshy > Leshy Ancestry Feats"
@@ -2074,6 +3260,15 @@
     level: 7
     traits: ["general", "skill"]
     requirements: "master in Diplomacy"
+- id: "shatter-defenses"
+  name: "Shatter Defenses"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Your offense exploits your enemy's fear. Make a melee Strike against a frightened creature. If you hit and deal damage, the target becomes off-guard until its frightened condition ends. If the target was already off-guard to you when you damaged it with this Strike, it can't reduce its frightened value below 1 until the start of your next turn."
+  properties:
+    level: 6
+    actions: "one"
+    traits: ["fighter", "press"]
+    requirements: "A frightened creature is in your melee reach."
 - id: "shield-block"
   name: "Shield Block"
   source: "pc > Chapter 5: Feats"
@@ -2083,6 +3278,40 @@
     actions: "reaction"
     traits: ["general"]
     trigger: "While you have your shield raised, you would take physical damage (bludgeoning, piercing, or slashing) from an attack."
+- id: "shield-warden"
+  name: "Shield Warden"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "When you have a shield raised, you can use your Shield Block reaction when an attack is made against an ally adjacent to you. If you do, the shield prevents that ally from taking damage instead of preventing you from taking damage, following the normal rules for Shield Block."
+  properties:
+    level: 6
+    traits: ["fighter"]
+    prerequisites: "Shield Block"
+- id: "shielded-stride"
+  name: "Shielded Stride"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "When your shield is up, your enemies' blows can't touch you. When you have your shield raised, you can Stride to move half your Speed without triggering reactions that are triggered by your movement (such as Reactive Strikes). You can use Shielded Stride while Flying or Swimming instead of Striding if you have the corresponding movement type."
+  properties:
+    level: 4
+    traits: ["fighter"]
+- id: "shove-down"
+  name: "Shove Down"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You leverage your weight to topple foes that you move. You attempt to Trip the target, even if the target is no longer in your reach."
+  properties:
+    level: 6
+    actions: "free"
+    traits: ["rogue"]
+    prerequisites: "trained in Athletics"
+    requirements: "Your last action was a successful Shove."
+- id: "sidestep"
+  name: "Sidestep"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You deftly step aside and gently redirect an attack. You redirect the triggering attack to a creature of your choice that is adjacent to you and within the attack's reach or maximum range. The attacker rerolls the Strike's attack roll against the new target."
+  properties:
+    level: 8
+    actions: "reaction"
+    traits: ["rogue"]
+    trigger: "The attack roll for a Strike targeting you fails or critically fails."
 - id: "sign-language"
   name: "Sign Language"
   source: "pc > Chapter 5: Feats"
@@ -2109,6 +3338,14 @@
   properties:
     level: 5
     traits: ["nephilim"]
+- id: "skirmish-strike"
+  name: "Skirmish Strike"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Your feet and weapon move in tandem. Either Step and then Strike, or Strike and then Step."
+  properties:
+    level: 6
+    actions: "one"
+    traits: ["flourish", "rogue"]
 - id: "skittering-scuttle"
   name: "Skittering Scuttle"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Goblin > Ancestry Feats"
@@ -2117,6 +3354,27 @@
     level: 9
     traits: ["goblin"]
     prerequisites: "Goblin Scuttle"
+- id: "slam-down"
+  name: "Slam Down"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You make an attack to knock a foe off balance, then follow up immediately with a sweep to topple them. Make a melee Strike. If it hits and deals damage, you can attempt an Athletics check to Trip the creature you hit. If you're wielding a two-handed melee weapon, you can ignore Trip's requirement that you have a hand free. Both attacks count toward your multiple attack penalty, but the penalty doesn't increase until after you've made both of them."
+  properties:
+    level: 4
+    actions: "two"
+    traits: ["fighter", "flourish"]
+    prerequisites: "trained in Athletics"
+- id: "sleek-reposition"
+  name: "Sleek Reposition"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    While your opponent is still recovering from your prior attack, you snag its armor, clothing, or flesh to move it as you please. Make a melee Strike with a finesse weapon or polearm. If you hit a target that is your size or smaller, you can automatically Reposition it, with the same benefits as the Reposition action (including the critical success effect, if your Strike was a critical hit). If you used a weapon with reach, use the weapon's reach for this Reposition.
+    This Strike has the following failure effect.
+    **Failure.** The target becomes off-guard until the end of your current turn.
+  properties:
+    level: 2
+    actions: "one"
+    traits: ["fighter", "press"]
+    requirements: "You are wielding a finesse weapon or polearm."
 - id: "slip-sideways"
   name: "Slip Sideways"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Nephilim > Feats"
@@ -2133,6 +3391,48 @@
     level: 7
     traits: ["general", "skill"]
     prerequisites: "master in Deception"
+- id: "sly-disarm"
+  name: "Sly Disarm"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You can Disarm a creature through sleight of hand rather than brute force. You can use Thievery instead of Athletics when you attempt a Disarm. When you use Thievery to attempt a Disarm and succeed, the target is off-guard against the next attack you make before the end of your turn."
+  properties:
+    level: 6
+    traits: ["rogue"]
+- id: "sly-striker"
+  name: "Sly Striker"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    Your attacks deal more damage, even against creatures that aren't off-guard. When you succeed or critically succeed at a Strike against a creature that isn't off-guard, you also deal 1d6 precision damage. This applies only if you're using a weapon or unarmed attack you could deal sneak attack damage with.
+    At 14th level, if you would normally deal 3d6 or more sneak attack damage to off-guard creatures, you deal 2d6 precision damage to creatures that aren't off-guard.
+  properties:
+    level: 8
+    traits: ["rogue"]
+    prerequisites: "sneak attack"
+- id: "smash-from-the-air"
+  name: "Smash From the Air"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Your expertise enables you to knock away spells. You can use Cut from the Air against ranged spell attacks."
+  properties:
+    level: 18
+    traits: ["fighter"]
+    prerequisites: "Cut From the Air"
+- id: "snagging-strike"
+  name: "Snagging Strike"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You combine an attack with quick grappling moves to throw an enemy off balance as long as it stays in your reach. Make a Strike while keeping one hand free. If this Strike hits, the target is off-guard until the start of your next turn or until it's no longer within the reach of your hand, whichever comes first."
+  properties:
+    level: 1
+    actions: "one"
+    traits: ["fighter"]
+    requirements: "You have one hand free, and your target is within reach of that hand."
+- id: "sneak-adept"
+  name: "Sneak Adept"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "It's almost impossible to spot you. When you roll a failure on a Sneak action, you get a success instead. You can still critically fail."
+  properties:
+    level: 10
+    traits: ["rogue"]
+    prerequisites: "master in Stealth"
 - id: "solar-rejuvenation"
   name: "Solar Rejuvenation"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Leshy > Leshy Ancestry Feats"
@@ -2185,6 +3485,24 @@
     level: 13
     traits: ["orc"]
     prerequisites: "Orc Superstition"
+- id: "spring-from-the-shadows"
+  name: "Spring From the Shadows"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You leap from hiding and assail your target. You Stride up to your Speed, but you must end your movement next to an enemy you're hidden from or undetected by. You then Strike that enemy; you remain hidden from or undetected by that creature until after you Strike. You can use Spring from the Shadows while Burrowing, Climbing, Flying, or Swimming instead of Striding if you have the corresponding movement type."
+  properties:
+    level: 12
+    actions: "one"
+    traits: ["flourish", "rogue"]
+- id: "stay-down"
+  name: "Stay Down!"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You have ways of keeping your foes down. Attempt an Athletics check against the triggering foe's Fortitude DC. On a success, the action is disrupted, causing the creature to remain prone. On a critical success, the creature also can't Stand until its next turn."
+  properties:
+    level: 14
+    actions: "reaction"
+    traits: ["rogue"]
+    prerequisites: "master in Athletics"
+    trigger: "A prone foe within your reach Stands."
 - id: "steady-balance"
   name: "Steady Balance"
   source: "pc > Chapter 5: Feats"
@@ -2257,6 +3575,13 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Society"
+- id: "strong-arm"
+  name: "Strong Arm"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "When you Strike with a thrown weapon, the weapon's range increment increases by 10 feet."
+  properties:
+    level: 2
+    traits: ["rogue"]
 - id: "stubborn-persistence"
   name: "Stubborn Persistence"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Human > Human Ancestry Feats"
@@ -2280,6 +3605,25 @@
     level: 1
     traits: ["general", "skill"]
     prerequisites: "trained in Thievery"
+- id: "sudden-charge"
+  name: "Sudden Charge"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "With a quick sprint, you dash up to your foe and swing. Stride twice. If you end your movement within melee reach of at least one enemy, you can make a melee Strike against that enemy. You can use Sudden Charge while Burrowing, Climbing, Flying, or Swimming instead of Striding if you have the corresponding movement type."
+  properties:
+    level: 1
+    actions: "two"
+    traits: ["fighter", "flourish"]
+- id: "sudden-leap"
+  name: "Sudden Leap"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    You make an impressive leap and swing while you soar. Make a Leap, High Jump, or Long Jump and attempt one melee Strike at any point during your jump. Immediately after the Strike, you fall to the ground if you're in the air, even if you haven't reached the maximum distance of your jump. If the distance you fall is no more than the height of your jump, you take no damage and land upright.
+    When attempting a High Jump or Long Jump during a Sudden Leap, determine the jump distance using Long Jump's rules, and change your maximum distance to double your Speed.
+  properties:
+    level: 8
+    actions: "two"
+    traits: ["fighter"]
+    special: "If you have Felling Strike, you can use Felling Strike instead of a normal Strike. This doesn't change the number of actions Sudden Leap takes."
 - id: "summon-nephilim-kin"
   name: "Summon Nephilim Kin"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Versatile Heritages > Nephilim > Feats"
@@ -2317,6 +3661,16 @@
   properties:
     level: 1
     traits: ["changeling", "lineage"]
+- id: "swift-elusion"
+  name: "Swift Elusion"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Attempt an Acrobatics check against the foe's Reflex DC. If you succeed, either Stride to a different space adjacent to the foe or move the foe to a different space adjacent to you."
+  properties:
+    level: 16
+    actions: "reaction"
+    traits: ["rogue"]
+    prerequisites: "legendary in Acrobatics"
+    trigger: "A foe ends its movement adjacent to you."
 - id: "swift-sneak"
   name: "Swift Sneak"
   source: "pc > Chapter 5: Feats"
@@ -2325,6 +3679,53 @@
     level: 7
     traits: ["general", "skill"]
     prerequisites: "master in Stealth"
+- id: "swipe"
+  name: "Swipe"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    You make a wide, arcing swing. Make a melee Strike and compare the attack roll result to the AC of up to two foes, each of whom must be within your melee reach and adjacent to each other. Roll damage only once and apply it to each creature you hit. A Swipe counts as two attacks for your multiple attack penalty.
+    If you're using a weapon with the sweep trait, its modifier applies to all your Swipe attacks.
+  properties:
+    level: 4
+    actions: "two"
+    traits: ["fighter", "flourish"]
+- id: "swipe-souvenir"
+  name: "Swipe Souvenir"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "When you wriggle free from an enemy's grasp, you take something of theirs with you. You attempt to Escape from being grabbed or restrained by a creature. If you succeed, you can also attempt to Steal from the creature, even if the creature is in combat."
+  properties:
+    level: 8
+    actions: "two"
+    traits: ["rogue"]
+    requirements: "You're grabbed or restrained by a creature."
+- id: "tactical-debilitations"
+  name: "Tactical Debilitations"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    You learn new debilitations that grant you tactical advantages against your foes. Add the following debilitations to the list you can choose from when you use Debilitating Strike.
+    - **Debilitation.** The target can't use reactions.
+    - **Debilitation.** The target can't flank or contribute to allies' flanking.
+  properties:
+    level: 10
+    traits: ["rogue"]
+    prerequisites: "scoundrel racket, Debilitating Strike"
+- id: "tactical-entry"
+  name: "Tactical Entry"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You Stride. This movement doesn't trigger any reactions."
+  properties:
+    level: 8
+    actions: "free"
+    traits: ["rogue"]
+    prerequisites: "master in Stealth"
+    requirements: "You rolled Stealth for initiative in this encounter, and neither you nor any enemies have acted yet."
+- id: "tactical-reflexes"
+  name: "Tactical Reflexes"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You are particularly swift at punishing foes who leave you openings. At the start of each of your turns when you regain your actions, you gain an additional reaction that can be used only to make a Reactive Strike."
+  properties:
+    level: 10
+    traits: ["fighter"]
 - id: "telluric-power"
   name: "Telluric Power"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Dwarf > Ancestry Feats"
@@ -2360,6 +3761,13 @@
     level: 7
     traits: ["general", "skill"]
     prerequisites: "master in Intimidation"
+- id: "the-harder-they-fall"
+  name: "The Harder They Fall"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You make your foes fall painfully when you trip them. When you successfully Trip an off-guard foe, your target takes 1d6 bludgeoning damage. On a critical success, the target takes 1d6 bludgeoning damage plus your sneak attack damage."
+  properties:
+    level: 4
+    traits: ["rogue"]
 - id: "thorned-seedpod"
   name: "Thorned Seedpod"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Leshy > Leshy Ancestry Feats"
@@ -2409,6 +3817,15 @@
     level: 1
     traits: ["downtime", "general", "manipulate", "skill"]
     prerequisites: "trained in Nature"
+- id: "trap-finder"
+  name: "Trap Finder"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    You have an intuitive sense that alerts you to the presence of traps. You gain a +1 circumstance bonus to Perception checks to find traps, to AC against attacks made by traps, and to saves against traps. Even if you aren't Searching, you get a check to find traps that normally require you to be Searching. You still need to meet any other requirements to find the trap.
+    You can disable traps that require a proficiency rank of master in Thievery. If you have master proficiency in Thievery, you can disable traps that require a proficiency rank of legendary instead, and your circumstance bonuses against traps increase to +2.
+  properties:
+    level: 1
+    traits: ["rogue"]
 - id: "tree-climber"
   name: "Tree Climber"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Elf > Ancestry Feats"
@@ -2431,6 +3848,21 @@
     actions: "one"
     traits: ["general", "manipulate", "skill"]
     prerequisites: "trained in Arcana, Nature, Occultism, or Religion"
+- id: "triple-shot"
+  name: "Triple Shot"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You can quickly fire multiple shots with greater control. When you use Double Shot, you can make the attacks against the same target. You can add an additional action to Double Shot to make three ranged Strikes instead of two. If you do, the penalty is -4. All attacks count toward your multiple attack penalty, but the penalty doesn't increase until after you've made all of them."
+  properties:
+    level: 6
+    traits: ["fighter"]
+    prerequisites: "Double Shot"
+- id: "tumble-behind"
+  name: "Tumble Behind"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You tumble under and behind your foe, your rapid movement letting you catch them off guard. When you successfully Tumble Through, the foe whose space you passed through is off-guard against the next attack you make before the end of your turn."
+  properties:
+    level: 1
+    traits: ["rogue"]
 - id: "tusks"
   name: "Tusks"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Orc > Orc Ancestry Feats"
@@ -2439,6 +3871,90 @@
     level: 1
     traits: ["orc"]
     special: "You can take this feat only at 1st level, and you can't retrain into this feat. You can retrain out of this feat only through drastic measures, such as breaking, filing, or extracting your tusks."
+- id: "twin-distraction"
+  name: "Twin Distraction"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Your movements with two weapons are so swift and disorienting that they befuddle your opponent. When using Twin Feint, if both your Strikes deal damage to a targeted creature, the target must succeed at a Will saving throw against your class DC or become stupefied 1 until the end of your next turn."
+  properties:
+    level: 4
+    traits: ["rogue"]
+    prerequisites: "Twin Feint"
+    requirements: "You are wielding two melee weapons, each in a different hand."
+- id: "twin-feint"
+  name: "Twin Feint"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You use an attack with one weapon to distract your foe from a second attack coming at a different angle. Make one Strike with each of your two melee weapons, both against the same target. The target is automatically off-guard against the second attack. Apply your multiple attack penalty to the Strikes normally."
+  properties:
+    level: 1
+    actions: "two"
+    traits: ["rogue"]
+    requirements: "You are wielding two melee weapons, each in a different hand."
+- id: "twin-parry"
+  name: "Twin Parry"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You use your two weapons to parry attacks. You gain a +1 circumstance bonus to AC until the start of your next turn, or a +2 circumstance bonus if either weapon has the parry trait. You lose this circumstance bonus if you no longer meet this feat's requirement."
+  properties:
+    level: 4
+    actions: "one"
+    traits: ["fighter"]
+    requirements: "You are wielding two melee weapons, one in each hand."
+- id: "twin-riposte"
+  name: "Twin Riposte"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "A clever parry with one weapon leaves your opponent open to an attack with the other weapon. Make a melee Strike or Disarm action against the triggering opponent."
+  properties:
+    level: 10
+    actions: "reaction"
+    traits: ["fighter"]
+    trigger: "A creature within your reach critically fails to Strike you."
+    requirements: "You are benefiting from Twin Parry."
+- id: "twinned-defense"
+  name: "Twinned Defense"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You're always ready to use your off-hand weapon to interfere with attacks against you. While you are in this stance, you constantly gain the benefits of the Twin Parry action."
+  properties:
+    level: 16
+    actions: "one"
+    traits: ["fighter", "stance"]
+    prerequisites: "Twin Parry"
+    requirements: "You are wielding two melee weapons, one in each hand."
+- id: "twist-the-knife"
+  name: "Twist the Knife"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "After stabbing your opponent in a weak spot, you tear the wound open. You deal persistent bleed damage to the target equal to your number of sneak attack damage dice."
+  properties:
+    level: 6
+    actions: "one"
+    traits: ["rogue"]
+    requirements: "Your last action was a melee Strike that dealt sneak attack damage to an off-guard target."
+- id: "two-weapon-flurry"
+  name: "Two-Weapon Flurry"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Using the momentum of your prior attack, you lash out with both your weapons in a sudden frenzy. Strike twice, once with each weapon."
+  properties:
+    level: 14
+    actions: "one"
+    traits: ["fighter", "flourish", "press"]
+    requirements: "You are wielding two weapons, each in a different hand."
+- id: "ultimate-flexibility"
+  name: "Ultimate Flexibility"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: |-
+    Your experience keeps you on your toes, helping you adopt complex strategies on the fly and face the most dangerous challenges. When you gain a fighter feat using combat flexibility, you gain three fighter feats instead of two. While the first feat must still be 8th level or lower, the second feat can be up to 14th level, and the third feat can be up to 18th level.
+    You can use the first feat to meet the prerequisites of the second or third feats and the second feat to meet the prerequisites of the third feat. You must meet all three feats' other prerequisites normally.
+    In addition, you can adapt to the battlefield's challenges by spending 1 hour to train. If you do, you can reselect the feats chosen with combat flexibility as if you had made your daily preparations. You can't trade out limited-use abilities that you've already used, such as Determination.
+  properties:
+    level: 20
+    traits: ["fighter"]
+    prerequisites: "improved flexibility"
+- id: "unbalancing-blow"
+  name: "Unbalancing Blow"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "Interweaving attacks, you unbalance your foes. Whenever your Strike is a critical hit and deals damage, the target is off-guard against your attacks until the end of your next turn."
+  properties:
+    level: 2
+    traits: ["rogue"]
+    prerequisites: "thief racket"
 - id: "unburdened-iron"
   name: "Unburdened Iron"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Dwarf > Ancestry Feats"
@@ -2464,6 +3980,15 @@
   properties:
     level: 1
     traits: ["leshy"]
+- id: "underhanded-assault"
+  name: "Underhanded Assault"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You capitalize on the distraction provided by an ally. You Sneak up to a foe adjacent to one of your allies. You can roll against the foe you're Sneaking up on, even if it's currently observing you, as though you were hidden. You take a -2 penalty on your Stealth check. If your Stealth check against the chosen foe succeeds, you can make a melee Strike against that foe at the end of your Sneak."
+  properties:
+    level: 2
+    actions: "two"
+    traits: ["rogue"]
+    prerequisites: "trained in Stealth"
 - id: "underwater-marauder"
   name: "Underwater Marauder"
   source: "pc > Chapter 5: Feats"
@@ -2573,6 +4098,25 @@
     level: 13
     traits: ["goblin"]
     prerequisites: "Very Sneaky"
+- id: "vicious-debilitations"
+  name: "Vicious Debilitations"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: |-
+    The debilitations you dish out seriously impair your foes. Add the following debilitations to the list you can choose from when you use Debilitating Strike.
+    - **Debilitation.** The target gains weakness 5 to your choice of bludgeoning, piercing, or slashing damage.
+    - **Debilitation.** The target becomes clumsy 1.
+  properties:
+    level: 10
+    traits: ["rogue"]
+    prerequisites: "ruffian racket, Debilitating Strike"
+- id: "vicious-swing"
+  name: "Vicious Swing"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You unleash a particularly powerful attack that clobbers your foe but leaves you a bit unsteady. Make a melee Strike. This counts as two attacks when calculating your multiple attack penalty. If this Strike hits, you deal an extra die of weapon damage. If you're at least 10th level, increase this to two extra dice, and if you're at least 18th level, increase it to three extra dice."
+  properties:
+    level: 1
+    actions: "two"
+    traits: ["fighter", "flourish"]
 - id: "virtuosic-performer"
   name: "Virtuosic Performer"
   source: "pc > Chapter 5: Feats"
@@ -2625,6 +4169,15 @@
     level: 2
     traits: ["general", "skill"]
     prerequisites: "expert in Thievery"
+- id: "watch-your-back"
+  name: "Watch Your Back"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "You menace the target, stoking their fears and drawing their attention. Attempt an Intimidation check against the Will DC of a target within 30 feet. If you succeed, for 1 minute, that target gains a +2 status bonus to Perception checks against you, but it takes a -2 status penalty to Will saves against fear effects."
+  properties:
+    level: 6
+    actions: "one"
+    traits: ["emotion", "fear", "mental", "rogue"]
+    prerequisites: "trained in Intimidation"
 - id: "watchful-halfling"
   name: "Watchful Halfling"
   source: "pc > Chapter 2: Ancestries & Backgrounds > Halfling > Ancestry Feats"
@@ -2642,3 +4195,28 @@
     level: 1
     traits: ["general"]
     special: "You can select this feat more than once. Each time you do, you become trained in an advanced weapon."
+- id: "weapon-supremacy"
+  name: "Weapon Supremacy"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "Your skill with weapons bends the laws of reality, allowing you to continuously attack with speed that would normally require magical assistance. You're permanently quickened. You can use your extra action only to Strike."
+  properties:
+    level: 20
+    traits: ["fighter"]
+- id: "whirlwind-strike"
+  name: "Whirlwind Strike"
+  source: "pc > Chapter 3: Classes > Fighter > Fighter Feats"
+  description: "You lash out in a blur of motion, attacking all nearby adversaries. Make a melee Strike against each enemy within your melee reach. Each attack counts toward your multiple attack penalty, but you do not increase your penalty until you have made all your attacks."
+  properties:
+    level: 14
+    actions: "three"
+    traits: ["fighter", "flourish"]
+- id: "you-re-next"
+  name: "You're Next"
+  source: "pc > Chapter 3: Classes > Rogue > Rogue Feats"
+  description: "After downing a foe, you menace another. Attempt to Demoralize a creature within 60 feet, with a +2 circumstance bonus. If you have legendary proficiency in Intimidation, you can use this as a free action with the same trigger."
+  properties:
+    level: 1
+    actions: "reaction"
+    traits: ["emotion", "fear", "mental", "rogue", "visual"]
+    prerequisites: "trained in Intimidation"
+    trigger: "You reduce an enemy to 0 Hit Points."

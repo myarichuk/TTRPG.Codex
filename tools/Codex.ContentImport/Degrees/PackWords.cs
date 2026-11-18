@@ -220,7 +220,7 @@ public static partial class PackWordCheck
         }
     }
 
-    public static List<PackFinding> CheckDenylist(string packDir, Denylist denylist, Denylist? pairs = null)
+    public static List<PackFinding> CheckDenylist(string packDir, Denylist denylist, Denylist? pairs = null, IReadOnlySet<(string Word, string Next)>? compounds = null)
     {
         var findings = new List<PackFinding>();
         foreach (var file in Load(packDir, denylist))
@@ -240,10 +240,13 @@ public static partial class PackWordCheck
                         }
                     }
 
-                    foreach (var word in Words(item.Text))
+                    var itemWords = Words(item.Text).ToList();
+                    for (var w = 0; w < itemWords.Count; w++)
                     {
-                        var hash = Denylist.Hash(word);
-                        if (denylist.Contains(hash) && seen.Add(hash))
+                        var hash = Denylist.Hash(itemWords[w]);
+                        // A word allowed only as the first of a named compound (see Waivers.ParseCompounds) passes where the next word is the second one.
+                        var allowed = compounds != null && w + 1 < itemWords.Count && compounds.Contains((itemWords[w].ToLowerInvariant(), itemWords[w + 1].ToLowerInvariant()));
+                        if (denylist.Contains(hash) && !allowed && seen.Add(hash))
                         {
                             findings.Add(new PackFinding(file.Name, entry.Number, item.Path, "word on the denylist", hash));
                         }

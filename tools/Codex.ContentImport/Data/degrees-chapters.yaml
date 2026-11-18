@@ -38,6 +38,13 @@
 #             under a "Lineages" heading (1st level, no band) or a level band is a `feat` entry whose trait line carries the heritage's key, and a part before the first heritage of a section of several is one `rule`
 #   backgrounds (parser) the section's text before its first heading is one `rule`; each heading that ends in the background word is a `background` entry whose story is read past, whose description is the rules
 #             sentences and whose boosts, trained skills, Lore subject and skill feat are fields
+#   classes (parser) one class's whole range: its flavor is read past; its statistics box (the key attribute, which may be a choice of two, and the hit points), its initial proficiencies and its advancement table make the `class` entry's fields and its
+#             first feature row; each class feature (an entry-header heading, with its level after the name) is a feature row of the class, with the grants to the sheet's ranked lists that its sentences make; each heading in the block-header font
+#             under the feature named by `subclassFeature` is a `subclass` entry (its first paragraph, the flavor, is read past); the class feats under their level bands are `feat` entries. The advancement table must agree with the feature rows
+#             (every feature row is in the table at its level, and any other row of the table is a feature gained at an earlier level again); `advancementNames` maps a name the table prints otherwise than the heading does (the reason goes in
+#             `countsDiffer`). `saveAttributes` names the attribute key of each saving throw, as the book's own rules say it. The bookmark children, the level bands, the feat headers, the trait lines, the level markers and the book's printed list of the
+#             class's feats are counted
+#   sidebarFillsColumn / endsAtPage   pages where a sidebar fills a whole column, so the opening text of the next column is the page's own; bookmark paths whose next section opens a page with no title block of its own, so the section ends with its page
 #   planned   (below the rows) sections a later chapter takes: not read, only not counted as "left out" by the denylist generator
 # Dropped material is never named here: the setting, religion, example-of-play and map sections are simply absent.
 # A path that names anything but a game term does not belong in this file.
@@ -646,6 +653,77 @@ rows:
     approved: true
     paths:
       - ["Chapter 2: Ancestries & Backgrounds", Languages, Sign Language]
+  # Chapter 8a: how a class entry is read (its own text and its six sections that hold rules). The class summaries that follow are left out: they name the book's sample characters and a faith.
+  - chapter: classes
+    book: pc
+    parser: rules
+    target: rule
+    category: Classes
+    approved: true
+    subheadings: true
+    countsDiffer: The section's bookmark children include the class summaries, which are left out, so its headings are not compared with its bookmark children here.
+    own:
+      - ["Chapter 3: Classes", Reading Class Entries]
+    ownName: Class Entries
+    # A section whose title is also a rule of the skills chapter's: named by what it is for.
+    entryNames:
+      Key Attribute: Class Key Attribute
+    # The text of the hit points section goes on over the page break, above the next section's title.
+    runsToTitle:
+      - ["Chapter 3: Classes", Reading Class Entries, Hit Points]
+    # The class summaries start the next page and open with a list of entries, not a title.
+    endsAtPage:
+      - ["Chapter 3: Classes", Reading Class Entries, Class Features]
+    paths:
+      - ["Chapter 3: Classes", Reading Class Entries, Playing the Class]
+      - ["Chapter 3: Classes", Reading Class Entries, Key Attribute]
+      - ["Chapter 3: Classes", Reading Class Entries, Hit Points]
+      - ["Chapter 3: Classes", Reading Class Entries, Initial Proficiencies]
+      - ["Chapter 3: Classes", Reading Class Entries, Advancement Table]
+      - ["Chapter 3: Classes", Reading Class Entries, Class Features]
+  # The fighter and the rogue: one range each. Flavor is read past; the statistics, initial proficiencies and advancement table become the class entry's fields and its first feature row, each class feature
+  # is a feature row, a rogue's racket is a subclass entry, and the class feats under their level bands are feat entries. The sidebars (Key Terms, Sample <class>) are left out.
+  - chapter: classes
+    book: pc
+    parser: classes
+    target: class
+    folder: classes
+    approved: true
+    saveAttributes:
+      Fortitude: con
+      Reflex: dex
+      Will: wis
+    # A page whose feat text runs wider than the gutter search allows: its gutter is pinned (the text of both columns ends or starts at the same x as elsewhere).
+    # A sample character's sidebar fills the first column of page 147, so the feat text that opens the second column is the page's own, going on from the page before.
+    sidebarFillsColumn: [147]
+    gutterAt:
+      143: 314
+      145: 314
+      147: 314
+      149: 314
+    paths:
+      - ["Chapter 3: Classes", Fighter]
+  - chapter: classes
+    book: pc
+    parser: classes
+    target: class
+    folder: classes
+    approved: true
+    countsDiffer: The advancement table names one 13th-level feature otherwise than its heading does, which advancementNames maps; every other row of the table agrees.
+    subclassFeature: Rogue's Racket
+    saveAttributes:
+      Fortitude: con
+      Reflex: dex
+      Will: wis
+    advancementNames:
+      incredible senses: Perception Legend
+    # Two pages whose text runs to the same x as the next column's headings (an action's text under the class features, and feats beside the list of feats): the gutter search cut them at a wrong gap, so it is pinned.
+    gutterAt:
+      169: 314
+      171: 314
+      175: 314
+    paths:
+      - ["Chapter 3: Classes", Rogue]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
@@ -654,5 +732,13 @@ planned:
       - ["Chapter 1: Introduction", Basics of Play]
       - ["Chapter 1: Introduction", Playing the Game]
       - ["Chapter 1: Introduction", Character Creation]
-      - ["Chapter 3: Classes"]
+      - ["Chapter 3: Classes", Bard]
+      - ["Chapter 3: Classes", Cleric]
+      - ["Chapter 3: Classes", Druid]
+      - ["Chapter 3: Classes", Ranger]
+      - ["Chapter 3: Classes", Witch]
+      - ["Chapter 3: Classes", Wizard]
+      - ["Chapter 3: Classes", Companions]
+      - ["Chapter 3: Classes", Familiars]
+      - ["Chapter 3: Classes", Archetypes]
       - ["Chapter 8: Playing the Game"]

@@ -10,10 +10,24 @@ public static class Waivers
 {
     private const string RetiredPrefix = "retired-pair ";
 
+    private const string CompoundPrefix = "compound ";
+
     public static HashSet<string> Parse(string text) =>
-        text.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith('#') && !l.StartsWith(RetiredPrefix, StringComparison.Ordinal)).Select(l => l.ToLowerInvariant()).ToHashSet(StringComparer.Ordinal);
+        text.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith('#') && !l.StartsWith(RetiredPrefix, StringComparison.Ordinal) && !l.StartsWith(CompoundPrefix, StringComparison.Ordinal))
+            .Select(l => l.ToLowerInvariant()).ToHashSet(StringComparer.Ordinal);
 
     public static HashSet<string> Embedded() => Parse(BooksConfig.EmbeddedYaml("degrees-denylist-waivers.txt"));
+
+    /// <summary>
+    /// The compounds a person has allowed (lines <c>compound &lt;word&gt; &lt;next word&gt;</c>): a word that stays on the denylist, because the book capitalizes it in a name the pack must never say, is allowed in the pack
+    /// only where the word after it is the second one (one feat's name). The word gate honours it for those two adjacent words and for no other place.
+    /// </summary>
+    public static HashSet<(string Word, string Next)> ParseCompounds(string text) =>
+        text.Split('\n').Select(l => l.Trim()).Where(l => l.StartsWith(CompoundPrefix, StringComparison.Ordinal))
+            .Select(l => l[CompoundPrefix.Length..].Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Where(p => p.Length == 2).Select(p => (p[0].ToLowerInvariant(), p[1].ToLowerInvariant())).ToHashSet();
+
+    public static HashSet<(string Word, string Next)> EmbeddedCompounds() => ParseCompounds(BooksConfig.EmbeddedYaml("degrees-denylist-waivers.txt"));
 
     /// <summary>
     /// The pair hashes a person has retired (lines <c>retired-pair &lt;64 hex digits&gt; &lt;one-line reason&gt;</c>, no words): a hash that nothing produces any more (an artifact of an intermediate build), which
@@ -127,6 +141,7 @@ public static partial class ImportPipeline
             TakenSidebarKeys = takenSidebars,
             MaxColumns = page => columns.GetValueOrDefault(page, 2),
             PinnedGutters = pinned,
+            SidebarFillsColumn = rows.SelectMany(r => r.SidebarFillsColumn).ToHashSet(),
             SidebarPages = sidebars,
             SidebarStarts = starts,
             SidebarTitles = titles,
@@ -164,6 +179,7 @@ public static partial class ImportPipeline
         CheckAncestryCounts(spine, blocks, ranges, parsed);
         CheckAncestryList(blocks, parsed);
         CheckVersatileCounts(spine, blocks, ranges, parsed);
+        CheckClassCounts(spine, blocks, ranges, parsed);
         CheckBackgroundCounts(blocks, ranges, parsed);
         CheckActionCounts(spine, blocks, ranges, parsed);
         CheckSpellCounts(blocks, ranges, parsed);
@@ -202,6 +218,7 @@ public static partial class ImportPipeline
             Extracted = e.Extracted.Select(x => new LabelledText(x.Label, kept[e.Id].Fields[x.Label])).ToList(),
             Tags = e.Tags.ToList(),
             Raw = e.Raw.ToList(),
+            Features = e.Features.Select(f => new FinalFeature(f.Name, f.Level, kept[e.Id].Fields[ParsedEntry.FeatureField(f)], f.Adds.ToList())).ToList(),
         }).ToList();
 
         // The traits a versatile heritage gives (a heritage that names no ancestry): the words of its "You gain the X trait" sentence, read from the description after redaction, so a renamed heritage says its new key.
@@ -220,6 +237,13 @@ public static partial class ImportPipeline
         if (final.GroupBy(e => e.Id, StringComparer.Ordinal).FirstOrDefault(g => g.Count() > 1) is { } repeated)
         {
             throw new DegreesException($"{repeated.Count()} entries share one id ({repeated.Key}) after a redaction row renamed one of them.");
+        }
+
+        // A subclass names its class the same way, and the same rows could rename the class since.
+        var classIds = final.Where(e => e.Type == "class").Select(e => e.Id).ToHashSet(StringComparer.Ordinal);
+        if (final.Where(e => e.Type == "subclass" && e.Raw.Any(r => r.Label == "class")).Any(s => !classIds.Contains(s.Raw.Single(r => r.Label == "class").Text.Trim('"'))))
+        {
+            throw new DegreesException("A subclass names a class whose final id is another (a redaction row renamed the class), so the link would match nothing.");
         }
 
         // A heritage names its ancestry by the id the ancestry had when the stage ran: if a redaction row has renamed the ancestry since, the link would match nothing, with no error.
@@ -794,7 +818,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
                     t == 0 ? dropped.Count(b => b.Role != "opener") : 0,
                     t == 0 ? dropped.Count(b => b.Role == "opener") : 0,
                     t == 0 ? redactions.Rows.Select((r, n) => (r, n)).Where(x => (x.r.Book == null || x.r.Book == book) && ids.Any(x.r.Names)).Select(x => x.n + 1).ToList() : new List<int>(),
-                    ofType.Count(e => PageReference().IsMatch(e.Description) || e.Extracted.Any(x => PageReference().IsMatch(x.Text))),
+                    ofType.Count(e => PageReference().IsMatch(e.Description) || e.Extracted.Any(x => PageReference().IsMatch(x.Text)) || e.Features.Any(f => PageReference().IsMatch(f.Description))),
                     t == 0 ? readPast : 0));
             }
         }
@@ -984,8 +1008,19 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
             .Select(p => Denylist.PairHash(p.First, p.Second)).Distinct(StringComparer.Ordinal).OrderBy(h => h, StringComparer.Ordinal).ToList();
     }
 
+    /// <summary>
+    /// The lines the old sidebar rule would have dropped on a page the split by titles keeps as the page's own, on pages no row takes. They are left-out text for the words and for the pairs alike (a feat list a
+    /// sample character's sidebar leaves beside a section that is planned stays hashed until that section is taken).
+    /// </summary>
+    private static IEnumerable<string> LegacyLines(BlocksResult blocks, IReadOnlyList<TakenRange> ranges)
+    {
+        var takenPages = ranges.SelectMany(r => r.Indexes.Concat(r.LeadStart >= 0 ? Enumerable.Range(r.LeadStart, r.Start - r.LeadStart) : Enumerable.Empty<int>())
+            .Concat(r.TailEnd >= 0 ? Enumerable.Range(r.End, r.TailEnd - r.End) : Enumerable.Empty<int>())).Select(i => blocks.Blocks[i].Page).ToHashSet();
+        return (blocks.LegacyDropped ?? new List<Block>()).Where(b => !takenPages.Contains(b.Page)).SelectMany(b => b.Lines);
+    }
+
     private static IEnumerable<string> LeftOutLines(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<(int Start, int End)>? planned) =>
-        TakeStage.LeftOut(blocks, ranges, planned).SelectMany(b => b.Lines)
+        TakeStage.LeftOut(blocks, ranges, planned).SelectMany(b => b.Lines).Concat(LegacyLines(blocks, ranges))
             .Concat(ranges.Where(r => r.Row.Parser == "glossary").SelectMany(r => EntriesStage.ScanGlossary(r.BlocksIn(blocks), new HashSet<string>(StringComparer.Ordinal)).Dropped))
             .Concat(ranges.Where(r => r.Row.Parser == "actions").SelectMany(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks))).SelectMany(b => b.Lines))
             .Concat(ranges.Where(r => r.Row.Parser == "entries").SelectMany(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks))).SelectMany(b => b.Lines))
@@ -1007,6 +1042,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         "ancestries" => EntriesStage.AncestryFlavor(range.BlocksIn(blocks)),
         "versatile" => EntriesStage.VersatileFlavor(range.BlocksIn(blocks)),
         "backgrounds" => EntriesStage.BackgroundFlavor(range.BlocksIn(blocks)),
+        "classes" => EntriesStage.ClassFlavor(range.BlocksIn(blocks), range.Row),
         _ => new List<Block>(),
     };
 
@@ -1103,9 +1139,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         var glossaryLeftOut = ranges.Where(r => r.Row.Parser == "glossary").SelectMany(r => EntriesStage.ScanGlossary(r.BlocksIn(blocks), new HashSet<string>(StringComparer.Ordinal)).Dropped);
         // The boxes of examples an actions range reads past are text no entry holds, and names turn up in them: their words are left out too.
         // What the old sidebar rule dropped from pages that no row takes is left out text too, though the split by titles keeps it as the page's own.
-        var takenPages = ranges.SelectMany(r => r.Indexes.Concat(r.LeadStart >= 0 ? Enumerable.Range(r.LeadStart, r.Start - r.LeadStart) : Enumerable.Empty<int>())
-            .Concat(r.TailEnd >= 0 ? Enumerable.Range(r.End, r.TailEnd - r.End) : Enumerable.Empty<int>())).Select(i => blocks.Blocks[i].Page).ToHashSet();
-        var legacy = (blocks.LegacyDropped ?? new List<Block>()).Where(b => !takenPages.Contains(b.Page)).SelectMany(b => b.Lines);
+        var legacy = LegacyLines(blocks, ranges);
         var boxes = legacy.Concat(ranges.Where(r => r.Row.Parser == "actions").SelectMany(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks))).SelectMany(b => b.Lines))
             .Concat(ranges.Where(r => r.Row.Parser == "entries").SelectMany(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks))).SelectMany(b => b.Lines))
             // An ancestry's lore is read past inside a taken range, and so is the list of languages its box offers: both are left-out text.

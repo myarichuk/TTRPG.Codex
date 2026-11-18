@@ -517,6 +517,22 @@ public class DegreesRedactionTests : IDisposable
     }
 
     [Fact]
+    public void ACompoundWaiverAllowsADeniedWordOnlyBesideTheOneWordThatFollowsIt()
+    {
+        // Invented words: "zorblax" is denied, and one name, "Zorblax Wick", is allowed; the word anywhere else (or before another word) still fires.
+        var compounds = Waivers.ParseCompounds("# a comment\ncompound zorblax wick\nplain waiver\n");
+        Assert.Equal(new[] { ("zorblax", "wick") }, compounds);
+        Assert.DoesNotContain("compound zorblax wick", Waivers.Parse("compound zorblax wick\nplain waiver\n"));
+        Assert.Contains("plain waiver", Waivers.Parse("compound zorblax wick\nplain waiver\n"));
+
+        var ok = FixturePack("- id: one\n  name: Zorblax Wick\n  text: A Zorblax Wick burns.\n");
+        Assert.Empty(PackWordCheck.CheckDenylist(ok, DenyZorblax, null, compounds));
+        Assert.NotEmpty(PackWordCheck.CheckDenylist(ok, DenyZorblax));
+        var other = FixturePack("- id: one\n  name: Zorblax Moss\n  text: The Zorblax Wick burns near the zorblax.\n");
+        Assert.NotEmpty(PackWordCheck.CheckDenylist(other, DenyZorblax, null, compounds));
+    }
+
+    [Fact]
     public void ANameOfTwoOrdinaryWordsIsCaughtByThePairList_AndOnlyWhenBothAreCapitalizedAndAdjacent()
     {
         // Invented words: neither is on the word list, but the two together are a name the left-out text sets in capitals.
@@ -632,7 +648,7 @@ public class DegreesRedactionTests : IDisposable
             // Joined, so a failure lists every finding (xunit shortens a collection to five).
             var flagged = string.Join("; ", PackWordCheck.CheckAllowlist(pack, terms, deny, Denylist.EmbeddedCommon()).Select(f => f.ToString()).Distinct().Order());
             Assert.True(flagged.Length == 0, flagged);
-            var denied = string.Join("; ", PackWordCheck.CheckDenylist(pack, deny, Denylist.EmbeddedPairs()).Select(f => f.ToString()));
+            var denied = string.Join("; ", PackWordCheck.CheckDenylist(pack, deny, Denylist.EmbeddedPairs(), Waivers.EmbeddedCompounds()).Select(f => f.ToString()));
             Assert.True(denied.Length == 0, denied);
         }
     }

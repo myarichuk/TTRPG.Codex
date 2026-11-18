@@ -605,7 +605,17 @@ public sealed partial class SheetRuleEngine
             {
                 var classField = rules.Multiclass?.ClassField ?? rules.Skills?.ClassField ?? "class";
                 var entry = from.Field == classField ? FirstClass(sheet, result, from.Field) : ReferencedEntry(from.Field, sheet);
-                fromEntry = entry == null ? null : AttributesNamedIn(entry.Properties.GetValueOrDefault(from.Property)).FirstOrDefault();
+                var named = entry?.Properties.GetValueOrDefault(from.Property);
+                if (named is string choice && choice.Contains('|', StringComparison.Ordinal))
+                {
+                    // "str|dex": a choice between attributes. The class DC cannot know which one the player chose, so the one with the higher modifier counts.
+                    var options = AttributesNamedIn(choice.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Cast<object>().ToList());
+                    fromEntry = options.OrderByDescending(a => ModifierOf(sheet, result, a)).FirstOrDefault();
+                }
+                else
+                {
+                    fromEntry = entry == null ? null : AttributesNamedIn(named).FirstOrDefault();
+                }
             }
 
             var keys = rule.Keys().Select(k => new RankedKey(k.Key, string.IsNullOrEmpty(k.Label) ? k.Key : k.Label, k.Attribute ?? rule.Attribute ?? fromEntry,

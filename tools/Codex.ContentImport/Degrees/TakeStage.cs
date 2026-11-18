@@ -43,6 +43,8 @@ public static class TakeStage
         ["ancestries"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon" },
         // A versatile heritage's pages are the same parts as an ancestry's, less the statistics box.
         ["versatile"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon" },
+        // A class's pages: the statistics box, flavor and feature headings (entry-header), the initial proficiencies, the advancement table, the racket and action headings and the level bands and feats (block-header), the titles of its two sections.
+        ["classes"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon" },
         // The backgrounds: each one's heading (block-header) and its text.
         ["backgrounds"] = new[] { "block-header", "rules", "body", "icon" },
     };
@@ -203,6 +205,12 @@ public static class TakeStage
             {
                 // The row says its section's last lines sit on the page the next section starts on, above that section's own text. The edge is found by position, below.
                 return new TakenRange(row, pathNumber, node, start, Math.Max(start, end), 0, false, SpillBlocks(blocks.Blocks, row.SpillsOnto.Value, end, where));
+            }
+
+            if (row.EndsAtPageFor(node.Path))
+            {
+                // The row says the next section's page opens with no title block of its own (class summaries open with a list of entries): the section ends where its page does.
+                return new TakenRange(row, pathNumber, node, start, Math.Max(start, end));
             }
 
             var at = FindTitle(blocks.Blocks, after, end) ?? throw new DegreesException($"{where}: the next section's title is not a block on page {after.PageStart}, so the end of the range is unknown.");

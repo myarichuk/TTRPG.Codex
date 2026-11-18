@@ -97,6 +97,22 @@ public static class PackEmitter
                     properties.Append("    ").Append(x.Label).Append(": ").Append(x.Text).Append('\n');
                 }
 
+                // A class's or a subclass's feature rows: a name, the level it applies from, its text and the grants it makes to the sheet's ranked lists.
+                if (e.Features.Count > 0)
+                {
+                    properties.Append("    features:\n");
+                    foreach (var f in e.Features)
+                    {
+                        properties.Append("      - name: ").Append(Scalar(f.Name, 10)).Append('\n');
+                        properties.Append("        level: ").Append(f.Level.ToString(CultureInfo.InvariantCulture)).Append('\n');
+                        properties.Append("        description: ").Append(Scalar(f.Description, 10)).Append('\n');
+                        if (f.Adds.Count > 0)
+                        {
+                            properties.Append("        adds: [").Append(string.Join(", ", f.Adds)).Append("]\n");
+                        }
+                    }
+                }
+
                 if (properties.Length > 0)
                 {
                     sb.Append("  properties:\n").Append(properties);
