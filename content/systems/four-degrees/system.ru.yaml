@@ -22,6 +22,7 @@ actorFields:
   heritage: { label: Наследие, category: Общее }
   background: { label: Предыстория, category: Общее }
   class: { label: Класс, category: Общее }
+  subclass: { label: Подкласс, category: Общее }
   faith: { label: Вера, category: Вера }
   faithVows: { label: Обеты, category: Вера, description: Чего вера требует от последователей, своими словами. }
   faithTaboos: { label: Запреты, category: Вера, description: Что вера запрещает, своими словами. }
@@ -129,6 +130,15 @@ entityTypes:
       keyAttribute: { label: Ключевая характеристика }
       boosts: { label: Повышения характеристик }
       savingThrows: { label: Обученные спасброски }
+      extraSkills: { label: Дополнительные навыки }
+      features: { label: Умения класса }
+  subclass:
+    label: Подкласс
+    pluralLabel: Подклассы
+    fields:
+      class: { label: Класс }
+      keyAttribute: { label: Ключевая характеристика }
+      features: { label: Умения }
   faith:
     label: Вера
     pluralLabel: Веры
@@ -294,6 +304,7 @@ sheetRules:
     lvl20: Уровень 20
   messages:
     "that heritage belongs to another ancestry.": это наследие принадлежит другому происхождению.
+    "that subclass belongs to another class.": этот подкласс принадлежит другому классу.
   skills:
     acrobatics: Акробатика
     arcana: Магия

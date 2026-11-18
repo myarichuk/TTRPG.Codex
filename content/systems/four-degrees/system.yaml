@@ -45,6 +45,7 @@ actorFields:
   - { key: heritage,    label: Heritage,    type: EntityReference, targetEntityType: heritage,   category: General }
   - { key: background,  label: Background,  type: EntityReference, targetEntityType: background, category: General }
   - { key: class,       label: Class,       type: EntityReference, targetEntityType: class,      category: General }
+  - { key: subclass,    label: Subclass,    type: EntityReference, targetEntityType: subclass,   category: General }
   # The faith shape: a choice from the faith entries (a table may add its own) and two free text lines, one for what the faith asks
   # and one for what it forbids. There is no alignment: nothing here limits who may follow what.
   - { key: faith,       label: Faith,       type: EntityReference, targetEntityType: faith,      category: Faith }
@@ -99,10 +100,23 @@ entityTypes:
     pluralLabel: Classes
     folder: classes
     fields:
-      - { key: hp,           label: Hit points per level, type: Number }
-      - { key: keyAttribute, label: Key attribute,        type: Text }
-      - { key: boosts,       label: Attribute boosts,     type: TagList }
-      - { key: savingThrows, label: Saves trained,        type: TagList }
+      - { key: hp,           label: Hit points per level, type: Number, description: "Added at 1st level and at every level after it, with the Constitution modifier." }
+      - { key: keyAttribute, label: Key attribute,        type: Text, description: "The attribute the class cares about most and its class DC uses. a|b is a choice between two; the class DC takes the higher modifier." }
+      - { key: boosts,       label: Attribute boosts,     type: TagList, description: "The boost the class gives: a word is a fixed boost, a|b one of two." }
+      - { key: savingThrows, label: Saves trained,        type: TagList, description: "The saving throws the class starts trained in, by attribute (con for Fortitude, dex for Reflex, wis for Will). Higher ranks are grants of the features." }
+      - { key: extraSkills,  label: Extra skills,         type: Number, description: "How many more skills the class trains, plus the Intelligence modifier when it is positive. Shown, not computed." }
+      - { key: features,     label: Class features,       type: Collection, description: "One row per feature: name, level (1 when none), description, and grants (adds) to the sheet's ranked lists." }
+  # A choice made at 1st level inside a class (a rogue's racket): its own feature rows, read beside the class's. The sheet's subclass choice is limited to the chosen class's (sheetRules.constraints).
+  - type: subclass
+    label: Subclass
+    pluralLabel: Subclasses
+    folder: subclasses
+    summaryFields: [class]
+    filterFields: [class]
+    fields:
+      - { key: class,        label: Class,         type: EntityReference, targetEntityType: class, description: "The class this choice belongs to." }
+      - { key: keyAttribute, label: Key attribute, type: Text, description: "A key attribute the choice allows besides the class's (the class DC and the boost do not read it)." }
+      - { key: features,     label: Features,      type: Collection, description: "One row per feature: name, level (1 when none), description, and grants (adds) to the sheet's ranked lists." }
   # A deity-like choice with no names built in. A faith entry holds the same two free lines the sheet has; picking one is optional.
   - type: faith
     label: Faith
@@ -557,6 +571,9 @@ sheetRules:
     - field: heritage
       where:
         - { property: ancestry, equalsField: ancestry, orEmpty: true, message: "that heritage belongs to another ancestry." }
+    - field: subclass
+      where:
+        - { property: class, equalsField: class, message: "that subclass belongs to another class." }
   # Hit points: the class's own number per level (no die) plus Constitution, and the ancestry's number once.
   hitPoints:
     key: HP_Max
@@ -695,6 +712,7 @@ sheetRules:
     - { field: heritage }
     - { field: background }
     - { field: class, property: features, byField: level }
+    - { field: subclass, property: features, byField: level }
     - { list: feats }
 
 # The play-time half: a DC and a speed the kind owns, and trinkets whose modifiers reach them through the kind's own feature source.

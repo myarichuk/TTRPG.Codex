@@ -22,6 +22,7 @@ actorFields:
   heritage: { label: מורשת, category: כללי }
   background: { label: רקע, category: כללי }
   class: { label: מקצוע, category: כללי }
+  subclass: { label: תת-מקצוע, category: כללי }
   faith: { label: אמונה, category: אמונה }
   faithVows: { label: נדרים, category: אמונה, description: מה האמונה דורשת ממאמיניה, במילים שלך. }
   faithTaboos: { label: איסורים, category: אמונה, description: מה האמונה אוסרת, במילים שלך. }
@@ -129,6 +130,15 @@ entityTypes:
       keyAttribute: { label: תכונת מפתח }
       boosts: { label: הגברות תכונה }
       savingThrows: { label: הצלות מיומנות }
+      extraSkills: { label: מיומנויות נוספות }
+      features: { label: יכולות המקצוע }
+  subclass:
+    label: תת-מקצוע
+    pluralLabel: תתי-מקצועות
+    fields:
+      class: { label: מקצוע }
+      keyAttribute: { label: תכונת מפתח }
+      features: { label: יכולות }
   faith:
     label: אמונה
     pluralLabel: אמונות
@@ -294,6 +304,7 @@ sheetRules:
     feats: כשרונות
   messages:
     "that heritage belongs to another ancestry.": המורשת הזו שייכת למוצא אחר.
+    "that subclass belongs to another class.": תת-המקצוע הזה שייך למקצוע אחר.
   skills:
     acrobatics: אקרובטיקה
     arcana: מאגיה
