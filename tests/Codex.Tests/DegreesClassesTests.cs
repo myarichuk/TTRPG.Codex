@@ -438,4 +438,356 @@ public class DegreesClassesTests
         Assert.Equal("Gadget Style", row.SubclassFeature);
         Assert.Equal("wis", row.SaveAttributes.Single(kv => kv.Key.Equals("will", StringComparison.OrdinalIgnoreCase)).Value);
     }
+
+    // ---- Chapter 8b: a spellcaster (invented words only): the SPELLS proficiency line, the spells-per-day table in its two halves, the advancement table's "Nth-rank spells" rows, the text's own numbers, the grants by name and the
+    // runs of a subclass gained at a later level. ----
+
+    private const string CasterRowYaml = """
+        rows:
+          - { chapter: makers, book: pc, parser: classes, target: class, folder: classes, approved: true, columns: 1, subclassFeature: Gadget Style, grantsByName: true, saveAttributes: { Fortitude: con, Reflex: dex, Will: wis }, paths: [["Chapter 9: Makers", "Tinker"]] }
+        """;
+
+    private static int[] CasterSlots(int level) => Enumerable.Range(1, 10).Select(rank => rank == 10 ? 0 : level < 2 * rank - 1 ? 0 : level == 2 * rank - 1 ? 2 : 3).ToArray();
+
+    private static int HighestRank(int level) => CasterSlots(level).Select((n, i) => n > 0 ? i + 1 : 0).Max();
+
+    private static string Ordinal(int n) => n + (n == 1 ? "st" : n == 2 ? "nd" : n == 3 ? "rd" : "th");
+
+    private static (int, string)[] CasterTable(bool wrongRank = false)
+    {
+        var rows = new List<(int, string)> { (1, "Ancestry and background, initial proficiencies, tinker spellcasting, gadget style, tinker feat") };
+        for (var level = 2; level <= 20; level++)
+        {
+            var parts = new List<string>();
+            if (HighestRank(level) > HighestRank(level - 1)) parts.Add(Ordinal(HighestRank(level) + (wrongRank && level == 7 ? 1 : 0)) + "-rank spells");
+            if (level == 3) parts.AddRange(new[] { "keen eyes", "second gear" });
+            if (level == 5) parts.Add("third gear");
+            parts.Add("tinker feat");
+            rows.Add((level, string.Join(", ", parts)));
+        }
+
+        return rows.ToArray();
+    }
+
+    private static string SlotCell(int n, bool star) => n == 0 ? "—" : n + (star ? "*" : string.Empty);
+
+    private static List<Block> Caster(string tradition = "arcane", string attribute = "Intelligence", string textCantrips = "four", int tableCantrips = 4, int rowsInSecondHalf = 20, bool wrongRank = false, bool spellsLabel = true,
+        bool withTable = true, string keyWord = "Intelligence", bool listAmongFeatures = false)
+    {
+        var blocks = Tinker(table: CasterTable(wrongRank));
+        blocks[blocks.FindIndex(b => b.Role == "body" && b.Lines[0].StartsWith("Intelligence or Wisdom", StringComparison.Ordinal))] =
+            Box(780, keyWord, "6 plus your Constitution modifier");
+        if (spellsLabel)
+        {
+            var at = blocks.FindIndex(b => b.Lines.Count == 1 && b.Lines[0] == "Trained in light armor") + 1;
+            blocks.Insert(at, Plain("block-header", 635, "SPELLS"));
+            blocks.Insert(at + 1, Rows("body", 634, 0, "Trained in spell attack modifier", "Trained in spell DC"));
+        }
+
+        var gadget = blocks.FindIndex(b => b.Role == "entry-header" && b.Lines[0] == "Gadget Style");
+        var added = new List<Block>
+        {
+            Plain("entry-header", 445, "Tinker Spellcasting"),
+            Plain("rules", 444, $"Tinkers can cast spells of the {tradition} tradition, each with a spring or a cog. On the first day you can prepare two 1st-rank spells and {textCantrips} cantrips. The tinker's key attribute is {attribute}, your spell attack and your spell DC both use your {attribute} modifier. When the lamps are lit, you start with a focus pool of 1 Focus Point, and the work begins."),
+        };
+        if (withTable)
+        {
+            added.Add(Plain("block-header", 443, "TINKER SPELLS PER DAY"));
+            var first = new List<string> { "Your Spell", "Level Cantrips 1st 2nd 3rd 4th" };
+            for (var level = 1; level <= 20; level++)
+            {
+                var s = CasterSlots(level);
+                first.Add($"{level} {tableCantrips} {SlotCell(s[0], level == 1)} {SlotCell(s[1], false)} {SlotCell(s[2], false)} {SlotCell(s[3], false)}");
+            }
+
+            first.Add("* A made-up note about the starred slot, which goes on");
+            added.Add(Rows("body", 442, 0, first.ToArray()));
+            added.Add(Plain("rules", 441, "Some words between the two halves of the table."));
+            added.Add(Rows("body", 440, 1, "Rank", "5th 6th 7th 8th 9th 10th"));
+            var second = Enumerable.Range(1, rowsInSecondHalf).Select(level => string.Join(' ', Enumerable.Range(5, 6).Select(r => SlotCell(r == 10 ? 0 : CasterSlots(level)[r - 1], false)))).ToList();
+            for (var i = 0; i < 3 && i < second.Count; i++) added.Add(Rows("body", 439 - i, 1, second[i]));
+            second = second.Skip(3).ToList();
+            second.Add("slot that works differently from the others.");
+            added.Add(Rows("body", 430, 1, second.ToArray()));
+            added.Add(Plain("body", 429, "in the next column, which is a note too."));
+        }
+
+        blocks.InsertRange(gadget, added);
+        if (listAmongFeatures)
+        {
+            var header = blocks.FindIndex(b => b.Role == "block-header" && b.Lines[0] == "TINKER FEATS BY NAME");
+            var moved = blocks.GetRange(header, 2);
+            blocks.RemoveRange(header, 2);
+            blocks.InsertRange(blocks.FindIndex(b => b.Role == "entry-header" && b.Lines[0] == "Keen Eyes 3rd") + 2, moved);
+        }
+
+        return WithRuns(blocks);
+    }
+
+    private static List<SpineNode> CasterSpine()
+    {
+        var spine = Spine();
+        var at = spine.FindIndex(n => n.Title == "Initial Proficiencies") + 1;
+        spine.Insert(at, new SpineNode(3, "Tinker Spellcasting", new[] { "Chapter 9: Makers", "Tinker", "Class Features", "Tinker Spellcasting" }, 1, 1, false));
+        return spine;
+    }
+
+    private static PipelineOutput RunCaster(List<Block> blocks, string yaml = CasterRowYaml) =>
+        ImportPipeline.Run(Book(blocks), CasterSpine(), Take(yaml), RedactionTable.Parse("normalization: 2\nrows: []\n"), "pc");
+
+    /// <summary>The blocks of the subclasses' text with a muse's feat and spell, an order's skill, and runs gained at later levels, in place of the plain ones.</summary>
+    private static List<Block> WithRuns(List<Block> blocks)
+    {
+        var springs = blocks.FindIndex(b => b.Lines[0] == "Springs bounce about the workshop.");
+        blocks[springs] = Rows("rules", 410, 0, "Springs bounce about the workshop.", "You are trained in Athletics.", "First Gear (1st): You gain the Alpha Gizmo tinker feat.",
+            "Second Gear (3rd): Your proficiency ranks for spell DCs and spell attack modifiers increase to expert.", "Third Gear (5th): You gain master proficiency in martial weapons.");
+        blocks.Insert(springs + 1, new Block(1, 0, "body", 60, 0, 300, 409, new List<string> { "Order Skill Crafting", "Muse Feat Alpha Gizmo", "Muse Spell Chime Bolt (page 12)" },
+            new List<LineInfo> { new(60, 200, "Order Skill"), new(60, 200, "Muse Feat"), new(60, 200, "Muse Spell") }));
+        var cogs = blocks.FindIndex(b => b.Lines[0] == "Cogs turn in the dark.");
+        blocks[cogs] = Rows("rules", 390, 0, "Cogs turn in the dark.", "First Gear (1st): You gain the Beta Gizmo tinker feat.", "Second Gear (3rd): Your proficiency ranks for spell DCs and spell attack modifiers increase to expert.",
+            "Third Gear (5th): You gain master proficiency with the favored weapon of your guild, simple weapons, and unarmed attacks.");
+        return blocks;
+    }
+
+    [Fact]
+    public void ASpellcastersSpellsLabel_TableAndText_BecomeItsTraditionCastingFocusPoolAndRows_AndTheTableIsNotItsText()
+    {
+        var result = RunCaster(Caster());
+        var tinker = result.Final.Single(e => e.Type == "class");
+
+        Assert.Equal(new[] { "hp", "keyAttribute", "boosts", "savingThrows", "extraSkills", "tradition", "casting", "focusPool" }, tinker.Raw.Select(r => r.Label).Take(8));
+        Assert.Equal(("\"int\"", "\"arcane\"", "\"prepared\"", "1"), (tinker.Raw.Single(r => r.Label == "keyAttribute").Text, tinker.Raw.Single(r => r.Label == "tradition").Text, tinker.Raw.Single(r => r.Label == "casting").Text, tinker.Raw.Single(r => r.Label == "focusPool").Text));
+        // One row for each of the 20 levels, with the cantrips, the slots of each rank from the 1st, the highest rank and a spell for each slot; a mark on a number (the star) is no part of it.
+        var rows = tinker.Raw.Single(r => r.Label == "spellcasting").Text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(20, rows.Length);
+        Assert.Equal("      - { level: 1, cantrips: 4, slots: \"2\", maxRank: 1, spells: 2 }", rows[0]);
+        Assert.Equal("      - { level: 4, cantrips: 4, slots: \"3/3\", maxRank: 2, spells: 6 }", rows[3]);
+        Assert.Equal("      - { level: 17, cantrips: 4, slots: \"3/3/3/3/3/3/3/3/2\", maxRank: 9, spells: 26 }", rows[16]);
+        Assert.Equal("      - { level: 20, cantrips: 4, slots: \"3/3/3/3/3/3/3/3/3\", maxRank: 9, spells: 27 }", rows[19]);
+        // The table and its notes are no feature text; the spell attack modifier and the spell DC are granted with the class's other initial ranks.
+        var spellcasting = tinker.Features.Single(f => f.Name == "Tinker Spellcasting");
+        Assert.DoesNotContain("made-up note", spellcasting.Description);
+        Assert.DoesNotContain("Level Cantrips", spellcasting.Description);
+        Assert.DoesNotContain("in the next column", string.Join(' ', tinker.Features.Select(f => f.Description)));
+        Assert.Contains("{ to: spellAttack, rank: trained }", tinker.Features.Single(f => f.Name == "Initial Proficiencies").Adds);
+        Assert.Contains("{ to: spellDc, rank: trained }", tinker.Features.Single(f => f.Name == "Initial Proficiencies").Adds);
+        Assert.Contains("**Spells.** Trained in spell attack modifier. Trained in spell DC.", tinker.Features.Single(f => f.Name == "Initial Proficiencies").Description);
+    }
+
+    [Fact]
+    public void ASubclassesLabelledLinesAndLaterRuns_GrantFeatsSpellsAndRanks_AndTheFavoredWeaponOfAFaithIsLeftToTheText()
+    {
+        var result = RunCaster(Caster());
+        var springs = result.Final.Single(e => e.Id == "springs");
+        var cogs = result.Final.Single(e => e.Id == "cogs");
+
+        // A skill the order trains, the feat the muse gives (by id: the pack's feat of that name), and the spell it names, which the pack of this synthetic book does not hold: it stays text.
+        Assert.Equal(new[] { "{ to: skills, entries: [athletics], rank: trained }", "{ to: skills, entries: [crafting], rank: trained }", "{ to: feats, entries: [alpha-gizmo] }" }.Order(), springs.Features[0].Adds.Distinct().Order());
+        Assert.Contains("**Muse Spell.** Chime Bolt", springs.Features[0].Description);
+        Assert.DoesNotContain("page 12", springs.Features[0].Description);
+        Assert.Contains("spell:chime-bolt", result.GrantsByName.Left);
+        Assert.True(result.GrantsByName.Resolved >= 2);
+        // A run gained at a later level is a row of its own, at that level; the one at the 1st level stays in the subclass's own row, and its feat is a grant.
+        Assert.Equal(new[] { ("Cogs", 1), ("Second Gear", 3), ("Third Gear", 5) }, cogs.Features.Select(f => (f.Name, f.Level)));
+        Assert.Equal(new[] { ("Springs", 1), ("Second Gear", 3), ("Third Gear", 5) }, springs.Features.Select(f => (f.Name, f.Level)));
+        Assert.Equal(new[] { "{ to: feats, entries: [beta-gizmo] }" }, cogs.Features[0].Adds);
+        Assert.Equal(new[] { "{ to: spellAttack, rank: expert }", "{ to: spellDc, rank: expert }" }, cogs.Features[1].Adds.Order().ToArray());
+        // A sentence that names the faith's favored weapon among other things grants the others (the sheet has no weapon of its own in a ranked list).
+        Assert.Equal(new[] { "{ to: weapons, entries: [simple, unarmed], rank: master }" }, cogs.Features[2].Adds);
+    }
+
+    [Fact]
+    public void ThePrintedListAmongTheFeatures_IsStillTheIndependentCount()
+    {
+        var spine = CasterSpine();
+        var blocks = Caster(listAmongFeatures: true);
+        var result = ImportPipeline.Run(Book(blocks), spine, Take(CasterRowYaml), RedactionTable.Parse("normalization: 2\nrows: []\n"), "pc");
+
+        Assert.Equal(10, result.Final.Count(e => e.Type == "feat"));
+        var counts = ImportPipeline.CheckClassCounts(spine, Book(blocks), result.Ranges, result.Parsed).Single();
+        Assert.Equal((10, 10), (counts.Feats, counts.Listed));
+    }
+
+    [Fact]
+    public void ASpellcastersGates_FailTheRun_WhenTheTableTheTextOrTheTableOfAdvancementDisagree()
+    {
+        // The advancement table names a new spell rank at a level the spells-per-day table does not agree with.
+        Assert.Contains("new spell ranks", Assert.Throws<DegreesException>(() => RunCaster(Caster(wrongRank: true))).Message);
+        // A half of the table with 19 rows.
+        Assert.Contains("20 rows", Assert.Throws<DegreesException>(() => RunCaster(Caster(rowsInSecondHalf: 19))).Message);
+        // The text says four cantrips and the table has five; the text names no tradition; the key attribute is not the one the text says; a spells line with no table, and a table with no spells line.
+        Assert.Contains("1st-level spells and cantrips", Assert.Throws<DegreesException>(() => RunCaster(Caster(tableCantrips: 5))).Message);
+        Assert.Contains("tradition", Assert.Throws<DegreesException>(() => RunCaster(Caster(tradition: "made-up"))).Message);
+        Assert.Contains("key attribute", Assert.Throws<DegreesException>(() => RunCaster(Caster(keyWord: "Wisdom"))).Message);
+        Assert.Contains("one of each", Assert.Throws<DegreesException>(() => RunCaster(Caster(withTable: false))).Message);
+        Assert.Contains("one of each", Assert.Throws<DegreesException>(() => RunCaster(Caster(spellsLabel: false))).Message);
+    }
+
+    [Fact]
+    public void TheSpellTablesBlocks_AreTheNumbersAndDashesOfRows_WithNotesOnlyAtTheEnd()
+    {
+        Assert.True(EntriesStage.IsSpellTableBlock(Rows("body", 0, 0, "Your Spell", "Level Cantrips 1st 2nd 3rd 4th", "1 5 2* — — —", "* a note"), false));
+        Assert.True(EntriesStage.IsSpellTableBlock(Rows("body", 0, 0, "Rank", "5th 6th 7th 8th 9th 10th"), false));
+        Assert.True(EntriesStage.IsSpellTableBlock(Rows("body", 0, 0, "— — — — — —"), false));
+        // A note cut at the foot of a column goes on in a block of its own: only right after a table block, and only in lowercase.
+        Assert.True(EntriesStage.IsSpellTableBlock(Rows("body", 0, 0, "slot that works differently."), true));
+        Assert.False(EntriesStage.IsSpellTableBlock(Rows("body", 0, 0, "slot that works differently."), false));
+        Assert.False(EntriesStage.IsSpellTableBlock(Rows("body", 0, 0, "Slot that works differently."), true));
+        // A row after a note is no table, and a labelled line is not one.
+        Assert.False(EntriesStage.IsSpellTableBlock(Rows("body", 0, 0, "* a note", "1 5 2 — — —"), false));
+        Assert.False(EntriesStage.IsSpellTableBlock(Rows("body", 0, 0, "Order Skill Athletics", "Druid Feat Animal"), false));
+    }
+
+    [Fact]
+    public void TheSpellRankRowsOfTheAdvancementTable_AreNoFeaturesAndAreCheckedAgainstTheTable()
+    {
+        var table = EntriesStage.ParseAdvancement(Table(0, CasterTable()), Take(CasterRowYaml).Single());
+        Assert.Equal(new[] { 3, 5, 7, 9, 11, 13, 15, 17 }.Concat(new[] { 19 }.Take(0)), table.Where(t => t.Name.EndsWith("-rank spell", StringComparison.Ordinal)).Select(t => t.Level));
+        Assert.All(table.Where(t => t.Name.EndsWith("-rank spell", StringComparison.Ordinal)), t => Assert.True(EntriesStage.IsSpellRankRow(t.Name)));
+        Assert.False(EntriesStage.IsSpellRankRow("tinker feat"));
+    }
+
+    [Fact]
+    public void AnInitialProficiencyThatIsUntrained_OrAFaithsFavoredWeapon_GivesNothing_AndTheSpellWordsAreTheSheetsLists()
+    {
+        var row = Take(CasterRowYaml).Single();
+        var initial = EntriesStage.ParseInitial(new List<(string, List<Block>)>
+        {
+            ("DEFENSES", new List<Block> { Rows("body", 0, 0, "Untrained in heavy armor, but a vow may change that", "Trained in unarmored defense") }),
+            ("ATTACKS", new List<Block> { Rows("body", 0, 0, "Trained in simple weapons", "Trained in the favored weapon of your deity, a list of three.", "A rare one comes with a permit.") }),
+            ("SPELLS", new List<Block> { Rows("body", 0, 0, "Trained in spell attack modifier", "Trained in spell DC") }),
+        }, row);
+
+        Assert.Equal(new[] { "{ to: armor, entries: [unarmored], rank: trained }", "{ to: weapons, entries: [simple], rank: trained }", "{ to: spellAttack, rank: trained }", "{ to: spellDc, rank: trained }" }.Order(), initial.Adds.Order());
+        Assert.Contains("Untrained in heavy armor, but a vow may change that.", initial.Statements.Single(s => s.Label == "DEFENSES").Text);
+    }
+
+    [Fact]
+    public void TheGrantShapes_OfASubclassWithAFaith_AreTheOnesTheSentencesSay_AndOtherSentencesMakeNone()
+    {
+        var row = Take(CasterRowYaml).Single();
+        // "You have R proficiency in X" after "you're trained in", "Your proficiency rank in X increases", "if you gain F" later grants; the faith's favored weapon is left out of a list.
+        var adds = EntriesStage.SentenceGrants("You're trained in light armor, and you have expert proficiency in Will saves. Your proficiency rank in heavy armor increases to master. You gain expert proficiency with the favored weapon of your cult, martial weapons, and unarmed attacks.", row, out var notModelled);
+        Assert.Equal(new[]
+        {
+            "{ to: armor, entries: [light], rank: trained }",
+            "{ to: saves, entries: [wis], rank: expert }",
+            "{ to: armor, entries: [heavy], rank: master }",
+            "{ to: weapons, entries: [martial, unarmed], rank: expert }",
+        }, adds);
+        Assert.Equal(1, notModelled);
+        Assert.Equal(new[] { ("tough hide", "expert", "heavy armor") },
+            EntriesStage.LaterGrants("At 4th level, if you gain the tough hide class feature, you also gain expert proficiency in heavy armor."));
+
+        // A grant by name is a marker until the ids are final; a sentence that is a choice or a condition makes none.
+        Assert.Equal(new[] { "{ to: feats, entries: [@feat(Alpha Gizmo)] }", "{ to: feats, entries: [@feat(Cog Turner)] }", "{ to: focusSpells, entries: [@spell(chime bolt)] }", "{ to: grantedSpells, entries: [@spell(low note)] }" },
+            EntriesStage.NamedGrants("You gain the Alpha Gizmo tinker feat. If your faith allows it, you gain the Beta Gizmo feat. You gain the Cog Turner tinker feat, a fast one. You gain your choice of the Gamma Gizmo or Delta Gizmo feat. You learn the chime bolt composition spell. You learn the low note composition cantrip."));
+        Assert.Equal(new[] { "{ to: skills, entries: [crafting], rank: trained }", "{ to: feats, entries: [@feat(Alpha Gizmo)] }", "{ to: focusSpells, entries: [@spell(chime bolt)] }", "{ to: grantedSpells, entries: [@spell(low note)] }" },
+            EntriesStage.LabelledGrants(new[] { new LabelledText("Order Skill", "Crafting"), new LabelledText("Druid Feat", "Alpha Gizmo"), new LabelledText("Order Spell", "chime bolt"), new LabelledText("Muse Spell", "low note"), new LabelledText("Anathema", "Be rude.") }));
+    }
+
+    [Fact]
+    public void ARunGainedAtALevel_IsARowOfItsOwn_AndTheOneAtTheFirstLevelStaysInTheSubclass()
+    {
+        var (kept, rows) = EntriesStage.SplitLevelledParagraphs(new[]
+        {
+            new LabelledText(string.Empty, "Some words. First Gear (1st): The first run. Second Gear (3rd): The second run. Final Gear (19th): The last run."),
+            new LabelledText("Other Label", "Not touched. Gear Gear (3rd): But a label's text is left alone."),
+        });
+
+        Assert.Equal(new[] { ("Second Gear", 3, "The second run."), ("Final Gear", 19, "The last run.") }, rows);
+        Assert.Equal(new[] { (string.Empty, "Some words."), ("First Gear (1st)", "The first run."), ("Other Label", "Not touched. Gear Gear (3rd): But a label's text is left alone.") }, kept.Select(k => (k.Label, k.Text)));
+    }
+
+    [Fact]
+    public void AClassFeatureTheRowRenames_KeepsTheBooksNameForTheBookmarks_AndTheTableMapsItsOwn()
+    {
+        var yaml = CasterRowYaml.Replace("grantsByName: true,", "grantsByName: true, featureNames: { Keen Eyes: Sharp Sight }, advancementNames: { keen eyes: Sharp Sight },", StringComparison.Ordinal);
+        var result = RunCaster(Caster(), yaml);
+
+        Assert.Equal(new[] { "Sharp Sight" }, result.Final.Single(e => e.Type == "class").Features.Where(f => f.Level == 3).Select(f => f.Name));
+    }
+
+    [Fact]
+    public void AGrantNamedByAClass_BecomesTheIdOfTheEntryOfThatName_OrNothingWhenThereAreNoneOrManyAndNoClassKeyTellsThem()
+    {
+        FinalEntry Spell(string id, string name) => new() { Id = id, Name = name, Type = "spell" };
+        FinalEntry Feat(string id, string name, params string[] traits) => new() { Id = id, Name = name, Type = "feat", Traits = traits.ToList() };
+        var cls = new FinalEntry { Id = "tinker-class", Name = "Tinker", Type = "class", Features = new List<FinalFeature> { new("Row", 1, "text", new List<string> { "{ to: feats, entries: [@feat(Gizmo)] }", "{ to: feats, entries: [@feat(Doodad)] }", "{ to: focusSpells, entries: [@spell(Chime Bolt)] }", "{ to: grantedSpells, entries: [@spell(Missing)] }", "{ to: skills, entries: [athletics], rank: trained }" }) } };
+        var final = new List<FinalEntry> { cls, Feat("gizmo-tinker", "Gizmo", "tinker"), Feat("gizmo-other", "Gizmo", "other"), Feat("doodad", "Doodad"), Feat("doodad-too", "Doodad"), Spell("chime-bolt-spell", "Chime Bolt") };
+
+        var (resolved, left) = ImportPipeline.ResolveGrantNames(final);
+
+        Assert.Equal(2, resolved); // the feat of the class's key, and the spell
+        Assert.Equal(new[] { "feat:doodad", "spell:missing" }, left.Order());
+        Assert.Equal(new[] { "{ to: feats, entries: [gizmo-tinker] }", "{ to: focusSpells, entries: [chime-bolt-spell] }", "{ to: skills, entries: [athletics], rank: trained }" }, cls.Features.Single().Adds);
+    }
+
+    [Fact]
+    public void TheNameOfADroppedEntry_IsHashedByItsWords_AndTheLetterAfterAnApostropheIsNoWord()
+    {
+        var blocks = Tinker();
+        blocks[blocks.FindIndex(b => b.Role == "block-header" && b.Lines[0].StartsWith("ALPHA GIZMO", StringComparison.Ordinal))] = Plain("block-header", 290, "ALPHA'S GIZMO [one-action] FEAT 1");
+        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("Alpha's Gizmo"))).ToLowerInvariant();
+        var redactions = RedactionTable.Parse($"normalization: 2\nrows:\n  - {{ book: pc, entry: alpha-s-gizmo, field: name, span: {{ sha256: \"{hash}\", length: 13 }}, action: drop-entry, reason: \"A test.\" }}\n");
+        var spine = Spine();
+
+        var redacted = ImportPipeline.RedactedWords(Book(blocks), TakeStage.Resolve(spine, Book(blocks), Take()), redactions, "pc", spine);
+
+        // Without the possessive's letter, the denylist would hold the hash of "s" and stop every possessive of the packs.
+        Assert.Equal(new[] { "alpha", "gizmo" }, redacted.Names);
+    }
+
+    [Fact]
+    public void AClassFeatureTheRowSaysInOtherWords_PutsTheBooksHeadingAmongTheReservedNames()
+    {
+        var yaml = CasterRowYaml.Replace("grantsByName: true,", "grantsByName: true, featureNames: { Keen Eyes: Sharp Sight }, advancementNames: { keen eyes: Sharp Sight },", StringComparison.Ordinal);
+        var spine = CasterSpine();
+        var blocks = Caster();
+
+        var redacted = ImportPipeline.RedactedWords(Book(blocks), TakeStage.Resolve(spine, Book(blocks), Take(yaml)), RedactionTable.Parse("normalization: 2\nrows: []\n"), "pc", spine);
+
+        Assert.Equal(new[] { "eyes", "keen" }, redacted.Names);
+    }
+
+    [Fact]
+    public void AFeatsInlineAction_IsSetOutWithItsLabelledLines_AndABulletedTriggerWithItsEffectIsTwoLines()
+    {
+        var entry = new ParsedEntry();
+        entry.Parts.Add(new LabelledText("Spin Cog.", "[2 actions] (primal, sonic) Frequency once per hour; Requirements You hold a cog; Effect The cog spins; it whirs."));
+        entry.Parts.Add(new LabelledText("• Trigger", "You fall; Effect Choose a spring."));
+        EntriesStage.SplitInlineAction(entry);
+
+        Assert.Equal(new[] { ("Spin Cog (2 actions)", string.Empty), ("Traits", "primal sonic"), ("Frequency", "once per hour"), ("Requirements", "You hold a cog"), ("Effect", "The cog spins; it whirs."), ("• Trigger", "You fall"), ("Effect", "Choose a spring.") },
+            entry.Parts.Select(p => (p.Label, p.Text)));
+    }
+
+    [Fact]
+    public void ALineSetInButStartingInLowercase_GoesOnTheSentence_AndAHyphenBetweenTwoCapitalsKeepsNoSpace()
+    {
+        var blocks = Caster();
+        var body = blocks.FindIndex(b => b.Lines.Count > 0 && b.Lines[0] == "Prerequisites trained in Crafting");
+        blocks[body] = new Block(1, 0, "body", 60, 0, 300, 288, new List<string> { "Prerequisites trained in Crafting", "You use Well-", "Versed tools and a", "thing that goes on." },
+            new List<LineInfo> { new(60, 200, "Prerequisites"), new(60, 300, string.Empty), new(60, 200, string.Empty), new(70, 300, string.Empty) });
+
+        var feat = RunCaster(blocks).Final.Single(e => e.Id == "alpha-gizmo");
+
+        // The last line is set in (the layout's art pushes it) and starts in lowercase after a sentence that has not ended: it is no paragraph. The hyphen at the end of a line, between two capitalized parts, is the name's own.
+        Assert.Equal("You use Well-Versed tools and a thing that goes on.", feat.Description);
+    }
+
+    [Fact]
+    public void TheColumnLabelsOfThePrintedList_AloneInABlockAfterItsTitle_BelongToTheList()
+    {
+        // The printed list sits among the class features here, where a block that is not its body would become the text of a feature.
+        var blocks = Caster(listAmongFeatures: true);
+        var list = blocks.FindIndex(b => b.Role == "body" && b.Lines[0] == "Feat Level");
+        var rest = blocks[list].Lines.Skip(1).ToList();
+        blocks[list] = Rows("body", 310, 0, rest.ToArray());
+        blocks.Insert(list, Plain("body", 311, "Feat Level"));
+        var result = RunCaster(blocks);
+
+        Assert.All(result.Final.Single(e => e.Type == "class").Features, f => Assert.DoesNotContain("Feat Level", f.Description));
+        Assert.Equal(10, result.Final.Count(e => e.Type == "feat"));
+    }
 }

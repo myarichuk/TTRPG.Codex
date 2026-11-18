@@ -67,7 +67,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [InlineData("weapon", 83)]    // chapter 6a: 84 rows of the weapon tables, less the alchemical bomb (the gear chapter's) = 83; 87 descriptions, less the bomb and the 4 kinds of ammunition, plus the fist's row, which has none = 83
     [InlineData("background", 40)] // chapter 7b: 40 headings that end in the background word, 40 sentences that open a background's rules and 40 that grant a skill feat; the chapter prints no list of them
     [InlineData("heritage", 49)]  // chapter 7b adds the 4 versatile heritages (two kinds, and the two of the mixed-ancestry section: 4 lore bookmark pairs, 4 heritage bookmarks); chapter 7a: the bookmark children of the eight heritages sections (5, 6, 5, 5, 6, 2, 9 and 7) are the heritage headings of their ranges, and the entries parsed
-    [InlineData("feat", 485)]     // chapter 8a adds the 173 class feats of the fighter (92) and the rogue (81): feat headers = trait lines = level markers = the printed list of the class's feats (EveryClassCarriesItsStatisticsAndFeatureRows_AndTheCountsAreThePinnedOnes); chapter 7b adds the 43 feats of the versatile heritages (EveryVersatileHeritageHasItsFeats_AndEveryBackgroundItsFields); chapter 7a adds the 143 ancestry feats (EveryAncestryFeatSitsUnderItsLevelBand_AndTheCountsAreThePinnedOnes); chapter 3: Chapter 5 of the book has no child bookmarks, so its entries are counted from the document three ways: the 126 header-font blocks that end in the
+    [InlineData("feat", 686)]     // chapter 8b adds the 201 class feats of the bard (69), the cleric (69) and the druid (63), counted like the others (see TheSpellcastersCarryTheirTables_FeatureRows_Subclasses_AndFeats_AsPinned). Chapter 8a adds the 173 class feats of the fighter (92) and the rogue (81): feat headers = trait lines = level markers = the printed list of the class's feats (EveryClassCarriesItsStatisticsAndFeatureRows_AndTheCountsAreThePinnedOnes); chapter 7b adds the 43 feats of the versatile heritages (EveryVersatileHeritageHasItsFeats_AndEveryBackgroundItsFields); chapter 7a adds the 143 ancestry feats (EveryAncestryFeatSitsUnderItsLevelBand_AndTheCountsAreThePinnedOnes); chapter 3: Chapter 5 of the book has no child bookmarks, so its entries are counted from the document three ways: the 126 header-font blocks that end in the
                                   // type's word and a level, the 126 trait-line blocks (one follows each header) and the 126 level markers read line by line. They agree, so no countsDiffer reason.
     [InlineData("trait", 125)]    // chapter 2: the glossary's trait definitions. The importer finds 129 definitions and 24 trait lines that only point to a page or another book
                                   // (153), and reads 153 occurrences of the trait mark in the range: the two counts agree, so no countsDiffer reason is needed.
@@ -776,7 +776,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Fact]
     public void EveryClassCarriesItsStatisticsAndFeatureRows_AndTheCountsAreThePinnedOnes()
     {
-        var classes = Entries("class", PackId).OrderBy(c => c.Id, StringComparer.Ordinal).ToList();
+        var classes = Entries("class", PackId).Where(c => c.Id is "fighter-class" or "rogue-class").OrderBy(c => c.Id, StringComparer.Ordinal).ToList();
         Assert.Equal(new[] { "fighter-class", "rogue-class" }, classes.Select(c => c.Id));
         Assert.All(classes, c => Assert.Matches(@"^pc > Chapter 3: Classes > (Fighter|Rogue)$", c.Source!));
         Assert.Equal(new long[] { 10, 8 }, classes.Select(c => Convert.ToInt64(c.Properties["hp"])));
@@ -802,7 +802,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
 
         // Every grant names a ranked list of the sheet and entries the list has, and a rank of the system's four (a skill grant names a skill of the sheet).
         var lists = _system.SheetRules!.Ranked.ToDictionary(l => l.Key, l => l.Keys().Select(k => k.Key).ToList(), StringComparer.Ordinal);
-        var grants = rows.SelectMany(r => r).Concat(Entries("subclass", PackId).SelectMany(s => ((IEnumerable<object>)s.Properties["features"]).Cast<IDictionary<string, object>>()))
+        var grants = rows.SelectMany(r => r).Concat(Entries("subclass", PackId).Where(s => (string)s.Properties["class"] == "rogue-class").SelectMany(s => ((IEnumerable<object>)s.Properties["features"]).Cast<IDictionary<string, object>>()))
             .Where(r => r.ContainsKey("adds")).SelectMany(r => ((IEnumerable<object>)r["adds"]).Cast<IDictionary<string, object>>()).ToList();
         Assert.NotEmpty(grants);
         Assert.All(grants, g =>
@@ -820,7 +820,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
         });
 
         // The rackets (subclasses): four, each naming the rogue; the three that print another key attribute hold it, the thief prints none.
-        var rackets = Entries("subclass", PackId).OrderBy(s => s.Id, StringComparer.Ordinal).ToList();
+        var rackets = Entries("subclass", PackId).Where(s => (string)s.Properties["class"] == "rogue-class").OrderBy(s => s.Id, StringComparer.Ordinal).ToList();
         Assert.Equal(new[] { "mastermind", "ruffian", "scoundrel", "thief" }, rackets.Select(s => s.Id));
         Assert.All(rackets, s => Assert.Equal("rogue-class", (string)s.Properties["class"]));
         Assert.All(rackets, s => Assert.Equal("pc > Chapter 3: Classes > Rogue > Rogue's Racket", s.Source));
@@ -828,7 +828,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
         Assert.Equal(new[] { 1, 3, 1, 1 }, rackets.Select(s => ((IEnumerable<object>)s.Properties["features"]).Count()));
 
         // The class feats: 92 and 81, by level (1, 2, 4, ... 20), each carrying its class's key, and the labelled fields as the book prints them.
-        var feats = Entries("feat", PackId).Where(f => f.Source!.StartsWith("pc > Chapter 3: Classes", StringComparison.Ordinal)).ToList();
+        var feats = Entries("feat", PackId).Where(f => Regex.IsMatch(f.Source!, @"^pc > Chapter 3: Classes > (Fighter|Rogue) >")).ToList();
         Assert.Equal(173, feats.Count);
         Assert.All(feats, f => Assert.Matches(@"^pc > Chapter 3: Classes > (Fighter|Rogue) > (Fighter|Rogue) Feats$", f.Source!));
         var levels = new long[] { 1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 };
@@ -853,10 +853,131 @@ public class DegreesRulesPackTests : IAsyncLifetime
         Assert.Contains("**Inspired Stratagem (reaction).**\n**Traits.** fortune linguistic\n**Trigger.**", feats.Single(f => f.Id == "inspired-stratagem").Description);
     }
 
+    /// <summary>
+    /// The bard, the cleric and the druid (chapter 8b), counted from the document and not from the importer's text handling: 25, 18 and 25 feature rows (the advancement table agrees with them, and its "Nth-rank spells" rows agree with the
+    /// spells-per-day table, which the importer checks); 4, 2 and 4 subclasses (the muses, the doctrines and the orders, from the bookmarks); 69, 69 and 63 class feats (headers = trait lines = level markers = the printed list), by level.
+    /// The spellcasting fields come from the class's text and its table: the tradition, how it casts, the focus pool, and the 20 rows of cantrips and slots, which are worked out here from the one rule the printed table follows
+    /// (a rank opens at its odd level with two slots and has three from the next level; the 10th rank is one slot at the 19th level).
+    /// </summary>
+    [Fact]
+    public void TheSpellcastersCarryTheirTables_FeatureRows_Subclasses_AndFeats_AsPinned()
+    {
+        var classes = Entries("class", PackId).Where(c => c.Id is "bard-class" or "cleric-class" or "druid-class").OrderBy(c => c.Id, StringComparer.Ordinal).ToList();
+        Assert.Equal(new[] { "bard-class", "cleric-class", "druid-class" }, classes.Select(c => c.Id));
+        Assert.Equal(5, Entries("class", PackId).Count());
+        Assert.All(classes, c => Assert.Matches(@"^pc > Chapter 3: Classes > (Bard|Cleric|Druid)$", c.Source!));
+        Assert.Equal(new long[] { 8, 8, 8 }, classes.Select(c => Convert.ToInt64(c.Properties["hp"])));
+        Assert.Equal(new[] { "cha", "wis", "wis" }, classes.Select(c => (string)c.Properties["keyAttribute"]));
+        Assert.Equal(new[] { "occult", "divine", "primal" }, classes.Select(c => (string)c.Properties["tradition"]));
+        Assert.Equal(new[] { "spontaneous", "prepared", "prepared" }, classes.Select(c => (string)c.Properties["casting"]));
+        Assert.Equal(new long[] { 4, 2, 2 }, classes.Select(c => Convert.ToInt64(c.Properties["extraSkills"])));
+        Assert.All(classes, c => Assert.Equal(new[] { "con", "dex" }, Words(c, "savingThrows")));
+        Assert.Equal(new[] { true, false, true }, classes.Select(c => c.Properties.ContainsKey("focusPool"))); // the bard's compositions and the druid's orders start a focus pool of 1; the cleric's domains come by a feat
+        Assert.All(classes.Where(c => c.Properties.ContainsKey("focusPool")), c => Assert.Equal(1L, Convert.ToInt64(c.Properties["focusPool"])));
+
+        // The table: 20 rows, the same in the three classes (the book prints one for each), and every cell as the printed rule gives it.
+        foreach (var c in classes)
+        {
+            var table = ((IEnumerable<object>)c.Properties["spellcasting"]).Cast<IDictionary<string, object>>().ToList();
+            Assert.Equal(Enumerable.Range(1, 20), table.Select(r => (int)Convert.ToInt64(r["level"])));
+            foreach (var row in table)
+            {
+                var level = (int)Convert.ToInt64(row["level"]);
+                var slots = Enumerable.Range(1, 10).Select(rank => rank == 10 ? (level >= 19 ? 1 : 0) : level < 2 * rank - 1 ? 0 : level == 2 * rank - 1 ? 2 : 3).ToList();
+                var highest = slots.Select((n, i) => n > 0 ? i + 1 : 0).Max();
+                Assert.Equal(5L, Convert.ToInt64(row["cantrips"]));
+                Assert.Equal(string.Join('/', slots.Take(highest)), Convert.ToString(row["slots"], System.Globalization.CultureInfo.InvariantCulture)); // a single number (levels 1 and 2) loads as a number
+                Assert.Equal((long)highest, Convert.ToInt64(row["maxRank"]));
+                Assert.Equal((long)slots.Sum(), Convert.ToInt64(row["spells"]));
+            }
+        }
+
+        // The feature rows: 25, 18 and 25, at the levels the headings give; each has a name, a level and a text with no page or chapter pointer.
+        var rows = classes.Select(c => ((IEnumerable<object>)c.Properties["features"]).Cast<IDictionary<string, object>>().ToList()).ToList();
+        Assert.Equal(new[] { 25, 18, 25 }, rows.Select(r => r.Count));
+        Assert.All(rows.SelectMany(r => r), r =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace((string)r["name"]));
+            Assert.InRange(Convert.ToInt64(r["level"]), 1, 20);
+            Assert.False(string.IsNullOrWhiteSpace((string)r["description"]));
+            Assert.DoesNotMatch(@"\bpages? \d|Chapter \d|\bCore \d", (string)r["description"]);
+        });
+        Assert.Equal(new[] { 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 5, 7, 9, 9, 11, 11, 13, 13, 15, 17, 19, 19 }, rows[0].Select(r => (int)Convert.ToInt64(r["level"])));
+        Assert.Equal(new[] { 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 5, 5, 9, 11, 13, 13, 19 }, rows[1].Select(r => (int)Convert.ToInt64(r["level"])));
+        Assert.Equal(new[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 5, 5, 7, 11, 11, 13, 13, 15, 19, 19 }, rows[2].Select(r => (int)Convert.ToInt64(r["level"])));
+        // The druid's secret language is the one feature the pack names in plain words.
+        Assert.Equal("Druid Language", (string)rows[2].Single(r => ((string)r["name"]).Contains("Language", StringComparison.Ordinal))["name"]);
+
+        // The subclasses: the four muses, the two doctrines and the four orders. A doctrine is a row at its first level and one for each later doctrine (1 + 5 rows), the warpriest one more (its armor rises with Divine Defense).
+        var subclasses = Entries("subclass", PackId).Where(s => (string)s.Properties["class"] != "rogue-class").OrderBy(s => s.Id, StringComparer.Ordinal).ToList();
+        Assert.Equal(14, Entries("subclass", PackId).Count());
+        Assert.Equal(new[] { "animal-subclass", "cloistered-cleric", "enigma", "leaf", "maestro", "polymath", "storm", "untamed", "warpriest", "warrior-subclass" }, subclasses.Select(s => s.Id));
+        Assert.Equal(new[] { "druid-class", "cleric-class", "bard-class", "druid-class", "bard-class", "bard-class", "druid-class", "druid-class", "cleric-class", "bard-class" }, subclasses.Select(s => (string)s.Properties["class"]));
+        Assert.Equal(new[] { 1, 6, 1, 1, 1, 1, 1, 1, 7, 1 }, subclasses.Select(s => ((IEnumerable<object>)s.Properties["features"]).Count()));
+        Assert.Equal(new[] { 1, 3, 7, 11, 15, 19 }, ((IEnumerable<object>)subclasses.Single(s => s.Id == "cloistered-cleric").Properties["features"]).Cast<IDictionary<string, object>>().Select(r => (int)Convert.ToInt64(r["level"])));
+        Assert.Equal(new[] { 1, 3, 7, 11, 15, 19, 13 }, ((IEnumerable<object>)subclasses.Single(s => s.Id == "warpriest").Properties["features"]).Cast<IDictionary<string, object>>().Select(r => (int)Convert.ToInt64(r["level"])));
+
+        // Every grant names something the sheet has: a ranked list (spell attack and spell DC among them) and its entries, or a list of feats and spells and ids that exist (a feat of the pack, a focus spell of kind focus, a granted spell of the pack).
+        var rankedLists = _system.SheetRules!.Ranked.ToDictionary(l => l.Key, l => l.Keys().Select(k => k.Key).ToList(), StringComparer.Ordinal);
+        Assert.Contains("spellAttack", rankedLists.Keys);
+        Assert.Contains("spellDc", rankedLists.Keys);
+        var grants = rows.SelectMany(r => r).Concat(subclasses.SelectMany(s => ((IEnumerable<object>)s.Properties["features"]).Cast<IDictionary<string, object>>()))
+            .Where(r => r.ContainsKey("adds")).SelectMany(r => ((IEnumerable<object>)r["adds"]).Cast<IDictionary<string, object>>()).ToList();
+        var feats = Entries("feat", PackId).ToDictionary(f => f.Id);
+        var spells = Entries("spell", PackId).ToDictionary(s => s.Id);
+        var byName = 0;
+        Assert.All(grants, g =>
+        {
+            var to = (string)g["to"];
+            var entries = g.TryGetValue("entries", out var e) ? ((IEnumerable<object>)e).Select(x => (string)x).ToList() : new List<string>();
+            if (to == "feats") { byName += entries.Count; Assert.All(entries, k => Assert.Contains(k, feats.Keys)); }
+            else if (to == "focusSpells") { byName += entries.Count; Assert.All(entries, k => Assert.Equal("focus", (string)spells[k].Properties["kind"])); }
+            else if (to == "grantedSpells") { byName += entries.Count; Assert.All(entries, k => Assert.Contains(k, spells.Keys)); }
+            else
+            {
+                Assert.Contains((string)g["rank"], new[] { "trained", "expert", "master", "legendary" });
+                if (to == "skills") Assert.All(entries, k => Assert.Contains(k, SkillKeys));
+                else if (to == "saves") Assert.All(entries, k => Assert.Contains(k, AttributeWords));
+                else { Assert.Contains(to, rankedLists.Keys); Assert.All(entries, k => Assert.Contains(k, rankedLists[to])); }
+            }
+        });
+        // The ranks of the spell attack modifier and the spell DC are always granted together (the book's classes do).
+        Assert.Equal(grants.Count(g => (string)g["to"] == "spellAttack"), grants.Count(g => (string)g["to"] == "spellDc"));
+        // 21 feats and spells are named by a grant: the bard's composition spell and cantrip, a feat and a spell for each of the four muses and the four orders, the doctrines' two feats and the druid's Shield Block (all by id).
+        Assert.Equal(21, byName);
+        Assert.Equal(21, grants.Where(g => g["to"] is "feats" or "focusSpells" or "grantedSpells").Sum(g => ((IEnumerable<object>)g["entries"]).Count()));
+
+        // The class feats: 69, 69 and 63, by level (1, 2, 4, ... 20), each carrying its class's key, each with the labelled fields as the book prints them.
+        var classFeats = Entries("feat", PackId).Where(f => Regex.IsMatch(f.Source!, @"^pc > Chapter 3: Classes > (Bard|Cleric|Druid) >")).ToList();
+        Assert.Equal(201, classFeats.Count);
+        Assert.All(classFeats, f => Assert.Matches(@"^pc > Chapter 3: Classes > (Bard|Cleric|Druid) > (Bard|Cleric|Druid) Feats$", f.Source!));
+        var levels = new long[] { 1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 };
+        foreach (var (key, perLevel) in new[] { ("bard", new[] { 7, 8, 8, 7, 7, 7, 5, 6, 4, 5, 5 }), ("cleric", new[] { 7, 8, 6, 6, 9, 5, 6, 7, 5, 6, 4 }), ("druid", new[] { 9, 4, 8, 6, 8, 8, 5, 5, 4, 3, 3 }) })
+        {
+            var own = classFeats.Where(f => Words(f, "traits").Contains(key)).ToList();
+            Assert.Equal(perLevel.Sum(), own.Count);
+            Assert.Equal(perLevel, levels.Select(l => own.Count(f => (long)f.Properties["level"] == l)));
+        }
+
+        Assert.Equal(new[] { 109, 9, 24, 7, 1, 6 }, new[] { "prerequisites", "frequency", "trigger", "requirements", "cost", "special" }.Select(k => classFeats.Count(f => f.Properties.ContainsKey(k))));
+        Assert.Equal(66, classFeats.Count(f => f.Properties.ContainsKey("actions")));
+        Assert.All(classFeats, f => Assert.Single(Words(f, "traits").Intersect(new[] { "bard", "cleric", "druid" })));
+        // A feat named like one of another class's (or of a spell, a trait, a gear entry) takes a suffix: its class, or the word of its type.
+        Assert.Equal(new[] { "cantrip-expansion-bard", "cantrip-expansion-cleric", "effortless-concentration-bard", "effortless-concentration-druid", "reach-spell-bard", "reach-spell-cleric", "reach-spell-druid", "steady-spellcasting-bard", "steady-spellcasting-cleric", "steady-spellcasting-druid" },
+            classFeats.Where(f => Regex.IsMatch(f.Id, "-(bard|cleric|druid)$")).Select(f => f.Id).Order());
+        Assert.Equal(20, classFeats.Count(f => f.Id.EndsWith("-feat", StringComparison.Ordinal)));
+        Assert.Equal(classFeats.Count, classFeats.Select(f => f.Id).Distinct().Count());
+        // Two feats whose names held the name of a spell the pack leaves out (it names the setting's deities) are renamed, and their text says what they do: the old ids (by their hashes, as the redaction table names them) are not in the pack.
+        var oldIds = new[] { "472252bb4c7b4012a721c1ed9d4461fe6ff721ff79279ca3e87c76f3fec73d4a", "dc537a031d473d69e7aabb7780f02194f4e3d4dedcc581c3606c6e068f46d689" };
+        Assert.DoesNotContain(Entries("feat", PackId), f => oldIds.Contains(Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(f.Id))).ToLowerInvariant()));
+        Assert.Contains(Entries("feat", PackId), f => f.Id == "divine-audience");
+        Assert.Contains(Entries("feat", PackId), f => f.Id == "protective-form");
+    }
+
     [Fact]
     public void ThePackHoldsNothingElse_AndTheReportAgrees()
     {
-        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83 + 16 + 124 + 1 + 8 + 45 + 143 + 4 + 43 + 7 + 40 + 7 + 2 + 4 + 173; // 16 gear rules and 124 gear entries (chapter 6b); then the ancestry rules, 8 ancestries, 45 heritages and 143 ancestry feats (chapter 7a); then 4 versatile heritages, their 43 feats, 7 rules and 40 backgrounds (chapter 7b); then 7 rules, 2 classes, 4 subclasses and 173 class feats (chapter 8a)
+        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83 + 16 + 124 + 1 + 8 + 45 + 143 + 4 + 43 + 7 + 40 + 7 + 2 + 4 + 173 + 3 + 10 + 201; // 16 gear rules and 124 gear entries (chapter 6b); then the ancestry rules, 8 ancestries, 45 heritages and 143 ancestry feats (chapter 7a); then 4 versatile heritages, their 43 feats, 7 rules and 40 backgrounds (chapter 7b); then 7 rules, 2 classes, 4 subclasses and 173 class feats (chapter 8a)
         Assert.Equal(total, AllEntries(PackId).Count());
 
         // import-report.yaml holds counts and ids only; its totals are the importer's own and must match what loaded.

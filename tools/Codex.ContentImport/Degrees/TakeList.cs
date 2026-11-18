@@ -237,6 +237,18 @@ public sealed class TakeRow
     /// </summary>
     public Dictionary<string, string> AdvancementNames { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// For a <c>classes</c> row: a class feature's heading that the pack says in other words, by the book's heading (a name the setting coined for a thing the rules need: the secret language of a class).
+    /// The advancement table's own name for it is mapped by <see cref="AdvancementNames"/>; the book's bookmark is still compared by its own name.
+    /// </summary>
+    public Dictionary<string, string> FeatureNames { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// For a <c>classes</c> row: true when a feature's sentences and a subclass's labelled lines that name a feat or a spell grant it to the sheet's lists by its id (<c>You gain the N feat</c>, <c>You learn
+    /// the n composition spell</c>, an order's or a muse's feat and spell). The grants of the fighter and the rogue (8a) are not read this way, so their entries stay as they were.
+    /// </summary>
+    public bool GrantsByName { get; set; }
+
     /// <summary>True for the row that holds the spells the four tradition lists name: its level words include <c>spell</c>. Only these are counted against the lists.</summary>
     public bool OnTraditionLists => LevelWords.Contains("spell", StringComparer.OrdinalIgnoreCase);
 

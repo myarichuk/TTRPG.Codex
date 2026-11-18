@@ -319,6 +319,39 @@
     - "rogue-class"
 - chapter: "classes"
   parser: "classes"
+  target: "class"
+  entries: 1
+  droppedSidebarBlocks: 15
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 20
+  redactionRows: [269, 270, 271, 272, 281, 284, 285, 286, 291, 292, 303]
+  ids:
+    - "bard-class"
+- chapter: "classes"
+  parser: "classes"
+  target: "class"
+  entries: 1
+  droppedSidebarBlocks: 32
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 18
+  redactionRows: [273, 274, 275, 276, 282, 290, 296, 297, 298, 304, 305, 306, 307, 309, 310, 311, 312, 313, 314, 315]
+  ids:
+    - "cleric-class"
+- chapter: "classes"
+  parser: "classes"
+  target: "class"
+  entries: 1
+  droppedSidebarBlocks: 41
+  droppedOpenerBlocks: 1
+  pageReferencesLeft: 0
+  readPastBlocks: 20
+  redactionRows: [277, 278, 279, 280, 283, 287, 288, 289, 293, 294, 295, 299, 300, 301, 302, 308]
+  ids:
+    - "druid-class"
+- chapter: "classes"
+  parser: "classes"
   target: "feat"
   entries: 92
   droppedSidebarBlocks: 0
@@ -510,6 +543,234 @@
     - "you-re-next"
 - chapter: "classes"
   parser: "classes"
+  target: "feat"
+  entries: 69
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "accompany"
+    - "all-in-my-head"
+    - "allegro-feat"
+    - "annotate-composition"
+    - "assured-knowledge"
+    - "bardic-lore"
+    - "call-and-response"
+    - "cantrip-expansion-bard"
+    - "combat-reading"
+    - "courageous-advance"
+    - "courageous-assault"
+    - "courageous-onslaught"
+    - "deep-lore"
+    - "defensive-coordination"
+    - "directed-audience"
+    - "dirge-of-doom-feat"
+    - "discordant-voice"
+    - "earworm"
+    - "eclectic-polymath"
+    - "eclectic-skill"
+    - "educate-allies"
+    - "effortless-concentration-bard"
+    - "emotional-push"
+    - "enigma-s-knowledge"
+    - "esoteric-polymath"
+    - "eternal-composition"
+    - "fatal-aria-feat"
+    - "fortissimo-composition-feat"
+    - "harmonize"
+    - "house-of-imaginary-walls-feat"
+    - "hymn-of-healing-feat"
+    - "impossible-polymath"
+    - "in-tune"
+    - "inspirational-focus"
+    - "know-it-all"
+    - "lingering-composition-feat"
+    - "loremaster-s-etude-feat"
+    - "martial-performance"
+    - "melodious-spell"
+    - "multifarious-muse"
+    - "ode-to-ouroboros-feat"
+    - "perfect-encore"
+    - "pied-piping-feat"
+    - "quickened-casting"
+    - "rallying-anthem-feat"
+    - "reach-spell-bard"
+    - "reflexive-courage"
+    - "resounding-finale"
+    - "reverberate"
+    - "ritual-researcher"
+    - "shared-assault"
+    - "song-of-marching-feat"
+    - "song-of-strength-feat"
+    - "soothing-ballad-feat"
+    - "soulsight"
+    - "steady-spellcasting-bard"
+    - "studious-capacity"
+    - "symphony-of-the-muse"
+    - "symphony-of-the-unfettered-heart-feat"
+    - "triple-time-feat"
+    - "triumphant-inspiration"
+    - "true-hypercognition"
+    - "ultimate-polymath"
+    - "unusual-composition"
+    - "uplifting-overture-feat"
+    - "versatile-performance"
+    - "versatile-signature"
+    - "vigorous-anthem"
+    - "well-versed"
+- chapter: "classes"
+  parser: "classes"
+  target: "feat"
+  entries: 69
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "advanced-domain"
+    - "cantrip-expansion-cleric"
+    - "cast-down"
+    - "castigating-weapon"
+    - "channel-smite"
+    - "channeling-block"
+    - "communal-healing"
+    - "cremate-undead"
+    - "deadly-simplicity"
+    - "defensive-recovery"
+    - "deity-s-protection"
+    - "directed-channel"
+    - "divine-apex"
+    - "divine-audience"
+    - "divine-castigation"
+    - "divine-infusion"
+    - "divine-rebuttal"
+    - "divine-weapon"
+    - "domain-focus"
+    - "domain-initiate"
+    - "ebb-and-flow"
+    - "echoing-channel"
+    - "emblazon-antimagic"
+    - "emblazon-armament"
+    - "emblazon-energy"
+    - "eternal-bane"
+    - "eternal-blessing"
+    - "fast-channel"
+    - "fortunate-relief"
+    - "harming-hands"
+    - "healing-hands"
+    - "heroic-recovery"
+    - "improved-swift-banishment"
+    - "inviolable"
+    - "lasting-armament"
+    - "magic-hands"
+    - "maker-of-miracles"
+    - "martyr"
+    - "miraculous-possibility"
+    - "panic-the-dead"
+    - "premonition-of-avoidance"
+    - "premonition-of-clarity"
+    - "protective-form"
+    - "raise-symbol"
+    - "rapid-response"
+    - "reach-spell-cleric"
+    - "rebounding-smite"
+    - "remediate"
+    - "replenishment-of-war"
+    - "restorative-channel"
+    - "restorative-strike"
+    - "resurrectionist"
+    - "sacred-ground"
+    - "sanctify-armament"
+    - "sap-life"
+    - "sapping-symbol"
+    - "selective-energy"
+    - "shared-avoidance"
+    - "shared-clarity"
+    - "shared-replenishment"
+    - "shield-of-faith"
+    - "spellshape-channel"
+    - "steady-spellcasting-cleric"
+    - "surging-focus"
+    - "swift-banishment"
+    - "versatile-font"
+    - "void-siphon"
+    - "warpriest-s-armor"
+    - "zealous-rush"
+- chapter: "classes"
+  parser: "classes"
+  target: "feat"
+  entries: 63
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "animal-companion"
+    - "animal-empathy"
+    - "anthropomorphic-shape"
+    - "call-of-the-wild"
+    - "current-spell"
+    - "deimatic-display"
+    - "dragon-shape"
+    - "effortless-concentration-druid"
+    - "elemental-shape"
+    - "elemental-summons"
+    - "enhanced-familiar"
+    - "ferocious-shape"
+    - "fey-caller"
+    - "floral-restoration"
+    - "forest-passage"
+    - "form-control"
+    - "garland-spell"
+    - "grown-of-oak"
+    - "healing-transformation"
+    - "hierophant-s-power"
+    - "impaling-briars-feat"
+    - "incredible-companion"
+    - "insect-shape"
+    - "instinctive-support"
+    - "invoke-disaster"
+    - "leshy-familiar"
+    - "leshy-familiar-secrets"
+    - "ley-line-conduit"
+    - "mature-animal-companion"
+    - "monstrosity-shape"
+    - "order-explorer"
+    - "order-magic"
+    - "overwhelming-energy"
+    - "perfect-form-control"
+    - "plant-empathy"
+    - "plant-shape"
+    - "poison-resistance"
+    - "primal-aegis"
+    - "primal-focus"
+    - "primal-howl"
+    - "primal-summons-feat"
+    - "pristine-weapon"
+    - "raise-menhir"
+    - "reach-spell-druid"
+    - "reactive-transformation"
+    - "side-by-side"
+    - "snowdrift-spell"
+    - "soaring-shape"
+    - "sow-spell"
+    - "specialized-companion"
+    - "steady-spellcasting-druid"
+    - "storm-born"
+    - "storm-retribution"
+    - "thunderclap-spell"
+    - "timeless-nature"
+    - "true-shapeshifter"
+    - "untamed-form-feat"
+    - "uplifting-winds"
+    - "verdant-metamorphosis"
+    - "verdant-weapon"
+    - "wandering-oasis"
+    - "widen-spell"
+    - "wind-caller"
+- chapter: "classes"
+  parser: "classes"
   target: "subclass"
   entries: 4
   droppedSidebarBlocks: 0
@@ -521,6 +782,43 @@
     - "ruffian"
     - "scoundrel"
     - "thief"
+- chapter: "classes"
+  parser: "classes"
+  target: "subclass"
+  entries: 4
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "enigma"
+    - "maestro"
+    - "polymath"
+    - "warrior-subclass"
+- chapter: "classes"
+  parser: "classes"
+  target: "subclass"
+  entries: 2
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "cloistered-cleric"
+    - "warpriest"
+- chapter: "classes"
+  parser: "classes"
+  target: "subclass"
+  entries: 4
+  droppedSidebarBlocks: 0
+  droppedOpenerBlocks: 0
+  pageReferencesLeft: 0
+  redactionRows: []
+  ids:
+    - "animal-subclass"
+    - "leaf"
+    - "storm"
+    - "untamed"
 - chapter: "classes"
   parser: "rules"
   target: "rule"
@@ -1472,7 +1770,7 @@
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
   readPastBlocks: 3
-  redactionRows: [71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87]
+  redactionRows: [71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 316]
   ids:
     - "acid-grip"
     - "aerial-form"

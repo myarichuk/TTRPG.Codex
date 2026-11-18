@@ -764,7 +764,7 @@ public static class SystemDefinitionLoader
 
         foreach (var condition in rules.Constraints.SelectMany(c => c.Where).Concat(rules.Lists.SelectMany(l => l.Where)))
         {
-            var referencedFields = new[] { condition.EqualsField, condition.ContainsNameOfField, condition.LteField, condition.GteField, condition.EqualsPropertyOfField?.Field, condition.LteLookup?.Field }
+            var referencedFields = new[] { condition.EqualsField, condition.ContainsNameOfField, condition.LteField, condition.GteField, condition.EqualsPropertyOfField?.Field, condition.ContainsPropertyOfField?.Field, condition.LteLookup?.Field }
                 .Where(f => f != null);
             foreach (var field in referencedFields.Where(f => !fieldKeys.Contains(f!)))
             {

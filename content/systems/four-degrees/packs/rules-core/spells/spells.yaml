@@ -7365,7 +7365,7 @@
   name: "Void Warp"
   source: "pc > Chapter 7: Spells > Spell Lists > Spells"
   description: |-
-    You call upon the Void to harm life force. The target takes 2d4 void damage with a basic Fortitude save. On a critical failure, the target is also enfeebled 1 until the start of your next turn.
+    You call upon void energy to harm life force. The target takes 2d4 void damage with a basic Fortitude save. On a critical failure, the target is also enfeebled 1 until the start of your next turn.
     **Heightened (+1).** The damage increases by 1d4.
   properties:
     kind: "cantrip"

@@ -724,6 +724,71 @@ rows:
       175: 314
     paths:
       - ["Chapter 3: Classes", Rogue]
+  # The bard, the cleric and the druid (8b): the first spellcasters. Read as the fighter and the rogue are; the choice of a bard's muse, a cleric's doctrine and a druid's order is a subclass entry each.
+  - chapter: classes
+    book: pc
+    parser: classes
+    target: class
+    folder: classes
+    approved: true
+    subclassFeature: Muses
+    grantsByName: true
+    countsDiffer: The feats section's bookmarks start at the 2nd level; the 1st-level band (the muse feats) has no bookmark of its own, and every other band is a bookmark.
+    # A page where a sample character's sidebar fills part of the first column: its lines run to the same x as the next column's text, so the gutter is pinned.
+    gutterAt:
+      103: 314
+    saveAttributes:
+      Fortitude: con
+      Reflex: dex
+      Will: wis
+    paths:
+      - ["Chapter 3: Classes", Bard]
+  - chapter: classes
+    book: pc
+    parser: classes
+    target: class
+    folder: classes
+    approved: true
+    subclassFeature: Doctrine
+    grantsByName: true
+    # The page of the two doctrines: the left column's lines run to the same x as the right column's text, so the gutter search cut them at a wrong gap and read both columns across.
+    gutterAt:
+      113: 314
+      119: 314
+      121: 314
+    saveAttributes:
+      Fortitude: con
+      Reflex: dex
+      Will: wis
+    paths:
+      - ["Chapter 3: Classes", Cleric]
+  - chapter: classes
+    book: pc
+    parser: classes
+    target: class
+    folder: classes
+    approved: true
+    subclassFeature: Druidic Order
+    grantsByName: true
+    # The feature that teaches the order's secret language is named for the language, a name the setting coined; the pack says the feature in plain words (the table's own name for it is mapped, too).
+    countsDiffer: The class feature that teaches a secret language is renamed in plain words (featureNames); its advancement table name is mapped (advancementNames) and its bookmark is compared by the book's own name.
+    # The key is the lowercase hex SHA-256 of the book's lowercase heading, so this file never holds the coined word.
+    featureNames:
+      "3b8cefd91d5bfdac1bf5d8856ae011f31450c18bc69be22cc025b7ec9495d596": Druid Language
+    advancementNames:
+      "3b8cefd91d5bfdac1bf5d8856ae011f31450c18bc69be22cc025b7ec9495d596": Druid Language
+    # A sample character's sidebar fills the first column of page 133, so the feat text that opens the second column is the page's own, going on from the page before.
+    sidebarFillsColumn: [133]
+    gutterAt:
+      131: 314
+      133: 314
+      135: 314
+    saveAttributes:
+      Fortitude: con
+      Reflex: dex
+      Will: wis
+    paths:
+      - ["Chapter 3: Classes", Druid]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
@@ -732,9 +797,6 @@ planned:
       - ["Chapter 1: Introduction", Basics of Play]
       - ["Chapter 1: Introduction", Playing the Game]
       - ["Chapter 1: Introduction", Character Creation]
-      - ["Chapter 3: Classes", Bard]
-      - ["Chapter 3: Classes", Cleric]
-      - ["Chapter 3: Classes", Druid]
       - ["Chapter 3: Classes", Ranger]
       - ["Chapter 3: Classes", Witch]
       - ["Chapter 3: Classes", Wizard]

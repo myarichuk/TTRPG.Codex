@@ -1185,6 +1185,13 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             return names.Any(n => n.Equals(referenced.Name, StringComparison.OrdinalIgnoreCase) || n.Equals(referenced.Id, StringComparison.OrdinalIgnoreCase));
         }
 
+        if (condition.ContainsPropertyOfField is { } containsProperty)
+        {
+            var referenced = ReferencedEntry(containsProperty.Field, sheet);
+            var wanted = referenced?.Properties.GetValueOrDefault(containsProperty.Property)?.ToString();
+            return !string.IsNullOrEmpty(wanted) && NamesIn(value).Any(n => n.Equals(wanted, StringComparison.OrdinalIgnoreCase));
+        }
+
         if (condition.LteField != null || condition.GteField != null)
         {
             var number = ToDouble(value);

@@ -462,5 +462,120 @@ you sustain
 # Chapter 8a review: one word stays on the denylist, because the book also capitalizes it in a multi-word name of a place that the pack must never say. It is allowed only as the first word of the one feat's name that uses it
 # (a compound line: the word, then the word that must follow it); anywhere else the word gate still fires.
 compound dread striker
+# Chapter 8b review (the bard, the cleric and the druid): a left-out section (the sample characters' sidebars, a stat block's label) capitalizes these words too, so each would stay on the denylist without a line.
+# Each is an ordinary word of one feat's name (or of a rule's sentence) or the name of a game effect; none names a person, place, faith or people, and the book writes none of them in a multi-word name of a place.
+# (Fourteen more words were first waived and are not: no left-out text capitalizes them any more, so a line would lift nothing.)
+caller
+effortless
+emblazon
+empathy
+retribution
+selective
+widen
+concern
+# One word stays on the denylist, because the book also capitalizes it as the first word of a two-word name of a place that the pack must never say; it is allowed only before the one word that follows it in one feat's text.
+compound mordant power
+# Chapter 8b pairs: each is a feat's name, a class feature's or a table's name, a game term, or a label word that the book's layout puts before the next sentence's first word (a subclass's skill label, a feat's label); none names a person, place, faith or people.
+animal companion
+bard spells
+cleric spells
+divine font
+divine weapon
+domain initiate
+effortless concentration
+emblazon armament
+enhanced familiar
+forest passage
+form control
+heroic recovery
+incredible companion
+invoke disaster
+mature animal
+monstrosity shape
+plant empathy
+primal focus
+selective energy
+skill acrobatics
+skill athletics
+skill intimidation
+specialized companion
+spell repertoire
+spell you
+steady spellcasting
+storm retribution
+widen spell
+wind caller
 # Retired pairs: a pair hash that nothing produces any more, which `denylist --fresh` may drop (and says so). A hash and a one-line reason, no words.
 retired-pair 284c34fb2cf8624689826b6ea7f3087e367fa08578a85c9fb246c392047bf662 cross-span artifact of an intermediate build; both words denied singly
+# Chapter 8b: pairs the old sidebar split read out of the three classes' pages (the bard, the cleric and the druid) as left-out text, and that the take-list now takes, so `denylist --fresh` no longer makes them.
+# A named waiver explains a pair that has gone (the fresh review counts it), and keeps the pair off the list if left-out text makes it again. Each is a word pair of the pack or of a feat's header or trait line; none names a person, place, faith or people.
+# Pairs of the pack's own text (feat names, feature names):
+combat reading
+courageous advance
+dragon shape
+eternal bane
+eternal blessing
+familiar secrets
+ferocious shape
+form dragon
+grasping tendrils
+in tune
+leshy familiar
+reach spell
+reactive transformation
+shape elemental
+shared avoidance
+swift banishment
+verdant burst
+zealous rush
+# A bold label's last word, or a parenthesis's, glued to the next sentence's first word:
+air your
+burst when
+effect choose
+speed it
+tendrils your
+# A prerequisite label and its first word:
+prerequisites animal
+prerequisites call
+prerequisites channel
+prerequisites divine
+prerequisites domain
+prerequisites mature
+prerequisites untamed
+# The end of a feat's name and the word FEAT of its header, the traits of a trait line, and fragments of feat names:
+auditory bard
+avoidance feat
+bane feat
+bard concentrate
+bard secret
+blessing feat
+cleric concentrate
+cleric fortune
+companion feat
+concentrate druid
+concentrate spellshape
+druid healing
+druid manipulate
+druid spellshape
+faith feat
+healing vitality
+initiate feat
+manipulate spellshape
+of clarity
+of faith
+of strength
+of war
+overture feat
+passage feat
+secrets feat
+shape feat
+shield of
+song of
+strength feat
+summons feat
+war feat
+weapon feat
+# The only pairs that are retired: two that read as nonsense (a label word glued to the next sentence, in the book's layout) and one that is a band heading's ordinal suffix and the word Level (the heading is split at its digit).
+retired-pair 51cb8e3d8a8adfe0bf0a68287c418bcd7aa7fcbfab6c7dde595ff31c48fb552e a label word glued to the first word of the next sentence, in a feat's text now taken
+retired-pair 919203769d9deaba7b396fcdc58d6a3e4b730fa85b981d2a71570825d3ed4396 a label word glued to the first word of the next sentence, in a feat's text now taken
+retired-pair 1e2c96e1705a82441a961f310e991ed265812be76a469fcdbafc40740f1a0a3d a level band heading read as its ordinal suffix and the word that follows, on pages now taken

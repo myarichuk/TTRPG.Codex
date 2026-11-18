@@ -38,6 +38,7 @@ categories:
   Profile: פרופיל
   Defenses: הגנות
   Senses: חושים
+  Spellcasting: הטלת לחשים
   Actions: פעולות
   Attribute modifiers: מתאמי תכונות
   Attributes: תכונות
@@ -132,6 +133,10 @@ entityTypes:
       savingThrows: { label: הצלות מיומנות }
       extraSkills: { label: מיומנויות נוספות }
       features: { label: יכולות המקצוע }
+      tradition: { label: מסורת }
+      casting: { label: אופן ההטלה }
+      focusPool: { label: מאגר מיקוד }
+      spellcasting: { label: לחשים ליום }
   subclass:
     label: תת-מקצוע
     pluralLabel: תתי-מקצועות
@@ -145,6 +150,11 @@ entityTypes:
     fields:
       vows: { label: נדרים }
       taboos: { label: איסורים }
+      font: { label: מעיין אלוהי }
+      sanctification: { label: קידוש }
+      favoredWeapon: { label: נשק מועדף }
+      domains: { label: תחומים }
+      features: { label: יכולות }
   feat: { label: כשרון, pluralLabel: כשרונות }
   condition: { label: מצב, pluralLabel: מצבים }
   trait: { label: מאפיין, pluralLabel: מאפיינים }
@@ -266,6 +276,10 @@ entityTypes:
 values:
   Perception: תפיסה
   Class DC: דרגת קושי של המקצוע
+  Spell attack: התקפת לחש
+  Spell DC: דרגת קושי של לחשים
+  Spell slots: תאי לחשים
+  spell slot: תא לחשים
   Armor: שריון
   Weapons: כלי נשק
   Unarmored: ללא שריון
@@ -302,9 +316,23 @@ sheetRules:
     lvl20: דרגה 20
   lists:
     feats: כשרונות
+    cantrips: לחשונים
+    spells: לחשים
+    focusSpells: לחשי מיקוד
+    grantedSpells: לחשים מוענקים
+  listDescriptions:
+    cantrips: רק המסורת של המקצוע שלך, עד המספר שבטבלת המקצוע. לחשון מיקוד נכנס ללחשים שיכולת מעניקה.
+    spells: הלחשים שאתה מכיר או מכין. רק המסורת של המקצוע שלך, לא גבוהים מהתא הגבוה ביותר שלך, עד המספר שבטבלת המקצוע.
+    focusSpells: לחשי מיקוד שיכולת מקצוע, כשרון או מסדר מעניקים. הם אינם צורכים תאים; מאגר המיקוד נמצא במקצוע.
+    grantedSpells: לחשים ולחשונים שיכולת מעניקה לך מחוץ לרשימת המקצוע (לחש של מוזה, לחשון של יצירה). הם אינם נספרים בלחשים שלך.
   messages:
     "that heritage belongs to another ancestry.": המורשת הזו שייכת למוצא אחר.
     "that subclass belongs to another class.": תת-המקצוע הזה שייך למקצוע אחר.
+    "that is not a cantrip.": זה אינו לחשון.
+    "that is not a focus spell.": זה אינו לחש מיקוד.
+    "not on your class's spell list.": אינו ברשימת הלחשים של המקצוע שלך.
+    "cantrips go in the cantrips list.": לחשונים נכנסים לרשימת הלחשונים.
+    "above the highest spell rank you can cast.": גבוה מדרגת הלחש הגבוהה ביותר שאתה יכול להטיל.
   skills:
     acrobatics: אקרובטיקה
     arcana: מאגיה
@@ -322,6 +350,8 @@ sheetRules:
     stealth: התגנבות
     survival: הישרדות
     thievery: גניבה
+  slotPools:
+    slots: תאי לחשים
   ranks:
     trained: מיומן
     expert: מומחה

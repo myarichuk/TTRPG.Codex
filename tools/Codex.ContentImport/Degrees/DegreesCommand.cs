@@ -199,7 +199,8 @@ public static class DegreesCommand
         {
             var classes = ImportPipeline.CheckClassCounts(spine, blocks, result.Ranges, result.Parsed);
             output.WriteLine($"classes: {classes.Count} read; per class (flavor headings, features, subclasses, level bands, feats, feats in the printed list): " +
-                string.Join("; ", classes.Select(c => $"{c.LoreHeadings}, {c.Features}, {c.Subclasses}, {c.Bands}, {c.Feats}, {c.Listed}")) + $"; feat headers = trait lines = level markers in each ({classes.Sum(c => c.FeatHeaders)} in all); the advancement table agrees with the feature rows");
+                string.Join("; ", classes.Select(c => $"{c.LoreHeadings}, {c.Features}, {c.Subclasses}, {c.Bands}, {c.Feats}, {c.Listed}")) + $"; feat headers = trait lines = level markers in each ({classes.Sum(c => c.FeatHeaders)} in all); the advancement table agrees with the feature rows; " +
+                $"{result.GrantsByName.Resolved} feats and spells named by the classes' grants are ids, {result.GrantsByName.Left.Count} stay text ({string.Join(", ", result.GrantsByName.Left)})");
         }
 
         if (ImportPipeline.CheckBackgroundCounts(blocks, result.Ranges, result.Parsed) is { } backgrounds)
@@ -318,6 +319,8 @@ public static class DegreesCommand
         var withoutWaivers = ImportPipeline.DenylistWords(blocks, ranges, new HashSet<string>(StringComparer.Ordinal), 3, planned, redacted).Words;
         var liftedWords = ImportPipeline.LiftedWaivers(Waivers.Embedded(), redacted.Names, withoutWaivers);
         var liftedPairs = ImportPipeline.LiftedPairWaivers(Waivers.Embedded(), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, new HashSet<string>(StringComparer.Ordinal), redactedPairs));
+        // A fresh review counts a gone pair as waived when a named pair waiver hashes to it, whether or not the left-out text still makes it (a pair that a taken range has since said is no longer made, and a person has named it).
+        var namedPairs = liftedPairs.Concat(Waivers.Embedded().Where(w => w.Contains(' ')).Select(Denylist.Hash)).Distinct(StringComparer.Ordinal).ToList();
         var pairsFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-pairs.sha256");
         var commonFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-common.sha256");
         if (options.Fresh)
@@ -329,7 +332,7 @@ public static class DegreesCommand
             var reviews = new[]
             {
                 ImportPipeline.ReviewFresh("denylist", ReadHashes(path), words.Select(Denylist.Hash).ToList(), liftedWords, never, null),
-                ImportPipeline.ReviewFresh("pairs", ReadHashes(pairsFile), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, Waivers.Embedded(), redactedPairs), liftedPairs, new HashSet<string>(StringComparer.Ordinal),
+                ImportPipeline.ReviewFresh("pairs", ReadHashes(pairsFile), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, Waivers.Embedded(), redactedPairs), namedPairs, new HashSet<string>(StringComparer.Ordinal),
                     ImportPipeline.ExplainedPairs(blocks, ranges, planned, words), Waivers.EmbeddedRetired()),
                 ImportPipeline.ReviewFresh("common", ReadHashes(commonFile), Denylist.Format(ImportPipeline.CommonWords(blocks).Concat(ImportPipeline.OpenerWords(blocks, ranges)).Concat(Waivers.Embedded())).Split('\n', StringSplitOptions.RemoveEmptyEntries), Array.Empty<string>(),
                     new HashSet<string>(StringComparer.Ordinal), null),

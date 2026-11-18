@@ -94,7 +94,8 @@ public static class PackEmitter
                 // An item's statistics from a table: the value is already the YAML the field takes (a bare number, a quoted string, a flow map).
                 foreach (var x in e.Raw)
                 {
-                    properties.Append("    ").Append(x.Label).Append(": ").Append(x.Text).Append('\n');
+                    // A value that starts on a new line is a block (a class's table of rows): its lines are already indented.
+                    properties.Append("    ").Append(x.Label).Append(':').Append(x.Text.StartsWith('\n') ? x.Text : " " + x.Text).Append('\n');
                 }
 
                 // A class's or a subclass's feature rows: a name, the level it applies from, its text and the grants it makes to the sheet's ranked lists.
