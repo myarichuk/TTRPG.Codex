@@ -59,6 +59,21 @@ public sealed class TakeRow
     public string? CountsDiffer { get; set; }
 
     /// <summary>
+    /// For an <c>actions</c> row with a <see cref="CountsDiffer"/> reason: how many of the action headings of its range have no trait line below them, and how many have no action icon. When given, the run
+    /// compares the counts with these numbers, so the reason cannot go on being accepted after the counts change. Left out, the reason alone is accepted, as before.
+    /// </summary>
+    public int? NoTraitLine { get; set; }
+
+    /// <summary>See <see cref="NoTraitLine"/>: the action headings of the range with no action icon in them.</summary>
+    public int? NoIcon { get; set; }
+
+    /// <summary>
+    /// For an <c>actions</c> row: an action whose whole text is one paragraph that opens with a field label (a requirements or a trigger line whose next sentence the layout did not set on a line of its own)
+    /// has that paragraph cut after its first sentence. Only the rows that set it split such an action.
+    /// </summary>
+    public bool SplitLoneFields { get; set; }
+
+    /// <summary>
     /// A page number: the section's last lines sit on the page its next section starts on, above that section's own text, because the bookmarks end the section a page early.
     /// The blocks taken there are the first of each column when it starts at the page's top edge (see <see cref="TakeStage"/>).
     /// </summary>
@@ -223,6 +238,18 @@ public sealed class TakeRow
     /// For a <c>rules</c> row with subheadings: a block of body text that opens with a bold heading line is a box of prose (the weapon rules' boxes on damage dice), not a small table, so its ragged lines run on.
     /// </summary>
     public bool ProseBoxes { get; set; }
+
+    /// <summary>
+    /// For a <c>rules</c> row with subheadings: the titles of boxes (a heading in the block-header font, then a block of body text) that are set over the column a paragraph runs on in, and so cut it in two. Each
+    /// is read as the last paragraphs of the entry, after the text it interrupts.
+    /// </summary>
+    public List<string> BoxesLast { get; set; } = new();
+
+    /// <summary>
+    /// For a <c>rules</c> row with subheadings: the titles of the taken sidebars (see <see cref="Sidebars"/>) whose body-font blocks are read as the body of a rule is, not as justified running text: a sidebar set
+    /// ragged-right, with bold labels that open paragraphs or a reproduced action. The other sidebars of the row read as they did.
+    /// </summary>
+    public List<string> BodySidebars { get; set; } = new();
 
     /// <summary>For a <c>rules</c> row: the section's text is read past, no entry is made (its blocks are claimed, so they are not counted as left out).</summary>
     public bool ReadPast { get; set; }
@@ -518,10 +545,21 @@ public sealed partial class TakeList
                 throw new DegreesException($"Take-list row {n}: artLabels belong to the items and rules parsers, readPast and foldChildren to the rules parser, and readPastChildren to a foldChildren row.");
             }
 
-            if (r.ActionGroups && r.Parser != "actions")
+            if ((r.ActionGroups || r.SplitLoneFields || r.NoTraitLine != null || r.NoIcon != null) && r.Parser != "actions")
             {
-                throw new DegreesException($"Take-list row {n}: actionGroups belongs to the actions parser.");
+                throw new DegreesException($"Take-list row {n}: actionGroups, splitLoneFields, noTraitLine and noIcon belong to the actions parser.");
             }
+
+            if ((r.BoxesLast.Count > 0 || r.BodySidebars.Count > 0) && (r.Parser != "rules" || !r.Subheadings))
+            {
+                throw new DegreesException($"Take-list row {n}: boxesLast and bodySidebars belong to a rules row with subheadings.");
+            }
+
+            if ((r.NoTraitLine != null || r.NoIcon != null) && (r.NoTraitLine == null || r.NoIcon == null || string.IsNullOrWhiteSpace(r.CountsDiffer)))
+            {
+                throw new DegreesException($"Take-list row {n}: noTraitLine and noIcon come together, with the countsDiffer reason that explains them.");
+            }
+
 
             if ((r.ArtPages.Count > 0 || r.SidebarSpill.Count > 0) && r.Parser != "rules")
             {

@@ -172,9 +172,9 @@ public static class BlocksStage
             for (var i = 0; i < _keys.Count; i++)
             {
                 var title = _keys[i];
-                LastKey = title;
                 if (key == title)
                 {
+                    LastKey = title;
                     _matched.Add(i);
                     return true;
                 }
@@ -187,6 +187,7 @@ public static class BlocksStage
                 if ((key.Length >= 8 && title.Length >= 8 && Distance(key, title) <= 2)
                     || (key.Length >= 4 && key.Length < title.Length && (title.StartsWith(key, StringComparison.Ordinal) || title.EndsWith(key, StringComparison.Ordinal))))
                 {
+                    LastKey = title;
                     _matched.Add(i);
                     return true;
                 }
@@ -781,6 +782,13 @@ public static class BlocksStage
                 // An action's heading is the page's own whatever its letters are: tested before the titles, so a short action name that is part of a sidebar's title is not taken for it.
                 if (IsActionHeader(blocks, i))
                 {
+                    // An action box a taken sidebar reproduces (set in as the sidebar's own text is) stays with the sidebar; the page's own text is set at the column's edge.
+                    if (inside && takingKey != null && !double.IsNaN(left) && b.Left >= left - SidebarIndent)
+                    {
+                        Drop(b);
+                        continue;
+                    }
+
                     inside = false;
                     kept.Add(b);
                     continue;
@@ -813,7 +821,8 @@ public static class BlocksStage
                 // A body line that opens with a bold label an action's text has (a degree of success, a requirements line) is the page's own text going on after the sidebar,
                 // even when the sidebar's text is set at the column's edge too (so the indent test cannot see the end). The block is cut there.
                 var setIn = b.Role == "body" && !double.IsNaN(left) && b.Left < left - SidebarIndent; // already at the page's own edge: the indent test below ends the sidebar before this block
-                var label = b.Role == "body" && b.Info != null && !setIn ? Enumerable.Range(0, b.Lines.Count).Where(k => ActionLabels.Contains(SpanText.Normalize(b.Info[k].Label).Trim().ToLowerInvariant())).Cast<int?>().FirstOrDefault() : null;
+                // Not in a sidebar the take-list takes: its own degrees of success (a counteract sidebar's) are its text, and the indent test below ends it.
+                var label = b.Role == "body" && b.Info != null && !setIn && takingKey == null ? Enumerable.Range(0, b.Lines.Count).Where(k => ActionLabels.Contains(SpanText.Normalize(b.Info[k].Label).Trim().ToLowerInvariant())).Cast<int?>().FirstOrDefault() : null;
                 if (label is { } at)
                 {
                     inside = false;

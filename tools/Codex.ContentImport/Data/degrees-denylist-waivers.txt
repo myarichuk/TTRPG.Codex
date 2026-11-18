@@ -669,16 +669,15 @@ wisdom you
 avert
 # Chapter 9 review (the rules of play): ordinary words that a section of the rules chapter left out (a sidebar, a sentence of a table of content, a heading) capitalizes, and that earlier or new entries say in running text: a verb, a noun, a plural of a game term, the second half of a hyphenated heading word. None is a name.
 adjusting
-dimensional
-ghosts
 gross
 library
-masters
 miniatures
 npcs
 printed
-subordinate
 venoms
+# One word of those the left-out text capitalizes is a word of a setting institution's name, so it is not waived: it is allowed only where the pack says it before the one word that follows it,
+# in one sentence about movement in three dimensions (a compound line). It is denied everywhere else.
+compound dimensional space
 # Chapter 9 review: pairs of game terms and labels (damage types, the degrees of a saving throw, the words of a trait line and of the action icon key, the terms of the table of conditions of a dying creature) that the left-out text of the chapter makes and the taken text now says.
 action activity
 attribute modifier
@@ -703,13 +702,6 @@ physical damage
 poison damage
 precious materials
 precision damage
-related activities
-related cover
-related dismiss
-related escape
-related flat
-related light
-related persistent
 saving throw
 single action
 spirit damage
@@ -717,7 +709,6 @@ strike since
 the game
 three action
 two action
-your perception
 # Chapter 9 (the rules of play): pairs that the old left-out text of the rules chapter made and that the taken text now says: a label of a table (the degrees of a counteract check, the sizes), two words of a trait line, a heading's last word with the next sentence's first, and a game term with the word that follows it.
 affliction example
 an edge
@@ -751,5 +742,6 @@ sustain an
 throw dc
 vertical jump
 you seek
+your perception
 # Chapter 8d: archer is an ordinary word of a ranger archetype's text that a left-out heading capitalizes in a pun on a gap; it names no place, group or person.
 archer

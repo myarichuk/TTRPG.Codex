@@ -98,7 +98,11 @@ public class DegreesPlayingTests
         var (book3, ranges3, _) = Parse(string.Format(Row, string.Empty), Spine(true), blocks);
         Assert.Throws<DegreesException>(() => ImportPipeline.CheckFoldCounts(Spine(true), book3, ranges3));
         var (bookWhy, rangesWhy, _) = Parse(string.Format(Row, "countsDiffer: the third has no heading, "), Spine(true), blocks);
-        Assert.Empty(ImportPipeline.CheckFoldCounts(Spine(true), bookWhy, rangesWhy));
+        Assert.Equal((3, 2), Assert.Single(ImportPipeline.CheckFoldCounts(Spine(true), bookWhy, rangesWhy)));
+        // The reason accepts one bookmark with no heading and nothing else: a heading whose title matches no bookmark still fails.
+        var wrong = blocks.Select(b => b.Lines[0] == "Beta" ? Plain("section", 580, "Delta") : b).ToList();
+        var (bookWrong, rangesWrong, _) = Parse(string.Format(Row, "countsDiffer: the third has no heading, "), Spine(true), wrong);
+        Assert.Throws<DegreesException>(() => ImportPipeline.CheckFoldCounts(Spine(true), bookWrong, rangesWrong));
         // A row folds one font or the other, and only the rules parser folds.
         Assert.Throws<DegreesException>(() => TakeList.Parse(string.Format(Row, "foldChildren: true, ")));
         Assert.Throws<DegreesException>(() => TakeList.Parse("rows:\n  - { chapter: a, book: pc, parser: actions, target: action, approved: true, foldSections: true, paths: [[\"Book\"]] }\n"));
@@ -156,8 +160,13 @@ public class DegreesPlayingTests
         };
         const string Row = "rows:\n  - {{ chapter: a, book: pc, parser: actions, target: action, category: Test, approved: true, leadName: Using Basics, {0}paths: [[\"Book\", \"Basics\"]] }}\n";
 
-        var (book, ranges, parsed) = Parse(string.Format(Row, "actionGroups: true, "), spine, blocks);
+        var (book, ranges, parsed) = Parse(string.Format(Row, "actionGroups: true, splitLoneFields: true, "), spine, blocks);
 
+        // The two options are the row's own: another row's lone paragraph is not split, and its heading with no text is no group (it is a rule that lost its text, so it stays).
+        var (_, _, other) = Parse(string.Format(Row, "actionGroups: true, "), spine, blocks);
+        Assert.Equal("You are ready. You step aside and the others do not.", Assert.Single(Assert.Single(other, e => e.Type == "action").Extracted).Text);
+        var (_, _, single) = Parse(string.Format(Row, "splitLoneFields: true, "), spine, blocks);
+        Assert.Contains(single, e => e.Type == "rule" && e.Id == "group-one");
         var action = Assert.Single(parsed, e => e.Type == "action");
         Assert.Equal("Step About", action.Name);
         Assert.Equal("You are ready.", Assert.Single(action.Extracted).Text); // the requirement is its one sentence
@@ -165,9 +174,131 @@ public class DegreesPlayingTests
         Assert.Equal(new[] { "group-two", "using-basics" }, parsed.Where(e => e.Type == "rule").Select(e => e.Id).Order()); // Group One holds no text of its own: no entry
         var counts = ImportPipeline.CheckActionCounts(spine, book, ranges, parsed);
         Assert.Equal((2, 2, 1, 1, 1), (counts.Children, counts.Units, counts.Headers, counts.TraitLines, counts.Icons));
+        Assert.Equal(1, counts.EmptyGroups); // Group One made no rule, and the run says how many such headings there are
         // Without the option the two group headings are not the bookmarks' count of actions, and the run fails.
         var (plainBook, plainRanges, plainParsed) = Parse(string.Format(Row, string.Empty), spine, blocks);
         Assert.Throws<DegreesException>(() => ImportPipeline.CheckActionCounts(spine, plainBook, plainRanges, plainParsed));
         Assert.Throws<DegreesException>(() => TakeList.Parse("rows:\n  - { chapter: a, book: pc, parser: rules, target: rule, approved: true, actionGroups: true, paths: [[\"Book\"]] }\n"));
+    }
+
+    [Fact]
+    public void TheReasonOfAnActionsRowIsForItsNumbers_NotJustAnyText()
+    {
+        var spine = new List<SpineNode> { Node(0, "Book", "Book"), Node(1, "Basics", "Book", "Basics"), Node(1, "Later", "Book", "Later") };
+        var blocks = new List<Block>
+        {
+            Plain("section", 700, "Basics"),
+            Plain("block-header", 650, "STEP ABOUT [one-action]"), Plain("tag", 630, "MOVE"), Plain("rules", 610, "You step aside."),
+            Plain("block-header", 570, "WAIT AND SEE"), Plain("tag", 550, "EXPLORATION"), Plain("rules", 530, "You wait."),
+            Plain("section", 500, "Later"), Plain("rules", 480, "Words after."),
+        };
+        const string Row = "rows:\n  - {{ chapter: a, book: pc, parser: actions, target: action, category: Test, approved: true, {0}paths: [[\"Book\", \"Basics\"]] }}\n";
+
+        // Two headings, two trait lines, one icon: without a reason the counts disagree and the run fails.
+        var (book, ranges, parsed) = Parse(string.Format(Row, string.Empty), spine, blocks);
+        Assert.Throws<DegreesException>(() => ImportPipeline.CheckActionCounts(spine, book, ranges, parsed));
+
+        // A reason alone is accepted as before; with the numbers it is for, the run compares them with the counts.
+        var (b1, r1, p1) = Parse(string.Format(Row, "countsDiffer: one activity has no icon, "), spine, blocks);
+        var counts = ImportPipeline.CheckActionCounts(spine, b1, r1, p1);
+        Assert.Equal((2, 2, 1), (counts.Headers, counts.TraitLines, counts.Icons));
+        var (b2, r2, p2) = Parse(string.Format(Row, "countsDiffer: one activity has no icon, noTraitLine: 0, noIcon: 1, "), spine, blocks);
+        Assert.Equal(1, ImportPipeline.CheckActionCounts(spine, b2, r2, p2).Icons);
+        var (b3, r3, p3) = Parse(string.Format(Row, "countsDiffer: one activity has no icon, noTraitLine: 0, noIcon: 0, "), spine, blocks);
+        Assert.Contains("reason is for 0 and 0", Assert.Throws<DegreesException>(() => ImportPipeline.CheckActionCounts(spine, b3, r3, p3)).Message, StringComparison.Ordinal);
+        // The numbers come together, with a reason, and belong to the actions parser.
+        Assert.Throws<DegreesException>(() => TakeList.Parse(string.Format(Row, "noIcon: 1, ")));
+        Assert.Throws<DegreesException>(() => TakeList.Parse(string.Format(Row, "countsDiffer: why, noIcon: 1, ")));
+        Assert.Throws<DegreesException>(() => TakeList.Parse("rows:\n  - { chapter: a, book: pc, parser: rules, target: rule, approved: true, countsDiffer: why, noTraitLine: 0, noIcon: 1, paths: [[\"Book\"]] }\n"));
+    }
+
+    [Fact]
+    public void ABoxSetOverTheColumnAParagraphRunsOnIn_IsReadAfterTheParagraph_OnlyWhereTheRowNamesIt()
+    {
+        var spine = new List<SpineNode> { Node(0, "Book", "Book"), Node(1, "Part", "Book", "Part"), Node(1, "Next", "Book", "Next") };
+        var blocks = new List<Block>
+        {
+            Plain("section", 700, "Part"), Plain("rules", 680, "The first half of a sentence that runs"),
+            Plain("block-header", 660, "ODD BOX"), Plain("body", 640, "Words of the box."),
+            Plain("rules", 620, "on to its end.") with { Column = 1 }, Plain("section", 500, "Next"), Plain("rules", 480, "Words after."),
+        };
+        const string Row = "rows:\n  - {{ chapter: a, book: pc, parser: rules, target: rule, category: Test, approved: true, subheadings: true, {0}paths: [[\"Book\", \"Part\"]] }}\n";
+
+        Assert.Equal("The first half of a sentence that runs\nOdd Box\nWords of the box. on to its end.", Assert.Single(Parse(string.Format(Row, string.Empty), spine, blocks).Parsed).Render());
+        Assert.Equal("The first half of a sentence that runs on to its end.\nOdd Box\nWords of the box.", Assert.Single(Parse(string.Format(Row, "boxesLast: [Odd Box], "), spine, blocks).Parsed).Render());
+        Assert.Throws<DegreesException>(() => TakeList.Parse(string.Format(Row, "boxesLast: [Odd Box], ").Replace("subheadings: true, ", string.Empty)));
+    }
+
+    [Fact]
+    public void ANumberedStepThatWrapsIsOneLine_AndABoldOpeningThatIsAFormulaIsNoLabel()
+    {
+        var spine = new List<SpineNode> { Node(0, "Book", "Book"), Node(1, "Part", "Book", "Part"), Node(1, "Next", "Book", "Next") };
+        var blocks = new List<Block>
+        {
+            Plain("section", 700, "Part"),
+            Lines("rules", 680, (60, string.Empty, "Take these steps."), (69, string.Empty, "1. The first step is long and"), (78, string.Empty, "goes on a little."), (69, string.Empty, "2. The second step.")),
+            Plain("block-header", 620, "THE FORMULA"),
+            Lines("body", 600, (60, "Total = 10 + 2", "Total = 10 + 2 (up to a cap) + more"), (69, string.Empty, "+ other things")),
+            Plain("section", 500, "Next"), Plain("rules", 480, "Words after."),
+        };
+        const string Row = "rows:\n  - { chapter: a, book: pc, parser: rules, target: rule, category: Test, approved: true, subheadings: true, paths: [[\"Book\", \"Part\"]] }\n";
+
+        var text = Assert.Single(Parse(Row, spine, blocks).Parsed).Render();
+
+        Assert.Equal("Take these steps.\n1. The first step is long and goes on a little.\n2. The second step.\nThe Formula\nTotal = 10 + 2 (up to a cap) + more + other things", text);
+    }
+
+    [Fact]
+    public void ASidebarTheRowNamesIsReadAsTheBodyOfARule_TheOthersReadAsBefore()
+    {
+        var spine = new List<SpineNode>
+        {
+            Node(0, "Book", "Book"), Node(1, "Part", "Book", "Part"), new(2, "Sidebar: Odd Box", new[] { "Book", "Part", "Sidebar: Odd Box" }, 1, 1, true), Node(1, "Next", "Book", "Next"),
+        };
+        var blocks = new List<Block> { Plain("section", 700, "Part"), Plain("rules", 680, "Words of the part."), Plain("section", 500, "Next"), Plain("rules", 480, "Words after.") };
+        // One body block set ragged: a labelled first line that stops short, a line set in under it, a list item that ends a sentence and the paragraph after it, set in as the list is.
+        var taken = new List<Block>
+        {
+            Plain("block-header", 660, "ODD BOX"),
+            new(1, 0, "body", 60, 0, 300, 640, new List<string> { "Success Win big and", "then more.", "• An item of the list.", "A paragraph after the list." },
+                new List<LineInfo> { new(60, 250, "Success"), new(69, 150, string.Empty), new(60, 200, string.Empty), new(69, 250, string.Empty) }),
+        };
+        const string Row = "rows:\n  - {{ chapter: a, book: pc, parser: rules, target: rule, category: Test, approved: true, subheadings: true, {0}sidebars: [[\"Book\", \"Part\", \"Sidebar: Odd Box\"]], paths: [[\"Book\", \"Part\"]] }}\n";
+        string Read(string options)
+        {
+            var book = Book(blocks) with { TakenSidebars = new Dictionary<string, List<Block>> { ["oddbox"] = taken } };
+            var ranges = TakeStage.Resolve(spine, book, TakeList.Parse(string.Format(Row, options)).Rows);
+            return EntriesStage.Run(book, ranges, "pc", null, spine).Single(e => e.Id == "odd-box").Render();
+        }
+
+        var body = Read("bodySidebars: [Odd Box], ");
+        Assert.Contains("Win big and then more.", body, StringComparison.Ordinal); // the line set in goes on its label's paragraph
+        Assert.Contains("• An item of the list.\nA paragraph after the list.", body, StringComparison.Ordinal); // the paragraph after the list is its own
+        Assert.DoesNotContain("Win big and then more.", Read(string.Empty), StringComparison.Ordinal); // another sidebar of the row reads as before
+        Assert.Throws<DegreesException>(() => TakeList.Parse(string.Format(Row, "bodySidebars: [Odd Box], ").Replace("subheadings: true, ", string.Empty)));
+    }
+
+    [Fact]
+    public void TheDegreesOfASidebarTheRowTakesAreCountedFromItsBlocks_AndAnEntryThatLostThemFailsTheRun()
+    {
+        var spine = new List<SpineNode>
+        {
+            Node(0, "Book", "Book"), Node(1, "Part", "Book", "Part"), new(2, "Sidebar: Odd Box", new[] { "Book", "Part", "Sidebar: Odd Box" }, 1, 1, true), Node(1, "Next", "Book", "Next"),
+        };
+        var blocks = new List<Block> { Plain("section", 700, "Part"), Plain("rules", 680, "Words of the part."), Plain("section", 500, "Next"), Plain("rules", 480, "Words after.") };
+        var taken = new List<Block>
+        {
+            Plain("block-header", 660, "ODD BOX"),
+            Lines("body", 640, (60, "Success", "Success You win."), (60, "Failure", "Failure You lose.")),
+        };
+        var book = Book(blocks) with { TakenSidebars = new Dictionary<string, List<Block>> { ["oddbox"] = taken } };
+        var rows = TakeList.Parse("rows:\n  - { chapter: a, book: pc, parser: rules, target: rule, category: Test, approved: true, sidebars: [[\"Book\", \"Part\", \"Sidebar: Odd Box\"]], paths: [[\"Book\", \"Part\"]] }\n").Rows;
+        var ranges = TakeStage.Resolve(spine, book, rows);
+        var parsed = EntriesStage.Run(book, ranges, "pc", null, spine);
+
+        Assert.Equal((2, 2), ImportPipeline.CheckSidebarDegrees(book, ranges, parsed));
+        // The sidebar's entry without its degrees (they went with the text beside it) is a difference, and the run fails.
+        var lost = parsed.Where(e => e.Id != "odd-box").ToList();
+        Assert.Throws<DegreesException>(() => ImportPipeline.CheckSidebarDegrees(book, ranges, lost));
     }
 }

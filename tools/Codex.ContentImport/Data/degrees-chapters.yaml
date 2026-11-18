@@ -45,6 +45,8 @@
 #             `countsDiffer`). `saveAttributes` names the attribute key of each saving throw, as the book's own rules say it. The bookmark children, the level bands, the feat headers, the trait lines, the level markers and the book's printed list of the
 #             class's feats are counted
 #   sidebarFillsColumn / endsAtPage   pages where a sidebar fills a whole column, so the opening text of the next column is the page's own; bookmark paths whose next section opens a page with no title block of its own, so the section ends with its page
+#   bodySidebars (rules parser with subheadings) titles of taken sidebars read as the body of a rule; boxesLast (rules parser with subheadings) titles of boxes set over a column the text runs on in, read after the entry's text
+#   noTraitLine / noIcon (actions parser) the number of action headings with no trait line and with no icon that the row's countsDiffer reason is for (the run compares them); splitLoneFields (actions parser) cuts an action's one labelled paragraph after its first sentence
 #   foldSections (rules parser) as foldChildren, for a section whose children are titled in the section font (an overview of short paragraphs, or the general rules of effects); the children's bookmarks are counted against those headings (countsDiffer gives a reason when one has no heading)
 #   artPages / sidebarSpill (rules parser) pages whose pictures are labelled with names and numbers (a display block, a body block of up to five words with no full stop, a block-header of up to four words that opens with a digit), or where the lines of a sidebar that is not taken run on past
 #             the gutter (every block in the body font is the sidebar's): skipped, and hashed for the denylist with the text left out
@@ -988,6 +990,8 @@ rows:
     subheadings: true
     foldChildren: true
     proseBoxes: true
+    # The box that restates the hero point rule is set over the column the death-effects paragraph runs on in: read after the entry's text.
+    boxesLast: [Heroic Recovery]
     # The figures of the terrain, cover and flanking rules are labelled with names and numbers.
     artPages: [424, 425, 426]
     # The sections whose text goes on over a page break above the next title.
@@ -1076,6 +1080,9 @@ rows:
       Hit Points: Hit Points and Healing
       Secret Checks: Secret Check Rolls
       Counteracting: Counteract Checks
+      "#86f74343420fd78df4701bc56b16f6c6b8322fcc5ff608e43fa8fd05ca32e631": Combat in Three Dimensions
+    # Three sidebars are set ragged-right: one with labels that open paragraphs (the degrees of a counteract check), one that holds a reproduced action, one with a list: read as the body of a rule is.
+    bodySidebars: [Counteracting, Reactions to Movement, "#86f74343420fd78df4701bc56b16f6c6b8322fcc5ff608e43fa8fd05ca32e631"]
     # The sidebars that state rules. The ones left out are examples, advice or lists that repeat other entries (said in the design document).
     sidebars:
       - ["Chapter 8: Playing the Game", Checks, "Step 4: Degree of Success", "Sidebar: Fortune and Misfortune"]
@@ -1089,6 +1096,7 @@ rows:
       - ["Chapter 8: Playing the Game", Movement, Flanking, "Sidebars: Tiny Creatures and Flanking & Avoiding Flanking", Tiny Creatures and Flanking]
       - ["Chapter 8: Playing the Game", Afflictions, "Sidebar: Counteracting"]
       - ["Chapter 8: Playing the Game", Perception and Detection, "Sidebar: Detecting with Other Senses"]
+      - ["Chapter 8: Playing the Game", Encounter Mode, Special Battles, "#86f74343420fd78df4701bc56b16f6c6b8322fcc5ff608e43fa8fd05ca32e631"]
   # The basic and specialty basic actions, and the exploration activities, are printed as the skill actions are (a heading with its action cost, a trait line, the text).
   - chapter: playing
     book: pc
@@ -1099,10 +1107,14 @@ rows:
     tableRows: true
     leadName: Using Basic Actions
     actionGroups: true
+    # (noTraitLine and noIcon are the numbers the reason is for; the run compares them with the counts.)
     # The page of Step and Strike: the left column's lines run to the right column's text, so the gutter search read the ends of some lines in the next column (words were missing from sentences).
     gutterAt:
       419: 313
-    countsDiffer: placeholder
+    countsDiffer: Six of the basic and specialty basic actions (three of each) print no trait line; all of them have an action cost.
+    noTraitLine: 6
+    noIcon: 0
+    splitLoneFields: true
     paths:
       - ["Chapter 8: Playing the Game", Actions, Basic Actions]
   - chapter: playing
@@ -1115,7 +1127,10 @@ rows:
     leadName: Exploration Activities
     runsToTitle:
       - ["Chapter 8: Playing the Game", Exploration Mode, Exploration Activities]
-    countsDiffer: placeholder
+    countsDiffer: The exploration activities have a trait line each but no action icon, as they are not played with actions.
+    noTraitLine: 0
+    noIcon: 10
+    splitLoneFields: true
     paths:
       - ["Chapter 8: Playing the Game", Exploration Mode, Exploration Activities]
 # Sections a later chapter takes (only the introduction's rules parts are left: the rules of play are taken above). They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.

@@ -404,4 +404,31 @@ public class DegreesGearTests
         // A path that is no sidebar bookmark fails the run.
         Assert.Throws<DegreesException>(() => ImportPipeline.OptionsFor(SidebarSpine, TakeList.Parse(SidebarYaml.Replace("Sidebar: Wheel Box", "Parts")).Rows));
     }
+
+    [Fact]
+    public void ALineThatOpensWithADegreeLabel_EndsASidebarThatIsDropped_ButBelongsToOneThatIsTaken()
+    {
+        var b = new PdfDocumentBuilder();
+        var times = b.AddStandard14Font(Standard14Font.TimesRoman);
+        var hel = b.AddStandard14Font(Standard14Font.Helvetica);
+        var helBold = b.AddStandard14Font(Standard14Font.HelveticaBold);
+        var p = b.AddPage(603, 783);
+        p.AddText("Parts", 16, new PdfPoint(60, 740), helBold);
+        p.AddText("The text of the section.", 10, new PdfPoint(60, 722), times);
+        p.AddText("WHEEL BOX", 11, new PdfPoint(60, 690), helBold);
+        p.AddText("Seat Belts: Strap in.", 9, new PdfPoint(60, 676), hel);
+        p.AddText("Success", 9, new PdfPoint(60, 664), helBold);
+        p.AddText("The strap holds.", 9, new PdfPoint(100, 664), hel);
+        using var doc = PdfDocument.Open(b.Build());
+        var layout = LayoutStage.Run(doc, FontRoles.Parse(Roles));
+
+        // A sidebar that is dropped ends where a line opens with the label of a degree of success (the page's own action text goes on): the line stays with the page.
+        var plain = BlocksStage.Run(layout.Pages, ImportPipeline.OptionsFor(SidebarSpine, TakeList.Parse(SidebarYaml.Replace("    sidebars: [[\"Chapter\", \"Sidebar: Wheel Box\"]]\n", string.Empty)).Rows));
+        Assert.Contains(plain.Blocks, k => k.Lines.Any(l => l.StartsWith("Success", StringComparison.Ordinal)));
+
+        // A sidebar the take-list takes keeps its own degrees of success: they are its text, and no block of it is the page's.
+        var taken = BlocksStage.Run(layout.Pages, ImportPipeline.OptionsFor(SidebarSpine, TakeList.Parse(SidebarYaml).Rows));
+        Assert.DoesNotContain(taken.Blocks, k => k.Lines.Any(l => l.StartsWith("Success", StringComparison.Ordinal)));
+        Assert.Contains(Assert.Single(taken.TakenSidebars!).Value, k => k.Lines.Any(l => l.StartsWith("Success", StringComparison.Ordinal)));
+    }
 }

@@ -9,7 +9,6 @@ public static partial class EntriesStage
     /// <summary>The description of one item: the name its paragraph opens with (bold, then a colon) and the paragraphs.</summary>
     internal sealed record ItemDescription(string Name, List<string> Paragraphs);
 
-    /// <summary>A body block set entirely in capitals is the label under a picture (an item's name over its drawing), not text.</summary>
     /// <summary>
     /// A label of a picture on a page the row names in <see cref="TakeRow.ArtPages"/>: a display block, a body block of up to five words with no full stop, or a heading in the block-header
     /// font of up to four words that opens with a digit (a distance on a diagram).
@@ -34,6 +33,7 @@ public static partial class EntriesStage
             || (block.Role == "block-header" && words <= 4 && text.Length > 0 && char.IsDigit(text[0]));
     }
 
+    /// <summary>A body block set entirely in capitals is the label under a picture (an item's name over its drawing), not text.</summary>
     internal static bool IsArtLabel(Block block) =>
         block.Role == "body" && block.Lines.All(l => l.Any(char.IsLetter) && !l.Any(char.IsLower));
 

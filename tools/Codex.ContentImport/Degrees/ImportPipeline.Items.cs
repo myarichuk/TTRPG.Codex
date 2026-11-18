@@ -17,7 +17,7 @@ public static partial class ImportPipeline
     public static List<(int Children, int Headings)> CheckFoldCounts(IReadOnlyList<SpineNode> spine, BlocksResult blocks, IEnumerable<TakenRange> ranges)
     {
         var compared = new List<(int, int)>();
-        foreach (var range in ranges.Where(r => !r.Own && r.Row.Parser == "rules" && (r.Row.FoldChildren || r.Row.FoldSections) && string.IsNullOrWhiteSpace(r.Row.CountsDiffer)))
+        foreach (var range in ranges.Where(r => !r.Own && r.Row.Parser == "rules" && (r.Row.FoldChildren || r.Row.FoldSections)))
         {
             var foldRole = range.Row.FoldSections ? "section" : "entry-header";
             var node = range.Node;
@@ -26,7 +26,10 @@ public static partial class ImportPipeline
             var headings = Enumerable.Range(range.Start, Math.Max(0, range.End - range.Start)).Select(i => blocks.Blocks[i]).Where(b => b.Role == foldRole)
                 .Select(b => BlocksStage.SidebarTitleSet.Key(string.Join(' ', b.Lines))).ToList();
             compared.Add((children.Count, headings.Count));
-            if (!children.SequenceEqual(headings))
+            // A reason accepts one bookmark more than there are headings (a section with a picture and no heading of its own), the headings otherwise being the bookmarks in order; any other difference fails.
+            var oneWithoutHeading = !string.IsNullOrWhiteSpace(range.Row.CountsDiffer) && children.Count == headings.Count + 1
+                && Enumerable.Range(0, children.Count).Any(skip => children.Where((_, i) => i != skip).SequenceEqual(headings));
+            if (!children.SequenceEqual(headings) && !oneWithoutHeading)
             {
                 throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: the section has {children.Count} bookmark children and {headings.Count} headings in the entry-header font in its range, and their titles differ.");
             }

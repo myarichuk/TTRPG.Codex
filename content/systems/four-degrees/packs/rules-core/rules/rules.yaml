@@ -212,7 +212,7 @@
     Multiple statistics help you defend against attacks, spells, hazards, and other dangers of adventuring: Armor Class and three saving throws.
     Armor Class
     Attack rolls are compared to a special Difficulty Class called Armor Class (AC), which measures how hard it is for your foes to hit you with Strikes, spell attack rolls, and other attacks. Just like for any other check and DC, the result of an attack roll must meet or exceed your AC to be successful, which allows your foe to deal damage to you. Armor Class is calculated using the following formula.
-    **Armor Class = 10 + Dexterity modifier.** (up to your armor's Dex Cap) + proficiency bonus + armor's item bonus to AC + other bonuses + penalties
+    Armor Class = 10 + Dexterity modifier (up to your armor's Dex Cap) + proficiency bonus + armor's item bonus to AC + other bonuses + penalties
     Use your proficiency bonus for the category (light, medium, or heavy) or the specific type of armor you're wearing. If you're not wearing armor, use your proficiency in unarmored defense.
     Armor Class can benefit from bonuses with a variety of sources, much like attack rolls. Armor itself grants an item bonus, so other item bonuses usually won't apply to your AC, but magic armor can increase the item bonus granted by your armor.
     Penalties to AC come from situations and effects in much the same way bonuses do. Circumstance penalties come from unfavorable situations, and status penalties come from effects that impede your abilities or from broken armor. You take an item penalty when you wear shoddy armor.
@@ -521,6 +521,19 @@
     • The platinum piece (pp) is used for the purchase of very expensive items or as a way to easily transport large sums of currency. A platinum piece is worth 10 gold pieces, 100 silver pieces, or 1,000 copper pieces.
   properties:
     category: "Equipment"
+- id: "combat-in-three-dimensions"
+  name: "Combat in Three Dimensions"
+  source: "pc > Chapter 8: Playing the Game > Encounter Mode > Special Battles > Sidebar"
+  description: |-
+    In aerial and aquatic combat, you might need to track positioning in three dimensions. For flying creatures, you might use one of the following methods:
+    • Find platforms to place flying creatures' miniatures on.
+    • Set a die next to a creature with the number indicating how many squares up in the air it is.
+    • Make a stack of dice or tokens, 1 per 5 feet of elevation.
+    • Write the elevation next to the monster on the grid.
+    In underwater combat, choose a plane to be the baseline, typically the waterline, the sea floor, or a stationary object you can measure from.
+    As with ground-based movement, moving diagonally up or down in 3-D space requires counting every other diagonal as 10 feet. Measure flanking in all directions—creatures above and below an enemy can flank it just as effectively as they can from opposite sides.
+  properties:
+    category: "Playing the Game"
 - id: "communication"
   name: "Communication"
   source: "pc > Chapter 3: Classes > Familiars > Communication"
@@ -615,6 +628,25 @@
     Some effects try to counteract spells, afflictions, conditions, or other effects. Counteract checks compare the power of two forces and determine which defeats the other. Successfully counteracting an effect disrupts it, preventing it from having any effect, unless noted otherwise.
     When attempting a counteract check, add the relevant skill modifier or other appropriate modifier to your check against the target's DC. If you're counteracting an affliction, the DC is in the affliction's stat block. If it's a spell, use the caster's DC. The GM can also calculate a DC based on the target effect's level. For spells, the counteract check modifier is your spellcasting attribute modifier plus your spellcasting proficiency bonus, plus any bonuses and penalties that specifically apply to counteract checks.
     What you can counteract depends on the check result and the target's counteract rank. If an effect is a spell, its rank is the counteract rank. Otherwise, halve its level and round up to determine its counteract rank (minimum counteract rank 0). If an effect's level is unclear and it came from a creature, halve and round up the creature's level.
+    **Critical Success.** Counteract the target if its counteract rank is no more than 3 higher than your effect's counteract rank.
+    **Success.** Counteract the target if its counteract rank is no more than 1 higher than your effect's counteract rank.
+    **Failure.** Counteract the target if its counteract rank is lower than your effect's counteract rank.
+    **Critical Failure.** You fail to counteract the target.
+    Counteract Table
+    This table provides a reference for what an effect can counteract based on its rank and the check result. The first number in each column is the counteract rank at which you can counteract an effect based on your degree of success. The numbers in parentheses are the typical level range corresponding to that rank.
+    Counteract Critical
+    Rank Failure Success Success
+    0 — 1 (1 to 2) 3 (5 to 6)
+    1 0 (-1 to 0) 2 (3 to 4) 4 (7 to 8)
+    2 1 (1 to 2) 3 (5 to 6) 5 (9 to 10)
+    3 2 (3 to 4) 4 (7 to 8) 6 (11 to 12)
+    4 3 (5 to 6) 5 (9 to 10) 7 (13 to 14)
+    5 4 (7 to 8) 6 (11 to 12) 8 (15 to 16)
+    6 5 (9 to 10) 7 (13 to 14) 9 (17 to 18)
+    7 6 (11 to 12) 8 (15 to 16) 10 (19 to 20)
+    8 7 (13 to 14) 9 (17 to 18) 11 (21 to 22)
+    9 8 (15 to 16) 10 (19 to 20) 12 (23 to 24)
+    10 9 (17 to 18) 11 (21 to 22) 13 (25 to 26)
   properties:
     category: "Playing the Game"
 - id: "counteracting"
@@ -1053,7 +1085,7 @@
     When you and an ally are flanking a foe, it has a harder time defending against you. A creature is off-guard (taking a -2 circumstance penalty to AC) to melee attacks from creatures that are flanking it.
     To flank a foe, you and your ally must be on opposite sides of the creature. A line drawn between the center of your space and the center of your ally's space must pass through opposite sides or opposite corners of the foe's space. Additionally, both you and the ally have to be able to act, you must be wielding melee weapons or be able to make an unarmed attack, you can't be under any effects that prevent you from attacking, and you must both have the enemy within reach. If you are wielding a reach weapon, you use your reach with that weapon for this purpose.
     3D Flanking
-    Though battle grids are often two-dimensional, the game world isn't! Sometimes you might need to visualize a creature's space as a cube for flanking. For instance, if one creature is underneath a flying sphinx while an ally is flying above the sphinx, they might be flanking it even if they're piled in an odd stack on your battle grid. And if a creature were mounted on a horse, it might be able to measure from farther off the ground than normal.
+    Though battle grids are often flat, the game world isn't! Sometimes you might need to visualize a creature's space as a cube for flanking. For instance, if one creature is underneath a flying sphinx while an ally is flying above the sphinx, they might be flanking it even if they're piled in an odd stack on your battle grid. And if a creature were mounted on a horse, it might be able to measure from farther off the ground than normal.
     In these cases, it's usually best to have the GM make the call on who's flanking rather than trying to do meticulous measurements in three dimensions.
   properties:
     category: "Playing the Game"
@@ -1252,8 +1284,7 @@
   source: "pc > Chapter 8: Playing the Game > Checks"
   description: |-
     All types of checks, from skill checks to attack rolls to saving throws, follow these basic steps.
-    1. Roll a d20 and identify the modifiers, bonuses, and
-    penalties that apply.
+    1. Roll a d20 and identify the modifiers, bonuses, and penalties that apply.
     2. Calculate the result.
     3. Compare to the DC.
     4. Determine the degree of success and the effect.
@@ -1267,14 +1298,10 @@
   description: |-
     Damage decreases a creature's Hit Points (HP) on a 1-to- 1 basis (so a creature that takes 6 damage loses 6 Hit Points).
     Damage is sometimes given as a fixed amount, but more often than not you'll make a damage roll to determine how much damage you deal. A damage roll typically uses a number and type of dice determined by the weapon or unarmed attack used or the spell cast, and it's often enhanced by various modifiers, bonuses, and penalties. Like checks, a damage roll—especially a melee weapon damage roll—is often modified by a number of modifiers, penalties, and bonuses. When making a damage roll, you take the following steps, explained in detail below.
-    1. Roll damage dice indicated by the weapon, unarmed
-    attack, or spell, and apply the modifiers, bonuses,
-    and penalties that apply to the result of the roll.
+    1. Roll damage dice indicated by the weapon, unarmed attack, or spell, and apply the modifiers, bonuses, and penalties that apply to the result of the roll.
     2. Determine the damage type.
-    3. Apply immunities, weaknesses, and resistances the
-    subject has to the damage.
-    4. If any damage remains, reduce Hit Points the target
-    has by that amount.
+    3. Apply immunities, weaknesses, and resistances the subject has to the damage.
+    4. If any damage remains, reduce Hit Points the target has by that amount.
   properties:
     category: "Playing the Game"
 - id: "identifying-spells"
@@ -1377,12 +1404,12 @@
   description: |-
     There are ways in which you can die instantly, without reaching dying 0 first.
     Death Effects
-    Some spells and abilities can kill you immediately or bring you closer to death without needing to reduce you to 0 Hit Points first. These abilities have the death trait and usually involve energy from the Void, the antithesis of life, or other effects that target the mind or soul. If you're reduced to 0 Hit Points by a death effect, you're slain instantly without needing to reach dying 4. For instance, the vision of death spell automatically kills those it reduces to 0 Hit Points as terrifying hallucinations cause them to drop dead.
-    Heroic Recovery
-    If you have at least 1 Hero Point, you can spend all of your remaining Hero Points at the start of your turn or when your dying value would increase. You lose the dying condition entirely and stabilize with 0 Hit Points. You don't gain the wounded condition or increase its value from losing the dying condition in this way, but if you already had that condition, you don't lose it or decrease its value.
+    Some spells and abilities can kill you immediately or bring you closer to death without needing to reduce you to 0 Hit Points first. These abilities have the death trait and usually involve void energy, the antithesis of life, or other effects that target the mind or soul. If you're reduced to 0 Hit Points by a death effect, you're slain instantly without needing to reach dying 4. For instance, the vision of death spell automatically kills those it reduces to 0 Hit Points as terrifying hallucinations cause them to drop dead.
     A death effect might state that it kills you outright, without dealing damage, in which case you die without having to first reach dying 4 or be reduced to 0 Hit Points. For instance, an extremely powerful entity of death can automatically slay creatures who fail their save against its death strike ability.
     Massive Damage
     You die instantly if you ever take damage equal to or greater than double your maximum Hit Points in one blow.
+    Heroic Recovery
+    If you have at least 1 Hero Point, you can spend all of your remaining Hero Points at the start of your turn or when your dying value would increase. You lose the dying condition entirely and stabilize with 0 Hit Points. You don't gain the wounded condition or increase its value from losing the dying condition in this way, but if you already had that condition, you don't lose it or decrease its value.
   properties:
     category: "Playing the Game"
 - id: "intimidation"
@@ -1706,7 +1733,7 @@
 - id: "other-actions"
   name: "Other Actions"
   source: "pc > Chapter 8: Playing the Game > Actions > Other Actions"
-  description: "Sometimes you need to attempt something not already covered by defined actions in the game. When this happens, the rules tell you how many actions you need to spend, as well as any traits your action might have. For example, a spell that lets you switch targets might say you can do so \"by spending a single action, which has the concentrate trait.\" Game Masters can also use this approach when a character tries to do something that isn't covered in the rules."
+  description: "Sometimes you need to attempt something not already covered by defined actions in the game. When this happens, the rules tell you how many actions you need to spend, as well as any traits your action might have. For example, a spell that lets you switch targets might say you can do so \"by spending a single action, which has the concentrate trait.\" The GM can also use this approach when a character tries to do something that isn't covered in the rules."
   properties:
     category: "Playing the Game"
 - id: "other-activities"
@@ -1853,6 +1880,9 @@
   description: |-
     Some reactions and free actions are triggered by a creature using an action with the move trait. The most notable example is Reactive Strike (reproduced below). Actions with the move trait can trigger reactions or free actions throughout the course of the distance traveled. Each time you exit a square within a creature's reach, your movement triggers those reactions and free actions (although no more than once per move action for a given reacting creature). If you use a move action but don't move out of a square, the trigger instead happens at the end of that action or ability.
     Some actions, such as Step, specifically state they don't trigger reactions or free actions based on movement.
+    REACTIVE STRIKE [reaction]
+    **Trigger.** A creature within your reach uses a manipulate action or a move action, makes a ranged attack, or leaves a square during a move action it's using.
+    You lash out at a foe that leaves an opening. Make a melee Strike against the triggering creature. If your attack is a critical hit and the trigger was a manipulate action, you disrupt that action. This Strike doesn't count toward your multiple attack penalty, and your multiple attack penalty doesn't apply to this Strike.
   properties:
     category: "Playing the Game"
 - id: "reading-spells"
@@ -1889,25 +1919,6 @@
     Apart from waiting them out, afflictions can be removed through certain uses of the skills and spells. The Treat Disease and Treat Poison uses of Medicine are commonly used to treat those afflictions.
     The cleanse affliction spell is also available to most spellcasters. Spells that counteract conditions at the source, such as sound body, can also be effective against diseases and poisons that cause those conditions.
     Curses are trickier, requiring solutions that specifically mention them, such as a 4th-rank cleanse affliction or the Break Curse skill feat.
-    **Critical Success.** Counteract the target if its counteract rank is no more than 3 higher than your effect's counteract rank.
-    **Success.** Counteract the target if its counteract rank is no more than 1 higher than your effect's counteract rank.
-    **Failure.** Counteract the target if its counteract rank is lower than your effect's counteract rank.
-    **Critical Failure.** You fail to counteract the target.
-    Counteract Table
-    This table provides a reference for what an effect can counteract based on its rank and the check result. The first number in each column is the counteract rank at which you can counteract an effect based on your degree of success. The numbers in parentheses are the typical level range corresponding to that rank.
-    Counteract Critical
-    Rank Failure Success Success
-    0 — 1 (1 to 2) 3 (5 to 6)
-    1 0 (-1 to 0) 2 (3 to 4) 4 (7 to 8)
-    2 1 (1 to 2) 3 (5 to 6) 5 (9 to 10)
-    3 2 (3 to 4) 4 (7 to 8) 6 (11 to 12)
-    4 3 (5 to 6) 5 (9 to 10) 7 (13 to 14)
-    5 4 (7 to 8) 6 (11 to 12) 8 (15 to 16)
-    6 5 (9 to 10) 7 (13 to 14) 9 (17 to 18)
-    7 6 (11 to 12) 8 (15 to 16) 10 (19 to 20)
-    8 7 (13 to 14) 9 (17 to 18) 11 (21 to 22)
-    9 8 (15 to 16) 10 (19 to 20) 12 (23 to 24)
-    10 9 (17 to 18) 11 (21 to 22) 13 (25 to 26)
   properties:
     category: "Playing the Game"
 - id: "resistance-rule"
@@ -2394,9 +2405,9 @@
     Damage rolls for melee weapons and unarmed attacks typically add your Strength attribute modifier.
     Melee damage roll = damage die of weapon or unarmed attack + Strength modifier + bonuses + penalties
     Damage rolls for ranged weapons typically don't add an attribute modifier, though you add your Strength modifier to damage rolls for thrown weapons or half the modifier to damage rolls for ranged weapons with the propulsive trait.
-    **Ranged damage roll = damage die of weapon.** (+ Strength modifier for a thrown weapon or half Strength modifier for a propulsive weapon) + bonuses + penalties
+    Ranged damage roll = damage die of weapon (+ Strength modifier for a thrown weapon or half Strength modifier for a propulsive weapon) + bonuses + penalties
     For damage rolls with spells, alchemical bombs, and similar items, you don't add an attribute modifier unless otherwise noted.
-    **Spell.** (or similar effect) damage roll = damage die of effect + bonuses + penalties
+    Spell (or similar effect) damage roll = damage die of effect + bonuses + penalties
     As with checks, you might add circumstance, status, or item bonuses to your damage rolls, but if you have multiple bonuses of the same type, you add only the highest bonus of that type. Again like checks, you may also apply circumstance, status, item, and untyped penalties to the damage roll, and again you apply only the greatest penalty of a specific type but apply all untyped penalties together.
     If the combined penalties on an attack would reduce the damage to 0 or below, you still deal 1 damage. Sometimes there are other considerations, described below.
     Adding Damage Dice
@@ -2505,7 +2516,7 @@
     If an encounter involves combat, it's often a good idea to track the movement and relative position of the participants using a battle mat or some other form of grid to display the terrain, and miniatures to represent the combatants. When a character moves on a grid, every 1-inch square of the play area is 5 feet across in the game world. Hence, a creature moving in a straight line spends 5 feet of its movement for every map square traveled. Difficult terrain can make some squares cost more of your movement.
     Diagonal Movement
     Because moving diagonally covers more ground, you count that movement differently. The first square of diagonal movement you make in a turn counts as 5 feet, but the second counts as 10 feet, and your count thereafter alternates between the two. For example, as you move across 4 squares diagonally, you would count 5 feet, then 10, then 5, and then 10, for a total of 30 feet. You track your total diagonal movement across all your movement during your turn, but reset your count at the end of your turn.
-    3d Movement
+    3D Movement
     Most movement in a game can be represented on a flat map. If creatures are flying, swimming, or otherwise moving through three-dimensional space, see the advice under Special Battles.
     Size, Space, and Reach
     Creatures and objects of different sizes occupy different amounts of space. The sizes and the spaces they each take up on a grid are listed in the Size and Reach table (see below). The table also lists the typical reach for creatures of each size, for both tall creatures (most bipeds) and long creatures (most quadrupeds).
@@ -2518,9 +2529,6 @@
     Large 10 feet 10 feet 5 feet
     Huge 15 feet 15 feet 10 feet
     Gargantuan 20 feet or more 20 feet 15 feet
-    REACTIVE STRIKE [reaction]
-    **Trigger.** A creature within your reach uses a manipulate action or a move action, makes a ranged attack, or leaves a square during a move action it's using.
-    You lash out at a foe that leaves an opening. Make a melee Strike against the triggering creature. If your attack is a critical hit and the trigger was a manipulate action, you disrupt that action. This Strike doesn't count toward your multiple attack penalty, and your multiple attack penalty doesn't apply to this Strike.
     A Small or larger creature or object takes up at least 1 square on a grid, and creatures of these sizes can't usually share spaces except in situations like a character riding a mount.
     Multiple Tiny creatures can occupy the same square. At least four can fit in a single square, though the GM might determine that even more can fit. Tiny creatures can share a space occupied by a larger creature as well. If a Tiny creature's reach is 0 feet, it must share a space with a creature in order to attack it.
     Moving Through a Creature's Space
@@ -2691,8 +2699,8 @@
     Afflictions with the virulent trait are harder to remove. You must succeed at two consecutive saves to reduce a virulent affliction's stage by 1. A critical success reduces a virulent affliction's stage by only 1 instead of by 2.
     Affliction Example
     To see how a poison works, let's look at arsenic.
-    **Arsenic.** (poison) You can't reduce your sickened condition while affected by arsenic; Saving Throw DC 18 Fortitude; Onset 10 minutes; Maximum Duration 5 minutes; Stage 1 1d4 poison damage and sickened 1 (1 minute); Stage 2 1d6 poison damage and sickened 2 (1 minute); Stage 3 2d6 poison damage and sickened 3 (1 minute) If you drank a glass of wine laced with arsenic, you would attempt an initial Fortitude save against the listed
-    DC of 18. If you fail, you advance to stage 1. Because of the onset time, nothing happens for 10 minutes, but once this time passes, you take 1d4 poison damage and become sickened 1. As noted, you're unable to reduce the sickened condition. The interval of stage 1 is 1 minute (as shown in parentheses), so you attempt a new save after 1 minute passes. If you succeed, you reduce the stage by 1, recovering from the poison. If you fail again, the stage increases by 1 to stage 2, and you take 1d6 poison damage and become sickened 2.
+    Arsenic (poison) You can't reduce your sickened condition while affected by arsenic; Saving Throw DC 18 Fortitude; Onset 10 minutes; Maximum Duration 5 minutes; Stage 1 1d4 poison damage and sickened 1 (1 minute); Stage 2 1d6 poison damage and sickened 2 (1 minute); Stage 3 2d6 poison damage and sickened 3 (1 minute)
+    If you drank a glass of wine laced with arsenic, you would attempt an initial Fortitude save against the listed DC of 18. If you fail, you advance to stage 1. Because of the onset time, nothing happens for 10 minutes, but once this time passes, you take 1d4 poison damage and become sickened 1. As noted, you're unable to reduce the sickened condition. The interval of stage 1 is 1 minute (as shown in parentheses), so you attempt a new save after 1 minute passes. If you succeed, you reduce the stage by 1, recovering from the poison. If you fail again, the stage increases by 1 to stage 2, and you take 1d6 poison damage and become sickened 2.
     If your initial save against the arsenic was a critical failure, after the onset time, you would advance directly to stage 2. After the 10-minute onset time, you would take 1d6 poison damage and become sickened 2. Succeeding at your second save would reduce the stage by 1 to stage 1, and you'd take only 1d4 poison damage. Failing the second save would increase by 1 again to stage 3.
     If you reach stage 3 of the poison, either by failing while at stage 2 or critically failing while at stage 1, you'd take 2d6 poison damage and be sickened 3. If you failed or critically failed your saving throw while at stage 3, you would repeat the effects of stage 3.
     Since the poison has a maximum duration of 5 minutes, you recover from it once the 5 minutes pass, no matter which stage you're at.
