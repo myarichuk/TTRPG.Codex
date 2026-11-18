@@ -65,9 +65,9 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
         var schema = catalog.GetUISchemas(systemId).FirstOrDefault(s => s.EntityType == DataDrivenSystemPlugin.ActorSchemaType);
         foreach (var field in schema?.Fields ?? new List<FieldDefinition>())
         {
-            if (field.DefaultValue != null)
+            if (YamlValues.SeedOf(field) is { } seed)
             {
-                actor.Sheet[field.Key] = field.DefaultValue is int i ? (long)i : field.DefaultValue;
+                actor.Sheet[field.Key] = seed;
             }
         }
     }

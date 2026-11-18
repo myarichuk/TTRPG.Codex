@@ -298,7 +298,7 @@
         tagline = Ctx.Campaign.Tagline;
         systemId = Ctx.Campaign.SystemId;
         rulesEnforcement = string.IsNullOrWhiteSpace(Ctx.Campaign.RulesEnforcement) ? "inherit" : Ctx.Campaign.RulesEnforcement;
-        activePacks = Ctx.Campaign.ActivePacks.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        activePacks = PackSelection.Selected(Ctx.Campaign.Choice(), Registry.GetPacks(Ctx.Campaign.SystemId));
 
         usernames = await MemberNames.LoadAsync(UserRepo, Ctx.Campaign);
     }
@@ -313,16 +313,10 @@
         _ => L["Campaign.Settings.Role.Observer"]
     };
 
-    private bool IsActive(string packId) => activePacks.Count == 0 || activePacks.Contains(packId);
+    private bool IsActive(string packId) => activePacks.Contains(packId);
 
     private void TogglePack(string packId, bool on)
     {
-        if (activePacks.Count == 0)
-        {
-            // Going from "everything" to an explicit list: start from all packs, then apply the change.
-            activePacks = Registry.GetPacks(Ctx.Campaign.SystemId).Where(p => !p.IsTranslation).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        }
-
         if (on) activePacks.Add(packId); else activePacks.Remove(packId);
     }
 
@@ -388,9 +382,9 @@
 
     private Task SavePacksNowAsync()
     {
-        var all = Registry.GetPacks(Ctx.Campaign.SystemId).Where(p => !p.IsTranslation).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var packs = activePacks.SetEquals(all) ? new List<string>() : activePacks.ToList();
-        return ChangeAsync(campaign => campaign.ActivePacks = packs.ToList(), L["Campaign.Settings.PacksSaved"]);
+        // Stored as the difference from the defaults, and the older full list is cleared (PackSelection.FromSelection).
+        var choice = PackSelection.FromSelection(activePacks, Registry.GetPacks(Ctx.Campaign.SystemId));
+        return ChangeAsync(campaign => { campaign.ActivePacks = new(); campaign.PacksOn = choice.On.ToList(); campaign.PacksOff = choice.Off.ToList(); }, L["Campaign.Settings.PacksSaved"]);
     }
 
     private int roleResets;

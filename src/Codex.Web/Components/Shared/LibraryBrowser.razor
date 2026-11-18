@@ -46,8 +46,16 @@
         {
             <div class="empty">
                 <div class="empty-icon"><LucideIcon IconName="book-open" Size="28" /></div>
-                <h3>@L["Library.Browser.NothingMatches"]</h3>
-                <p>@(string.IsNullOrWhiteSpace(query) ? L["Library.Browser.EmptyType"] : L["Library.Browser.TryDifferent"])</p>
+                @if (string.IsNullOrWhiteSpace(query) && selectedType != null && Campaign != null)
+                {
+                    @* An empty type with no search: the empty state is the whole message, with no "nothing matches" title over it. *@
+                    <EmptyEntries SystemId="@EffectiveSystemId" EntryType="@selectedType" Campaign="Campaign" BasePath="@($"/campaigns/{Campaign.Id}")" CanManage="@(Access?.IsDm ?? false)" OnAddOwn="OnNewHomebrew" />
+                }
+                else
+                {
+                    <h3>@L["Library.Browser.NothingMatches"]</h3>
+                    <p>@(string.IsNullOrWhiteSpace(query) ? L["Library.Browser.EmptyType"] : L["Library.Browser.TryDifferent"])</p>
+                }
             </div>
         }
         else
@@ -141,6 +149,10 @@
     /// <summary>Shown under the selected entry's detail (the session notes that mention it).</summary>
     [Parameter] public RenderFragment<LibraryItem>? DetailFooter { get; set; }
     [Parameter] public bool ShowResultCount { get; set; } = true;
+
+    /// <summary>Opens the new-homebrew editor, for the empty state's "Add your own" (the host page has the editor; the browser does not).
+    /// Not set: the empty state links to the editor's route instead.</summary>
+    [Parameter] public EventCallback OnNewHomebrew { get; set; }
 
     /// <summary>Incremented by the host to force a reload (e.g. after homebrew changed).</summary>
     [Parameter] public int Version { get; set; }

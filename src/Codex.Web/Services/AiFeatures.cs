@@ -114,7 +114,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
 
         var subclasses = classEntry == null || subclassType == null
             ? new List<string>()
-            : registry.GetEntries(campaign.SystemId, subclassType)
+            : registry.GetEntries(campaign.SystemId, subclassType, registry.Active(campaign))
                 .Where(s => string.Equals(YamlValues.GetString(s.Properties, subclassOf), classId, StringComparison.OrdinalIgnoreCase))
                 .Select(s => $"{s.Name}: {TextFormatting.Summary(YamlValues.GetString(s.Properties, "summary") ?? s.Description, 120)}")
                 .ToList();
@@ -644,7 +644,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         var schema = catalog.GetUISchemas(campaign.SystemId).FirstOrDefault(s => s.EntityType == DataDrivenSystemPlugin.ActorSchemaType);
         foreach (var field in schema?.Fields ?? new List<FieldDefinition>())
         {
-            if (field.DefaultValue != null) sheet[field.Key] = field.DefaultValue is int i ? (long)i : field.DefaultValue;
+            if (YamlValues.SeedOf(field) is { } seed) sheet[field.Key] = seed;
         }
 
         engine.InitializeSheet(sheet);

@@ -206,7 +206,7 @@ public sealed class CharacterAssist(CampaignLibrary library, ISystemCatalog cata
             return $"\"{key}\" is not an entry; give type/id as search_library lists it (\"spell/fireball\").";
         }
 
-        if (await library.GetAsync(s.Campaign, s.Access, type, id) is not { } item) return $"There is no Library entry {type}/{id} you can use. Use search_library.";
+        if (await library.GetOfferedAsync(s.Campaign, s.Access, type, id) is not { } item) return $"There is no Library entry {type}/{id} you can use. Use search_library.";
         var sb = new StringBuilder($"# {item.Entry.Name} ({item.Entry.Type}/{item.Entry.Id})\n");
         foreach (var (name, value) in item.Entry.Properties.Take(40))
         {
@@ -408,7 +408,9 @@ public sealed class CharacterAssist(CampaignLibrary library, ISystemCatalog cata
         foreach (var type in types)
         {
             if (!library.CanRead(s.Campaign, s.Access, type)) continue;
-            if (s.Resolver.Resolve(type, id) is { } byId) return byId;
+            // A pick the model proposes must come from a pack that is on: the resolver reads every pack (so a held entry still resolves),
+            // and search is already narrowed to the active ones.
+            if (s.Resolver.Resolve(type, id) is { } byId && library.IsOffered(s.Campaign, byId)) return byId;
             var named = (await library.SearchAsync(s.Campaign, s.Access, value, type, limit: 10))
                 .FirstOrDefault(i => i.Entry.Name.Equals(value, StringComparison.OrdinalIgnoreCase));
             if (named != null && s.Resolver.Resolve(type, named.Entry.Id) is { } byName) return byName;

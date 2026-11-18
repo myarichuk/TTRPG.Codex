@@ -171,7 +171,7 @@ else
 
             @if (Access.IsDm)
             {
-                <QuickAddPanel SystemId="@Campaign.SystemId" OnAdd="QuickAddMonsterAsync" OnAddHazard="QuickAddHazardAsync" HazardType="HazardType" PlaceHazards="placeHazards" PlaceName="@placeHazardsName" />
+                <QuickAddPanel SystemId="@Campaign.SystemId" Campaign="Campaign" CreatureType="@(Definition?.EntityTypes.FirstOrDefault(t => t.ActorBlueprint)?.Type ?? "monster")" OnAdd="QuickAddMonsterAsync" OnAddHazard="QuickAddHazardAsync" HazardType="HazardType" PlaceHazards="placeHazards" PlaceName="@placeHazardsName" />
 
                 <HazardsTable Campaign="Campaign" Access="Access" CurrentUserId="@CurrentUserId" Runtime="runtime" Snapshot="snapshot" Actors="Actors" Definition="Definition" />
 

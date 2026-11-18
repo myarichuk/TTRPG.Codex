@@ -30,11 +30,13 @@ public sealed class CachedEntryResolver : IEntryResolver
 
         foreach (var type in types)
         {
-            var items = await library.OptionsAsync(campaign, access, type);
+            // Every pack's entries resolve, so a sheet that holds an ancestry or an item from a pack the campaign has since switched
+            // off still reads and computes; only the candidates (what a picker offers) are narrowed to the active packs.
+            var items = await library.OptionsAsync(campaign, access, type, onlyActivePacks: false);
             var list = new List<ContentEntry>();
             foreach (var item in items)
             {
-                list.Add(item.Entry);
+                if (library.IsOffered(campaign, item)) list.Add(item.Entry);
                 resolver._byId[(type.ToLowerInvariant(), item.Entry.Id)] = item.Entry;
             }
 

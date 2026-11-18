@@ -258,7 +258,7 @@
     private RenderFragment ConditionLabel(string condition, string label) => __builder =>
     {
         var entry = ContentRegistry.GetEntry(Campaign.SystemId, "condition", condition.ToLowerInvariant()) ?? ContentRegistry.GetEntry(Campaign.SystemId, "condition", condition);
-        if (entry != null && (Library.ActivePacks(Campaign) is not { } packs || packs.Contains(entry.PackId)))
+        if (entry != null)
         {
             <a class="table-name" href="@MentionLinks.Href(Campaign.Id, MentionKind.Item, MentionSources.ItemKey(entry.Type, entry.Id))" data-preview>@label</a>
         }

@@ -451,10 +451,22 @@ systemId: srd5e               # the system this pack belongs to
 kind: rules                   # rules | world | homebrew (informational)
 priority: 0                   # higher wins when two packs define the same entry id
 dependencies: [other-pack]    # loaded first, so `inherits` can resolve
+activeByDefault: true         # optional; false = off until a campaign switches it on in Settings
 description: ...
 authors: [ ... ]
 license: { ...as above... }
 ```
+
+**Which packs a campaign uses.** A pack is on for a campaign unless its manifest says `activeByDefault: false` (the four-degrees
+`homebrew-core`), which stays installed and shows in Settings with its toggle off. A campaign stores its choice relative to the
+defaults: `PacksOn` (packs that are off by default and were switched on) and `PacksOff` (packs that are on by default and were
+switched off). A campaign that never chose has both empty, so a pack added later is on for it, and for a campaign that turned an
+optional pack on. An older campaign's full list (`ActivePacks`) keeps its exact meaning until the next save from Settings, which writes
+the two lists and clears it. The vault (no GM, no Settings) uses every pack. The rule lives in `PackSelection`
+(`Codex.Plugin.Abstractions`) and every reader goes through it. Only pickers, search, the Library list, the combat quick-add and the
+AI tools' new picks are narrowed: a reference a campaign already holds (a character's ancestry, a creature in an encounter, a
+placed hazard) still opens when its pack is off. A picker, step or list with no entries shows an empty state: it points to Settings
+only when a pack that is off has entries of that type, and to the new-homebrew editor to add your own.
 
 ## Entries
 

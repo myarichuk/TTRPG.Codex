@@ -1,0 +1,77 @@
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@inject ISystemCatalog Catalog
+@inject IContentRegistry Registry
+
+@* The one message for a picker, step or list that has no entries of a content type: what is missing, in the type's own label from the
+   system, and the way out. "Turn on a pack in Settings" is offered only when a pack that is off has entries of the type; otherwise the
+   sentence says the system's packs have none yet. "Add your own" opens the new-homebrew editor for the type (a button when the host is
+   the Library, which has the editor on the same page). A GM gets the links; a player is told whom to ask. With no BasePath (the vault,
+   or the global Library: no campaign, no GM, no Settings) only the sentence shows. *@
+
+<p class="field-hint mb-1 empty-entries" role="status" data-testid="@("empty-entries-" + EntryType)">
+    @Sentence
+    @if (!string.IsNullOrEmpty(BasePath))
+    {
+        @if (CanManage)
+        {
+            <span class="d-block mt-1">
+                @if (OffPackHasEntries)
+                {
+                    <a href="@($"{BasePath}/settings#packs-heading")" class="text-nowrap" data-testid="empty-entries-settings">@L["Library.Empty.Settings"]</a>
+                    <span aria-hidden="true">·</span>
+                }
+                @if (OnAddOwn.HasDelegate)
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => OnAddOwn.InvokeAsync()" data-testid="empty-entries-add">@L["Library.Empty.AddOwn"]</CodexButton>
+                }
+                else
+                {
+                    <a href="@($"{BasePath}/library/{Uri.EscapeDataString(EntryType)}?new=1")" class="text-nowrap" data-testid="empty-entries-add">@L["Library.Empty.AddOwn"]</a>
+                }
+            </span>
+        }
+        else if (OffPackHasEntries)
+        {
+            <span class="d-block mt-1" data-testid="empty-entries-ask">@L["Library.Empty.AskGm"]</span>
+        }
+    }
+</p>
+
+@code {
+    [Parameter, EditorRequired] public string SystemId { get; set; } = string.Empty;
+
+    /// <summary>The content type with nothing in it (<c>class</c>, <c>creature</c>); its plural label comes from the system.</summary>
+    [Parameter, EditorRequired] public string EntryType { get; set; } = string.Empty;
+
+    /// <summary>The campaign, to tell whether a pack that is off has entries of the type. Null: no pack is off.</summary>
+    [Parameter] public CampaignDocument? Campaign { get; set; }
+
+    /// <summary>The campaign's path (<c>/campaigns/abc</c>); null outside a campaign, where only the sentence shows.</summary>
+    [Parameter] public string? BasePath { get; set; }
+
+    /// <summary>Whether this reader is the GM, who can switch packs and write homebrew. A host that does not say gets the player's text.</summary>
+    [Parameter] public bool CanManage { get; set; }
+
+    /// <summary>Called by "Add your own" instead of linking, for a host that already is the page with the editor.</summary>
+    [Parameter] public EventCallback OnAddOwn { get; set; }
+
+    private string Label
+    {
+        get
+        {
+            var label = Catalog.GetLocalizedDefinition(SystemId)?.EntityTypes
+                .FirstOrDefault(t => string.Equals(t.Type, EntryType, StringComparison.OrdinalIgnoreCase))?.PluralOrLabel
+                ?? CampaignLibrary.Humanize(EntryType);
+            // English reads "No classes ...": lowercase it there. Other languages keep the label as the system words it.
+            return L.Culture.TwoLetterISOLanguageName == "en" ? label.ToLowerInvariant() : label;
+        }
+    }
+
+    private string Sentence => OffPackHasEntries ? L["Library.Empty.None", Label] : L["Library.Empty.NoneAtAll", Label];
+
+    /// <summary>A pack the campaign has switched off holds entries of this type, so turning it on would help.</summary>
+    private bool OffPackHasEntries =>
+        Campaign != null && Registry.Active(Campaign) is { } active
+        && Registry.GetEntries(SystemId, EntryType).Any(e => !active.Contains(e.PackId));
+}

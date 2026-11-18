@@ -62,8 +62,20 @@ public class CampaignDocument
     /// <summary>The tagline, or the start of the description when none is set: what a card shows. A method, so it is not stored.</summary>
     public string Pitch() => !string.IsNullOrWhiteSpace(Tagline) ? Tagline : Codex.Core.TextFormatting.Summary(Description, MaxTagline);
 
-    /// <summary>Content pack ids active for this campaign, in load-priority order.</summary>
+    /// <summary>The older way a campaign stored its packs: the full list of pack ids in play, where an empty list meant "the defaults".
+    /// A non-empty list keeps meaning exactly that until the next save from Settings, which writes <see cref="PacksOn"/> and
+    /// <see cref="PacksOff"/> instead and clears this. New code reads packs through <c>PackSelection</c>, never from here.</summary>
     public List<string> ActivePacks { get; set; } = new();
+
+    /// <summary>Packs that are off by default (<c>activeByDefault: false</c>) which this campaign switched on.</summary>
+    public List<string> PacksOn { get; set; } = new();
+
+    /// <summary>Packs that are on by default which this campaign switched off. A pack added later is on unless it is named here.</summary>
+    public List<string> PacksOff { get; set; } = new();
+
+    /// <summary>True only on the stand-in campaign a vault character is read against (<c>VaultService.CampaignFor</c>): a vault has no GM and
+    /// no Settings, so it uses every pack of the system. Never stored.</summary>
+    public bool AllPacks { get; set; }
 
     /// <summary>House rules: how strictly the system's sheet rules apply here. "inherit" (or null)
     /// uses the system's own setting; "strict", "warn" or "off" override it for this campaign.</summary>

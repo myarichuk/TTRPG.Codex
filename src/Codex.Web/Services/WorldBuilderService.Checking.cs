@@ -131,7 +131,8 @@ public sealed partial class WorldBuilderService
             var feature = draft.Feature!;
             var key = feature.HazardEntry!;
             var id = key.Split('/')[1];
-            var item = await library.GetAsync(campaign, access, hazardType, id, Lang);
+            // The model proposes a hazard for the place: it must come from a pack that is on (a hazard already placed is not checked here).
+            var item = await library.GetOfferedAsync(campaign, access, hazardType, id, Lang);
             if (item == null)
             {
                 warnings.Add($"{draft.Ref} (place '{draft.Name}'): hazard '{key}' is not in the Library, so it was ignored; use {hazardType}/<id> as search_library lists it, or propose a homebrew {hazardType} entry and give its ref.");
@@ -390,7 +391,7 @@ public sealed partial class WorldBuilderService
             var homebrewKey = key.StartsWith(WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix, StringComparison.OrdinalIgnoreCase);
             if (homebrewKey) key = key[(WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix).Length..];
             var item = key.Split('/') is [var type, var id]
-                ? homebrewKey ? await library.GetAsync(campaign, access, type, id, isHomebrew: true) : await library.GetAsync(campaign, access, type, id)
+                ? homebrewKey ? await library.GetAsync(campaign, access, type, id, isHomebrew: true) : await library.GetOfferedAsync(campaign, access, type, id)
                 : null;
             if (item == null)
             {
@@ -489,7 +490,7 @@ public sealed partial class WorldBuilderService
         {
             var name = draft.SuggestedStats!.Trim();
             // "monster/veteran", as search_library lists it, is a type and an id.
-            if (name.Split('/') is [var typeKey, var id] && await library.GetAsync(campaign, access, typeKey, id) is { } byId)
+            if (name.Split('/') is [var typeKey, var id] && await library.GetOfferedAsync(campaign, access, typeKey, id) is { } byId)
             {
                 draft.Stats = await CreatureAsync(campaign, access, byId);
                 continue;

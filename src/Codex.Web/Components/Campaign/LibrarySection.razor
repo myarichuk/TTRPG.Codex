@@ -48,7 +48,7 @@
 }
 
 <LibraryBrowser Campaign="Ctx.Campaign" Access="Ctx.Access" BasePath="@($"{Ctx.BasePath}/library")"
-                RouteType="@RouteType" RouteId="@RouteId" Version="version">
+                RouteType="@RouteType" RouteId="@RouteId" Version="version" OnNewHomebrew="NewHomebrew">
     <DetailArt Context="item">
         <ArtSlot ImageUrl="@ArtService.Url(Ctx.Campaign, item)" CanEdit="Ctx.IsDm" Landscape="@(!IsCreatureType(item.Entry.Type))"
                  Label="@(IsCreatureType(item.Entry.Type) ? L["Campaign.Library.Portrait"] : L["Campaign.Library.Art"])" Alt="@L["Campaign.Library.ArtFor", item.Entry.Name]" Class="entry-art" TestId="entry-art"

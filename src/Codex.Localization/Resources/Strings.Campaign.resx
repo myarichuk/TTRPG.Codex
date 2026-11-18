@@ -281,7 +281,7 @@
   <data name="Campaign.Settings.Remove" xml:space="preserve"><value>Remove</value></data>
   <data name="Campaign.Settings.Packs.Title" xml:space="preserve"><value>Content packs</value></data>
   <data name="Campaign.Settings.Packs.None" xml:space="preserve"><value>No packs are loaded for this system.</value></data>
-  <data name="Campaign.Settings.Packs.Hint" xml:space="preserve"><value>Untick a pack to keep it out of this campaign's Library. With nothing ticked, every pack is in play.</value></data>
+  <data name="Campaign.Settings.Packs.Hint" xml:space="preserve"><value>Tick the packs this campaign uses. Some packs start unticked and stay off until you tick them; packs added later are on unless you untick them. Untick a pack to keep it out of this campaign's Library.</value></data>
   <data name="Campaign.Settings.Packs.Save" xml:space="preserve"><value>Save pack selection</value></data>
   <data name="Campaign.Settings.Members" xml:space="preserve"><value>Members</value></data>
   <data name="Campaign.Settings.Owner" xml:space="preserve"><value>(owner)</value></data>

@@ -71,7 +71,15 @@
     }
     else if (onPlace.Count == 0)
     {
-        <p class="small-muted mb-0">@L["Combat.QuickAddHint"]</p>
+        @if (!AnyCreature())
+        {
+            @* No creature in any pack that is on: say so and where to get some, rather than a search box that finds nothing. *@
+            <EmptyEntries SystemId="@SystemId" EntryType="@CreatureType" Campaign="Campaign" BasePath="@(Campaign == null ? null : $"/campaigns/{Campaign.Id}")" CanManage="true" />
+        }
+        else
+        {
+            <p class="small-muted mb-0">@L["Combat.QuickAddHint"]</p>
+        }
     }
 </section>
 
@@ -99,16 +107,27 @@
 
     private static bool IsHazard(IActorDefinition a) => a.Tags.Contains("hazard", StringComparer.OrdinalIgnoreCase);
 
-    // Creatures as before: every registry actor that is not a hazard.
+    /// <summary>The campaign, whose packs narrow what is offered: a creature or hazard from a pack that is off is not.
+    /// The place's own hazards (<see cref="PlaceHazards"/>) are held by the place and stay.</summary>
+    [Parameter] public CampaignDocument? Campaign { get; set; }
+
+    /// <summary>The system's creature type, for the empty state's label.</summary>
+    [Parameter] public string CreatureType { get; set; } = "monster";
+
+    private bool Offered(IActorDefinition a) => Campaign == null || ContentRegistry.Active(Campaign) is not { } active || active.Contains(a.PackId);
+
+    private bool AnyCreature() => ContentRegistry.GetActorsBySystem(SystemId).Any(a => !IsHazard(a) && Offered(a));
+
+    // Creatures as before: every registry actor that is not a hazard, from a pack that is on.
     private IEnumerable<IActorDefinition> Creatures() =>
-        ContentRegistry.GetActorsBySystem(SystemId).Where(a => !IsHazard(a) && Matches(a));
+        ContentRegistry.GetActorsBySystem(SystemId).Where(a => !IsHazard(a) && Offered(a) && Matches(a));
 
     // The Library's complex hazards that match, but not those already offered from the place.
     private IReadOnlyList<HazardOffer> Hazards()
     {
         if (OnAddHazard == null || HazardType == null || search.Length == 0) return Array.Empty<HazardOffer>();
         var offered = PlaceHazards.Select(o => o.Definition.Id).ToHashSet(StringComparer.Ordinal);
-        return ContentRegistry.GetActorsBySystem(SystemId).Where(a => IsHazard(a) && Matches(a) && !offered.Contains(a.Id))
+        return ContentRegistry.GetActorsBySystem(SystemId).Where(a => IsHazard(a) && Offered(a) && Matches(a) && !offered.Contains(a.Id))
             .Select(a => HazardOffers.FromLibrary(a, HazardType)).ToList();
     }
 

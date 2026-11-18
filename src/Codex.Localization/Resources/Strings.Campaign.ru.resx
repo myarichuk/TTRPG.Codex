@@ -281,7 +281,7 @@
   <data name="Campaign.Settings.Remove" xml:space="preserve"><value>Убрать</value></data>
   <data name="Campaign.Settings.Packs.Title" xml:space="preserve"><value>Наборы материалов</value></data>
   <data name="Campaign.Settings.Packs.None" xml:space="preserve"><value>Для этой системы не загружено ни одного набора.</value></data>
-  <data name="Campaign.Settings.Packs.Hint" xml:space="preserve"><value>Снимите отметку с набора, чтобы исключить его из Библиотеки этой кампании. Если ничего не отмечено, используются все наборы.</value></data>
+  <data name="Campaign.Settings.Packs.Hint" xml:space="preserve"><value>Отметьте наборы, которые использует эта кампания. Некоторые наборы сначала без отметки и остаются выключенными, пока вы их не отметите; наборы, добавленные позже, включены, пока вы не снимете отметку. Снимите отметку с набора, чтобы исключить его из Библиотеки этой кампании.</value></data>
   <data name="Campaign.Settings.Packs.Save" xml:space="preserve"><value>Сохранить выбор наборов</value></data>
   <data name="Campaign.Settings.Members" xml:space="preserve"><value>Участники</value></data>
   <data name="Campaign.Settings.Owner" xml:space="preserve"><value>(владелец)</value></data>

@@ -281,7 +281,7 @@
   <data name="Campaign.Settings.Remove" xml:space="preserve"><value>הסרה</value></data>
   <data name="Campaign.Settings.Packs.Title" xml:space="preserve"><value>חבילות תוכן</value></data>
   <data name="Campaign.Settings.Packs.None" xml:space="preserve"><value>לא נטענו חבילות עבור המערכת הזו.</value></data>
-  <data name="Campaign.Settings.Packs.Hint" xml:space="preserve"><value>בטלו סימון של חבילה כדי להוציא אותה מהספרייה של הקמפיין. אם דבר אינו מסומן, כל החבילות פעילות.</value></data>
+  <data name="Campaign.Settings.Packs.Hint" xml:space="preserve"><value>סמנו את החבילות שהקמפיין משתמש בהן. חלק מהחבילות מתחילות בלי סימון ונשארות כבויות עד שתסמנו אותן; חבילות שיתווספו בהמשך פעילות עד שתבטלו את הסימון שלהן. בטלו סימון של חבילה כדי להוציא אותה מהספרייה של הקמפיין.</value></data>
   <data name="Campaign.Settings.Packs.Save" xml:space="preserve"><value>שמירת בחירת החבילות</value></data>
   <data name="Campaign.Settings.Members" xml:space="preserve"><value>חברים</value></data>
   <data name="Campaign.Settings.Owner" xml:space="preserve"><value>(בעלים)</value></data>
