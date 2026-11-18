@@ -54,10 +54,22 @@ public sealed record EntryRequirements(IReadOnlyDictionary<string, object> Prope
             }
             else if (condition.ContainsPropertyOfField is { } containsProperty)
             {
-                var field = system.ActorFields.FirstOrDefault(f => f.Key == containsProperty.Field);
-                var id = sheet.TryGetValue(containsProperty.Field, out var named) ? named?.ToString() : null;
-                var entry = field?.TargetEntityType == null || string.IsNullOrEmpty(id) ? null : entries.Resolve(field.TargetEntityType, id);
-                if (entry == null || !entry.Properties.TryGetValue(containsProperty.Property, out var wanted) || wanted == null) return null;
+                object? wanted = null;
+                // The value comes from the entry the field names, or when that entry has none, from the entry of the fallback field.
+                foreach (var source in new[] { containsProperty, containsProperty.Or })
+                {
+                    if (source == null) continue;
+                    var field = system.ActorFields.FirstOrDefault(f => f.Key == source.Field);
+                    var id = sheet.TryGetValue(source.Field, out var named) ? named?.ToString() : null;
+                    var entry = field?.TargetEntityType == null || string.IsNullOrEmpty(id) ? null : entries.Resolve(field.TargetEntityType, id);
+                    if (entry != null && entry.Properties.TryGetValue(source.Property, out var value) && value != null && value.ToString()?.Length > 0)
+                    {
+                        wanted = value;
+                        break;
+                    }
+                }
+
+                if (wanted == null) return null;
                 properties[condition.Property] = new List<object> { wanted };
             }
             else if (condition.Contains != null)

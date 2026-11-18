@@ -58,6 +58,9 @@ public sealed record PipelineOutput(List<TakenRange> Ranges, List<ParsedEntry> P
 {
     /// <summary>The grants of the classes that name a feat or a spell: how many became an id, and which names (kind and slug) the pack has no entry for, so they stay text.</summary>
     public (int Resolved, List<string> Left) GrantsByName { get; init; } = (0, new List<string>());
+
+    /// <summary>The curriculum lines of the subclasses (a wizard's schools): how many subclasses have one and how many spell names they list, every one a spell of the pack (see <see cref="ImportPipeline.CheckCurriculum"/>).</summary>
+    public (int Subclasses, int Names) Curriculum { get; init; } = (0, 0);
 }
 
 /// <summary>The part of the run that needs no PDF: blocks in, entries and report rows out. The tests drive it with synthetic books.</summary>
@@ -222,7 +225,8 @@ public static partial class ImportPipeline
             Extracted = e.Extracted.Select(x => new LabelledText(x.Label, kept[e.Id].Fields[x.Label])).ToList(),
             Tags = e.Tags.ToList(),
             Raw = e.Raw.ToList(),
-            Features = e.Features.Select(f => new FinalFeature(f.Name, f.Level, kept[e.Id].Fields[ParsedEntry.FeatureField(f)], f.Adds.ToList())).ToList(),
+            // A subclass's own feature row is named like the subclass (a choice with one row): when a row has renamed the entry, the row takes the new name.
+            Features = e.Features.Select(f => new FinalFeature(e.Type == "subclass" && f.Name == e.Name ? kept[e.Id].Fields["name"] : f.Name, f.Level, kept[e.Id].Fields[ParsedEntry.FeatureField(f)], f.Adds.ToList())).ToList(),
         }).ToList();
 
         // The traits a versatile heritage gives (a heritage that names no ancestry): the words of its "You gain the X trait" sentence, read from the description after redaction, so a renamed heritage says its new key.
@@ -259,7 +263,8 @@ public static partial class ImportPipeline
 
         // A class's grants by name become grants by id, now that every id is final.
         var named = ResolveGrantNames(final);
-        return new PipelineOutput(ranges, parsed, final, report, ReportRows(blocks, spine, rows, redactions, book, parsed, final, ranges)) { GrantsByName = named };
+        var curriculum = CheckCurriculum(final);
+        return new PipelineOutput(ranges, parsed, final, report, ReportRows(blocks, spine, rows, redactions, book, parsed, final, ranges)) { GrantsByName = named, Curriculum = curriculum };
     }
 
     /// <summary>
@@ -961,6 +966,24 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
                 return PackWordCheck.CapitalPairs(s.Text).Where(p => !kept.Contains(p));
             })
             .Distinct().ToList();
+    }
+
+    /// <summary>
+    /// The names of more than one word that a redaction row removes, as the lists of their words (see <see cref="Denylist.EmbeddedPhrases"/>): the old name of an entry a replace row renames, the name of an entry a
+    /// drop-entry row removes, and the book's heading of a class feature the take-list says in other words. A name the row's replacement says again is not removed.
+    /// </summary>
+    public static List<List<string>> RedactedPhrases(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, RedactionTable redactions, string book, IReadOnlyList<SpineNode>? spine = null, IReadOnlyDictionary<string, string>? shippedIds = null)
+    {
+        var parsed = EntriesStage.Run(blocks, ranges, book, shippedIds, spine);
+        var entries = parsed.Select(e => new RedactionEntry(e.Id, e.RedactionFields())).ToList();
+        var scoped = new RedactionTable { Normalization = redactions.Normalization, Rows = redactions.Rows.Where(r => r.Book == null || r.Book == book).ToList() };
+        var spans = RedactionStage.SourceSpans(entries, scoped);
+        var phrases = spans.Where(s => s.Row.Action == RedactionRow.DropEntry).Select(s => PackWordCheck.Words(parsed.First(e => e.Id == s.Id).Name).ToList())
+            .Concat(spans.Where(s => s.Row.Action == RedactionRow.Replace && s.Row.Field == "name" && !(s.Row.Text != null && SpanText.Normalize(s.Row.Text).Equals(SpanText.Normalize(s.Text), StringComparison.OrdinalIgnoreCase)))
+                .Select(s => PackWordCheck.Words(s.Text).ToList()))
+            .Concat(parsed.SelectMany(e => e.Features).Where(f => f.BookName != null).Select(f => PackWordCheck.Words(f.BookName!).ToList()))
+            .Where(words => words.Count > 1).ToList();
+        return phrases.GroupBy(p => string.Join(' ', p.Select(w => w.ToLowerInvariant()))).Select(g => g.First()).ToList();
     }
 
     private static HashSet<string>? _packWords;

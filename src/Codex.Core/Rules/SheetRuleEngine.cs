@@ -1187,8 +1187,13 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
         if (condition.ContainsPropertyOfField is { } containsProperty)
         {
-            var referenced = ReferencedEntry(containsProperty.Field, sheet);
-            var wanted = referenced?.Properties.GetValueOrDefault(containsProperty.Property)?.ToString();
+            // The value comes from the entry the field names; when that entry has none, from the entry of the fallback field (a witch's tradition is her patron's, not her class's).
+            var wanted = ReferencedEntry(containsProperty.Field, sheet)?.Properties.GetValueOrDefault(containsProperty.Property)?.ToString();
+            if (string.IsNullOrEmpty(wanted) && containsProperty.Or is { } fallback)
+            {
+                wanted = ReferencedEntry(fallback.Field, sheet)?.Properties.GetValueOrDefault(fallback.Property)?.ToString();
+            }
+
             return !string.IsNullOrEmpty(wanted) && NamesIn(value).Any(n => n.Equals(wanted, StringComparison.OrdinalIgnoreCase));
         }
 

@@ -789,6 +789,75 @@ rows:
       Will: wis
     paths:
       - ["Chapter 3: Classes", Druid]
+  # The ranger, the witch and the wizard (8c). The ranger's choice (a hunter's edge) is a paragraph of its feature, so it has no subclass; the witch's patrons and the wizard's schools are sections of their own among the features.
+  - chapter: classes
+    book: pc
+    parser: classes
+    target: class
+    folder: classes
+    approved: true
+    grantsByName: true
+    # A sample character's sidebar fills the first column of page 161: its lines run to the same x as the second column's text, so the gutter is pinned, and the feat text that opens the second column is the page's own.
+    sidebarFillsColumn: [161]
+    gutterAt:
+      161: 314
+    saveAttributes:
+      Fortitude: con
+      Reflex: dex
+      Will: wis
+    paths:
+      - ["Chapter 3: Classes", Ranger]
+  - chapter: classes
+    book: pc
+    parser: classes
+    target: class
+    folder: classes
+    approved: true
+    grantsByName: true
+    subclassFeature: Patron
+    subclassSection: Patrons
+    traditionFromSubclass: true
+    ruleSections: [Witch Lessons]
+    ruleSectionCategory: Classes
+    countsDiffer: The advancement table names the hex spells feature as hexes, the familiar (a part of the spellcasting feature) at the 1st level, and the extra familiar ability at three later levels; advancementNames maps each to the feature it belongs to. Every other row agrees.
+    advancementNames:
+      hexes: Hex Spells
+      familiar: Witch Spellcasting
+      familiar ability: Witch Spellcasting
+    # Two pages where a sample character's sidebar fills the first column (as the ranger's page 161).
+    sidebarFillsColumn: [189, 191]
+    gutterAt:
+      189: 314
+      191: 314
+    saveAttributes:
+      Fortitude: con
+      Reflex: dex
+      Will: wis
+    paths:
+      - ["Chapter 3: Classes", Witch]
+  - chapter: classes
+    book: pc
+    parser: classes
+    target: class
+    folder: classes
+    approved: true
+    grantsByName: true
+    subclassFeature: Arcane School
+    subclassSection: Arcane Schools
+    choiceFeatures: [Arcane Thesis]
+    countsDiffer: The advancement table names the 11th-level weapon feature with the class's name before it; advancementNames maps it to the feature's heading. Every other row agrees.
+    advancementNames:
+      wizard weapon expertise: Weapon Expertise
+    sidebarFillsColumn: [201, 203]
+    gutterAt:
+      201: 314
+      203: 314
+    saveAttributes:
+      Fortitude: con
+      Reflex: dex
+      Will: wis
+    paths:
+      - ["Chapter 3: Classes", Wizard]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
@@ -797,9 +866,6 @@ planned:
       - ["Chapter 1: Introduction", Basics of Play]
       - ["Chapter 1: Introduction", Playing the Game]
       - ["Chapter 1: Introduction", Character Creation]
-      - ["Chapter 3: Classes", Ranger]
-      - ["Chapter 3: Classes", Witch]
-      - ["Chapter 3: Classes", Wizard]
       - ["Chapter 3: Classes", Companions]
       - ["Chapter 3: Classes", Familiars]
       - ["Chapter 3: Classes", Archetypes]

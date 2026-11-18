@@ -579,3 +579,74 @@ weapon feat
 retired-pair 51cb8e3d8a8adfe0bf0a68287c418bcd7aa7fcbfab6c7dde595ff31c48fb552e a label word glued to the first word of the next sentence, in a feat's text now taken
 retired-pair 919203769d9deaba7b396fcdc58d6a3e4b730fa85b981d2a71570825d3ed4396 a label word glued to the first word of the next sentence, in a feat's text now taken
 retired-pair 1e2c96e1705a82441a961f310e991ed265812be76a469fcdbafc40740f1a0a3d a level band heading read as its ordinal suffix and the word that follows, on pages now taken
+# Chapter 8c review (the ranger, the witch and the wizard): a left-out section (the sample characters' sidebars, the printed lists of the classes' feats, the book's index) capitalizes these words too, so each would stay on the denylist without a line.
+# Each is an ordinary word of one feat's name (or a hunter's edge, a class feature's name or the name of a game effect); none names a person, place, faith or people, and the book writes none of them in a multi-word name of a place or a person (the contexts were read).
+# (Four more words, bespell, ceremonial, transfiguration and wizardly, were first waived and are not: no left-out text capitalizes them any more, so a line would lift nothing.)
+cauldron
+counterspell
+murksight
+outwit
+stealthy
+# The verb the book's credits capitalize at a sentence start; an ordinary word of the pack's text.
+produced
+# Chapter 8c pairs: the three classes' pages were left-out text for the pairs (the sample characters' sidebars, the printed lists of feats, the old sidebar split), and the take-list now takes them, so `denylist --fresh` no longer makes these.
+# A named waiver explains a pair that has gone and keeps it off the list if left-out text makes it again. Each is a word pair of a feat's name or of its header or trait line (a name and the word FEAT, the traits of a trait line), a class feature's or a game term's name,
+# or a label word that the book's layout puts before the next sentence's first word; none names a person, place, faith or people.
+advanced bulk
+arcane manipulate
+arcane wizard
+bonded item
+broom feat
+bulk the
+charge feat
+concentrate teleportation
+detection witch
+drain bonded
+familiar feat
+fight feat
+flourish ranger
+focus feat
+incredible familiar
+knife feat
+lesson feat
+linked focus
+manipulate wizard
+presence feat
+prerequisites enhanced
+protection array
+reflect spell
+rites of
+shot feat
+snap shot
+special this
+spell feat
+spell protection
+spellcasting feat
+survival experienced
+survival your
+swift tracker
+teleportation wizard
+tracker feat
+# Pairs of the three classes' text as it is taken (a feat's or a feature's name, an action's name, the label word of a subclass's line and the word after it, a trained skill's label, a label glued to the next sentence's first word):
+advanced school
+arcane school
+basic lesson
+companion cry
+conceal spell
+convincing illusion
+dc your
+greater lesson
+hex focus
+hunter edge
+magic sense
+major lesson
+masterful companion
+point out
+requirements your
+school spell
+skill arcana
+spells your
+witch bottle
+# Two retired pairs: a level band heading read as its ordinal suffix and the word Level (the heading is split at its digit), and the title of another book glued to the next sentence's first word, in a pointer a row now cuts.
+retired-pair a0160252e55b4a35caba246accca0d84d7fdb5595e42d132585d80fe7046ebb0 a level band heading read as its ordinal suffix and the word that follows, on pages now taken
+retired-pair 245dac79c26b3b8129e38235b7927ad350065b5bd347caa48f44ff83ac23a4cb the title of another book glued to the first word of the next sentence, in a pointer that a row now cuts

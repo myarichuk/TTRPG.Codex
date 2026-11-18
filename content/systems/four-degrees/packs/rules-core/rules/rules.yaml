@@ -1463,3 +1463,23 @@
   description: "Some abilities require you to wield an item, typically a weapon. You're wielding an item any time you're holding it in the number of hands needed to use it effectively. When wielding an item, you're not just carrying it around—you're ready to use it. Other abilities might require you to be wearing the item, to be holding it, or simply to have it."
   properties:
     category: "Equipment"
+- id: "witch-lessons"
+  name: "Witch Lessons"
+  source: "pc > Chapter 3: Classes > Witch > Class Features"
+  description: |-
+    A witch's knowledge takes the form of lessons, which you can learn by selecting feats like Basic Lesson or Greater Lesson. Each lesson grants you a hex and teaches your familiar a new spell, adding it to the spells you can prepare using your witch spellcasting. You gain this spell even if it's not on your tradition's spell list.
+    Basic Lessons
+    Lesson of Dreams: Dreams can be a window to greater insights. You gain the veil of dreams hex, and your familiar learns sleep.
+    Lesson of Elements: Natural disasters and inclement weather hold more power than the mightiest creature. You gain the elemental betrayal hex. Your familiar learns your choice of breathe fire, gust of wind, hydraulic push, or pummeling rubble.
+    Lesson of Life: Life can be shared. You gain the life boost hex, and your familiar learns spirit link.
+    Lesson of Protection: An ounce of protection is worth a pound of cure. You gain the blood ward hex; your familiar learns mystic armor.
+    Lesson of Vengeance: Suffer not even the smallest slights. You gain the needle of vengeance hex, and your familiar learns phantom pain.
+    Greater Lessons
+    Lesson of Mischief: Nothing's wrong with some mischief, now and then. You gain the deceiver's cloak hex, and your familiar learns mad monkeys.
+    Lesson of Shadow: A shadow is far from empty—it contains something of the person who casts it. You gain the malicious shadow hex, and your familiar learns chilling darkness.
+    Lesson of Snow: Emulate snow, for it can snuff out life despite its gentleness. You gain the personal blizzard hex, and your familiar learns wall of wind.
+    Major Lessons
+    Lesson of Death: Death is final, yet not as inescapable as it may seem. You gain the curse of death hex, and your familiar learns raise dead.
+    Lesson of Renewal: Entropy comes for all, but it can be wound back through effort. You gain the restorative moment hex, and your familiar learns field of life.
+  properties:
+    category: "Classes"

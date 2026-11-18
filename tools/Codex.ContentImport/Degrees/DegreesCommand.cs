@@ -200,7 +200,7 @@ public static class DegreesCommand
             var classes = ImportPipeline.CheckClassCounts(spine, blocks, result.Ranges, result.Parsed);
             output.WriteLine($"classes: {classes.Count} read; per class (flavor headings, features, subclasses, level bands, feats, feats in the printed list): " +
                 string.Join("; ", classes.Select(c => $"{c.LoreHeadings}, {c.Features}, {c.Subclasses}, {c.Bands}, {c.Feats}, {c.Listed}")) + $"; feat headers = trait lines = level markers in each ({classes.Sum(c => c.FeatHeaders)} in all); the advancement table agrees with the feature rows; " +
-                $"{result.GrantsByName.Resolved} feats and spells named by the classes' grants are ids, {result.GrantsByName.Left.Count} stay text ({string.Join(", ", result.GrantsByName.Left)})");
+                $"{result.GrantsByName.Resolved} feats and spells named by the classes' grants are ids, {result.GrantsByName.Left.Count} stay text ({string.Join(", ", result.GrantsByName.Left)}); {result.Curriculum.Subclasses} curriculum lines list {result.Curriculum.Names} names, each a spell of the pack");
         }
 
         if (ImportPipeline.CheckBackgroundCounts(blocks, result.Ranges, result.Parsed) is { } backgrounds)
@@ -323,6 +323,8 @@ public static class DegreesCommand
         var namedPairs = liftedPairs.Concat(Waivers.Embedded().Where(w => w.Contains(' ')).Select(Denylist.Hash)).Distinct(StringComparer.Ordinal).ToList();
         var pairsFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-pairs.sha256");
         var commonFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-common.sha256");
+        var phrasesFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-phrases.sha256");
+        var phraseHashes = ImportPipeline.RedactedPhrases(blocks, ranges, RedactionTable.Embedded(), options.Book, spine, StableIds(options.Pack)).Select(Denylist.PhraseHash).Distinct(StringComparer.Ordinal).OrderBy(h => h, StringComparer.Ordinal).ToList();
         if (options.Fresh)
         {
             // A regeneration from scratch is reviewed before anything is written: it never drops a hash of a redacted word or of a dropped entry's name, never drops a pair a waiver, a title or a
@@ -336,6 +338,8 @@ public static class DegreesCommand
                     ImportPipeline.ExplainedPairs(blocks, ranges, planned, words), Waivers.EmbeddedRetired()),
                 ImportPipeline.ReviewFresh("common", ReadHashes(commonFile), Denylist.Format(ImportPipeline.CommonWords(blocks).Concat(ImportPipeline.OpenerWords(blocks, ranges)).Concat(Waivers.Embedded())).Split('\n', StringSplitOptions.RemoveEmptyEntries), Array.Empty<string>(),
                     new HashSet<string>(StringComparer.Ordinal), null),
+                // A removed name's phrase is never dropped: the list only grows with the rows.
+                ImportPipeline.ReviewFresh("phrases", ReadHashes(phrasesFile), phraseHashes, Array.Empty<string>(), ReadHashes(phrasesFile), null),
             };
             foreach (var r in reviews)
             {
@@ -364,6 +368,9 @@ public static class DegreesCommand
         var openers = ImportPipeline.OpenerWords(blocks, ranges);
         var commonBefore = MergeDenylist(commonPath, Denylist.Format(common.Concat(openers).Concat(Waivers.Embedded())), out var commonTotal, CommonHeader, fresh: options.Fresh);
         output.WriteLine($"common words: {common.Count} lowercase word(s) and {openers.Count} sentence-opener word(s) of this book hashed; the file now holds {commonTotal} hash(es){(options.Fresh ? string.Empty : $" ({commonTotal - commonBefore} new)")}");
+        // The phrases of the names that the redaction rows remove (more than one word): the whole name, so a name of ordinary words is caught as a name.
+        var phrasesBefore = MergeDenylist(phrasesFile, string.Concat(phraseHashes.Select(h => h + "\n")), out var phrasesTotal, PhrasesHeader, fresh: options.Fresh);
+        output.WriteLine($"phrases: {phraseHashes.Count} name(s) of more than one word removed by a row hashed; the file now holds {phrasesTotal} hash(es){(options.Fresh ? string.Empty : $" ({phrasesTotal - phrasesBefore} new)")}");
         return 0;
     }
 
@@ -378,6 +385,10 @@ public static class DegreesCommand
         var dir = packDir ?? PackEmitter.CommittedPackDir();
         return dir == null ? null : PackEmitter.ShippedIds(dir);
     }
+
+    private const string PhrasesHeader =
+        "# The hashed phrases of the local book importer: one lowercase hex SHA-256 of a whole name of more than one word that a redaction row removes, lowercased, with single spaces, no words.\n" +
+        "# The denylist test fails a pack that says a run of words that hashes to one of these. `degrees denylist --fresh` never drops one.\n";
 
     private const string PairsHeader =
         "# The hashed pairs of the local book importer: one lowercase hex SHA-256 of two lowercased words with a space between, no words.\n" +

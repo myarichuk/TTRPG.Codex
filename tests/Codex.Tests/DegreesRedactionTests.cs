@@ -573,6 +573,22 @@ public class DegreesRedactionTests : IDisposable
     }
 
     [Fact]
+    public void AnOldNameOfOrdinaryWords_IsCaughtAsAWholePhrase_AnywhereInTheText_AndNotAsItsPartsAlone()
+    {
+        // Invented words: a name of a small word between two common ones has no pair hash, and none of its words can be denied; its phrase is the guard.
+        var phrases = new Denylist(new[] { Denylist.PhraseHash(new[] { "Wind", "in", "Stone" }), Denylist.PhraseHash(new[] { "Grey", "Fox" }) });
+        var said = FixturePack("- id: one\n  name: Plain Stone\n  text: Where the old wind in stone sings, and a Grey Fox's tracks end.\n");
+        var findings = PackWordCheck.CheckDenylist(said, NoDenylist, null, null, phrases);
+
+        Assert.Equal(new[] { Denylist.PhraseHash(new[] { "wind", "in", "stone" }), Denylist.PhraseHash(new[] { "grey", "fox" }) }.Order(), findings.Select(f => f.Detail).Order());
+        Assert.All(findings, f => Assert.Equal("phrase on the denylist", f.Kind));
+        Assert.DoesNotContain("wind", string.Join(' ', findings.Select(f => f.ToString())), StringComparison.OrdinalIgnoreCase);
+        // The parts alone, a different order, and a gap between them are not the phrase.
+        Assert.Empty(PackWordCheck.CheckDenylist(FixturePack("- id: one\n  name: Plain Stone\n  text: The wind sings. Stone in wind. A grey, lone fox.\n"), NoDenylist, null, null, phrases));
+        Assert.Empty(PackWordCheck.CheckDenylist(said, NoDenylist));
+    }
+
+    [Fact]
     public void ADenylistedWordThatFailsTheAllowlistIsPrintedAsItsHash()
     {
         var pack = FixturePack(CleanEntries.Replace("A stone. Heavy.", "A stone from Zorblax. Heavy."));
@@ -648,7 +664,7 @@ public class DegreesRedactionTests : IDisposable
             // Joined, so a failure lists every finding (xunit shortens a collection to five).
             var flagged = string.Join("; ", PackWordCheck.CheckAllowlist(pack, terms, deny, Denylist.EmbeddedCommon()).Select(f => f.ToString()).Distinct().Order());
             Assert.True(flagged.Length == 0, flagged);
-            var denied = string.Join("; ", PackWordCheck.CheckDenylist(pack, deny, Denylist.EmbeddedPairs(), Waivers.EmbeddedCompounds()).Select(f => f.ToString()));
+            var denied = string.Join("; ", PackWordCheck.CheckDenylist(pack, deny, Denylist.EmbeddedPairs(), Waivers.EmbeddedCompounds(), Denylist.EmbeddedPhrases()).Select(f => f.ToString()));
             Assert.True(denied.Length == 0, denied);
         }
     }

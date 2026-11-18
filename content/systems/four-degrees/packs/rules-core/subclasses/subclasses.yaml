@@ -96,6 +96,111 @@
           If you successfully identify a creature using Recall Knowledge, that creature is off-guard against your attacks until the start of your next turn; if you critically succeed, it's off-guard against your attacks for 1 minute.
           You're trained in Society and one of the following skills of your choice: Arcana, Nature, Occultism, or Religion. You can choose Intelligence as your key attribute.
         adds: [{ to: skills, entries: [society], rank: trained }]
+- id: "patron-of-curses"
+  name: "Patron of Curses"
+  source: "pc > Chapter 3: Classes > Witch > Patron"
+  properties:
+    class: "witch-class"
+    tradition: "occult"
+    features:
+      - name: "Patron of Curses"
+        level: 1
+        description: |-
+          **Spell List.** occult
+          **Patron Skill.** Occultism
+          **Lesson of Strength's Impermanence.** Your patron has taught you that power can be taken much more easily that it can be built. You gain the evil eye hex cantrip and your familiar learns enfeeble.
+          **Familiar of Ongoing Misery.** Your familiar seems hostile to all creatures other than you, hissing at them if they get too near. When you Cast or Sustain a hex, your familiar can curse a creature within 15 feet of it, prolonging one negative condition of your choice affecting the creature by 1 round. This extension can be applied only once to a given case of a condition. This is a curse effect. This prolongs only conditions with a timed duration (such as "1 round" or "until the end of your next turn") and doesn't prevent conditions from being removed by other means.
+        adds: [{ to: grantedSpells, entries: [evil-eye] }, { to: skills, entries: [occultism], rank: trained }]
+- id: "patron-of-faith"
+  name: "Patron of Faith"
+  source: "pc > Chapter 3: Classes > Witch > Patron"
+  properties:
+    class: "witch-class"
+    tradition: "divine"
+    features:
+      - name: "Patron of Faith"
+        level: 1
+        description: |-
+          **Spell List.** divine
+          **Patron Skill.** Religion
+          **Lesson of Fervor's Grasp.** Your patron has taught you that nothing can seize the heart like faith, whether used to inspire or direct. You gain the stoke the heart hex cantrip and your familiar learns command.
+          **Familiar of Restored Spirit.** Your familiar is pleasantly warm and soft, seeming to wash away worries with its mere presence. When you Cast or Sustain a hex, one willing creature within 15 feet of your familiar gains temporary Hit Points equal to 2 + half your level, which last until the start of your next turn.
+        adds: [{ to: grantedSpells, entries: [stoke-the-heart] }, { to: skills, entries: [religion], rank: trained }]
+- id: "patron-of-fate"
+  name: "Patron of Fate"
+  source: "pc > Chapter 3: Classes > Witch > Patron"
+  properties:
+    class: "witch-class"
+    tradition: "occult"
+    features:
+      - name: "Patron of Fate"
+        level: 1
+        description: |-
+          **Spell List.** occult
+          **Patron Skill.** Occultism
+          **Lesson of Fate's Vicissitudes.** Your patron's harsh lesson is that fate spares no one, rising and falling in turn for all. You gain the nudge fate hex cantrip and your familiar learns sure strike.
+          **Familiar of Balanced Luck.** Your familiar has a spot on its body that looks like a good luck charm or a bad omen, depending on the angle. When you Cast or Sustain a hex, one creature within 15 feet of your familiar gets your choice of either a +1 status bonus to its AC or a -1 status penalty to its AC until the start of your next turn.
+        adds: [{ to: grantedSpells, entries: [nudge-fate] }, { to: skills, entries: [occultism], rank: trained }]
+- id: "patron-of-glyphs"
+  name: "Patron of Glyphs"
+  source: "pc > Chapter 3: Classes > Witch > Patron"
+  properties:
+    class: "witch-class"
+    tradition: "arcane"
+    features:
+      - name: "Patron of Glyphs"
+        level: 1
+        description: |-
+          **Spell List.** arcane
+          **Patron Skill.** Arcana
+          **Lesson of Glyph's Supremacy.** Your patron teaches that the written word can accomplish so much more than it seems. You gain the discern secrets hex and your familiar learns runic weapon.
+          **Familiar of Flowing Script.** Your familiar is covered in a pattern that looks similar to letters in an unknown language, one that seems to draw attention even as it eludes understanding. When you Cast or Sustain a hex, the letters begin to rapidly change, causing a distraction. Until the start of your next turn, your familiar can provide flanking for you and your allies as though it were able to attack and had a reach of 5 feet; this is a visual effect.
+        adds: [{ to: grantedSpells, entries: [discern-secrets] }, { to: skills, entries: [arcana], rank: trained }]
+- id: "patron-of-night"
+  name: "Patron of Night"
+  source: "pc > Chapter 3: Classes > Witch > Patron"
+  properties:
+    class: "witch-class"
+    tradition: "occult"
+    features:
+      - name: "Patron of Night"
+        level: 1
+        description: |-
+          **Spell List.** occult
+          **Patron Skill.** Occultism
+          **Lesson of Night's Terrors.** Your patron taught you that the darkness can hide all manner of things best left unseen. You gain the shroud of night hex cantrip, and your familiar learns fear.
+          **Familiar of Stalking Night.** Your familiar is dark of fur or feather, and light seems to disappear into it. When you Cast or Sustain a hex, and your familiar is adjacent to an enemy to which it's concealed, hidden, or undetected, the enemy becomes frightened 1.
+        adds: [{ to: grantedSpells, entries: [shroud-of-night] }, { to: skills, entries: [occultism], rank: trained }]
+- id: "patron-of-the-wilds"
+  name: "Patron of the Wilds"
+  source: "pc > Chapter 3: Classes > Witch > Patron"
+  properties:
+    class: "witch-class"
+    tradition: "primal"
+    features:
+      - name: "Patron of the Wilds"
+        level: 1
+        description: |-
+          **Spell List.** primal
+          **Patron Skill.** Nature
+          **Lesson of Wild Speech.** Your patron has taught you the complexities of nonverbal speech, letting you influence and call animals and plants to you. You gain the wilding word hex cantrip and your familiar learns your choice of summon animal or summon plant or fungus.
+          **Familiar of Keen Senses.** Your familiar has glinting eyes, twitching ears, or some other sign of a beast's powerful senses. When you Cast or Sustain a hex, your familiar gains your choice of an imprecise scent, tremorsense, or wavesense, with a range of 60 feet until the start of your next turn, and it can immediately Point Out as a free action.
+        adds: [{ to: grantedSpells, entries: [wilding-word] }, { to: skills, entries: [nature], rank: trained }]
+- id: "patron-of-winter"
+  name: "Patron of Winter"
+  source: "pc > Chapter 3: Classes > Witch > Patron"
+  properties:
+    class: "witch-class"
+    tradition: "primal"
+    features:
+      - name: "Patron of Winter"
+        level: 1
+        description: |-
+          **Spell List.** primal
+          **Patron Skill.** Nature
+          **Lesson of Winter's Chill.** Your patron taught you the power of winter firsthand by subjecting you to frost and snow. You learn the clinging ice hex cantrip and your familiar learns gust of wind.
+          **Familiar of Freezing Rime.** Your familiar is cold to the touch, its breath always visible. When you Cast or Sustain a hex, you can cause ice to form in a 5-foot burst centered on a square of your familiar's space. Those squares are difficult terrain until the start of your next turn.
+        adds: [{ to: grantedSpells, entries: [clinging-ice] }, { to: skills, entries: [nature], rank: trained }]
 - id: "polymath"
   name: "Polymath"
   source: "pc > Chapter 3: Classes > Bard > Muses"
@@ -130,6 +235,90 @@
         level: 19
         description: "Your proficiency rank for medium armor increases to master."
         adds: [{ to: armor, entries: [medium], rank: master }]
+- id: "school-of-ars-grammatica"
+  name: "School of Ars Grammatica"
+  source: "pc > Chapter 3: Classes > Wizard > Arcane School"
+  properties:
+    class: "wizard-class"
+    features:
+      - name: "School of Ars Grammatica"
+        level: 1
+        description: |-
+          **Curriculum.** cantrips: message, sigil; 1st: command, disguise magic, runic body, runic weapon; 2nd: dispel magic, translate; 3rd: enthrall, veil of privacy; 4th: dispelling globe, suggestion; 5th: sending, truespeech; 6th: repulsion, spellwrack; 7th: contingency, planar seal; 8th: quandary, unrelenting observation; 9th: detonate magic
+          **School Spells.** initial: protective wards; advanced: rune of observation
+        adds: [{ to: focusSpells, entries: [protective-wards] }]
+- id: "school-of-battle-magic"
+  name: "School of Battle Magic"
+  source: "pc > Chapter 3: Classes > Wizard > Arcane School"
+  properties:
+    class: "wizard-class"
+    features:
+      - name: "School of Battle Magic"
+        level: 1
+        description: |-
+          **Curriculum.** cantrips: shield, telekinetic projectile; 1st: breathe fire, force barrage, mystic armor; 2nd: mist, resist energy; 3rd: earthbind, fireball; 4th: wall of fire, weapon storm; 5th: howling blizzard, impaling spike; 6th: chain lightning, disintegrate; 7th: energy aegis, true target; 8th: arctic rift, desiccate; 9th: falling stars
+          **School Spells.** initial: force bolt; advanced: energy absorption
+        adds: [{ to: focusSpells, entries: [force-bolt] }]
+- id: "school-of-civic-wizardry"
+  name: "School of Civic Wizardry"
+  source: "pc > Chapter 3: Classes > Wizard > Arcane School"
+  properties:
+    class: "wizard-class"
+    features:
+      - name: "School of Civic Wizardry"
+        level: 1
+        description: |-
+          **Curriculum.** cantrips: prestidigitation, read aura; 1st: hydraulic push, pummeling rubble, summon construct; 2nd: revealing light, water walk; 3rd: cozy cabin, safe passage; 4th: creation, unfettered movement; 5th: control water, wall of stone; 6th: disintegrate, wall of force; 7th: planar palace, retrocognition; 8th: earthquake, pinpoint; 9th: foresight
+          **School Spells.** initial: earthworks; advanced: community restoration
+        adds: [{ to: focusSpells, entries: [earthworks] }]
+- id: "school-of-mentalism"
+  name: "School of Mentalism"
+  source: "pc > Chapter 3: Classes > Wizard > Arcane School"
+  properties:
+    class: "wizard-class"
+    features:
+      - name: "School of Mentalism"
+        level: 1
+        description: |-
+          **Curriculum.** cantrips: daze, figment; 1st: dizzying colors, sleep, sure strike; 2nd: illusory creature, stupefy; 3rd: dream message, mind reading; 4th: nightmare, vision of death; 5th: hallucination, illusory scene; 6th: never mind, phantasmal calamity; 7th: project image, warp mind; 8th: disappearance, uncontrollable dance; 9th: phantasmagoria
+          **School Spells.** initial: charming push; advanced: invisibility cloak
+        adds: [{ to: focusSpells, entries: [charming-push] }]
+- id: "school-of-protean-form"
+  name: "School of Protean Form"
+  source: "pc > Chapter 3: Classes > Wizard > Arcane School"
+  properties:
+    class: "wizard-class"
+    features:
+      - name: "School of Protean Form"
+        level: 1
+        description: |-
+          **Curriculum.** cantrips: gouging claw, tangle vine; 1st: jump, pest form, spider sting; 2nd: enlarge, humanoid form; 3rd: feet to fins, vampiric feast; 4th: mountain resilience, vapor form; 5th: elemental form, toxic cloud; 6th: cursed metamorphosis, petrify; 7th: duplicate foe, fiery body; 8th: desiccate, monstrosity form; 9th: metamorphosis
+          **School Spells.** initial: scramble body; advanced: shifting form
+        adds: [{ to: focusSpells, entries: [scramble-body] }]
+- id: "school-of-the-boundary"
+  name: "School of the Boundary"
+  source: "pc > Chapter 3: Classes > Wizard > Arcane School"
+  properties:
+    class: "wizard-class"
+    features:
+      - name: "School of the Boundary"
+        level: 1
+        description: |-
+          **Curriculum.** cantrips: telekinetic hand, void warp; 1st: grim tendrils, phantasmal minion, summon undead; 2nd: darkness, see the unseen; 3rd: bind undead, ghostly weapon; 4th: flicker, translocate; 5th: banishment, invoke spirits; 6th: teleport, vampiric exsanguination; 7th: eclipse burst, interplanar teleport; 8th: quandary, unrelenting observation; 9th: massacre
+          **School Spells.** initial: fortify summoning; advanced: spiral of horrors
+        adds: [{ to: focusSpells, entries: [fortify-summoning] }]
+- id: "school-of-unified-magical-theory"
+  name: "School of Unified Magical Theory"
+  source: "pc > Chapter 3: Classes > Wizard > Arcane School"
+  properties:
+    class: "wizard-class"
+    features:
+      - name: "School of Unified Magical Theory"
+        level: 1
+        description: |-
+          **No Curriculum.** You don't have a set curriculum, and so you don't have curriculum spells and can't benefit from abilities that specifically affect them. Instead, you gain an additional 1st-level wizard class feat, and you add one 1st-rank spell of your choice to your spellbook to represent your diverse studies. Your studies into the very nature of magic itself have let you use it more efficiently—instead of using Drain Bonded Item only once per day, you can use it once per day for each rank of spell you can cast, recalling a spell of that rank each time.
+          **School Spells.** initial: hand of the apprentice; advanced: interdisciplinary incantation
+        adds: [{ to: focusSpells, entries: [hand-of-the-apprentice] }]
 - id: "scoundrel"
   name: "Scoundrel"
   source: "pc > Chapter 3: Classes > Rogue > Rogue's Racket"

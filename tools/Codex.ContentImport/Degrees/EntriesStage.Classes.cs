@@ -19,6 +19,15 @@ public sealed class SubclassScan
     public List<Block> Body { get; } = new();
 }
 
+/// <summary>A section among the class features that is a rule of its own (a witch's lessons): its title, its introduction, and each child heading with its text.</summary>
+public sealed class RuleSectionScan
+{
+    public Block Title { get; set; } = null!;
+    public string Name { get; set; } = string.Empty;
+    public List<Block> Intro { get; } = new();
+    public List<SubclassScan> Tiers { get; } = new();
+}
+
 /// <summary>
 /// A class's range sorted into its parts: the flavor and the explanations that are read past, the statistics box, the initial proficiencies, the advancement table, the class features
 /// (with the subclasses a feature holds) and the class feats under their level bands.
@@ -36,6 +45,11 @@ public sealed class ClassScan
     public Block? AdvancementTable { get; set; }
     public List<ClassFeatureScan> Features { get; } = new();
     public List<SubclassScan> Subclasses { get; } = new();
+
+    /// <summary>The introduction of the row's subclass section (a witch's patrons, a wizard's schools), which belongs to the class feature that names the choice.</summary>
+    public List<Block> SubclassIntro { get; } = new();
+
+    public List<RuleSectionScan> RuleSections { get; } = new();
     public List<FeatScan> Feats { get; } = new();
     public List<(Block Block, int Level)> Bands { get; } = new();
     public string? FeatsTitle { get; set; }
@@ -141,14 +155,19 @@ public static partial class EntriesStage
         ClassFeatureScan? feature = null;
         SubclassScan? subclass = null;
         FeatScan? feat = null;
+        var sect = 'N'; // N no section, S the row's subclass section, R a rule section (among the class features)
+        RuleSectionScan? ruleSection = null;
         var band = 0;
         var lastWasTable = false;
+        var lastWasAdvancement = false;
         var listTitleSeen = false;
         foreach (var b in slice)
         {
             var text = BlockText(b);
             var afterTable = lastWasTable;
             lastWasTable = false;
+            var afterAdvancement = lastWasAdvancement;
+            lastWasAdvancement = false;
             var afterListTitle = listTitleSeen;
             listTitleSeen = false;
             switch (b.Role)
@@ -170,6 +189,13 @@ public static partial class EntriesStage
                     }
 
                     break;
+                case "entry-header" when mode == 'C' && sect == 'S':
+                    subclass = new SubclassScan { Header = b }; // a patron, a school: a heading in the entry-header font under the row's subclass section
+                    scan.Subclasses.Add(subclass);
+                    break;
+                case "entry-header" when mode == 'C' && sect == 'R':
+                    ruleSection!.Tiers.Add(new SubclassScan { Header = b });
+                    break;
                 case "entry-header" when mode == 'C':
                     var m = ClassFeatureHeader.Match(Clean(text));
                     feature = new ClassFeatureScan
@@ -181,7 +207,8 @@ public static partial class EntriesStage
                     scan.Features.Add(feature);
                     subclass = null;
                     break;
-                case "block-header" when mode == 'B':
+                case "block-header" when mode == 'B' || (mode == 'C' && IsClassBoxHeader(text)):
+                    // The boxes of the proficiencies and the advancement table sit in a column of their own and may come after the section title of the features (a page's second column): their headings mean the same there.
                     if (text == "INITIAL PROFICIENCIES")
                     {
                         pending = 'I';
@@ -214,10 +241,15 @@ public static partial class EntriesStage
                         break;
                     }
 
-                    if (text.EndsWith(" SPELLS PER DAY", StringComparison.Ordinal))
+                    if (Regex.IsMatch(text, @" SPELLS PER DAY[*†]*$", RegexOptions.CultureInvariant))
                     {
-                        scan.SpellTableHeaders++; // a spellcaster's table of cantrips and spell slots: read as a table, not as the feature's text
+                        scan.SpellTableHeaders++; // a spellcaster's table of cantrips and spell slots: read as a table, not as the feature's text (its title may carry a note's mark)
                         break;
+                    }
+
+                    if (sect != 'N')
+                    {
+                        throw new DegreesException($"A class's section holds a heading in the block-header font on page {b.Page}, column {b.Column}, which the reader does not expect there.");
                     }
 
                     if (row.SubclassFeature != null && Slug(feature.Name) == Slug(row.SubclassFeature) && !text.Contains('['))
@@ -264,9 +296,23 @@ public static partial class EntriesStage
                         mode = 'C';
                         pending = 'N';
                     }
+                    else if (mode == 'C' && row.SubclassSection != null && text == row.SubclassSection)
+                    {
+                        sect = 'S';
+                        subclass = null;
+                    }
+                    else if (mode == 'C' && row.RuleSections.Contains(text))
+                    {
+                        sect = 'R';
+                        subclass = null;
+                        ruleSection = new RuleSectionScan { Title = b, Name = text };
+                        scan.RuleSections.Add(ruleSection);
+                    }
                     else if (text.EndsWith("Feats", StringComparison.Ordinal) && mode == 'C')
                     {
                         mode = 'F';
+                        sect = 'N';
+                        subclass = null;
                         scan.FeatsTitle = Clean(text);
                     }
                     else
@@ -289,8 +335,17 @@ public static partial class EntriesStage
                 case "body" when mode != 'B' && scan.ByNameHeaders > 0 && IsByNameList(b):
                     scan.ByName.Add(b);
                     break;
+                case "body" when afterAdvancement && scan.AdvancementTable != null && b.Role == "body" && b.Page == scan.AdvancementTable.Page && b.Column == scan.AdvancementTable.Column:
+                    // The advancement table's block was cut in two (a row runs over): the second part goes on the first.
+                    scan.AdvancementTable = scan.AdvancementTable with
+                    {
+                        Lines = scan.AdvancementTable.Lines.Concat(b.Lines).ToList(),
+                        Info = scan.AdvancementTable.Info == null || b.Info == null ? null : scan.AdvancementTable.Info.Concat(b.Info).ToList(),
+                    };
+                    lastWasAdvancement = true;
+                    break;
                 case "rules" or "body" or "icon":
-                    if (mode == 'B')
+                    if (mode == 'B' || (mode == 'C' && pending != 'N' && b.Role == "body"))
                     {
                         if (pending == 'S' && b.Role == "body" && scan.StatsBox == null)
                         {
@@ -301,6 +356,7 @@ public static partial class EntriesStage
                         {
                             scan.AdvancementTable = b;
                             pending = 'N';
+                            lastWasAdvancement = true;
                         }
                         else if (pending == 'L')
                         {
@@ -310,6 +366,11 @@ public static partial class EntriesStage
                         {
                             scan.Flavor.Add(b); // flavor text, the box's explanation, the introduction of the proficiencies
                         }
+
+                        if (mode == 'C')
+                        {
+                            pending = 'N'; // a box among the features: one block of text under its heading
+                        }
                     }
                     else if (mode == 'C')
                     {
@@ -317,6 +378,21 @@ public static partial class EntriesStage
                         {
                             scan.SpellTable.Add(b);
                             lastWasTable = true;
+                        }
+                        else if (sect == 'S' && subclass == null)
+                        {
+                            scan.SubclassIntro.Add(b); // the section's introduction: rules of the choice (the feature that names the section gets them)
+                        }
+                        else if (sect == 'R')
+                        {
+                            if (ruleSection!.Tiers.Count == 0)
+                            {
+                                ruleSection.Intro.Add(b);
+                            }
+                            else
+                            {
+                                ruleSection.Tiers[^1].Body.Add(b);
+                            }
                         }
                         else if (feature == null)
                         {
@@ -353,12 +429,18 @@ public static partial class EntriesStage
 
         if (scan.StatsBox == null || scan.AdvancementTable == null || scan.Initial.Count(i => i.Label != SpellsLabel) != InitialLabels.Length || scan.FeatsTitle == null || scan.Features.Count == 0)
         {
-            throw new DegreesException("A class's range lacks its statistics box, its proficiencies, its advancement table, its features or its feats.");
+            throw new DegreesException($"A class's range (from page {slice.FirstOrDefault()?.Page}) lacks its statistics box, its proficiencies, its advancement table, its features or its feats " +
+                $"(box {scan.StatsBox != null}, table {scan.AdvancementTable != null}, {scan.Initial.Count(i => i.Label != SpellsLabel)} of {InitialLabels.Length} proficiency labels, feats {scan.FeatsTitle != null}, {scan.Features.Count} features).");
         }
 
-        if (row.SubclassFeature != null && scan.Subclasses.Count == 0)
+        if ((row.SubclassFeature != null || row.SubclassSection != null) && scan.Subclasses.Count == 0)
         {
-            throw new DegreesException("The row names a feature that holds subclasses, and the class has none.");
+            throw new DegreesException("The row names a feature or a section that holds subclasses, and the class has none.");
+        }
+
+        if (row.RuleSections.Count != scan.RuleSections.Count || scan.RuleSections.Any(r => r.Tiers.Count == 0 || r.Tiers.Any(t => t.Body.Count == 0)))
+        {
+            throw new DegreesException("The row names rule sections among the class features, and the class's range does not hold each of them with its children and their text.");
         }
 
         return scan;
@@ -468,6 +550,12 @@ public static partial class EntriesStage
         if (Regex.IsMatch(w, @"^spell dcs?$"))
         {
             return new[] { ("spellDc", Array.Empty<string>()) };
+        }
+
+        // The class's own DC said without the word class (a ranger's, a spellcaster's is the spell DC above).
+        if (Regex.IsMatch(w, @"^[a-z']+ dc$"))
+        {
+            return new[] { ("classDc", Array.Empty<string>()) };
         }
 
         return w switch
@@ -632,6 +720,12 @@ public static partial class EntriesStage
                 else if (p.Contains("group", StringComparison.Ordinal) || p.Contains("favored weapon", StringComparison.Ordinal) || p.Contains("increase your proficiency rank", StringComparison.Ordinal) || Regex.IsMatch(p, @"\bhave (?:trained|expert|master|legendary) proficiency\b", RegexOptions.CultureInvariant))
                 {
                     // A weapon group the player picks, or a condition on a rank held (the sheet models neither).
+                    notModelled++;
+                    continue;
+                }
+                else if (Regex.IsMatch(p, @"^If you have [a-z' ]+, your proficiency ranks? (?:for|in) .+ increases? to (?:expert|master|legendary)$", RegexOptions.CultureInvariant))
+                {
+                    // A rank that depends on something the character may or may not have (spells a feat gives): the sheet holds no such condition, so the sentence stays text.
                     notModelled++;
                     continue;
                 }
@@ -847,6 +941,10 @@ public static partial class EntriesStage
         return result;
     }
 
+    /// <summary>A heading of the boxes the class sets before its features: the proficiencies (and the label of each) and the advancement table.</summary>
+    private static bool IsClassBoxHeader(string text) =>
+        text == "INITIAL PROFICIENCIES" || text == SpellsLabel || InitialLabels.Contains(text, StringComparer.Ordinal) || text.EndsWith(" ADVANCEMENT", StringComparison.Ordinal);
+
     private static bool IsInitialFeature(string name) => name.Equals("Initial Proficiencies", StringComparison.OrdinalIgnoreCase);
 
     private static string LowerWords(string text) => string.Join(' ', text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => w.ToLowerInvariant()));
@@ -886,12 +984,19 @@ public static partial class EntriesStage
             else
             {
                 var plain = MappedName(row.FeatureNames, f.Name);
-                feature = ReadFeature(plain ?? f.Name, f.Level, f.Body, compounds, cls.Chapter);
+                // The introduction of the subclass section (the patrons', the schools') is part of the feature that makes the choice.
+                var body = row.SubclassSection != null && row.SubclassFeature != null && Slug(f.Name) == Slug(row.SubclassFeature) ? f.Body.Concat(scan.SubclassIntro).ToList() : f.Body;
+                feature = ReadFeature(plain ?? f.Name, f.Level, body, compounds, cls.Chapter);
+                if (!ReferenceEquals(body, f.Body))
+                {
+                    feature.Parts = TidySubclassParts(feature.Parts);
+                }
+
                 feature.BookName = plain == null ? null : f.Name;
                 try
                 {
                     feature.Adds = SentenceGrants(feature.Render(), row, out _);
-                    if (row.GrantsByName)
+                    if (row.GrantsByName && !row.ChoiceFeatures.Contains(f.Name, StringComparer.OrdinalIgnoreCase))
                     {
                         feature.Adds.AddRange(NamedGrants(feature.Render()));
                     }
@@ -916,7 +1021,7 @@ public static partial class EntriesStage
         {
             var spellRows = ParseSpellTable(scan.SpellTable, cls.Name);
             CheckSpellRankRows(advancement, spellRows, cls.Features, cls.Name);
-            AddSpellcastingFields(cls, ReadSpellcasting(cls.Features, spellRows, box.KeyAttribute, cls.Name), spellRows);
+            AddSpellcastingFields(cls, ReadSpellcasting(cls.Features, spellRows, box.KeyAttribute, cls.Name, row.TraditionFromSubclass), spellRows);
         }
 
         var result = new List<ParsedEntry> { cls };
@@ -926,12 +1031,23 @@ public static partial class EntriesStage
         foreach (var s in scan.Subclasses)
         {
             var title = TitleCase(Clean(string.Join(' ', s.Header.Lines)));
-            var entry = NewEntry(range, book, title, compounds, "subclass", "subclasses", null, scan.Subclasses.Count > 0 ? row.SubclassFeature : null);
+            var entry = NewEntry(range, book, title, compounds, "subclass", "subclasses", null, scan.Subclasses.Count > 0 ? row.SubclassFeature ?? row.SubclassSection : null);
             entry.Owner = cls;
             var (_, rules) = ReadSubclass(s, compounds, cls.Chapter);
             // A paragraph that opens with a name and a level in parentheses (a doctrine gained at the 3rd level) is a feature row of its own, at that level; the one at the 1st level stays in the row.
             var (keptParts, levelled) = SplitLevelledParagraphs(rules.Parts);
-            rules.Parts = keptParts;
+            rules.Parts = row.SubclassSection != null ? TidySubclassParts(keptParts) : keptParts;
+            var tradition = TraditionOf(rules.Parts);
+            if (row.TraditionFromSubclass != (tradition != null))
+            {
+                throw new DegreesException($"The {cls.Name}'s subclass on page {s.Header.Page} {(tradition == null ? "names no tradition" : "names a tradition")}, and the row says its subclasses {(row.TraditionFromSubclass ? "decide" : "do not decide")} it.");
+            }
+
+            if (tradition != null)
+            {
+                entry.Raw.Add(new LabelledText("tradition", Quoted(tradition)));
+            }
+
             var text = rules.Render();
             rules.Adds = SentenceGrants(text, row, out _);
             if (row.GrantsByName)
@@ -984,6 +1100,31 @@ public static partial class EntriesStage
 
         CheckAdvancement(advancement, cls.Features, cls.Name, spellcaster, subclassRowSets.FirstOrDefault());
 
+        // A section among the features that is a rule of its own (a witch's lessons): one rule entry, the children's titles as paragraphs.
+        foreach (var section in scan.RuleSections)
+        {
+            var rule = NewEntry(range, book, section.Name, compounds, "rule", "rules", row.RuleSectionCategory, "Class Features");
+            var ruleReader = new BodyReader(rule, compounds, false, false, null, true);
+            foreach (var block in section.Intro)
+            {
+                ruleReader.Read(block);
+            }
+
+            foreach (var tier in section.Tiers)
+            {
+                ruleReader.EndParagraph();
+                ruleReader.Read(tier.Header with { Role = "body", Lines = new List<string> { TitleCase(Clean(string.Join(' ', tier.Header.Lines))) }, Info = null });
+                ruleReader.EndParagraph();
+                foreach (var block in tier.Body)
+                {
+                    ruleReader.Read(block);
+                }
+            }
+
+            ruleReader.Finish();
+            result.Add(rule);
+        }
+
         foreach (var f in scan.Feats)
         {
             var header = Clean(string.Join(' ', f.Header.Lines));
@@ -1022,13 +1163,22 @@ public static partial class EntriesStage
             reader.Finish();
             ExtractFields(entry);
             SplitInlineAction(entry);
+            // A list of items with no bold name (each a bullet) is set out as the lists with names are: a dash.
+            for (var i = 0; i < entry.Parts.Count; i++)
+            {
+                if (entry.Parts[i].Label.Length == 0 && entry.Parts[i].Text.StartsWith("• ", StringComparison.Ordinal))
+                {
+                    entry.Parts[i] = entry.Parts[i] with { Text = "- " + entry.Parts[i].Text[2..] };
+                }
+            }
+
             result.Add(entry);
         }
 
         return result;
     }
 
-    private static readonly Regex InlineAction = new(@"^\[(?<icon>[^\]]+)\] \((?<traits>[^)]+)\) (?<rest>(?:Frequency|Trigger|Requirements|Effect) .+)$", RegexOptions.CultureInvariant);
+    private static readonly Regex InlineAction = new(@"^\[(?<icon>[^\]]+)\] (?:\((?<traits>[^)]+)\) )?(?<rest>(?:Frequency|Trigger|Requirements|Effect) .+)$", RegexOptions.CultureInvariant);
 
     private static readonly Regex InlineActionField = new(@";\s+(?=(?:Frequency|Trigger|Requirements|Effect) )", RegexOptions.CultureInvariant);
 
@@ -1039,6 +1189,17 @@ public static partial class EntriesStage
     /// </summary>
     public static void SplitInlineAction(ParsedEntry entry)
     {
+        // The layout may cut an action's line after the semicolon that ends its frequency: the Effect label then opens the next part, and it is the same action.
+        for (var i = 0; i + 1 < entry.Parts.Count; i++)
+        {
+            if (entry.Parts[i].Label.Length > 0 && entry.Parts[i + 1].Label.TrimEnd('.', ':', ' ') == "Effect" && entry.Parts[i].Text.EndsWith(';')
+                && InlineAction.IsMatch(entry.Parts[i].Text + " Effect x"))
+            {
+                entry.Parts[i] = entry.Parts[i] with { Text = entry.Parts[i].Text + " Effect " + entry.Parts[i + 1].Text };
+                entry.Parts.RemoveAt(i + 1);
+            }
+        }
+
         for (var i = 0; i < entry.Parts.Count; i++)
         {
             var part = entry.Parts[i];
@@ -1062,11 +1223,12 @@ public static partial class EntriesStage
             }
 
             entry.Parts.RemoveAt(i);
-            var set = new List<LabelledText>
+            var set = new List<LabelledText> { new(part.Label.TrimEnd('.', ':', ' ') + " (" + m.Groups["icon"].Value + ")", string.Empty) };
+            if (m.Groups["traits"].Success)
             {
-                new(part.Label.TrimEnd('.', ':', ' ') + " (" + m.Groups["icon"].Value + ")", string.Empty),
-                new("Traits", string.Join(' ', m.Groups["traits"].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(t => t.ToLowerInvariant()))),
-            };
+                set.Add(new("Traits", string.Join(' ', m.Groups["traits"].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(t => t.ToLowerInvariant()))));
+            }
+
             set.AddRange(fields.Select(f => new LabelledText(f.Label, f.Text)));
             entry.Parts.InsertRange(i, set);
             i += set.Count - 1;

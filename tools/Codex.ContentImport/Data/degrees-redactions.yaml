@@ -2162,3 +2162,329 @@ rows:
     action: replace
     text: "You call upon void energy to harm life force."
     reason: "A sentence that named a plane of the setting's cosmology where the rules mean the energy; it is said by the energy."
+  # Chapter 8c (the ranger, the witch and the wizard): sentences that point to a page, a chapter or another book, the names of the setting's institutions, and the seven patrons' names. The mechanic is kept; the name and the pointer go.
+  - book: pc
+    entry: ranger-class
+    field: feature:ancestry-and-background
+    span: { sha256: "33d3f1c986823c419e2fd26746e1bbf26fba610230f0664d10a579cb4f40bc2f", length: 33 }
+    action: cut
+    reason: "A sentence that sent the reader to another chapter; the mechanic (the ancestry and background give their benefits) is kept."
+  - book: pc
+    entry: ranger-class
+    field: feature:ranger-feats
+    span: { sha256: "c3345a9b23dac34ea4b9d04c3aebd52c7e2bd794e0f5d10cfaa572ca4bf2ffc0", length: 24 }
+    action: cut
+    reason: "A sentence that pointed to a page; the mechanic (a class feat at 2nd level and every even level) is kept."
+  - book: pc
+    entry: ranger-class
+    field: feature:general-feats
+    span: { sha256: "851b1a2beca02ef8d7fff42eee569bbf638cbe2b6fd132e38072d27274393e0f", length: 38 }
+    action: cut
+    reason: "A sentence that pointed to another chapter; the mechanic (a general feat at 3rd level and every 4 levels) is kept."
+  - book: pc
+    entry: ranger-class
+    field: feature:ancestry-feats
+    span: { sha256: "0248c47acce847af41fcdc57e922a39605fe2041f46237c1cdc7cd043b466ae6", length: 95 }
+    action: replace
+    text: "The ancestry feats available to you are those of your ancestry."
+    reason: "A sentence that pointed to another chapter; the mechanic (the feats are the ancestry's) is kept."
+  - book: pc
+    entry: witch-class
+    field: feature:ancestry-and-background
+    span: { sha256: "33d3f1c986823c419e2fd26746e1bbf26fba610230f0664d10a579cb4f40bc2f", length: 33 }
+    action: cut
+    reason: "A sentence that sent the reader to another chapter; the mechanic (the ancestry and background give their benefits) is kept."
+  - book: pc
+    entry: witch-class
+    field: feature:witch-feats
+    span: { sha256: "cee5eb6ffbc8a16da299befabf1aae00a9daa983c9aa2b6f4ea2a484dfa83a30", length: 24 }
+    action: cut
+    reason: "A sentence that pointed to a page; the mechanic (a class feat at 2nd level and every even level) is kept."
+  - book: pc
+    entry: witch-class
+    field: feature:general-feats
+    span: { sha256: "851b1a2beca02ef8d7fff42eee569bbf638cbe2b6fd132e38072d27274393e0f", length: 38 }
+    action: cut
+    reason: "A sentence that pointed to another chapter; the mechanic (a general feat at 3rd level and every 4 levels) is kept."
+  - book: pc
+    entry: witch-class
+    field: feature:ancestry-feats
+    span: { sha256: "0248c47acce847af41fcdc57e922a39605fe2041f46237c1cdc7cd043b466ae6", length: 95 }
+    action: replace
+    text: "The ancestry feats available to you are those of your ancestry."
+    reason: "A sentence that pointed to another chapter; the mechanic (the feats are the ancestry's) is kept."
+  - book: pc
+    entry: wizard-class
+    field: feature:ancestry-and-background
+    span: { sha256: "33d3f1c986823c419e2fd26746e1bbf26fba610230f0664d10a579cb4f40bc2f", length: 33 }
+    action: cut
+    reason: "A sentence that sent the reader to another chapter; the mechanic (the ancestry and background give their benefits) is kept."
+  - book: pc
+    entry: wizard-class
+    field: feature:wizard-feats
+    span: { sha256: "90e3674b3499fe9737e8702b1b6eafed1d10f48def7b42bdb35b8cd10835f659", length: 24 }
+    action: cut
+    reason: "A sentence that pointed to a page; the mechanic (a class feat at 2nd level and every even level) is kept."
+  - book: pc
+    entry: wizard-class
+    field: feature:general-feats
+    span: { sha256: "851b1a2beca02ef8d7fff42eee569bbf638cbe2b6fd132e38072d27274393e0f", length: 38 }
+    action: cut
+    reason: "A sentence that pointed to another chapter; the mechanic (a general feat at 3rd level and every 4 levels) is kept."
+  - book: pc
+    entry: wizard-class
+    field: feature:ancestry-feats
+    span: { sha256: "0248c47acce847af41fcdc57e922a39605fe2041f46237c1cdc7cd043b466ae6", length: 95 }
+    action: replace
+    text: "The ancestry feats available to you are those of your ancestry."
+    reason: "A sentence that pointed to another chapter; the mechanic (the feats are the ancestry's) is kept."
+  - book: pc
+    entry: ranger-class
+    field: feature:skill-feats
+    span: { sha256: "d2612a12d3af5206b9b6a16e920834304e4d2a150f3bc63f7092adcb41c71664", length: 63 }
+    action: replace
+    text: "Skill feats have the skill trait."
+    reason: "A sentence that pointed to another chapter; what makes a feat a skill feat is kept."
+  - book: pc
+    entry: wizard-class
+    field: feature:skill-feats
+    span: { sha256: "d2612a12d3af5206b9b6a16e920834304e4d2a150f3bc63f7092adcb41c71664", length: 63 }
+    action: replace
+    text: "Skill feats have the skill trait."
+    reason: "A sentence that pointed to another chapter; what makes a feat a skill feat is kept."
+  - book: pc
+    entry: witch-class
+    field: feature:patron
+    span: { sha256: "814013d4f9ad1141a61d05ba9c9aa7215673633b63aa4d773eb734f30c899822", length: 57 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: witch-class
+    field: feature:witch-spellcasting
+    span: { sha256: "5b81418acabe1fe3d06f16a74a25722fcaec1dbecd6e15784e8ac4ac7478d6d0", length: 197 }
+    action: replace
+    text: "As you increase in level as a witch, the number of spells you can prepare each day increases, as does the highest rank of spell you can cast, as shown in the Witch Spells per Day table."
+    reason: "A sentence that pointed to a page for a table the class entry holds; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: witch-class
+    field: feature:witch-spellcasting
+    span: { sha256: "03275d1d567dc0f08581f98a045b7cec7413cd8158b9411e0365f90ac6584ad6", length: 59 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: witch-class
+    field: feature:witch-spellcasting
+    span: { sha256: "f47539a45aa9c04667accbfe7b0e0f3cb0c6c2effece772289f4558bb702062a", length: 158 }
+    action: replace
+    text: "This familiar follows the rules for familiars, though as it's a direct conduit between you and your patron, it's more powerful than typical familiars."
+    reason: "A sentence that pointed to a page; the mechanic (the familiar is more powerful than a typical one) is kept."
+  - book: pc
+    entry: witch-class
+    field: feature:hex-spells
+    span: { sha256: "4d7aa5b63e74eb0073eab6f8e8341a52e3a0282023a6a74cd4f61aa3c0fb206d", length: 54 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: wizard-class
+    field: feature:wizard-spellcasting
+    span: { sha256: "31373785ea6c5a260e53a7935aa94135ad8b5bb82a7057a42317a266d3c6a975", length: 199 }
+    action: replace
+    text: "As you increase in level as a wizard, the number of spells you can prepare each day increases, as does the highest rank of spell you can cast, as shown in the Wizard Spells per Day table."
+    reason: "A sentence that pointed to a page for a table the class entry holds; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: wizard-class
+    field: feature:wizard-spellcasting
+    span: { sha256: "03275d1d567dc0f08581f98a045b7cec7413cd8158b9411e0365f90ac6584ad6", length: 59 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: wizard-class
+    field: feature:wizard-spellcasting
+    span: { sha256: "f752ef1eb7b6a2eab13b46f8f994ae7158ccbdc2521b5fdf0b930a95e1ba2141", length: 258 }
+    action: replace
+    text: "It might be a musty, leather-bound tome or an assortment of thin metal disks connected to a brass ring."
+    reason: "A sentence whose examples of a spellbook's name held the setting's words (a place of the setting); the description of its form is kept."
+  - book: pc
+    entry: wizard-class
+    field: feature:arcane-thesis
+    span: { sha256: "252b83c63933558e6c81ef49ccb74afe5e5882936bd8db64931f6c64926a5a60", length: 248 }
+    action: replace
+    text: "The arcane thesis topics presented in this book are below; your specific thesis probably has a much longer and more technical title."
+    reason: "A sentence whose sample title of a thesis was a string of ordinary words that the allowlist gate had no use for; the sentence is kept without the sample."
+  - book: pc
+    entry: wizard-class
+    field: feature:arcane-thesis
+    span: { sha256: "4f7f7ad8cce91d77e2ba62ab89c86eb71b9b30a333f11464e4954547b87b65a6", length: 52 }
+    action: cut
+    reason: "A sentence that sent the reader to a page of another book."
+  - book: pc
+    entry: wizard-class
+    field: feature:arcane-school
+    span: { sha256: "81b7524a6cca5fdab78f7a555963d6aa3f3f701b382f7b8f8905edb420927cad", length: 128 }
+    action: replace
+    text: "Most wizards acquire their knowledge of spells from a formal educational institution."
+    reason: "A sentence that named two institutions of the setting as examples; the mechanic (a formal institution teaches the school) is kept in plain words."
+  - book: pc
+    entry: wizard-class
+    field: feature:arcane-school
+    span: { sha256: "80122449bc6f2367280aa89f477be817fcc7c7a65a7d23d34a07bd2fea350389", length: 51 }
+    action: replace
+    text: "The arcane schools are the wizard's subclasses."
+    reason: "A sentence that pointed to a page for the schools; it says what they are in plain words, and the plural stays a word of the pack."
+  - book: pc
+    entry: wizard-class
+    field: feature:arcane-school
+    span: { sha256: "a35e35d686d5c2f2dde3b75148faa5960bdf677c3a205cd7016eafa7249bb443", length: 51 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: initiate-warden
+    field: description
+    span: { sha256: "16091871be00e87e88ec1be6a438132eeeb1b44de3fe6be4337b568c03cf9aab", length: 116 }
+    action: replace
+    text: "You gain your choice of one warden spell from the initial warden spells (or another you have access to)."
+    reason: "A sentence with a page pointer in the middle; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: advanced-warden
+    field: description
+    span: { sha256: "6d66516b089fc075bdbf60446ca65df31517c95fa901083acf1571efc6aeea54", length: 122 }
+    action: replace
+    text: "You gain your choice of one warden spell from the advanced warden spells (or another you have access to)."
+    reason: "A sentence with a page pointer in the middle; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: masterful-warden
+    field: description
+    span: { sha256: "3271accaa1b63dd233234c0f493271c0b23d12a86bb1a475590baa028c569521", length: 115 }
+    action: replace
+    text: "You gain your choice of one warden spell from the master warden spells (or another you have access to)."
+    reason: "A sentence with a page pointer in the middle; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: peerless-warden
+    field: description
+    span: { sha256: "d40c9166967bf7fa78ba8b770ce67966480a195d978d57fad8a65a345a8595f1", length: 117 }
+    action: replace
+    text: "You gain your choice of one warden spell from the peerless warden spells (or another you have access to)."
+    reason: "A sentence with a page pointer in the middle; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: animal-companion-ranger
+    field: description
+    span: { sha256: "8eabd642cf8fe6b66122115c936e615f04e17ad255cf673e22f679449d4aedcc", length: 34 }
+    action: cut
+    reason: "A sentence that only pointed to a page."
+  - book: pc
+    entry: specialized-companion-ranger
+    field: description
+    span: { sha256: "44878df2a0097a2fdceabce351ba27e7e7bbbae44bd97d04d53597d551004941", length: 73 }
+    action: replace
+    text: "Your animal companion gains one specialization of your choice."
+    reason: "A parenthesis that only pointed to a page."
+  - book: pc
+    entry: basic-lesson
+    field: description
+    span: { sha256: "993c661833ffa33f6660d73258529d6d5e371dbddde74ca997cc3bca41f30a51", length: 48 }
+    action: replace
+    text: "Choose a basic lesson from the witch lessons."
+    reason: "A sentence that pointed to the page of the list of lessons; the rule section of the lessons is in the pack and the mechanic is kept."
+  - book: pc
+    entry: greater-lesson
+    field: description
+    span: { sha256: "eac9aab08ebec1523bd04655942960e7f8bde916fbd5f22b890c4f5488e61eab", length: 59 }
+    action: replace
+    text: "Choose a greater or basic lesson from the witch lessons."
+    reason: "A sentence that pointed to the page of the list of lessons; the rule section of the lessons is in the pack and the mechanic is kept."
+  - book: pc
+    entry: major-lesson
+    field: description
+    span: { sha256: "294ce0cb4ffbaa45ef4913ba52c28c8b83a00fb3cf26728593946a07085a039d", length: 67 }
+    action: replace
+    text: "Choose a major, greater, or basic lesson from the witch lessons."
+    reason: "A sentence that pointed to the page of the list of lessons; the rule section of the lessons is in the pack and the mechanic is kept."
+  - book: pc
+    entry: ceremonial-knife
+    field: description
+    span: { sha256: "f9dc99e0fe13dc8928924482c82b4aa65788698dc052216ba24173090b672331", length: 106 }
+    action: replace
+    text: "You, and only you, can Activate the knife to Cast the Spell within it, as normal for a wand."
+    reason: "A parenthesis that named another book and a page; the mechanic is kept."
+  - book: pc
+    entry: scroll-adept
+    field: description
+    span: { sha256: "5d9c293662106711e8d241554559c22a84b4371975c8a5a2eb5891be5d2cac62", length: 50 }
+    action: cut
+    reason: "A sentence that sent the reader to a page of another book."
+  - book: pc
+    entry: witch-s-broom
+    field: description
+    span: { sha256: "d655b022accf15c468a0150004d213422f88412afb8944b8ce3f6ad3d315b605", length: 113 }
+    action: replace
+    text: "You can Craft your broomstick into a flying broomstick as though you had the formula for that item."
+    reason: "A parenthesis that named another book and a page; the mechanic is kept."
+  - book: pc
+    entryHash: "6454b7d05fadaab87898b9945ffe843b098efada98fb67ab9979f8349246c341"
+    field: name
+    span: { sha256: "fba978fe96af1395507fa6ca00892bc705b5a1f9e634c9d54f85527da6633c7f", length: 19 }
+    action: replace
+    text: "Patron of Faith"
+    reason: "A name that the setting coined for a patron; the patron is said by what its lesson is about, and the mechanic stands."
+  - book: pc
+    entryHash: "a7a53b6efa27bb4d92d44a266eedb06d0682bcb4aefdac986f093f996c264823"
+    field: name
+    span: { sha256: "4d4385e8aa37a901c6c549d6a8cdf8e97da478f2f2748bfc908b20dc4285ef8c", length: 17 }
+    action: replace
+    text: "Patron of Glyphs"
+    reason: "A name that the setting coined for a patron; the patron is said by what its lesson is about, and the mechanic stands."
+  - book: pc
+    entryHash: "34b9ada5f50c1b9492da463d2d176a9479f1a29247508b4d8a88e2bde04cbe73"
+    field: name
+    span: { sha256: "d62fe27fc8cfb2f9c824a6ce2a83f9a07bf49d85efc68fd0c91960428dbd1085", length: 14 }
+    action: replace
+    text: "Patron of Curses"
+    reason: "A name that the setting coined for a patron; the patron is said by what its lesson is about, and the mechanic stands."
+  - book: pc
+    entryHash: "1914955bec890d13a6c16f71febfbd7f6f3648304b87e3d9c5d2343535f381cc"
+    field: name
+    span: { sha256: "649ef34f4e2e453dfe9559a598ccd7adef70295c261e78c66772a0744d06fb8f", length: 15 }
+    action: replace
+    text: "Patron of Winter"
+    reason: "A name that the setting coined for a patron; the patron is said by what its lesson is about, and the mechanic stands."
+  - book: pc
+    entryHash: "da08377cc35767452fa7808bd4b9b68818d86df8d9bef8fafb7f6b589d930dfe"
+    field: name
+    span: { sha256: "8351ef39756e4a30e92d01f8b1fdcf8611a4a6abc8e70c9e7692c51b9205bb87", length: 18 }
+    action: replace
+    text: "Patron of Fate"
+    reason: "A name that the setting coined for a patron; the patron is said by what its lesson is about, and the mechanic stands."
+  - book: pc
+    entryHash: "c7255f363facedc06042181b9d29b6158720bbe7a95f6df230d33623b2ffd02b"
+    field: name
+    span: { sha256: "0695f6f61f3f57a76d2df6744f912176c594d7d6df3399c4989be2a8e0edac40", length: 15 }
+    action: replace
+    text: "Patron of Night"
+    reason: "A name that the setting coined for a patron; the patron is said by what its lesson is about, and the mechanic stands."
+  - book: pc
+    entryHash: "7da68bc19974a0401f059160811d81275159ffa95af4aa3d86cf20ed97854bc9"
+    field: name
+    span: { sha256: "730dddace3e506426c02fad57317d21911263918190efce549c927066c6d0949", length: 15 }
+    action: replace
+    text: "Patron of the Wilds"
+    reason: "A name that the setting coined for a patron; the patron is said by what its lesson is about, and the mechanic stands."
+  - book: pc
+    entry: wizard-class
+    field: feature:arcane-school
+    span: { sha256: "a946105ffd2fba0e974984d7b1e912d88edb160d876a9e029b4daafde4e67697", length: 46 }
+    action: cut
+    reason: "A sentence about a mark that the pack's lists of spells do not carry (the mark of an uncommon spell)."
+  - book: pc
+    entry: familiar-s-language
+    field: description
+    span: { sha256: "bce2885f3e050d677a0f7293032d1382ec49ac0a0856f0ccb383e5a8c3390519", length: 161 }
+    action: replace
+    text: "For example, if your familiar were a cat, you could gain the effects of speak with animals for any felines (including leopards and tigers, among others)."
+    reason: "A sentence whose list of examples named an animal that the book also capitalizes in the name of a group of the setting; the example is kept without it."
+  - book: pc
+    entry: witch-class
+    field: feature:patron
+    span: { sha256: "bf881469e4cf2ed20c9d2abc70cace958416bbbc8c381f0cb9a6f45c1fb74d2e", length: 278 }
+    action: replace
+    text: "Your patron's true identity might be a powerful entity, or perhaps multiple such figures working in tandem, but that identity is for you to attempt to discover as you learn more of your patron's lessons."
+    reason: "A sentence whose list of examples named the setting's kinds of powerful beings (creatures and ranks of its cosmology); the mystery of the patron's identity is kept in plain words."

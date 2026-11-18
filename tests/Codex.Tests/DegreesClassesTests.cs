@@ -790,4 +790,388 @@ public class DegreesClassesTests
         Assert.All(result.Final.Single(e => e.Type == "class").Features, f => Assert.DoesNotContain("Feat Level", f.Description));
         Assert.Equal(10, result.Final.Count(e => e.Type == "feat"));
     }
+
+    // ---- Chapter 8c (invented words only): a choice that sits in a section of its own (the subclasses of a section among the features, the tradition its subclass decides), a rule section among the features, a feature that lists the\n    // options of a choice, the boxes of a class among its features, a table cut in two, and the shapes of the grants and the gates that came with them. ----
+
+    private static Block Labelled(double top, params (string Label, string Text)[] lines) =>
+        new(1, 0, "body", 60, 0, 300, top, lines.Select(l => l.Label + " " + l.Text).ToList(), lines.Select(l => new LineInfo(60, 200, l.Label)).ToList());
+
+    private static readonly string PatronRowYaml = CasterRowYaml.Replace("subclassFeature: Gadget Style,", "subclassFeature: Gadget Style, subclassSection: Gadget Styles, traditionFromSubclass: true,", StringComparison.Ordinal);
+
+    /// <summary>The caster of chapter 8b with its two subclasses moved to a section of their own after the features, each with the two lines of a patron (the tradition and the skill) and a lesson that gives a hex.</summary>
+    private static List<Block> PatronCaster(bool sentence = true, bool secondTradition = true)
+    {
+        var blocks = Caster();
+        var at = blocks.FindIndex(b => b.Lines.Count == 1 && b.Lines[0].StartsWith("Tinkers can cast", StringComparison.Ordinal));
+        if (sentence)
+        {
+            blocks[at] = blocks[at] with { Lines = new List<string> { blocks[at].Lines[0].Replace("of the arcane tradition", "of your guild's tradition", StringComparison.Ordinal) } };
+        }
+
+        var from = blocks.FindIndex(b => b.Role == "block-header" && b.Lines[0] == "Springs");
+        var to = blocks.FindIndex(b => b.Role == "entry-header" && b.Lines[0] == "Keen Eyes 3rd");
+        var moved = blocks.GetRange(from, to - from).Select(b => b.Role == "block-header" ? b with { Role = "entry-header" } : b).ToList();
+        blocks.RemoveRange(from, to - from);
+        var cogs = moved.FindIndex(b => b.Lines[0] == "Cogs");
+        moved.Insert(cogs, Labelled(409, ("Spell List", "arcane; Patron Skill Crafting"), ("Lesson of Chimes", "Bells ring in the hall. You gain the chime hex cantrip, and a small spirit follows you.")));
+        moved.Add(secondTradition
+            ? Labelled(389, ("Spell List", "occult; Patron Skill Stealth"), ("Lesson of Gears", "Gears hum all night. You learn the gear hex, and a small spirit follows you."))
+            : Labelled(389, ("Lesson of Gears", "Gears hum all night. You learn the gear hex, and a small spirit follows you.")));
+        var feats = blocks.FindIndex(b => b.Role == "section" && b.Lines[0] == "Tinker Feats");
+        blocks.InsertRange(feats, new[] { Plain("section", 355, "Gadget Styles"), Plain("rules", 354, "Choose one of the styles.") }.Concat(moved));
+        return blocks;
+    }
+
+    private static List<SpineNode> PatronSpine(bool dropChild = false)
+    {
+        var spine = CasterSpine();
+        var springs = spine.FindIndex(n => n.Title == "Springs");
+        spine.Insert(springs, new SpineNode(3, "Gadget Styles", new[] { "Chapter 9: Makers", "Tinker", "Class Features", "Gadget Styles" }, 1, 1, false));
+        if (dropChild)
+        {
+            spine.RemoveAt(spine.FindIndex(n => n.Title == "Cogs"));
+        }
+
+        return spine;
+    }
+
+    private static PipelineOutput RunPatron(List<Block> blocks, List<SpineNode>? spine = null, string yaml = "") =>
+        ImportPipeline.Run(Book(blocks), spine ?? PatronSpine(), Take(yaml.Length == 0 ? PatronRowYaml : yaml), RedactionTable.Parse("normalization: 2\nrows: []\n"), "pc");
+
+    [Fact]
+    public void ASubclassSection_MakesItsChildrenSubclasses_JoinsItsIntroToTheFeature_AndTheTraditionComesFromTheSubclass()
+    {
+        var blocks = PatronCaster();
+        var spine = PatronSpine();
+        var result = RunPatron(blocks, spine);
+        var tinker = result.Final.Single(e => e.Type == "class");
+        var springs = result.Final.Single(e => e.Id == "springs");
+        var cogs = result.Final.Single(e => e.Id == "cogs");
+
+        // The class says no tradition (its subclass's is its own); each subclass names one. The section's introduction is a paragraph of the feature that makes the choice.
+        Assert.DoesNotContain(tinker.Raw, r => r.Label == "tradition");
+        Assert.Equal(new[] { "arcane", "occult" }, new[] { springs, cogs }.Select(s => s.Raw.Single(r => r.Label == "tradition").Text.Trim('"')));
+        Assert.Contains("Choose one of the styles.", tinker.Features.Single(f => f.Name == "Gadget Style").Description);
+        Assert.Equal("pc > Chapter 9: Makers > Tinker > Gadget Style", springs.Source);
+        // The line of a patron that holds two labels is two lines, and the skill is a grant; the lesson's hex is a grant by name (left as text here: the invented pack holds no spell of that name).
+        Assert.Contains("**Spell List.** arcane\n**Patron Skill.** Crafting", springs.Features[0].Description);
+        Assert.Contains("{ to: skills, entries: [crafting], rank: trained }", springs.Features[0].Adds);
+        Assert.Contains("spell:chime", result.GrantsByName.Left);
+        Assert.Contains("spell:gear", result.GrantsByName.Left);
+        // The two subclasses are counted against the bookmarks of the section: two and two.
+        var counts = ImportPipeline.CheckClassCounts(spine, Book(blocks), result.Ranges, result.Parsed).Single();
+        Assert.Equal((2, 2, 2), (counts.RacketBookmarks, counts.Rackets, counts.Subclasses));
+        Assert.Equal(10, counts.Feats);
+    }
+
+    [Fact]
+    public void TheTraditionAClassLeavesToItsSubclass_IsGated_InBothDirections_AndTheSectionsChildrenAreCounted()
+    {
+        // The row says the subclass decides it, and the class text names its own.
+        Assert.Contains("as its subclass's", Assert.Throws<DegreesException>(() => RunPatron(PatronCaster(sentence: false))).Message);
+        // A subclass that names none.
+        Assert.Contains("names no tradition", Assert.Throws<DegreesException>(() => RunPatron(PatronCaster(secondTradition: false))).Message);
+        // A row that does not say it, and a subclass that names one.
+        Assert.Contains("do not decide", Assert.Throws<DegreesException>(() => RunPatron(PatronCaster(sentence: false), yaml: CasterRowYaml.Replace("subclassFeature: Gadget Style,", "subclassFeature: Gadget Style, subclassSection: Gadget Styles,", StringComparison.Ordinal))).Message);
+        // A bookmark of the section the headings do not have.
+        Assert.Contains("subclass bookmarks", Assert.Throws<DegreesException>(() => RunPatron(PatronCaster(), PatronSpine(dropChild: true))).Message);
+    }
+
+    [Fact]
+    public void ALineThatHoldsTheNextLabelAfterASemicolon_IsTwoLines_AndAListOfNamesLosesTheMarksOfUncommonOnes()
+    {
+        var parts = EntriesStage.TidySubclassParts(new[]
+        {
+            new LabelledText("Spell List", "arcane; Patron Skill Crafting"),
+            new LabelledText("Curriculum", "cantrips: a one, b two; 1st: c, U d; 2nd: e U f, g U School Spells initial: x y; advanced: z"),
+            new LabelledText("Curriculum", "cantrips: a, b; 9th: end"),
+            new LabelledText(string.Empty, "continued"),
+        });
+
+        Assert.Equal(new[] { ("Spell List", "arcane"), ("Patron Skill", "Crafting"), ("Curriculum", "cantrips: a one, b two; 1st: c, d; 2nd: e f, g"), ("School Spells", "initial: x y; advanced: z"), ("Curriculum", "cantrips: a, b; 9th: end continued") },
+            parts.Select(p => (p.Label, p.Text)).ToArray());
+        Assert.Equal("arcane", EntriesStage.TraditionOf(parts));
+        Assert.Null(EntriesStage.TraditionOf(new[] { new LabelledText("Spell List", "made-up; Patron Skill Crafting") }));
+        // A lowercase part that follows a line that is no curriculum is not joined to it.
+        Assert.Equal(2, EntriesStage.TidySubclassParts(new[] { new LabelledText("Spell List", "arcane"), new LabelledText(string.Empty, "lowercase start") }).Count);
+    }
+
+    [Fact]
+    public void ACurriculumLine_MustListSpellsOfThePack_RankByRank()
+    {
+        FinalEntry Spell(string name) => new() { Id = EntriesStage.Slug(name), Type = "spell", Name = name };
+        FinalEntry School(string line) => new() { Id = "school", Type = "subclass", Name = "School", Features = { new FinalFeature("School", 1, "text\n**Curriculum.** " + line + "\n**School Spells.** initial: x", new List<string>()) } };
+        var spells = new[] { "Alpha", "Beta", "Gamma", "Delta", "Eps", "Zeta", "Eta", "Theta", "Iota", "Kappa", "Lambda" }.Select(Spell).ToList();
+        var ranks = new[] { "cantrips", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th" };
+        string Line(string name) => string.Join("; ", ranks.Select(r => r + ": alpha, " + name));
+
+        Assert.Equal((1, 20), ImportPipeline.CheckCurriculum(spells.Append(School(Line("beta"))).ToList()));
+        // A name that is no spell of the pack (a word the layout set in by mistake), a rank out of order, and a rank missing.
+        Assert.Contains("no spell of the pack", Assert.Throws<DegreesException>(() => ImportPipeline.CheckCurriculum(spells.Append(School(Line("beta stray"))).ToList())).Message);
+        Assert.Contains("not the cantrips", Assert.Throws<DegreesException>(() => ImportPipeline.CheckCurriculum(spells.Append(School(string.Join("; ", ranks.Reverse().Select(r => r + ": alpha")))).ToList())).Message);
+        Assert.Contains("not the cantrips", Assert.Throws<DegreesException>(() => ImportPipeline.CheckCurriculum(spells.Append(School(string.Join("; ", ranks.Take(9).Select(r => r + ": alpha")))).ToList())).Message);
+    }
+
+    [Fact]
+    public void AHexAPatronGives_GoesToTheListItsSpellsKindSays_AndAnUnknownNameStaysText()
+    {
+        FinalEntry Spell(string name, string kind) => new() { Id = EntriesStage.Slug(name), Type = "spell", Name = name, Kind = kind };
+        var patron = new FinalEntry
+        {
+            Id = "patron", Type = "subclass", Name = "Patron",
+            Features = { new FinalFeature("Patron", 1, "text", new List<string> { "{ to: @hex, entries: [@hex(chime)] }", "{ to: @hex, entries: [@hex(tick tock)] }", "{ to: @hex, entries: [@hex(nothing)] }" }) },
+        };
+        var left = ImportPipeline.ResolveGrantNames(new List<FinalEntry> { Spell("Chime", "cantrip"), Spell("Tick Tock", "focus"), patron });
+
+        Assert.Equal(2, left.Resolved);
+        Assert.Equal(new[] { "spell:nothing" }, left.Left);
+        Assert.Equal(new[] { "{ to: grantedSpells, entries: [chime] }", "{ to: focusSpells, entries: [tick-tock] }" }, patron.Features[0].Adds);
+        // The sentences that make them: a hex or a hex cantrip, with or without "the"; a choice or a sentence about something else makes none.
+        Assert.Equal(new[] { "{ to: @hex, entries: [@hex(chime)] }", "{ to: @hex, entries: [@hex(gear)] }" }, EntriesStage.NamedGrants("Bells ring. You gain the chime hex cantrip, and a spirit follows. You learn the gear hex. You learn one of the made-up hexes."));
+    }
+
+    [Fact]
+    public void AClassFeatOfAnEarlierClassesName_KeepsItsShippedId_AndTheLaterOnesTakeTheirClass()
+    {
+        ParsedEntry Feat(string id, string classKey, int row) => new() { Id = id, Type = "feat", Folder = "feats", ClassKey = classKey, RowNumber = row, Name = id };
+        var earlier = Feat("shared", "bard", 3);
+        var later = Feat("shared", "witch", 5);
+        EntriesStage.SuffixClassFeats(new List<ParsedEntry> { later, earlier }, new Dictionary<string, string> { ["shared"] = "feats" });
+        Assert.Equal(new[] { "shared", "shared-witch" }, new[] { earlier.Id, later.Id });
+
+        // Nothing shipped under the id: each class feat of the group takes its class, as in chapter 8a.
+        var a = Feat("other", "bard", 3);
+        var b = Feat("other", "witch", 5);
+        EntriesStage.SuffixClassFeats(new List<ParsedEntry> { a, b }, new Dictionary<string, string>());
+        Assert.Equal(new[] { "other-bard", "other-witch" }, new[] { a.Id, b.Id });
+
+        // A general feat of the id (no class) keeps it against every class feat, whatever shipped.
+        var general = new ParsedEntry { Id = "plain", Type = "feat", Folder = "feats", RowNumber = 1, Name = "plain" };
+        var classFeat = Feat("plain", "wizard", 9);
+        EntriesStage.SuffixClassFeats(new List<ParsedEntry> { general, classFeat }, new Dictionary<string, string> { ["plain"] = "feats" });
+        Assert.Equal(new[] { "plain", "plain-wizard" }, new[] { general.Id, classFeat.Id });
+
+        // A general feat that comes after the class feat that shipped the id does not take it from that feat: the class feat keeps its id, and the two ids that are left are the run's to refuse.
+        var shippedClassFeat = Feat("later", "bard", 3);
+        var laterGeneral = new ParsedEntry { Id = "later", Type = "feat", Folder = "feats", RowNumber = 9, Name = "later" };
+        EntriesStage.SuffixClassFeats(new List<ParsedEntry> { shippedClassFeat, laterGeneral }, new Dictionary<string, string> { ["later"] = "feats" });
+        Assert.Equal(new[] { "later", "later" }, new[] { shippedClassFeat.Id, laterGeneral.Id });
+    }
+
+    [Fact]
+    public void ADcSaidWithoutTheWordClass_IsTheClassDc_AConditionalRankIsNotModelled_AndTheSpellDcIsStillTheSpellDc()
+    {
+        var row = Take(CasterRowYaml).Single();
+        var grants = EntriesStage.SentenceGrants("The lamps glow brighter. Your proficiency rank for your tinker DC increases to expert. The lamps burn low. If you have gadget spells, your proficiency rank in lamp lore increases to master.", row, out var notModelled);
+
+        Assert.Equal(new[] { "{ to: classDc, rank: expert }" }, grants);
+        Assert.Equal(1, notModelled);
+        Assert.Equal(new[] { "{ to: spellDc, rank: master }" }, EntriesStage.SentenceGrants("Springs wind tight. Your proficiency rank for spell DCs increases to master.", row, out _));
+        // A conditional sentence of another shape still fails the run.
+        Assert.Throws<DegreesException>(() => EntriesStage.SentenceGrants("If you have gadget spells, you are better at light armor and proficiency.", row, out _));
+    }
+
+    [Fact]
+    public void ASpellTablesTitleMayEndInAStar_AndALoneMarkAmongItsLinesIsNeitherARowNorANote()
+    {
+        Assert.True(EntriesStage.IsSpellTableBlock(Rows("body", 0, 0, "2 — 2 — 2 —", "†", "2 2 2 — 2 1", "†", "2 — 2 2 2 1", "a note the layout set after them"), false));
+        Assert.True(EntriesStage.IsSpellTableBlock(Rows("body", 0, 0, "* A note that goes on", "†", "another note"), false) == false);
+        Assert.True(EntriesStage.IsSpellTableBlock(Rows("body", 0, 0, "Level Cantrips 1st 2nd", "†", "1 5 2 — — —", "* a note", "†", "a second note"), false));
+
+        // The class's own title with a star and the marks among its rows: the same rows as the plain title.
+        var plain = RunCaster(Caster()).Final.Single(e => e.Type == "class").Raw.Single(r => r.Label == "spellcasting").Text;
+        var blocks = Caster();
+        var header = blocks.FindIndex(b => b.Role == "block-header" && b.Lines[0] == "TINKER SPELLS PER DAY");
+        blocks[header] = Plain("block-header", 443, "TINKER SPELLS PER DAY*");
+        blocks[header + 1] = blocks[header + 1] with { Lines = blocks[header + 1].Lines.SelectMany(l => l.StartsWith("19 ", StringComparison.Ordinal) ? new[] { "†", l } : new[] { l }).ToList(), Info = null };
+        Assert.Equal(plain, RunCaster(blocks).Final.Single(e => e.Type == "class").Raw.Single(r => r.Label == "spellcasting").Text);
+    }
+
+    [Fact]
+    public void ThePreparedCasterWhoSaysUpTo_IsPrepared()
+    {
+        var blocks = Caster();
+        var at = blocks.FindIndex(b => b.Lines.Count == 1 && b.Lines[0].Contains("can prepare two", StringComparison.Ordinal));
+        blocks[at] = blocks[at] with { Lines = new List<string> { blocks[at].Lines[0].Replace("can prepare two", "can prepare up to two", StringComparison.Ordinal) } };
+
+        Assert.Equal("\"prepared\"", RunCaster(blocks).Final.Single(e => e.Type == "class").Raw.Single(r => r.Label == "casting").Text);
+    }
+
+    private static List<SpineNode> WithNodes(List<SpineNode> spine, string before, params SpineNode[] nodes)
+    {
+        spine.InsertRange(spine.FindIndex(n => n.Title == before), nodes);
+        return spine;
+    }
+
+    private static SpineNode Node(int depth, string title, string? parent = null) =>
+        new(depth, title, parent == null ? new[] { "Chapter 9: Makers", "Tinker", "Class Features", title } : new[] { "Chapter 9: Makers", "Tinker", "Class Features", parent, title }, 1, 1, false);
+
+    private const string LoreYaml = """
+        rows:
+          - { chapter: makers, book: pc, parser: classes, target: class, folder: classes, approved: true, columns: 1, subclassFeature: Gadget Style, ruleSections: [Gadget Lore], ruleSectionCategory: Classes, saveAttributes: { Fortitude: con, Reflex: dex, Will: wis }, paths: [["Chapter 9: Makers", "Tinker"]] }
+        """;
+
+    private static List<Block> WithLore(List<Block> blocks)
+    {
+        blocks.InsertRange(blocks.FindIndex(b => b.Role == "section" && b.Lines[0] == "Tinker Feats"), new[]
+        {
+            Plain("section", 355, "Gadget Lore"), Plain("rules", 354, "The lore of gadgets, in two tiers."), Plain("entry-header", 353, "Basic Lore"), Plain("rules", 352, "Lore of cogs."),
+            Plain("entry-header", 351, "Greater Lore"), Plain("rules", 350, "Lore of springs."),
+        });
+        return blocks;
+    }
+
+    [Fact]
+    public void ARuleSectionAmongTheFeatures_IsOneRuleWithItsChildrensTitlesAsParagraphs_AndTheChildrenAreCountedAgainstTheBookmarks()
+    {
+        var spine = WithNodes(Spine(), "Tinker Feats", Node(3, "Gadget Lore"), Node(4, "Basic Lore", "Gadget Lore"), Node(4, "Greater Lore", "Gadget Lore"));
+        var result = ImportPipeline.Run(Book(WithLore(Tinker())), spine, Take(LoreYaml), RedactionTable.Parse("normalization: 2\nrows: []\n"), "pc");
+        var rule = result.Final.Single(e => e.Type == "rule");
+
+        Assert.Equal(("gadget-lore", "Classes", "pc > Chapter 9: Makers > Tinker > Class Features"), (rule.Id, rule.Category, rule.Source));
+        Assert.Equal("The lore of gadgets, in two tiers.\nBasic Lore\nLore of cogs.\nGreater Lore\nLore of springs.", rule.Description);
+        // The section is no feature of the class (its bookmark is left out of the feature bookmarks), and the table of advancement still agrees.
+        Assert.DoesNotContain(result.Final.Single(e => e.Type == "class").Features, f => f.Name.Contains("Lore", StringComparison.Ordinal));
+        // A bookmark of the section that no heading has, and a row that names a section the range lacks.
+        Assert.Contains("rule section", Assert.Throws<DegreesException>(() => ImportPipeline.Run(Book(WithLore(Tinker())),
+            WithNodes(Spine(), "Tinker Feats", Node(3, "Gadget Lore"), Node(4, "Basic Lore", "Gadget Lore"), Node(4, "Greater Lore", "Gadget Lore"), Node(4, "Extra Lore", "Gadget Lore")), Take(LoreYaml), RedactionTable.Parse("normalization: 2\nrows: []\n"), "pc")).Message);
+        Assert.Contains("rule sections", Assert.Throws<DegreesException>(() => ImportPipeline.Run(Book(Tinker()), Spine(), Take(LoreYaml), RedactionTable.Parse("normalization: 2\nrows: []\n"), "pc")).Message);
+    }
+
+    private const string ThesisYaml = """
+        rows:
+          - { chapter: makers, book: pc, parser: classes, target: class, folder: classes, approved: true, columns: 1, subclassFeature: Gadget Style, grantsByName: true, choiceFeatures: [Cog Thesis], saveAttributes: { Fortitude: con, Reflex: dex, Will: wis }, paths: [["Chapter 9: Makers", "Tinker"]] }
+        """;
+
+    private static List<Block> WithThesis()
+    {
+        var blocks = Tinker(table: TableRows(first: "Ancestry and background, initial proficiencies, gadget style, cog thesis, tinker feat"));
+        blocks.InsertRange(blocks.FindIndex(b => b.Role == "entry-header" && b.Lines[0] == "Keen Eyes 3rd"), new[]
+        {
+            Plain("entry-header", 385, "Cog Thesis"), Plain("rules", 384, "Pick one of the options below."), Plain("block-header", 383, "Option One"), Plain("rules", 382, "You gain the Alpha Gizmo tinker feat."),
+            Plain("block-header", 381, "Option Two"), Plain("rules", 380, "Another option, with its own words."),
+        });
+        return blocks;
+    }
+
+    private static List<SpineNode> ThesisSpine(bool dropChild = false)
+    {
+        var spine = WithNodes(Spine(), "Keen Eyes (3rd)", Node(3, "Cog Thesis"), Node(4, "Option One", "Cog Thesis"), Node(4, "Option Two", "Cog Thesis"));
+        if (dropChild)
+        {
+            spine.RemoveAt(spine.FindIndex(n => n.Title == "Option Two"));
+        }
+
+        return spine;
+    }
+
+    [Fact]
+    public void AFeatureThatListsTheOptionsOfAChoice_MakesNoGrantByName_AndItsOptionsAreCountedAgainstTheBookmarks()
+    {
+        var withRow = ImportPipeline.Run(Book(WithThesis()), ThesisSpine(), Take(ThesisYaml), RedactionTable.Parse("normalization: 2\nrows: []\n"), "pc");
+        var without = ImportPipeline.Run(Book(WithThesis()), ThesisSpine(), Take(ThesisYaml.Replace("choiceFeatures: [Cog Thesis], ", string.Empty, StringComparison.Ordinal)), RedactionTable.Parse("normalization: 2\nrows: []\n"), "pc");
+
+        // The option's sentence ("You gain the N feat") is one choice of several, not a grant of the class; without the row it would be one.
+        Assert.Empty(withRow.Final.Single(e => e.Type == "class").Features.Single(f => f.Name == "Cog Thesis").Adds);
+        Assert.Contains("{ to: feats, entries: [alpha-gizmo] }", without.Final.Single(e => e.Type == "class").Features.Single(f => f.Name == "Cog Thesis").Adds);
+        Assert.Contains("**Option One.**", withRow.Final.Single(e => e.Type == "class").Features.Single(f => f.Name == "Cog Thesis").Description);
+        // A bookmark of the options that no heading has.
+        Assert.Contains("choice feature", Assert.Throws<DegreesException>(() => ImportPipeline.Run(Book(WithThesis()), ThesisSpine(dropChild: true), Take(ThesisYaml), RedactionTable.Parse("normalization: 2\nrows: []\n"), "pc")).Message);
+    }
+
+    [Fact]
+    public void TheBoxesOfAClassAmongItsFeatures_AndATableCutInTwo_ReadAsTheyDoBeforeThem()
+    {
+        var plain = ImportPipeline.Run(Book(Tinker()), Spine(), Take(), RedactionTable.Parse("normalization: 2\nrows: []\n"), "pc").Final.Single(e => e.Type == "class");
+
+        // The section title of the features and the first feature come before the boxes of the proficiencies and the advancement table (a page's second column holds the boxes).
+        var blocks = Tinker();
+        var features = blocks.FindIndex(b => b.Role == "section" && b.Lines[0] == "Class Features");
+        var moved = blocks.GetRange(features, 4);
+        blocks.RemoveRange(features, 4);
+        blocks.InsertRange(blocks.FindIndex(b => b.Role == "block-header" && b.Lines[0] == "INITIAL PROFICIENCIES"), moved);
+        // And the table's block is cut after its tenth line (a row runs over).
+        var table = blocks.FindIndex(b => b.Role == "body" && b.Lines[0] == "Your Level Class Features");
+        var whole = blocks[table];
+        blocks[table] = whole with { Lines = whole.Lines.Take(10).ToList(), Info = whole.Info!.Take(10).ToList() };
+        blocks.Insert(table + 1, whole with { Lines = whole.Lines.Skip(10).ToList(), Info = whole.Info!.Skip(10).ToList() });
+
+        var moved1 = ImportPipeline.Run(Book(blocks), Spine(), Take(), RedactionTable.Parse("normalization: 2\nrows: []\n"), "pc").Final.Single(e => e.Type == "class");
+        Assert.Equal(plain.Raw.Select(r => (r.Label, r.Text)), moved1.Raw.Select(r => (r.Label, r.Text)));
+        Assert.Equal(plain.Features.Select(f => (f.Name, f.Level, string.Join('|', f.Adds))), moved1.Features.Select(f => (f.Name, f.Level, string.Join('|', f.Adds))));
+        Assert.Equal(new[] { "Ancestry and Background", "Initial Proficiencies", "Gadget Style", "Keen Eyes", "Tinker Feats" }, moved1.Features.Select(f => f.Name));
+    }
+
+    [Fact]
+    public void ASubclassARowRenames_IsGivenTheIdOfItsNewName_AndItsOwnFeatureRowTheNameToo()
+    {
+        var sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("Springs"))).ToLowerInvariant();
+        var redactions = RedactionTable.Parse($"normalization: 2\nrows:\n  - book: pc\n    entry: springs\n    field: name\n    span: {{ sha256: \"{sha}\", length: 7 }}\n    action: replace\n    text: \"Coils\"\n    reason: \"A name said in other words.\"\n");
+        var result = ImportPipeline.Run(Book(Tinker()), Spine(), Take(), redactions, "pc");
+        var coils = result.Final.Single(e => e.Id == "coils");
+
+        Assert.Equal("Coils", coils.Name);
+        Assert.Equal("Coils", coils.Features[0].Name);
+        Assert.DoesNotContain(result.Final, e => e.Id == "springs");
+        Assert.Equal("Cogs", result.Final.Single(e => e.Id == "cogs").Features[0].Name); // another subclass is not touched
+    }
+
+    [Fact]
+    public void TheNameOfMoreThanOneWordThatARowRemoves_IsAPhraseForTheDenylist_AndAOneWordNameIsNot()
+    {
+        string Row(string entry, string name, string text) =>
+            $"  - book: pc\n    entry: {entry}\n    field: name\n    span: {{ sha256: \"{Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(name))).ToLowerInvariant()}\", length: {name.Length} }}\n    action: replace\n    text: \"{text}\"\n    reason: \"A name said in other words.\"\n";
+        var redactions = RedactionTable.Parse("normalization: 2\nrows:\n" + Row("alpha-gizmo", "Alpha Gizmo", "Coil Tool") + Row("springs", "Springs", "Coils"));
+        var blocks = Book(Tinker());
+        var ranges = TakeStage.Resolve(Spine(), blocks, Take());
+
+        var phrases = ImportPipeline.RedactedPhrases(blocks, ranges, redactions, "pc", Spine());
+
+        Assert.Equal(new[] { new[] { "alpha", "gizmo" } }, phrases.Select(p => p.Select(w => w.ToLowerInvariant()).ToArray()));
+        Assert.Equal(Denylist.PhraseHash(new[] { "alpha", "gizmo" }), Denylist.PhraseHash(new[] { "Alpha", "Gizmo" }));
+        // A name the replacement says again is not removed.
+        Assert.Empty(ImportPipeline.RedactedPhrases(blocks, ranges, RedactionTable.Parse("normalization: 2\nrows:\n" + Row("alpha-gizmo", "Alpha Gizmo", "Alpha Gizmo")), "pc", Spine()));
+    }
+
+    private static string FirstFeatText(Block body)
+    {
+        var blocks = Caster();
+        var at = blocks.FindIndex(b => b.Role == "block-header" && b.Lines[0].StartsWith("ALPHA GIZMO", StringComparison.Ordinal)) + 2;
+        blocks[at] = body;
+        return RunCaster(blocks).Final.Single(e => e.Id == "alpha-gizmo").Description;
+    }
+
+    private static Block Lined(params (double Left, string Label, string Text)[] lines) =>
+        new(1, 0, "body", 60, 0, 300, 288, lines.Select(l => l.Text).ToList(), lines.Select(l => new LineInfo(l.Left, l.Label.Length > 0 || l.Text.Length > 30 ? 290 : 200, l.Label)).ToList());
+
+    [Fact]
+    public void AListItemsWrappedLines_AreItsOwn_AndAPlainLineAtTheBulletsEdgeAfterASentenceIsAParagraph()
+    {
+        var text = FirstFeatText(Lined((60, string.Empty, "You gain one of these commands, and you pick it."), (68, "• Guard", "• Guard Watches the door and shouts"), (78, string.Empty, "if a thief comes."),
+            (68, "• Hide", "• Hide Looks like an old wall."), (78, string.Empty, "It is an illusion."), (68, string.Empty, "You can have only one hut at a time, and a new one ends the last.")));
+
+        Assert.Contains("- **Guard.** Watches the door and shouts if a thief comes.\n- **Hide.** Looks like an old wall. It is an illusion.\nYou can have only one hut at a time, and a new one ends the last.", text);
+    }
+
+    [Fact]
+    public void AnInlineActionWithNoTraits_AndOneCutAfterItsFrequency_AreSetOutAsTheClassFeaturesActionsAre()
+    {
+        var plain = FirstFeatText(Lined((60, string.Empty, "Your familiar gains this."), (60, "Gizmo Strike", "Gizmo Strike [2 actions] Frequency once per day; Effect Your familiar hits a thing.")));
+        Assert.Equal("Your familiar gains this.\n**Gizmo Strike (2 actions).**\n**Frequency.** once per day\n**Effect.** Your familiar hits a thing.", plain);
+        Assert.DoesNotContain("**Traits.**", plain);
+
+        var cut = FirstFeatText(Lined((60, string.Empty, "Your familiar gains this."), (60, "Gizmo Strike", "Gizmo Strike [2 actions] (spirit) Frequency once per day;"), (60, "Effect", "Effect Your familiar hits a thing.")));
+        Assert.Contains("**Gizmo Strike (2 actions).**\n**Traits.** spirit\n**Frequency.** once per day\n**Effect.** Your familiar hits a thing.", cut);
+    }
+
+    [Fact]
+    public void ABulletWithNoBoldName_IsADash_AndTheExplanationOfALabelKeepsItsFullStop()
+    {
+        var text = FirstFeatText(Lined((60, string.Empty, "You do it in one of two ways:"), (68, string.Empty, "• If the spell hurts, you add a bonus."), (68, string.Empty, "• If it does not, you shape it.")));
+        Assert.Contains("- If the spell hurts, you add a bonus.\n- If it does not, you shape it.", text);
+        Assert.DoesNotContain("•", text);
+
+        var parts = EntriesStage.TidySubclassParts(new[] { new LabelledText("Spell List", "You use this tradition; Patron Skill You are trained in the skill of it") });
+        Assert.Equal(new[] { ("Spell List", "You use this tradition."), ("Patron Skill", "You are trained in the skill of it") }, parts.Select(p => (p.Label, p.Text)).ToArray());
+    }
 }
