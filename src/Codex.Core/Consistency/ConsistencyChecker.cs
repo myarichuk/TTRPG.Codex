@@ -32,7 +32,9 @@ public static class ConsistencyChecker
         new HazardShapeCheck(),
         new TagCaseCheck(),
         new CampaignHealthCheck(),
-        new LibraryReferenceCheck()
+        new LibraryReferenceCheck(),
+        // The checks the campaign's game system adds (system.yaml issueChecks): data rules and compiled checks, each guarded.
+        new SystemRuleCheck()
     };
 
     /// <summary>The noisy checks: true but rarely worth the DM's time. Never part of <see cref="Default"/>; a caller that asks for them

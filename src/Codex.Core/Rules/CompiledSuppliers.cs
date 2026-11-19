@@ -62,6 +62,11 @@ public static class CompiledSuppliers
         {
             if (widget.Type != null) yield return ($"The widget \"{name}\"", widget.Type, typeof(ICodexWidget));
         }
+
+        foreach (var check in system.IssueChecks)
+        {
+            if (!string.IsNullOrWhiteSpace(check.Type)) yield return ($"The issue check \"{check.Id}\"", check.Type, typeof(ICodexIssueCheck));
+        }
     }
 
     /// <summary>Whether the system names compiled code anywhere.</summary>

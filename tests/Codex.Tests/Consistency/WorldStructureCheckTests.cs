@@ -379,7 +379,7 @@ public class WorldStructureCheckTests
         var first = ConsistencyChecker.Run(V2World(), ConsistencyChecker.Default);
         var found = first.Select(i => i.Check).Distinct().ToList();
         // The checks that cannot share a world with another: an uninstalled system hides the campaign's other findings, and a retired owner is skipped.
-        Assert.Empty(CheckNames.V2.Except(found).Except(new[] { CheckNames.CampaignSystem, CheckNames.HazardShape }));
+        Assert.Empty(CheckNames.V2.Except(found).Except(new[] { CheckNames.CampaignSystem, CheckNames.HazardShape, CheckNames.SystemRule, CheckNames.CheckFailed })); // these have worlds of their own
 
         Assert.Equal(first.Select(Fx.Flat), ConsistencyChecker.Run(V2World(), ConsistencyChecker.Default).Select(Fx.Flat));
         Assert.Equal(first.Select(Fx.Flat), ConsistencyChecker.Run(V2World(reversed: true), ConsistencyChecker.Default).Select(Fx.Flat));

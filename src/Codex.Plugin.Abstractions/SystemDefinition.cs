@@ -694,6 +694,11 @@ public class SystemDefinition
     /// <summary>Named functions, callable from any formula by name.</summary>
     public Dictionary<string, FunctionDefinition> Functions { get; set; } = new();
 
+    /// <summary>Checks this system adds to the consistency checker (docs/WORLD_BUILDER.md, 9): rules over the sheet's own keys (<c>rule</c>), or
+    /// compiled code (<c>type</c>), each with a severity and a message. They run beside the app's own checks, are listed to the game master and the
+    /// model with the others, and cannot break the run. See <see cref="IssueCheckDefinition"/>.</summary>
+    public List<IssueCheckDefinition> IssueChecks { get; set; } = new();
+
     /// <summary>Widgets a DLL supplies (<c>{ type: "Acme.Street.Implants, Acme.Street" }</c>), placed by name in a layout like
     /// the host's own (<c>{ widget: implants }</c>).</summary>
     public Dictionary<string, WidgetDefinition> Widgets { get; set; } = new();

@@ -139,6 +139,12 @@ public static class SystemDefinitionLoader
         }
 
         var errors = Validate(definition).ToList();
+        // The issueChecks section does not forgive a key it does not read: a misspelt one would make a check quietly do nothing.
+        if (yaml.Contains("issueChecks", StringComparison.Ordinal))
+        {
+            errors.AddRange(IssueCheckProblems.UnknownKeys(UnknownYamlKeys.Find(yaml, typeof(SystemDefinition), CamelCaseNamingConvention.Instance)));
+        }
+
         if (errors.Count > 0)
         {
             throw WithErrors(new InvalidDataException($"{sourceName ?? "system.yaml"} is invalid:\n - " + string.Join("\n - ", errors)), errors.ToArray());
@@ -281,6 +287,11 @@ public static class SystemDefinitionLoader
         }
 
         foreach (var error in ValidateHazards(definition))
+        {
+            yield return error;
+        }
+
+        foreach (var error in IssueCheckProblems.Problems(definition))
         {
             yield return error;
         }

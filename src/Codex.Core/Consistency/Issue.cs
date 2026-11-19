@@ -110,6 +110,10 @@ public static class CheckNames
     public const string PackProblem = "pack-problem";
     public const string LibraryReference = "library-reference";
 
+    // The checks a game system adds (system.yaml issueChecks), and the one issue that says a compiled one could not run.
+    public const string SystemRule = "system-rule";
+    public const string CheckFailed = "check-failed";
+
     // Noise: true but rarely worth the DM's time, so off unless asked for (scope "noise" or the check's name).
     public const string OrphanPage = "orphan-page";
     public const string BacklinkMismatch = "backlink-mismatch";
@@ -120,7 +124,7 @@ public static class CheckNames
     public static readonly IReadOnlyList<string> V2 = new[]
     {
         PlaceTree, DuplicateSlug, NearDuplicateTitle, FactReference, DanglingPlacement, OwnerNotMember, HomebrewReference, HomebrewDuplicate, HazardShape,
-        TagCase, CampaignSystem, SystemDrift, PackDrift, PackProblem, LibraryReference
+        TagCase, CampaignSystem, SystemDrift, PackDrift, PackProblem, LibraryReference, SystemRule, CheckFailed
     };
 
     /// <summary>The checks that are off unless asked for, in the order they run.</summary>
@@ -134,7 +138,7 @@ public static class CheckNames
         BrokenLink, UnlinkedMention, DanglingMention, DanglingReference, EmptyBio, EmptyBody, TodoMarker, EmptyInventory,
         SecretUnclosed, SecretUnknownAudience, SecretForMissing, VisibilityLeak, SheetRule,
         PlaceTree, DuplicateSlug, NearDuplicateTitle, FactReference, DanglingPlacement, OwnerNotMember, HomebrewReference, HomebrewDuplicate, HazardShape,
-        TagCase, CampaignSystem, SystemDrift, PackDrift, PackProblem, LibraryReference,
+        TagCase, CampaignSystem, SystemDrift, PackDrift, PackProblem, LibraryReference, SystemRule, CheckFailed,
         OrphanPage, BacklinkMismatch, PersonPageNoActor, RetiredMention
     };
 }

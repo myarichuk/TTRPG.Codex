@@ -130,3 +130,29 @@ public sealed class ContractPlugin : ICodexSystemPlugin
 
     public IEnumerable<UISchema> GetUISchemas() => Array.Empty<UISchema>();
 }
+
+// ---- compiled consistency checks (docs/WORLD_BUILDER.md, 9; tests/Codex.Tests/Consistency/SystemIssueCheckTests.cs) ----
+
+/// <summary>The sample compiled check: a character whose name is too long for a sheet's plate. Plain data in, plain data out; the same world gives the same issues.</summary>
+public sealed class LongNameCheck : ICodexIssueCheck
+{
+    public IReadOnlyList<CodexIssue> Check(CodexIssueWorld world) => world.Actors
+        .Where(a => !a.Retired && a.Name.Length > 20)
+        .OrderBy(a => a.Id, StringComparer.Ordinal)
+        .Select(a => new CodexIssue("actor", a.Id, "-", "info", "Consistency.System.LongName", new[] { a.Name },
+            $"\"{a.Name}\" has a name too long for the sheet's plate.", "Ask the DM for a shorter name; do not shorten it yourself."))
+        .ToList();
+}
+
+/// <summary>Throws: the run goes on, and the check is one info issue.</summary>
+public sealed class ThrowingCheck : ICodexIssueCheck
+{
+    public IReadOnlyList<CodexIssue> Check(CodexIssueWorld world) => throw new InvalidOperationException("boom");
+}
+
+/// <summary>Returns an issue of a kind the host does not know.</summary>
+public sealed class BadRowCheck : ICodexIssueCheck
+{
+    public IReadOnlyList<CodexIssue> Check(CodexIssueWorld world) =>
+        new[] { new CodexIssue("spaceship", "x", "-", "error", "Consistency.System.Bad", Array.Empty<string>(), "Not a thing.") };
+}
