@@ -2420,3 +2420,35 @@ dimensions
 healing
 preparations
 weaknesses
+# Chapter 9, second half (the introduction): the words of the new entries' names (the steps of character creation, the six attribute modifiers, the sidebars) and the ordinary words that a sentence or a label capitalizes. Game terms and ordinary words only.
+edicts
+gender
+pronouns
+after
+excellence
+sheet
+six
+age
+alternate
+building
+buy
+character
+characters
+checklist
+concept
+creating
+defining
+finishing
+leveling
+narrative
+record
+select
+starting
+understanding
+voluntary
+xp
+inventory
+# The words of the take-list's own titles that its test asks for (the titles of the steps and of the sections below them).
+modifiers
+strikes
+boosts
