@@ -344,7 +344,7 @@ public static partial class EntriesStage
         foreach (var block in slice)
         {
             // A stat table is the items rows' (see StatTables), and the caption under a picture of an item is no text.
-            if (block.Role == StatTables.Role || (range.Row.ArtLabels && IsArtLabel(block)) || IsArtPageLabel(range.Row, block))
+            if (block.Role == StatTables.Role || block.Role == BlocksStage.ArtRole || (range.Row.ArtLabels && IsArtLabel(block)) || IsArtPageLabel(range.Row, block))
             {
                 continue;
             }
@@ -398,7 +398,7 @@ public static partial class EntriesStage
                 continue;
             }
 
-            reader.Read(block);
+            reader.Read(block.Role == "body" && range.Row.BodyAsRules.Contains(block.Page) ? block with { Role = "rules" } : block);
             if (range.Row.Subheadings && block.Role == "tag")
             {
                 reader.EndParagraph(); // the trait line under a heading is a paragraph of its own

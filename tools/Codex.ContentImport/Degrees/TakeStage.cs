@@ -31,7 +31,8 @@ public static class TakeStage
     {
         ["entries"] = new[] { "entry-header", "rules", "body", "tag", "icon", "table" },
         // A stat table (armor, shields, weapons) is carved out of its page for the items row to read; a range of another row that holds one reads past it.
-        ["rules"] = new[] { "rules", "body", "tag", "icon", "table", StatTables.Role },
+        // A block of a picture's own text (a row's artRegions) is claimed too: it is skipped, and hashed with the text left out.
+        ["rules"] = new[] { "rules", "body", "tag", "icon", "table", StatTables.Role, BlocksStage.ArtRole },
         // The descriptions of the items: paragraphs that open with a name. The stat tables of their pages are the row's other half.
         ["items"] = new[] { "rules", "body", "tag", "icon", StatTables.Role },
         ["glossary"] = new[] { "body" },
@@ -392,5 +393,7 @@ public static class TakeStage
         blocks.Blocks.Where((_, i) => !ranges.Any(r => r.Contains(i) || r.InLead(i)) && !(planned ?? Array.Empty<(int Start, int End)>()).Any(r => i >= r.Start && i < r.End))
             .Concat(blocks.Dropped ?? new List<Block>())
             // The labels of a picture that a row skips (see TakeRow.ArtPages) are no entry's text, so the denylist hashes them like any other text left out.
-            .Concat(blocks.Blocks.Where((b, i) => ranges.Any(r => (r.Row.ArtPages.Count > 0 || r.Row.SidebarSpill.Count > 0) && r.Contains(i) && EntriesStage.IsArtPageLabel(r.Row, b))));
+            .Concat(blocks.Blocks.Where((b, i) => ranges.Any(r => (r.Row.ArtPages.Count > 0 || r.Row.SidebarSpill.Count > 0) && r.Contains(i) && EntriesStage.IsArtPageLabel(r.Row, b))))
+            // The text of a picture inside a taken range (see TakeRow.ArtRegions) is no entry's text either.
+            .Concat(blocks.Blocks.Where((b, i) => b.Role == BlocksStage.ArtRole && ranges.Any(r => r.Contains(i))));
 }

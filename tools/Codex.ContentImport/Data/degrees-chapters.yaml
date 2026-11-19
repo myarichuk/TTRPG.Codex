@@ -53,6 +53,9 @@
 #   actionGroups (actions parser) the section's child bookmarks are groups of actions (headings in the entry-header font), counted against those headings; a group that holds no text of its own makes no rule
 #   sidebars  (rules parser) the path of a sidebar bookmark that states rules; a bookmark of two sidebars ("Sidebars: X & Y") takes the title of the one taken as its last segment, and the other stays out. entryNames may rename it by its last segment
 #   A path segment may be the hash of a title the file must not hold: `#` and the SHA-256 of the title's slug (which is also the `entryHash` of the redaction row that renames the entry); the entry is named by the title until that row renames it, and the hash is not in its source
+#   bands / artRegions / bodyAsRules / leftOutSections (rules parser) bands: a page that is one column with strips of two (`page: [[top, bottom, x]]`, y in points from the foot): each strip is cut at its gutter x, and the blocks follow the page from the top;
+#             artRegions: rectangles (`page: [[left, top, right, bottom]]`) that a picture's own text fills (a character sheet shown whole): a block wholly inside one is skipped as text and hashed with the text left out; bodyAsRules: pages whose text is set in
+#             the sidebars' font though it is the page's own, read as rules text; leftOutSections: the sections below the taken ones that the row leaves out, so every bookmark below a taken section is counted as an entry's own, inside a taken path or left out
 #   planned   (below the rows) sections a later chapter takes: not read, only not counted as "left out" by the denylist generator
 # Dropped material is never named here: the setting, religion, example-of-play and map sections are simply absent.
 # A path that names anything but a game term does not belong in this file.
@@ -1133,11 +1136,128 @@ rows:
     splitLoneFields: true
     paths:
       - ["Chapter 8: Playing the Game", Exploration Mode, Exploration Activities]
-# Sections a later chapter takes (only the introduction's rules parts are left: the rules of play are taken above). They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
-# Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
-planned:
-  - book: pc
-    paths:
+  # Chapter 9, second half: the rules parts of the introduction. Every heading in the section font is one `rule` entry (its own text, or its whole range), as in the first half; the children in the entry-header
+  # font are rules of their own where a player looks them up (the basics of play, the three modes, the steps and the details of the last two steps), and the children in the block-header font are paragraphs of the rule
+  # above them. The sections that other chapters already hold (the overviews of the ancestries and the classes, the sample character) are left out, with the setting and the religion, as `leftOutSections` names.
+  - chapter: introduction
+    book: pc
+    parser: rules
+    target: rule
+    category: Introduction
+    approved: true
+    tableRows: true
+    subheadings: true
+    # A section's own text, before its first child section.
+    own:
       - ["Chapter 1: Introduction", Basics of Play]
       - ["Chapter 1: Introduction", Playing the Game]
+      - ["Chapter 1: Introduction", Format of Rules]
       - ["Chapter 1: Introduction", Character Creation]
+      - ["Chapter 1: Introduction", Character Creation, "Step 9: Calculate Modifiers"]
+      - ["Chapter 1: Introduction", Character Creation, "Step 10: Finishing Details"]
+    paths:
+      - ["Chapter 1: Introduction", Basics of Play, Defining Characters]
+      - ["Chapter 1: Introduction", Basics of Play, Creating a Narrative]
+      - ["Chapter 1: Introduction", Playing the Game, Exploration]
+      - ["Chapter 1: Introduction", Playing the Game, Encounters]
+      - ["Chapter 1: Introduction", Playing the Game, Downtime]
+      - ["Chapter 1: Introduction", Format of Rules, Understanding Actions]
+      - ["Chapter 1: Introduction", Format of Rules, Reading Rules]
+      - ["Chapter 1: Introduction", Leveling Up]
+      - ["Chapter 1: Introduction", Character Creation, "Step 5: Choose a Class"]
+      - ["Chapter 1: Introduction", Character Creation, "Step 6: Finish Attribute Modifiers"]
+      - ["Chapter 1: Introduction", Character Creation, "Step 7: Record Class Details"]
+      - ["Chapter 1: Introduction", Character Creation, "Step 8: Buy Equipment"]
+      - ["Chapter 1: Introduction", Character Creation, "Step 9: Calculate Modifiers", Perception]
+      - ["Chapter 1: Introduction", Character Creation, "Step 9: Calculate Modifiers", Saving Throws]
+      - ["Chapter 1: Introduction", Character Creation, "Step 9: Calculate Modifiers", Melee Strikes and Ranged Strikes]
+      - ["Chapter 1: Introduction", Character Creation, "Step 9: Calculate Modifiers", Skills]
+      - ["Chapter 1: Introduction", Character Creation, "Step 10: Finishing Details", Edicts and Anathema]
+      - ["Chapter 1: Introduction", Character Creation, "Step 10: Finishing Details", Deity]
+      - ["Chapter 1: Introduction", Character Creation, "Step 10: Finishing Details", Age]
+      - ["Chapter 1: Introduction", Character Creation, "Step 10: Finishing Details", Gender and Pronouns]
+      - ["Chapter 1: Introduction", Character Creation, "Step 10: Finishing Details", Class DC]
+      - ["Chapter 1: Introduction", Character Creation, "Step 10: Finishing Details", Hero Points]
+      - ["Chapter 1: Introduction", Character Creation, "Step 10: Finishing Details", Armor Class (AC)]
+      - ["Chapter 1: Introduction", Character Creation, "Step 10: Finishing Details", Bulk]
+    # The sections below the taken ones that are not taken: what the ancestries' and the classes' overviews list is in the chapters of the ancestries and the classes, and the sample character is an example.
+    leftOutSections:
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", Ancestries]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", Classes]
+      - ["Chapter 1: Introduction", Character Creation, Sample Character]
+    # The next sections (the key terms and the setting's map) open their pages with titles that no block holds whole (the key terms' title is set across the gutter): these sections end where their page does.
+    endsAtPage:
+      - ["Chapter 1: Introduction", Playing the Game, Downtime]
+      - ["Chapter 1: Introduction", Leveling Up]
+    # The sections whose text goes on over a page break above the next title.
+    runsToTitle:
+      - ["Chapter 1: Introduction", Basics of Play, Defining Characters]
+      - ["Chapter 1: Introduction", Character Creation, "Step 7: Record Class Details"]
+    # The key of the action symbols on page 16 (a picture with the name of each symbol under it: the paragraphs say the same): the picture's text is no rule's.
+    artRegions:
+      16: [[300, 720, 520, 400]]
+    sidebars:
+      - ["Chapter 1: Introduction", Leveling Up, "Sidebar: Leveling-Up Checklist"]
+      - ["Chapter 1: Introduction", Character Creation, "Step 9: Calculate Modifiers", "Sidebar: Spells and Spellcasting"]
+    # Names of our own for sections whose title is another entry's (a rule of an earlier chapter of the same title).
+    entryNames:
+      Playing the Game: Playing the Game Overview
+      Perception: Perception Modifier
+      Skills: Skill Modifiers
+      Hero Points: Starting Hero Points
+      Bulk: Bulk Limit
+  # The first steps of character creation, on the pages of the character sheet's picture. The children of step 1 are headings in two fonts (three in the entry-header font, the others in the block-header font) and the children of the
+  # attribute modifiers and of the overview are all in the block-header font, so their count by the entry-header font does not apply (the bookmarks are counted against the entries by the other row's leftOutSections).
+  - chapter: introduction
+    book: pc
+    parser: rules
+    target: rule
+    category: Introduction
+    approved: true
+    tableRows: true
+    subheadings: true
+    countsDiffer: The children of step 1 are headings in two fonts (three in the entry-header font, the others in the block-header font) and the children of the six attribute modifiers and of the overview are headings in the block-header font, so the count by the entry-header font does not apply; the bookmarks are counted against the entries by the other row's leftOutSections.
+    own:
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept"]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", The Six Attribute Modifiers]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", Attribute Modifier Overview]
+    paths:
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", "Ancestry, Background, Class, or Details"]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", Faith]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", The Six Attribute Modifiers, Strength]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", The Six Attribute Modifiers, Dexterity]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", The Six Attribute Modifiers, Constitution]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", The Six Attribute Modifiers, Intelligence]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", The Six Attribute Modifiers, Wisdom]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", The Six Attribute Modifiers, Charisma]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", Attribute Modifier Overview, Attribute Boosts]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", Attribute Modifier Overview, Attribute Flaws]
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", Your Allies]
+      - ["Chapter 1: Introduction", Character Creation, "Step 2: Start Building Attribute Modifiers"]
+      - ["Chapter 1: Introduction", Character Creation, "Step 3: Select an Ancestry"]
+      - ["Chapter 1: Introduction", Character Creation, "Step 4: Pick a Background"]
+    # The sections whose text goes on over a page break above the next title (the box of the step goes on in the next column or page).
+    runsToTitle:
+      - ["Chapter 1: Introduction", Character Creation, "Step 4: Pick a Background"]
+    # Page 20 is one column with strips of two (the attributes are set in pairs); page 23 is two columns under the picture of the character sheet.
+    bands:
+      20: [[590, 365, 288], [230, 40, 288]]
+    gutterAt:
+      23: 314
+    # Page 20's text is set in the font of the sidebars, but it is the page's own: read as the rules text is.
+    bodyAsRules: [20]
+    # The character sheet is shown in a picture on pages 19, 23 and 24 with all its labels: the picture's text is no rule's.
+    artRegions:
+      19: [[75, 240, 312, 38]]
+      23: [[90, 700, 510, 368]]
+      24: [[118, 700, 470, 368]]
+    sidebars:
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", "Sidebar: Character Sheet"]
+      - ["Chapter 1: Introduction", Character Creation, "Sidebars: Alternate Ancestry Boosts & Optional: Voluntary Flaws", Alternate Ancestry Boosts]
+      - ["Chapter 1: Introduction", Character Creation, "Sidebars: Alternate Ancestry Boosts & Optional: Voluntary Flaws", "Optional: Voluntary Flaws"]
+    # The sidebar whose title has a prefix is named without it; the box of step 1 (what to write on the sheet) is an entry of its own, as the other steps' boxes are paragraphs of theirs.
+    entryNames:
+      Character Sheet: Character Sheet Notes
+      "Optional: Voluntary Flaws": Voluntary Flaws
+# Nothing is planned any more: the rules parts of the introduction were the last, and they are taken above. Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed.
+planned: []

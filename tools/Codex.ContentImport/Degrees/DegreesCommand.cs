@@ -187,6 +187,12 @@ public static class DegreesCommand
             output.WriteLine($"taken sidebars: {blocks.TakenSidebars?.Count ?? 0} kept apart, with {sidebars.Labels} degree labels at line starts = {sidebars.Degrees} degree sections of their entries");
         }
 
+        foreach (var cover in ImportPipeline.CheckBookmarkCoverage(spine, result.Ranges))
+        {
+            output.WriteLine($"bookmarks of the taken sections: {cover.Bookmarks} = {cover.Entries} entries' own + {cover.Folded} inside a taken path + {cover.LeftOut} of the sections the row leaves out; " +
+                $"sidebars: {cover.TakenSidebars} taken, {cover.LeftOutSidebars} left out");
+        }
+
         if (result.Ranges.Any(r => r.Row.Parser == "ancestries"))
         {
             var ancestries = ImportPipeline.CheckAncestryCounts(spine, blocks, result.Ranges, result.Parsed);

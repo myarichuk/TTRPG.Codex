@@ -4,7 +4,7 @@ using System.Text;
 namespace Codex.ContentImport.Degrees;
 
 /// <summary>What one approved row did, for <c>import-report.yaml</c>: counts and ids only, never a field value.</summary>
-public sealed record ReportRow(string Chapter, string Parser, string Target, int Entries, List<string> Ids, int Sidebars, int Openers, List<int> RedactionRows, int PageReferencesLeft, int ReadPastBlocks = 0);
+public sealed record ReportRow(string Chapter, string Parser, string Target, int Entries, List<string> Ids, int Sidebars, int Openers, List<int> RedactionRows, int PageReferencesLeft, int ReadPastBlocks = 0, BookmarkCoverage? Coverage = null);
 
 /// <summary>
 /// The fixed YAML writer for the generated pack and the only code that writes it. It does not use a serializer: every scalar is double-quoted (or a
@@ -233,6 +233,18 @@ public static class PackEmitter
             {
                 // Blocks of a taken section that the row reads past (overview tables, boxes of examples): counted here, since they are in no entry.
                 sb.Append("  readPastBlocks: ").Append(r.ReadPastBlocks.ToString(CultureInfo.InvariantCulture)).Append('\n');
+            }
+
+            if (r.Coverage is { } c)
+            {
+                // What the run counted from the document below the sections of the row (see ImportPipeline.CheckBookmarkCoverage): the bookmarks, where each went, and the sidebars.
+                sb.Append("  bookmarkCoverage:\n");
+                sb.Append("    bookmarks: ").Append(c.Bookmarks.ToString(CultureInfo.InvariantCulture)).Append('\n');
+                sb.Append("    own: ").Append(c.Entries.ToString(CultureInfo.InvariantCulture)).Append('\n');
+                sb.Append("    folded: ").Append(c.Folded.ToString(CultureInfo.InvariantCulture)).Append('\n');
+                sb.Append("    leftOut: ").Append(c.LeftOut.ToString(CultureInfo.InvariantCulture)).Append('\n');
+                sb.Append("    sidebarsTaken: ").Append(c.TakenSidebars.ToString(CultureInfo.InvariantCulture)).Append('\n');
+                sb.Append("    sidebarsLeftOut: ").Append(c.LeftOutSidebars.ToString(CultureInfo.InvariantCulture)).Append('\n');
             }
 
             sb.Append("  redactionRows: [").Append(string.Join(", ", r.RedactionRows.OrderBy(n => n).Select(n => n.ToString(CultureInfo.InvariantCulture)))).Append("]\n");

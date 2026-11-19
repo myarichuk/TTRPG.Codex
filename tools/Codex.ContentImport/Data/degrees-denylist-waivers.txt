@@ -743,5 +743,38 @@ throw dc
 vertical jump
 you seek
 your perception
+# Chapter 9, second half (the introduction): pairs that the left-out text of the introduction made and that the taken text now says: the headings of the action types and of the edicts (`single actions`, `required edicts`, `changing edicts`), the words of a stat block's format
+# (`action name`, `feat name`, and a label with the next sentence's first word: `prerequisites any`, `special any`, `frequency the`, `requirements sometimes`, `trigger reactions`), and a word of a pointer to a chapter with the next sentence's first word (`chapter if`, the number between them is no word; the pointer is cut). None names a person, place, faith or people.
+single actions
+action name
+prerequisites any
+changing edicts
+special any
+frequency the
+required edicts
+requirements sometimes
+feat name
+trigger reactions
+chapter if
+# Chapter 9, second half: xp (experience points) and inventory are game terms of the creation steps that a left-out heading or the sheet's labels capitalize; neither names a person, place, faith or people.
+xp
+inventory
+# Chapter 9, second half: the introduction's sections that the take-list leaves out (the key terms, the example of play, the notes on using the book) are left-out text now that nothing is planned, and capitalize these ordinary words at the start of a sentence or of a heading
+# (a skill feat's name, a kind of runner in a feat's name, a verb). Each was read in the pack's sentence; none names a person, place, faith or people.
+# One word of this group is also a surname in the book's credits, so it passes only as the noun of the one sentence that needs it (a compound line: the word, then the word that follows it) and stays denied everywhere else.
+compound chase or
+assurance
+runner
+hone
+sketch
+# Pairs of game terms (a name and its kind, two ranks, two kinds of action, a statistic and a label) that the same left-out text makes and the pack's text says.
+character sheet
+ancestry feat
+skill feat
+points xp
+master legendary
+free actions
+dc untrained
+rock runner
 # Chapter 8d: archer is an ordinary word of a ranger archetype's text that a left-out heading capitalizes in a pun on a gap; it names no place, group or person.
 archer
