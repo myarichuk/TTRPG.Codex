@@ -430,6 +430,26 @@ moments:
   - { key: catchBreath,  label: Short breather }
   - { key: sessionStart, label: Session start }
 
+# What the table does at zero hit points (rules getting-knocked-out and death-rule). A player character at 0 is knocked out: unconscious, not
+# dead; most other creatures die there, and the GM can revive a significant one. Healing above 0 wakes a creature (the Revive button brings
+# back one that died). This system has no death saves, so the table shows none. The rule's massive damage (twice the maximum in one blow)
+# is another rule from the flag below, so the flag is off. Gaining the dying condition when knocked out, and raising it when a dying
+# creature takes damage, are the GM's to set on the console for now; the recovery check at the start of each turn is rules.js.
+vitals:
+  down:
+    condition: Unconscious
+    deadCondition: Dead
+    instantDeathAtMax: false
+    nonPlayersDieAtZero: true
+
+# Events the table raises. The recovery check at the start of a turn of a dying creature is a script (dying-rule): it rolls a flat check,
+# moves the dying value by the degree, and kills at the value the creature dies at. A session begins with 1 hero point (starting-hero-points);
+# the points left at the end of a session are lost, and setting the track to 1 does the same.
+events:
+  turnStart: { script: rules.js#onTurnStart }
+  sessionStart:
+    - { intents: [{ set: { track: heroPoints, to: 1 } }] }
+
 # The book's conditions, by the names of the pack's `conditions/` entries (rules-core), which hold each one's text. The effects below are the part
 # the engine can express; a condition with no effect there has a rule the engine cannot compute, and its entry is the whole of it.
 conditions:
@@ -839,6 +859,9 @@ sheetKinds:
     values:
       - { key: senseDc, label: Sense DC, formula: "10 + level + 2 + mod(wis)", modifiers: senseDc }
       - { key: speed,   label: Speed,    formula: "ancestrySpeed > 0 ? ancestrySpeed : 25", modifiers: speed }
+    # Hero points (hero-points): at most 3 at a time.
+    tracks:
+      - { key: heroPoints, label: Hero Points, max: 3, display: boxes }
     lists:
       - key: trinkets
         label: Trinkets
