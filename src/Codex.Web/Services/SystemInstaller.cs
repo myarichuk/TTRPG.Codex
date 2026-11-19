@@ -256,9 +256,19 @@ public sealed class SystemInstaller
     {
         if (!MayReload(user)) return SystemInstallResult.Fail("Only the server's admin changes whether systems run their scripts.");
         var on = ScriptsOn(_configuration, settings);
-        if (_loader.ScriptsAllowed == on) return new SystemInstallResult(true, null);
-        _loader.ScriptsAllowed = on;
-        return await ReloadAsync(user);
+        // Under the gate with installs, removals and reloads, so none of them reads the flag half way through a load, and two saves cannot race.
+        await _gate.WaitAsync();
+        try
+        {
+            if (_loader.ScriptsAllowed == on) return new SystemInstallResult(true, null);
+            _loader.ScriptsAllowed = on;
+            var reload = await _loader.ReloadAsync();
+            return reload.Error == null ? new SystemInstallResult(true, null, reload) : SystemInstallResult.Fail(reload.Error);
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
 
     /// <summary>A reload the server starts itself, when files under the content roots changed (<see cref="SystemsWatcher"/>,

@@ -735,7 +735,7 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
        replaced DLL gets a new context.
      - Scripts off (rule 7): the admin's setting (`ServerSettingsDocument.SystemScripts`, else `Codex:Systems:Scripts`, on by
        default) sets `PluginLoader.ScriptsAllowed`. Off, a system that names scripts still loads, without them
-       (`SystemScripts.LeaveOut`): a scripted event has no handler, a scripted function gives 0, nothing is read or run, the
+       (`SystemScripts.LeaveOut`): a scripted event has no handler, a scripted function gives 0, nothing is parsed or run (the file is still read and fingerprinted), the
        fingerprint is unchanged, and one load warning names what was left out (`SystemDefinition.ScriptsLeftOut`,
        `SystemSummary.ScriptsLeftOut`). The archive check says the same as a warning, so an upload still installs.
        Saving the setting reloads the systems.

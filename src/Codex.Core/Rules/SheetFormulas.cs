@@ -125,10 +125,14 @@ public sealed partial class SheetFormulas
             {
                 // A script function takes the parameters its export declares (rules.js's hitPoints(body, will): two).
                 // A script left out (the server has scripts turned off) is not run to ask: its source says how many, and it gives 0.
-                var declared = system.ScriptsLeftOut.Contains(function.Script, StringComparer.Ordinal)
-                    ? SystemScripts.DeclaredArity(system, function.Script) ?? function.Reads?.Count ?? 0
-                    : SystemScripts.For(system).Arity(function.Script) ?? function.Reads?.Count;
-                if (declared is { } arity) Register(name, arity);
+                // It gives 0 whatever it is called with, so it takes any number of arguments.
+                if (system.ScriptsLeftOut.Contains(function.Script, StringComparer.Ordinal))
+                {
+                    for (var count = 0; count <= MaxFunctionArguments; count++) Register(name, count);
+                    continue;
+                }
+
+                if ((SystemScripts.For(system).Arity(function.Script) ?? function.Reads?.Count) is { } arity) Register(name, arity);
                 continue;
             }
 

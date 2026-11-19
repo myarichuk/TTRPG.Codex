@@ -405,7 +405,7 @@ internal static class TableEvents
                 return EventMessage.Of("Campaign.ClockFull", ClockTerm(CampaignObjects.Clocks(runtime.CampaignObjectState).FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase)), name));
             case SheetEvents.LogKind:
                 var args = intent.Fields.GetValueOrDefault("args") is IEnumerable values and not string
-                    ? values.Cast<object?>().Select(a => a?.ToString() ?? "").Select(a => runtime.GetActorDocument(a)?.Name ?? a).ToArray()
+                    ? values.Cast<object?>().Select(a => a?.ToString() ?? "").Select(a => runtime.GetActorDocument(a)?.Name ?? system.DisplayValue(a)).ToArray()
                     : Array.Empty<string>();
                 var key = intent.Fields.GetValueOrDefault("key")?.ToString() ?? "";
                 return EventMessage.Of("Sheet.Log", who, Term(system, key), string.Join(", ", args));

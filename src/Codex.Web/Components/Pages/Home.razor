@@ -125,7 +125,7 @@ else
                 }
                 @if (SelectedSystem?.ScriptsLeftOut is { Count: > 0 })
                 {
-                    <div class="field-hint" role="status" data-testid="new-campaign-scripts-off"><LucideIcon IconName="alert-triangle" Size="14" /> @L["Page.About.ScriptsOffHint"]</div>
+                    <ScriptsOffNote Class="field-hint" TestId="new-campaign-scripts-off" />
                 }
                 @if (Loader.FailedSystems.Count > 0)
                 {

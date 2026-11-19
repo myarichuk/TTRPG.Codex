@@ -38,6 +38,9 @@ public sealed record SystemArchiveCheck(
 /// </summary>
 public static class SystemArchive
 {
+    /// <summary>How the check's warning about scripts turned off begins, so a page that says it in the reader's language can leave this one out.</summary>
+    public const string ScriptsOffWarningStart = "It names scripts (";
+
     public const int MaxEntries = 2000;
     public const long MaxEntryBytes = 16L * 1024 * 1024;
     public const long MaxBytes = 64L * 1024 * 1024;
@@ -90,7 +93,7 @@ public static class SystemArchive
         if (!scriptsAllowed && scripts.Count > 0)
         {
             // Installing is allowed: the system loads without its scripts, and the table does those rules by hand (PluginLoader.ScriptsLeftOutMessage).
-            warnings.Add($"It names scripts ({string.Join(", ", scripts)}), and this server has scripts turned off, so it will load without them and those rules are done by hand.");
+            warnings.Add($"{ScriptsOffWarningStart}{string.Join(", ", scripts)}), and this server has scripts turned off, so it will load without them and those rules are done by hand.");
         }
 
         if (unknownKeys.Count > 0) warnings.Add(PluginLoader.UnknownKeysMessage(unknownKeys));

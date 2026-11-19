@@ -102,7 +102,7 @@ public sealed class SystemScripts
     /// <summary>
     /// Leaves the scripts out of a system a server with scripts turned off loads (the setting is the server's, and the files did not change, so the
     /// fingerprint is left as it is): an event whose handler is a script gets no handler, as if system.yaml had none, so the table does that step by hand,
-    /// and a function that is a script gives 0 (<see cref="SystemDefinition.ScriptsLeftOut"/>). No script is read, parsed or run. Returns the references
+    /// and a function that is a script gives 0 (<see cref="SystemDefinition.ScriptsLeftOut"/>). No script is parsed or run (the file is still read and fingerprinted). Returns the references
     /// left out, in the order the system names them; none when it names no script.
     /// </summary>
     public static IReadOnlyList<string> LeaveOut(SystemDefinition system)
@@ -117,16 +117,6 @@ public sealed class SystemScripts
 
         system.SetScriptsLeftOut(left);
         return left;
-    }
-
-    /// <summary>How many parameters the exported function declares, read from the source text without running it (<c>export function hitPoints(body, will)</c>:
-    /// two). Null when the file or the export is not there, or is not written as a plain function declaration.</summary>
-    public static int? DeclaredArity(SystemDefinition system, string reference)
-    {
-        var (file, export) = Split(reference);
-        if (!system.Scripts.TryGetValue(file, out var source) || export.Length == 0) return null;
-        var found = System.Text.RegularExpressions.Regex.Match(source, @"export\s+function\s+" + System.Text.RegularExpressions.Regex.Escape(export) + @"\s*\(([^)]*)\)");
-        return found.Success ? found.Groups[1].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Length : null;
     }
 
     internal static (string File, string Export) Split(string reference)

@@ -492,7 +492,7 @@ else
         if (before.SystemScripts != stored.SystemScripts && (await Auth.GetAuthenticationStateAsync()).User is { } admin)
         {
             var applied = await Installer.ApplyScriptsSettingAsync(stored, admin);
-            if (!applied.Succeeded) return Flash.Error(applied.Error ?? "");
+            if (!applied.Succeeded) return Flash.Error(L["Admin.Settings.Scripts.ReloadFailed", applied.Error ?? ""]);
         }
 
         return Flash.Success(L["Admin.Settings.Saved"]);

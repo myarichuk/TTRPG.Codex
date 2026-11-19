@@ -39,15 +39,7 @@
                 </h3>
                 @if (system.ScriptsLeftOut is { Count: > 0 })
                 {
-                    @* Visible text, not colour alone: what is done by hand, and for the admin a way to the setting (which explains what turning scripts on means). *@
-                    <div class="mb-1" data-testid="about-system-scripts-off">
-                        <span class="pill pill-warning"><LucideIcon IconName="alert-triangle" Size="12" /> @L["Page.About.ScriptsOff"]</span>
-                        <span class="small-muted ms-1" role="status">@L["Page.About.ScriptsOffHint"]</span>
-                        @if (mayReload)
-                        {
-                            <a class="small ms-1" href="/admin#settings-scripts" data-testid="about-turn-on-scripts">@L["Page.About.ScriptsTurnOn"]</a>
-                        }
-                    </div>
+                    <ScriptsOffNote Pill="true" Link="mayReload" Class="mb-1" TestId="about-system-scripts-off" />
                 }
                 @if (Loader.LoadProblems.Any(p => string.Equals(p.SystemId, system.Id, StringComparison.OrdinalIgnoreCase)))
                 {

@@ -1,0 +1,29 @@
+@* A system whose scripts are left out because this server has them turned off: its rules for them are done by hand. Said in words, never by colour
+   alone, and as a status so it is read out. For the admin it links to the switch, which explains what turning scripts on means (it never flips it). *@
+<div class="@Class" role="status" data-testid="@TestId">
+    @if (Pill)
+    {
+        <span class="pill pill-warning"><LucideIcon IconName="alert-triangle" Size="12" /> @L["Page.About.ScriptsOff"]</span>
+    }
+    else
+    {
+        <LucideIcon IconName="alert-triangle" Size="14" />
+    }
+    <span class="@(Pill ? "small-muted ms-1" : "")" data-testid="@(TestId)-text">@L["Page.About.ScriptsOffHint"]</span>
+    @if (Link)
+    {
+        <a class="small ms-1" href="/admin#settings-scripts" data-testid="@(TestId)-turn-on">@L["Page.About.ScriptsTurnOn"]</a>
+    }
+</div>
+
+@code {
+    /// <summary>Show the "Scripts off" pill before the sentence (the systems list), rather than only an icon.</summary>
+    [Parameter] public bool Pill { get; set; }
+
+    /// <summary>Show the link to the admin's switch: only for the admin, who may use it.</summary>
+    [Parameter] public bool Link { get; set; }
+
+    [Parameter] public string TestId { get; set; } = "scripts-off";
+
+    [Parameter] public string? Class { get; set; }
+}

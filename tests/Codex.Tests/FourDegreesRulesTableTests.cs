@@ -80,6 +80,39 @@ public class FourDegreesRulesTableTests : IClassFixture<RavenDbFixture>, IDispos
     }
 
     [Fact]
+    public async Task AdvancingInitiativeOntoADyingCharacter_RollsItsCheck_AndAnotherCreaturesTurnLogsNothing()
+    {
+        // The real path: the combat console's next turn. Its dice are the table's own, so the outcome is any of the four; every one moves dying 2.
+        var campaignId = Guid.NewGuid().ToString();
+        var other = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Lurk", Kind = ActorKind.PlayerCharacter };
+        other.Sheet["HP"] = 12L;
+        other.Sheet["HP_Max"] = 20L;
+        ActorSheetSync.ApplySheetToState(other, System, _registry);
+        await _actors.SaveAsync(other);
+        var (runtime, session, hero) = await TableAsync(dying: 2, wounded: 1);
+        await using var _ = runtime;
+        runtime.Hydrate(new[] { hero, other });
+        var pool = runtime.GetEntity(hero.Id)!.Value.Get<ResourcePoolComponent>();
+        pool.Set("HP", 0);
+        pool.Set("condition_dying", 2);
+        pool.Set("condition_wounded", 1);
+        await runtime.EnqueueAsync(new SetInitiativeCommand(other.Id, 20));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(hero.Id, 10));
+
+        await runtime.EnqueueAsync(new NextTurnCommand()); // onto the dying character
+
+        var log = await LogAsync(session);
+        Assert.Single(log, d => d.Contains("rolled d20"));
+        Assert.Contains(log, d => d.Contains("Recovery check DC 12"));
+        var dead = CodexWorld.HasStatus(runtime.GetEntity(hero.Id)!.Value, "Dead");
+        Assert.True(dead || pool.Get("condition_dying") != 2);
+
+        await runtime.EnqueueAsync(new NextTurnCommand()); // onto the healthy one: nothing is rolled or said
+        Assert.Single(await LogAsync(session), d => d.Contains("rolled d20"));
+        Assert.DoesNotContain(await LogAsync(session), d => d.Contains("Lurk: the turnStart"));
+    }
+
+    [Fact]
     public async Task ASuccessfulRecoveryCheck_EndsDying_AndRaisesWounded()
     {
         var (runtime, session, hero) = await TableAsync(dying: 1, wounded: 1);

@@ -101,7 +101,11 @@ public sealed class FourDegreesRulesScriptTests : IDisposable
         var intents = TurnStart(System, Sheet(dying), dice);
 
         var said = Said(intents);
-        Assert.Equal($"log key=Recovery check args=[{face},{10 + dying}]", said[0]);
+        var degree = expected.StartsWith("condition add=Dying value=3", StringComparison.Ordinal) ? "Critical failure"
+            : expected.StartsWith("condition add=Dying value=2", StringComparison.Ordinal) && dying == 1 ? "Failure"
+            : expected.StartsWith("condition add=Dying value=2", StringComparison.Ordinal) ? "Success"
+            : face == 20 ? "Critical success" : "Success";
+        Assert.Equal($"log key=Recovery check args=[DC {10 + dying},{degree}]", said[0]);
         Assert.Equal(expected, string.Join("|", said.Skip(1)));
         Assert.Equal(1, dice.Used);
     }
@@ -112,14 +116,15 @@ public sealed class FourDegreesRulesScriptTests : IDisposable
     [InlineData(3, 0, 10, true)] // dying 3, a failure: 4, dead
     [InlineData(2, 1, 10, true)] // doomed 1: dead at 3
     [InlineData(1, 3, 10, true)] // doomed 3: dead at 1, and a failure makes 2
-    [InlineData(1, 3, 15, false)] // a success: out of dying (0) before it reaches 1
+    [InlineData(1, 3, 15, true)] // dying 1 is already the death value with doomed 3: no check can save it
+    [InlineData(3, 1, 20, true)] // already at the death value (dying 3, doomed 1): dies, whatever the die would say
     public void RecoveryCheck_AtTheDeathValue_Kills_AndLessWhenDoomed(int dying, int doomed, int face, bool dies)
     {
         var intents = TurnStart(System, Sheet(dying, doomed), new SequenceDiceSource(new[] { face }));
 
         var kinds = intents.Select(i => i.Kind).ToList();
         Assert.Equal(dies, kinds.Contains("kill"));
-        if (dies) Assert.Equal(new[] { "log", "condition", "condition", "kill" }, kinds);
+        if (dies) Assert.Equal(new[] { "condition", "condition", "kill" }, kinds.Where(k => k != "log")); // a check is logged when one was rolled
         if (dies) Assert.All(intents.Where(i => i.Kind == "condition"), i => Assert.NotNull(i.Fields.GetValueOrDefault("remove")));
     }
 

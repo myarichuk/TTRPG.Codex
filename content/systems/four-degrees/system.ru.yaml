@@ -341,6 +341,13 @@ values:
   Gear: Снаряжение
   Hero Points: Очки героизма
   Recovery check: Проверка восстановления
+  DC 11: СЛ 11
+  DC 12: СЛ 12
+  DC 13: СЛ 13
+  Critical success: Критический успех
+  Success: Успех
+  Failure: Провал
+  Critical failure: Критический провал
   Dead: Мёртв
   turnStart: Начало хода
 

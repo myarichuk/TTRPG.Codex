@@ -10,6 +10,9 @@
 // What a recovery check does to the dying value, by degree (0 critical failure, 1 failure, 2 success, 3 critical success).
 const STEP = [2, 1, -1, -2];
 
+// The words for those degrees, as the log says them.
+const DEGREES = ["Critical failure", "Failure", "Success", "Critical success"];
+
 // The dying value at which a creature dies.
 const DEATH = 4;
 
@@ -24,16 +27,18 @@ export function onTurnStart(ev, sheet, ctx) {
   if (dying <= 0 || sheet.conditions.includes("Dead")) return [];
   if ((sheet.resources.HP ?? 0) > 0) return recover();
 
-  // Doomed lowers the dying value a creature dies at; one that lowers it to 0 kills at once, with no check.
+  // Doomed lowers the dying value a creature dies at. One already at that value (set by hand, or doomed rose) dies with no check.
   const deathAt = Math.max(0, DEATH - (values.Doomed ?? 0));
-  if (deathAt === 0) return die();
+  if (dying >= deathAt) return die();
 
   const dc = 10 + dying;
   const natural = ctx.d(20);
   // A flat check: the die is the whole total.
-  const next = dying + STEP[ctx.call("degree", natural, dc, natural)];
+  const degree = ctx.call("degree", natural, dc, natural);
+  const next = dying + STEP[degree];
+  // The log reads "Recovery check DC 12, Failure" (the die is said by the host); the words are the system's own, so they translate.
   /** @type {Intent} */
-  const said = { log: { key: "Recovery check", args: [natural, dc] } };
+  const said = { log: { key: "Recovery check", args: [`DC ${dc}`, DEGREES[degree]] } };
   if (next >= deathAt) return [said, ...die()];
 
   if (next <= 0) return [said, ...recover()];
