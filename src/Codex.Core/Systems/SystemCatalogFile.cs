@@ -35,6 +35,13 @@ public sealed record SystemCatalogFile(int Format, IReadOnlyList<SystemCatalogEn
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+    private static readonly System.Text.RegularExpressions.Regex ArchiveNameRule =
+        new(@"^system-[a-z0-9_-]+-[0-9A-Za-z.+-]+\.zip$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    /// <summary>Whether <paramref name="file"/> is a name an archive may be released and fetched under: <c>system-&lt;id&gt;-&lt;version&gt;.zip</c>,
+    /// with what a system id may hold (lower-case letters, digits, <c>-</c>, <c>_</c>) and no slash.</summary>
+    public static bool IsArchiveName(string? file) => file != null && ArchiveNameRule.IsMatch(file);
+
     /// <summary>The name a system's archive is released under.</summary>
     public static string ArchiveName(SystemDefinition system) => $"system-{system.Id}-{system.Version}.zip";
 

@@ -313,7 +313,7 @@
   <data name="Page.Systems.Bundled" xml:space="preserve"><value>Входит в приложение</value></data>
   <data name="Page.Systems.Downloading" xml:space="preserve"><value>Скачиваем «{0}»…</value></data>
   <data name="Page.Systems.Checking" xml:space="preserve"><value>Проверяем «{0}»…</value></data>
-  <data name="Page.Systems.Ready" xml:space="preserve"><value>Система «{0}» скачана и проверена. Посмотрите, что изменится, ниже и подтвердите установку.</value></data>
+  <data name="Page.Systems.Ready" xml:space="preserve"><value>Система «{0}» скачана и проверена. Посмотрите, что изменится, выше и подтвердите установку.</value></data>
   <data name="Page.Systems.DownloadFailed" xml:space="preserve"><value>Не удалось скачать «{0}». Проверьте соединение и повторите или установите скачанный файл.</value></data>
   <data name="Page.Systems.DownloadRefused" xml:space="preserve"><value>Файл системы «{0}» не совпал с тем, что описан в списке, поэтому он не использован. Ничего не установлено.</value></data>
   <data name="Page.Systems.FileHeading" xml:space="preserve"><value>Установить из файла</value></data>

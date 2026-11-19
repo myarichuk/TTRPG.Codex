@@ -46,14 +46,14 @@ public sealed class SystemCatalogTests
         var factory = Substitute.For<IHttpClientFactory>();
         factory.CreateClient(Arg.Any<string>()).Returns(_ => new HttpClient(server, disposeHandler: false));
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { [SystemCatalog.CatalogUrlKey] = url }).Build();
-        return new SystemCatalog(factory, configuration, NullLogger<SystemCatalog>.Instance, "1.4.0");
+        return new SystemCatalog(factory, configuration, NullLogger<SystemCatalog>.Instance, "1.4.0", isRelease: true);
     }
 
-    private static SystemCatalog Default(FakeServer server, string version = "1.4.0", Clock? clock = null)
+    private static SystemCatalog Default(FakeServer server, string version = "1.4.0", Clock? clock = null, bool release = true)
     {
         var factory = Substitute.For<IHttpClientFactory>();
         factory.CreateClient(Arg.Any<string>()).Returns(_ => new HttpClient(server, disposeHandler: false));
-        return new SystemCatalog(factory, new ConfigurationBuilder().Build(), NullLogger<SystemCatalog>.Instance, version, clock);
+        return new SystemCatalog(factory, new ConfigurationBuilder().Build(), NullLogger<SystemCatalog>.Instance, version, release, clock);
     }
 
     // ---- Where the list is read from ----
@@ -71,13 +71,34 @@ public sealed class SystemCatalogTests
     [Theory]
     [InlineData("1.0.0")]
     [InlineData("1.0.0+abc")]
+    [InlineData("1.4.0")]
     [InlineData("not-a-version")]
-    public void ALocalBuild_ReadsTheLatestRelease(string version)
+    public void ALocalBuild_ReadsTheLatestRelease_WhateverItsVersionSays(string version)
     {
-        var catalog = Default(new FakeServer(), version);
+        var catalog = Default(new FakeServer(), version, release: false);
 
         Assert.Equal(SystemCatalog.LatestUrl, catalog.CatalogUri!.ToString());
         Assert.True(catalog.FromLatest);
+    }
+
+    [Fact]
+    public void AReleaseNumbered1_0_0_ReadsItsOwnRelease()
+    {
+        var catalog = Default(new FakeServer(), "1.0.0", release: true);
+
+        Assert.EndsWith("/releases/download/v1.0.0/systems.json", catalog.CatalogUri!.ToString());
+        Assert.False(catalog.FromLatest);
+    }
+
+    [Fact]
+    public async Task AConfiguredUrlOverPlainHttp_TurnsTheListOff()
+    {
+        var server = new FakeServer();
+        var catalog = Catalog(server, "http://mirror.example.org/codex/systems.json");
+
+        Assert.False(catalog.Enabled);
+        Assert.Null(await catalog.ListAsync());
+        Assert.Empty(server.Requests);
     }
 
     [Fact]
@@ -124,15 +145,112 @@ public sealed class SystemCatalogTests
     }
 
     [Fact]
-    public async Task AFailedList_IsNotKept_SoTheNextTryAsksAgain()
+    public async Task AFailedList_IsKeptForHalfAMinute_ThenAskedAgain_AndTryAgainAsksAtOnce()
     {
         var server = new FakeServer();
-        var catalog = Default(server);
+        var clock = new Clock();
+        var catalog = Default(server, clock: clock);
 
         Assert.Null(await catalog.ListAsync());
         server.Respond = _ => Json(SystemCatalogFile.Write(Array.Empty<SystemCatalogEntry>()));
+        Assert.Null(await catalog.ListAsync());
+        Assert.Single(server.Requests);
 
+        clock.Now += TimeSpan.FromSeconds(31);
         Assert.Empty((await catalog.ListAsync())!.Systems);
+        Assert.Equal(2, server.Requests.Count);
+
+        server.Respond = _ => new HttpResponseMessage(HttpStatusCode.NotFound);
+        Assert.Null(await catalog.ListAsync(refresh: true));
+        Assert.Equal(3, server.Requests.Count);
+    }
+
+    [Fact]
+    public async Task ABadUriOrArgument_IsAFailure_NotAnException()
+    {
+        var server = new FakeServer { Respond = _ => throw new FormatException("bad header") };
+
+        Assert.Null(await Default(server).ListAsync());
+        var archive = new byte[] { 1 };
+        Assert.Equal(SystemDownloadFailure.Unreachable, (await Default(server).DownloadAsync(Entry(archive))).Failure);
+    }
+
+    [Fact]
+    public async Task AnIdWithAnUnderscore_IsListedAndDownloadable()
+    {
+        var archive = new byte[] { 1, 2 };
+        var entry = Entry(archive, "system-my_rules-1.0.0.zip") with { Id = "my_rules" };
+        var server = new FakeServer { Respond = r => r.RequestUri!.AbsolutePath.EndsWith("systems.json", StringComparison.Ordinal) ? Json(SystemCatalogFile.Write(new[] { entry })) : Bytes(archive) };
+        var catalog = Default(server);
+
+        Assert.Equal("my_rules", Assert.Single((await catalog.ListAsync())!.Systems).Id);
+        Assert.Equal(archive, (await catalog.DownloadAsync(entry)).Bytes);
+    }
+
+    [Fact]
+    public async Task ARelativeRedirect_AndAChainOfRedirects_AreFollowed()
+    {
+        var archive = new byte[] { 7 };
+        var server = new FakeServer
+        {
+            Respond = r => r.RequestUri!.AbsolutePath switch
+            {
+                var p when p.EndsWith("system-street-1.0.0.zip", StringComparison.Ordinal) => new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("/other/file.zip", UriKind.Relative) } },
+                "/other/file.zip" when r.RequestUri.Host == "github.com" => new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("https://objects.githubusercontent.com/x") } },
+                _ => Bytes(archive)
+            }
+        };
+
+        Assert.Equal(archive, (await Default(server).DownloadAsync(Entry(archive))).Bytes);
+        Assert.Equal(3, server.Requests.Count);
+    }
+
+    [Fact]
+    public async Task EndlessRedirects_StopAfterAFewHops()
+    {
+        var hops = 0;
+        var server = new FakeServer { Respond = _ => new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("https://github.com/loop/" + hops++) } } };
+
+        var download = await Default(server).DownloadAsync(Entry(new byte[] { 1 }));
+
+        Assert.Equal(SystemDownloadFailure.Unreachable, download.Failure);
+        Assert.Equal(6, server.Requests.Count);
+    }
+
+    [Fact]
+    public async Task ARedirectToTheConfiguredHost_IsFollowedOverHttpsOnly()
+    {
+        var archive = new byte[] { 5 };
+        var server = new FakeServer
+        {
+            Respond = r => r.RequestUri!.AbsolutePath == "/x/systems.json"
+                ? new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("https://mirror.example.org/y/list.json") } }
+                : Json(SystemCatalogFile.Write(new[] { Entry(archive) }))
+        };
+
+        Assert.Single((await Catalog(server, "https://mirror.example.org/x/systems.json").ListAsync())!.Systems);
+        Assert.Equal(2, server.Requests.Count);
+
+        var other = new FakeServer { Respond = _ => new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("https://cdn.mirror.example.org/list.json") } } };
+        Assert.Null(await Catalog(other, "https://mirror.example.org/x/systems.json").ListAsync());
+    }
+
+    [Fact]
+    public async Task ARedirectFromAConfiguredHostToPlainHttp_IsRefused()
+    {
+        var server = new FakeServer { Respond = _ => new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("http://mirror.example.org/systems.json") } } };
+
+        Assert.Null(await Catalog(server, "https://mirror.example.org/x/systems.json").ListAsync());
+        Assert.Single(server.Requests);
+    }
+
+    [Fact]
+    public async Task ADownloadWhoseContentLengthIsNotTheListedSize_IsRefused()
+    {
+        var archive = new byte[] { 1, 2, 3 };
+        var server = new FakeServer { Respond = _ => Bytes(new byte[] { 1, 2, 3, 4 }) };
+
+        Assert.Equal(SystemDownloadFailure.Refused, (await Default(server).DownloadAsync(Entry(archive))).Failure);
     }
 
     [Theory]

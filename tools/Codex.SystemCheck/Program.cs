@@ -101,6 +101,13 @@ if (!quiet) Console.WriteLine($"WROTE   {Path.GetFullPath(pack)}");
 if (catalogEntry != null)
 {
     var definition = SystemDefinitionLoader.Load(Path.Combine(folder, SystemDefinitionLoader.FileName));
+    if (!SystemCatalogFile.IsArchiveName(SystemCatalogFile.ArchiveName(definition)))
+    {
+        // The app would never fetch it: its id or version holds a character a release file name may not.
+        Console.WriteLine($"FAILED  {SystemCatalogFile.ArchiveName(definition)} is not a name the app's catalog accepts (system-<id>-<version>.zip, letters, digits, . + - _)");
+        return 1;
+    }
+
     var entry = SystemCatalogFile.EntryFor(definition, pack, SystemScripts.FilesNamed(definition).Count > 0);
     File.WriteAllText(catalogEntry, System.Text.Json.JsonSerializer.Serialize(entry, SystemCatalogFile.Json));
     if (!quiet) Console.WriteLine($"WROTE   {Path.GetFullPath(catalogEntry)}");

@@ -49,15 +49,10 @@ public sealed partial class SystemCatalog
     private static readonly TimeSpan CatalogTimeout = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan DownloadTimeout = TimeSpan.FromSeconds(90);
     private static readonly TimeSpan CacheFor = TimeSpan.FromMinutes(5);
-
-    [GeneratedRegex(@"^system-[a-z0-9-]+-[0-9A-Za-z.+-]+\.zip$", RegexOptions.CultureInvariant)]
-    private static partial Regex FileNameRule();
+    private static readonly TimeSpan FailureCacheFor = TimeSpan.FromSeconds(30);
 
     [GeneratedRegex(@"^[0-9a-fA-F]{64}$", RegexOptions.CultureInvariant)]
     private static partial Regex Sha256Rule();
-
-    [GeneratedRegex(@"^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$", RegexOptions.CultureInvariant)]
-    private static partial Regex ReleaseVersionRule();
 
     private readonly IHttpClientFactory _http;
     private readonly ILogger<SystemCatalog> _logger;
@@ -66,7 +61,8 @@ public sealed partial class SystemCatalog
     private SystemCatalogListing? _cached;
     private DateTimeOffset _cachedUntil;
 
-    public SystemCatalog(IHttpClientFactory http, IConfiguration configuration, ILogger<SystemCatalog> logger, string appVersion, TimeProvider? clock = null)
+    /// <param name="isRelease">Whether this build is a release (<see cref="IsReleaseBuild"/>): only then is its own version a release tag.</param>
+    public SystemCatalog(IHttpClientFactory http, IConfiguration configuration, ILogger<SystemCatalog> logger, string appVersion, bool isRelease, TimeProvider? clock = null)
     {
         _http = http;
         _logger = logger;
@@ -77,7 +73,7 @@ public sealed partial class SystemCatalog
         var configured = configuration[CatalogUrlKey];
         if (configured == null)
         {
-            FromLatest = !IsReleaseVersion(AppVersion);
+            FromLatest = !isRelease;
             configured = FromLatest ? LatestUrl : DefaultUrl.Replace("{version}", AppVersion, StringComparison.Ordinal);
         }
         else
@@ -85,7 +81,7 @@ public sealed partial class SystemCatalog
             configured = configured.Trim().Replace("{version}", AppVersion, StringComparison.Ordinal);
         }
 
-        if (Uri.TryCreate(configured, UriKind.Absolute, out var url) && url.Scheme is "https" or "http" && url.Segments.Length > 1)
+        if (Uri.TryCreate(configured, UriKind.Absolute, out var url) && url.Scheme == Uri.UriSchemeHttps && url.Segments.Length > 1)
         {
             CatalogUri = url;
             Base = new Uri(url, ".");
@@ -114,30 +110,29 @@ public sealed partial class SystemCatalog
         StripMetadata(Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
                       ?? Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "1.0.0");
 
-    /// <summary>A release version (1.2.3 or 1.2.3-beta.1) that is not the SDK's default, 1.0.0, which every local build has.</summary>
-    public static bool IsReleaseVersion(string version) => version != "1.0.0" && ReleaseVersionRule().IsMatch(version);
+    /// <summary>Whether this build is a release: the packaging scripts mark it (<c>-p:CodexRelease=true</c>, which Codex.Web.csproj turns
+    /// into assembly metadata). A local build is not, whatever its version number is.</summary>
+    public static bool IsReleaseBuild() =>
+        Assembly.GetEntryAssembly()?.GetCustomAttributes<AssemblyMetadataAttribute>().Any(a => a.Key == "CodexRelease" && a.Value == "true") == true;
 
     private static string StripMetadata(string version) => version.Split('+')[0].Trim();
 
     /// <summary>Whether <paramref name="file"/> may be fetched: <c>system-&lt;id&gt;-&lt;version&gt;.zip</c> and nothing else.</summary>
-    public static bool IsArchiveName(string? file) => file != null && FileNameRule().IsMatch(file);
+    public static bool IsArchiveName(string? file) => SystemCatalogFile.IsArchiveName(file);
 
     /// <summary>The systems the release lists, or null when the list cannot be had (off, offline, an error, a list this build does not
     /// read). Kept for a few minutes.</summary>
-    public async Task<SystemCatalogListing?> ListAsync(CancellationToken ct = default)
+    public async Task<SystemCatalogListing?> ListAsync(CancellationToken ct = default, bool refresh = false)
     {
         if (!Enabled) return null;
         await _gate.WaitAsync(ct);
         try
         {
-            if (_cached != null && _clock.GetUtcNow() < _cachedUntil) return _cached;
+            // A failure is kept for a short while too, so an offline server is not asked again by every page view; "try again" skips it.
+            if (!refresh && _clock.GetUtcNow() < _cachedUntil) return _cached;
             var listing = await FetchListAsync(ct);
-            if (listing != null)
-            {
-                _cached = listing;
-                _cachedUntil = _clock.GetUtcNow() + CacheFor;
-            }
-
+            _cached = listing;
+            _cachedUntil = _clock.GetUtcNow() + (listing != null ? CacheFor : FailureCacheFor);
             return listing;
         }
         finally
@@ -168,7 +163,7 @@ public sealed partial class SystemCatalog
             var usable = file.Systems.Where(IsUsable).ToList();
             return new SystemCatalogListing(usable, FromLatest);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or OperationCanceledException or IOException or InvalidOperationException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or OperationCanceledException or IOException or InvalidOperationException or UriFormatException or ArgumentException or FormatException)
         {
             if (ct.IsCancellationRequested) throw;
             _logger.LogInformation("The systems list could not be read from {Url}: {Reason}", CatalogUri, ex.Message);
@@ -214,7 +209,7 @@ public sealed partial class SystemCatalog
 
             return new SystemDownload(bytes, SystemDownloadFailure.None);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or OperationCanceledException or IOException or InvalidOperationException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or OperationCanceledException or IOException or InvalidOperationException or UriFormatException or ArgumentException or FormatException)
         {
             if (ct.IsCancellationRequested) throw;
             _logger.LogInformation("{File} could not be downloaded: {Reason}", entry.File, ex.Message);
@@ -275,11 +270,12 @@ public sealed partial class SystemCatalog
         return null;
     }
 
-    /// <summary>https github.com and *.githubusercontent.com; and the host of a configured list, never downgrading its scheme.</summary>
+    /// <summary>https github.com and *.githubusercontent.com; and the host of a configured list (https too: a list and its checksums
+    /// over plain http could be rewritten together).</summary>
     private bool MayFollow(Uri next)
     {
         var host = next.Host;
         if (next.Scheme == Uri.UriSchemeHttps && (host == "github.com" || host.EndsWith(".githubusercontent.com", StringComparison.Ordinal))) return true;
-        return !IsDefaultHost && host == CatalogUri!.Host && (next.Scheme == Uri.UriSchemeHttps || next.Scheme == CatalogUri.Scheme);
+        return !IsDefaultHost && next.Scheme == Uri.UriSchemeHttps && host == CatalogUri!.Host;
     }
 }

@@ -37,7 +37,7 @@ mkdir -p "$app"
 
 echo "==> Publishing the app for $rid ($version)"
 dotnet publish "$repo/src/Codex.Web/Codex.Web.csproj" -c Release -r "$rid" --self-contained false \
-    -p:UseAppHost=false -p:PublishReadyToRun=true -p:Version="$version" -o "$app"
+    -p:UseAppHost=false -p:PublishReadyToRun=true -p:Version="$version" -p:CodexRelease=true -o "$app"
 
 # The tray launcher goes in its own folder so its dependencies never mix with the server's. Its
 # apphost looks for the bundled runtime one level up (../runtime), so it needs no installed .NET.

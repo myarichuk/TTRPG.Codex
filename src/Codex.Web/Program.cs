@@ -282,7 +282,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddHttpClient(SystemCatalog.ClientName)
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false });
 builder.Services.AddSingleton(sp => new SystemCatalog(sp.GetRequiredService<IHttpClientFactory>(), builder.Configuration,
-    sp.GetRequiredService<ILogger<SystemCatalog>>(), SystemCatalog.CurrentAppVersion()));
+    sp.GetRequiredService<ILogger<SystemCatalog>>(), SystemCatalog.CurrentAppVersion(), SystemCatalog.IsReleaseBuild()));
 
 var app = builder.Build();
 

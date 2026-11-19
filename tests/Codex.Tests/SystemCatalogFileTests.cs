@@ -53,6 +53,49 @@ public sealed class SystemCatalogFileTests : IDisposable
     }
 
     [Theory]
+    [InlineData("system-street-1.0.0.zip", true)]
+    [InlineData("system-my_rules-1.0.0-beta.1+b2.zip", true)]
+    [InlineData("../system-street-1.0.0.zip", false)]
+    [InlineData("sub/system-street-1.0.0.zip", false)]
+    [InlineData("system-Street-1.0.0.zip", false)]
+    [InlineData("notes.zip", false)]
+    public void TheArchiveNameRule_AllowsWhatAnIdAllows_AndNoSlash(string file, bool allowed) => Assert.Equal(allowed, SystemCatalogFile.IsArchiveName(file));
+
+    private static (int Exit, string Output) RunCheck(params string[] args)
+    {
+        var dll = typeof(Codex.SystemCheck.SystemCheck).Assembly.Location;
+        var info = new System.Diagnostics.ProcessStartInfo("dotnet") { RedirectStandardOutput = true, RedirectStandardError = true };
+        info.ArgumentList.Add(dll);
+        foreach (var arg in args) info.ArgumentList.Add(arg);
+        using var process = System.Diagnostics.Process.Start(info)!;
+        var output = process.StandardOutput.ReadToEnd() + process.StandardError.ReadToEnd();
+        process.WaitForExit();
+        return (process.ExitCode, output);
+    }
+
+    [Fact]
+    public void TheCatalogCommand_WithNoEntries_WritesAnEmptyList_AndMergesEntriesInIdOrder()
+    {
+        var empty = Path.Combine(_scratch, "empty.json");
+        var (exit, output) = RunCheck("--catalog", empty);
+        Assert.True(exit == 0, output);
+        Assert.Empty(SystemCatalogFile.TryRead(File.ReadAllText(empty))!.Systems);
+
+        string Entry(string id) => System.Text.Json.JsonSerializer.Serialize(
+            new SystemCatalogEntry(id, id, "1.0.0", null, null, null, false, $"system-{id}-1.0.0.zip", 1, new string('a', 64)), SystemCatalogFile.Json);
+        var b = Path.Combine(_scratch, "b.json");
+        var a = Path.Combine(_scratch, "a.json");
+        File.WriteAllText(b, Entry("beta"));
+        File.WriteAllText(a, Entry("alpha"));
+        var merged = Path.Combine(_scratch, "merged.json");
+
+        (exit, output) = RunCheck("--catalog", merged, b, a);
+
+        Assert.True(exit == 0, output);
+        Assert.Equal(new[] { "alpha", "beta" }, SystemCatalogFile.TryRead(File.ReadAllText(merged))!.Systems.Select(s => s.Id));
+    }
+
+    [Theory]
     [InlineData("not json")]
     [InlineData("{\"format\":2,\"systems\":[]}")]
     [InlineData("{\"systems\":[]}")]

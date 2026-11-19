@@ -79,7 +79,7 @@ public sealed class GetSystemsTests : ComponentTestBase, IDisposable
         new(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "player") }, "test"));
 
     /// <summary>Loads "street" and "newer" (1.0.0) from the install folder and "rock" from outside it, then renders the page.</summary>
-    private async Task<IRenderedComponent<GetSystems>> OpenAsync(ClaimsPrincipal user, string? catalogUrl = null, IConfiguration? extra = null, string appVersion = "1.4.0")
+    private async Task<IRenderedComponent<GetSystems>> OpenAsync(ClaimsPrincipal user, string? catalogUrl = null, IConfiguration? extra = null, bool release = true)
     {
         var root = Path.Combine(_scratch, "Systems");
         foreach (var (folder, id) in new[] { (Path.Combine(root, "street"), "street"), (Path.Combine(root, "newer"), "newer"), (Path.Combine(_scratch, "content", "rock"), "rock") })
@@ -102,7 +102,7 @@ public sealed class GetSystemsTests : ComponentTestBase, IDisposable
 
         Services.AddSingleton(loader);
         Services.AddSingleton(installer);
-        Services.AddSingleton(new SystemCatalog(factory, settings, NullLogger<SystemCatalog>.Instance, appVersion));
+        Services.AddSingleton(new SystemCatalog(factory, settings, NullLogger<SystemCatalog>.Instance, "1.4.0", release));
         Services.AddSingleton<AuthenticationStateProvider>(new Signed(user));
         return Render<GetSystems>();
     }
@@ -161,7 +161,7 @@ public sealed class GetSystemsTests : ComponentTestBase, IDisposable
     public async Task ABuildWithNoReleaseVersion_SaysTheListIsTheLatestReleases()
     {
         _respond = _ => Listing();
-        var cut = await OpenAsync(Admin(), appVersion: "1.0.0");
+        var cut = await OpenAsync(Admin(), release: false);
 
         cut.WaitForAssertion(() => cut.Find(Id("systems-empty")));
         Assert.Contains("latest release", cut.Find(Id("systems-from-latest")).TextContent);
@@ -215,6 +215,53 @@ public sealed class GetSystemsTests : ComponentTestBase, IDisposable
         Assert.Contains("fresh rules", cut.Find(Id("install-plan")).TextContent);
         Assert.NotEmpty(cut.FindAll(Id("install-confirm")));
         Assert.NotEmpty(cut.FindAll(Id("install-cancel")));
+    }
+
+    [Fact]
+    public async Task WhileAPlanIsOpen_TheListButtonsAreOff_SoOnePlanIsNeverReplacedUnseen()
+    {
+        _respond = r => r.RequestUri!.AbsolutePath.EndsWith("systems.json", StringComparison.Ordinal)
+            ? Listing(Entry("fresh", "1.0.0"), Entry("other", "1.0.0"))
+            : new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Zip(r.RequestUri.AbsolutePath.Contains("other") ? "other" : "fresh", "1.0.0")) };
+        var cut = await OpenAsync(Admin());
+        cut.WaitForAssertion(() => cut.Find(Id("catalog-install-fresh")));
+
+        cut.Find(Id("catalog-install-fresh")).Click();
+
+        cut.WaitForAssertion(() => cut.Find(Id("install-plan")));
+        Assert.True(cut.Find(Id("catalog-install-other")).HasAttribute("disabled"));
+        Assert.True(cut.Find(Id("catalog-install-fresh")).HasAttribute("disabled"));
+        cut.Find(Id("install-cancel")).Click();
+        cut.WaitForAssertion(() => Assert.False(cut.Find(Id("catalog-install-other")).HasAttribute("disabled")));
+    }
+
+    [Fact]
+    public async Task APreReleaseIsNeverOfferedAsAnUpdateOverItsFinalRelease_ButTheFinalIsOverThePreRelease()
+    {
+        _respond = _ => Listing(Entry("street", "1.0.0-beta.1"), Entry("newer", "1.0.1"), Entry("rock", "1.0.0-rc.1"));
+        var cut = await OpenAsync(Admin());
+
+        cut.WaitForAssertion(() => cut.Find(Id("catalog-street")));
+        Assert.Empty(cut.FindAll(Id("catalog-update-street")));
+        Assert.Contains("Installed", cut.Find(Id("catalog-state-street")).TextContent);
+        Assert.NotEmpty(cut.FindAll(Id("catalog-update-newer")));
+    }
+
+    [Fact]
+    public async Task AnArchiveForAnotherSystemThanTheListNamed_IsDiscarded_AndNothingIsOffered()
+    {
+        // The list says "fresh", the bytes (and their checksum) are of "swapped".
+        var swapped = Zip("swapped", "1.0.0");
+        _respond = r => r.RequestUri!.AbsolutePath.EndsWith("systems.json", StringComparison.Ordinal)
+            ? Listing(Entry("fresh", "1.0.0", swapped))
+            : new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(swapped) };
+        var cut = await OpenAsync(Admin());
+        cut.WaitForAssertion(() => cut.Find(Id("catalog-install-fresh")));
+
+        cut.Find(Id("catalog-install-fresh")).Click();
+
+        cut.WaitForAssertion(() => Assert.Contains("was not the one the list described", cut.Markup));
+        Assert.Empty(cut.FindAll(Id("install-plan")));
     }
 
     [Fact]

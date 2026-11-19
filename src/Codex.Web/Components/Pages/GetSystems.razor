@@ -8,6 +8,7 @@
 @inject PluginLoader Loader
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 @* "Get more game systems": the systems released for this version of the app, installed with a click (docs/CONTENT_PACKS.md). Whoever
    may install (SystemInstaller.MayInstall) sees it; anyone else is sent home. A download goes through the same check and the same
@@ -34,13 +35,13 @@
         @if (plan != null)
         {
             <section class="panel" aria-labelledby="systems-plan-heading" data-testid="systems-plan">
-                <div class="panel-title"><h2 id="systems-plan-heading">@L["Page.Systems.Review"]</h2></div>
-                <SystemPlanView Plan="plan" Busy="busy" LinkToScriptsSwitch="mayReload" OnConfirm="InstallAsync" OnCancel="Cancel" />
+                <div class="panel-title"><h2 id="systems-plan-heading" tabindex="-1">@L["Page.Systems.Review"]</h2></div>
+                <SystemPlanView Plan="plan" Busy="busy" LinkToScriptsSwitch="mayReload" OnConfirm="InstallAsync" OnCancel="CancelPlan" />
             </section>
         }
 
         <section class="panel" aria-labelledby="systems-list-heading" aria-busy="@(busy || loading ? "true" : "false")" data-testid="systems-list">
-            <div class="panel-title"><h2 id="systems-list-heading">@L["Page.Systems.Available"]</h2></div>
+            <div class="panel-title"><h2 id="systems-list-heading" tabindex="-1">@L["Page.Systems.Available"]</h2></div>
             @if (!Releases.Enabled)
             {
                 <p class="small-muted" data-testid="systems-off">@L["Page.Systems.Off"]</p>
@@ -53,7 +54,7 @@
             {
                 <div role="alert" data-testid="systems-failed">
                     <p class="mb-2">@L["Page.Systems.Failed"]</p>
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="LoadAsync" data-testid="systems-retry">@L["Page.Systems.Retry"]</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="RetryAsync" data-testid="systems-retry">@L["Page.Systems.Retry"]</CodexButton>
                 </div>
             }
             else
@@ -97,11 +98,11 @@
                                         @switch (state.Kind)
                                         {
                                             case CatalogState.Install:
-                                                <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="() => GetAsync(entry)" Busy="busy && busyId == entry.Id" Disabled="busy"
+                                                <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="() => GetAsync(entry)" Busy="busy && busyId == entry.Id" Disabled="busy || plan != null"
                                                              aria-describedby="@($"catalog-name-{entry.Id}")" data-testid="@($"catalog-install-{entry.Id}")">@L["Page.Systems.Install"]</CodexButton>
                                                 break;
                                             case CatalogState.Update:
-                                                <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="() => GetAsync(entry)" Busy="busy && busyId == entry.Id" Disabled="busy"
+                                                <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="() => GetAsync(entry)" Busy="busy && busyId == entry.Id" Disabled="busy || plan != null"
                                                              aria-describedby="@($"catalog-name-{entry.Id}")" data-testid="@($"catalog-update-{entry.Id}")">@L["Page.Systems.Update", entry.Version]</CodexButton>
                                                 <span class="small-muted" data-testid="@($"catalog-state-{entry.Id}")">@L["Page.Systems.InstalledVersion", state.Installed ?? ""]</span>
                                                 break;
@@ -146,6 +147,7 @@
     private bool busy;
     private string? busyId;
     private string progress = string.Empty;
+    private string? focusId;
     private SystemCatalogListing? listing;
     private SystemInstallPlan? plan;
     private Flash? flash;
@@ -161,21 +163,52 @@
 
         user = principal;
         mayReload = Installer.MayReload(principal);
-        await LoadAsync();
+        loading = Releases.Enabled; // the list itself is read after the first render, so a slow or offline release never holds the page back
     }
 
-    private async Task LoadAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && user != null && Releases.Enabled)
+        {
+            await LoadAsync(refresh: false);
+        }
+
+        if (focusId != null)
+        {
+            var id = focusId;
+            focusId = null;
+            await JS.InvokeVoidAsync("codex.focus", id);
+        }
+    }
+
+    private async Task LoadAsync(bool refresh)
     {
         if (!Releases.Enabled) return;
         loading = true;
+        StateHasChanged();
         try
         {
-            listing = await Releases.ListAsync();
+            listing = await Releases.ListAsync(refresh: refresh);
         }
         finally
         {
             loading = false;
         }
+
+        StateHasChanged();
+    }
+
+    private async Task RetryAsync()
+    {
+        await LoadAsync(refresh: true);
+        FocusOn("systems-list-heading");
+    }
+
+    /// <summary>Where keyboard focus goes after the next render: the button that was pressed is off while it works.</summary>
+    private void FocusOn(string id)
+    {
+        focusId = id;
+        StateHasChanged();
     }
 
     /// <summary>What the entry is to this server: not there, there and older, there, or not the app's to change.</summary>
@@ -188,10 +221,24 @@
 
     /// <summary>Whether <paramref name="offered"/> is a later version than <paramref name="installed"/>. Versions that are not
     /// numbers are told apart only by being different.</summary>
-    private static bool IsNewer(string offered, string installed)
+    internal static bool IsNewer(string offered, string installed)
     {
-        static bool Parse(string text, out Version version) => Version.TryParse(text.Split('-', '+')[0], out version!);
-        if (Parse(offered, out var a) && Parse(installed, out var b) && a != b) return a > b;
+        static bool Parse(string text, out Version version, out string pre)
+        {
+            var core = text.Split('+')[0];
+            var dash = core.IndexOf('-');
+            pre = dash < 0 ? string.Empty : core[(dash + 1)..];
+            return Version.TryParse(dash < 0 ? core : core[..dash], out version!);
+        }
+
+        if (Parse(offered, out var a, out var preA) && Parse(installed, out var b, out var preB))
+        {
+            if (a != b) return a > b;
+            // The same numbers: a final release is later than its pre-releases, never the other way round.
+            if (preA.Length == 0 || preB.Length == 0) return preA.Length == 0 && preB.Length > 0;
+            return string.CompareOrdinal(preA, preB) > 0;
+        }
+
         return !string.Equals(offered, installed, StringComparison.Ordinal);
     }
 
@@ -202,9 +249,16 @@
     private async Task GetAsync(SystemCatalogEntry entry)
     {
         if (user == null || busy) return;
+        if (!Installer.MayInstall(user))
+        {
+            Nav.NavigateTo("/", replace: true);
+            return;
+        }
+
         busy = true;
         busyId = entry.Id;
         flash = null;
+        Cancel(); // a plan still open is dropped, not left holding its staging folder
         try
         {
             progress = L["Page.Systems.Downloading", entry.Name];
@@ -216,6 +270,7 @@
                 flash = Flash.Error(download.Failure == SystemDownloadFailure.Refused
                     ? L["Page.Systems.DownloadRefused", entry.Name]
                     : L["Page.Systems.DownloadFailed", entry.Name]);
+                focusId = "systems-list-heading";
                 return;
             }
 
@@ -223,8 +278,20 @@
             StateHasChanged();
             using var buffer = new MemoryStream(download.Bytes);
             plan = await Installer.CheckAsync(buffer, user);
+            if (plan != null && plan.Check.Id != null && !string.Equals(plan.Check.Id, entry.Id, StringComparison.Ordinal))
+            {
+                // The list named one system and the archive is another: nothing is offered.
+                Installer.Discard(plan.Token);
+                plan = null;
+                flash = Flash.Error(L["Page.Systems.DownloadRefused", entry.Name]);
+                focusId = "systems-list-heading";
+                progress = string.Empty;
+                return;
+            }
+
             if (plan == null) flash = Flash.Error(L["Page.About.InstallNotAllowed"]);
             progress = plan == null ? string.Empty : L["Page.Systems.Ready", entry.Name];
+            focusId = plan == null ? "systems-list-heading" : "systems-plan-heading";
         }
         finally
         {
@@ -244,8 +311,10 @@
             using var buffer = new MemoryStream();
             await upload.CopyToAsync(buffer);
             buffer.Position = 0;
+            Cancel();
             plan = await Installer.CheckAsync(buffer, user);
             if (plan == null) flash = Flash.Error(L["Page.About.InstallNotAllowed"]);
+            focusId = plan == null ? "systems-list-heading" : "systems-plan-heading";
         }
         catch (IOException ex)
         {
@@ -268,6 +337,7 @@
             plan = null;
             progress = string.Empty;
             flash = result.Succeeded ? Flash.Success(L["Page.About.Installed", name]) : Flash.Error(result.Error ?? "");
+            focusId = "systems-list-heading";
         }
         finally
         {
@@ -280,5 +350,11 @@
         if (plan != null) Installer.Discard(plan.Token);
         plan = null;
         progress = string.Empty;
+    }
+
+    private void CancelPlan()
+    {
+        Cancel();
+        FocusOn("systems-list-heading");
     }
 }

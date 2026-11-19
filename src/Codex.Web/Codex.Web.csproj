@@ -24,6 +24,12 @@
 
   </ItemGroup>
 
+  <!-- The packaging scripts pass -p:CodexRelease=true with the release's -p:Version. Only a build with this mark counts as a release
+       (SystemCatalog reads the release's own systems list; any other build reads the latest release's). -->
+  <ItemGroup Condition="'$(CodexRelease)' == 'true'">
+    <AssemblyMetadata Include="CodexRelease" Value="true" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>

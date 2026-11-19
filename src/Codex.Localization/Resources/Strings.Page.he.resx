@@ -313,7 +313,7 @@
   <data name="Page.Systems.Bundled" xml:space="preserve"><value>מגיעה עם האפליקציה</value></data>
   <data name="Page.Systems.Downloading" xml:space="preserve"><value>מורידים את {0}…</value></data>
   <data name="Page.Systems.Checking" xml:space="preserve"><value>בודקים את {0}…</value></data>
-  <data name="Page.Systems.Ready" xml:space="preserve"><value>{0} הורדה ונבדקה. אפשר לעיין למטה במה שישתנה לפני ההתקנה.</value></data>
+  <data name="Page.Systems.Ready" xml:space="preserve"><value>{0} הורדה ונבדקה. אפשר לעיין למעלה במה שישתנה לפני ההתקנה.</value></data>
   <data name="Page.Systems.DownloadFailed" xml:space="preserve"><value>לא הצלחנו להוריד את {0}. בדקו את החיבור ונסו שוב, או התקינו קובץ שהורדתם.</value></data>
   <data name="Page.Systems.DownloadRefused" xml:space="preserve"><value>הקובץ של {0} אינו הקובץ שהרשימה תיארה, ולכן לא נעשה בו שימוש. דבר לא הותקן.</value></data>
   <data name="Page.Systems.FileHeading" xml:space="preserve"><value>התקנה מקובץ</value></data>

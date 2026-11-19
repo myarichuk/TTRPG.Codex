@@ -454,14 +454,15 @@ with the app (the server has it from `content/`, so it is not the app's to chang
 
 - **Where from.** `Codex:Systems:CatalogUrl`, by default
   `https://github.com/myarichuk/TTRPG.Codex/releases/download/v{version}/systems.json`, `{version}` being the app's own
-  version (its `InformationalVersion`, without build metadata). A build with no release version (1.0.0, the SDK's default,
-  which every local build has) reads `.../releases/latest/download/systems.json` instead, and the page says so. An empty
-  setting turns the list off: the page then offers only the upload. A mirror for a server with its own file host is set the
-  same way; the file is then served from the same folder as `systems.json`.
+  version (its `InformationalVersion`, without build metadata). Only a release build counts: `packaging/package.sh` and
+  `package.ps1` pass `-p:CodexRelease=true`, which `Codex.Web.csproj` turns into assembly metadata, and the release workflow
+  refuses a pushed tag that is not `v<version>`. Any other build reads `.../releases/latest/download/systems.json` instead,
+  and the page says so. An empty setting turns the list off: the page then offers only the upload. A mirror for a server with
+  its own file host is set the same way; it must be https, and the file is then served from the same folder as `systems.json`.
 - **Only beside the list.** An archive is fetched only as `<the folder of systems.json>/<file>`, and `file` must be
-  `system-<id>-<version>.zip`; the list cannot point anywhere else. Redirects are followed only to https github.com and
+  `system-<id>-<version>.zip` (an id may hold `a-z`, digits, `-` and `_`; `Codex.SystemCheck --catalog-entry` fails for a name that breaks the rule); the list cannot point anywhere else. Redirects are followed only to https github.com and
   `*.githubusercontent.com` (and the host of a configured list). Requests carry a generic `TTRPG.Codex/<version>` user
-  agent and nothing about the server, its users or its campaigns. The list is kept for five minutes.
+  agent and nothing about the server, its users or its campaigns. The list is read after the page first shows, and kept for five minutes (a failure for 30 seconds; "Try again" asks at once).
 - **Checked twice.** The download must be no bigger than the list's `size` (counted as it arrives, never trusting
   Content-Length alone; at most 64 MB) and have its `sha256`. It then goes through the same check and the same plan as an
   upload, so every rule above (no compiled code, scripts off, what is replaced) still applies, and nothing is installed

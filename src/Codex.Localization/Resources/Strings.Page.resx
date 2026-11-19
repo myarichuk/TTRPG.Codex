@@ -313,7 +313,7 @@
   <data name="Page.Systems.Bundled" xml:space="preserve"><value>Bundled with the app</value></data>
   <data name="Page.Systems.Downloading" xml:space="preserve"><value>Downloading {0}…</value></data>
   <data name="Page.Systems.Checking" xml:space="preserve"><value>Checking {0}…</value></data>
-  <data name="Page.Systems.Ready" xml:space="preserve"><value>{0} is downloaded and checked. Review it below before installing.</value></data>
+  <data name="Page.Systems.Ready" xml:space="preserve"><value>{0} is downloaded and checked. Review it above before installing.</value></data>
   <data name="Page.Systems.DownloadFailed" xml:space="preserve"><value>Couldn't download {0}. Check the connection and try again, or install a downloaded file.</value></data>
   <data name="Page.Systems.DownloadRefused" xml:space="preserve"><value>The file for {0} was not the one the list described, so it was not used. Nothing was installed.</value></data>
   <data name="Page.Systems.FileHeading" xml:space="preserve"><value>Install from a file</value></data>
