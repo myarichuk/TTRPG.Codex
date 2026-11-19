@@ -278,6 +278,11 @@ builder.Services.AddSingleton<CastService>();
 
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
+// The list of released systems: redirects are followed by SystemCatalog itself, and only to the hosts a release is served from.
+builder.Services.AddHttpClient(SystemCatalog.ClientName)
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false });
+builder.Services.AddSingleton(sp => new SystemCatalog(sp.GetRequiredService<IHttpClientFactory>(), builder.Configuration,
+    sp.GetRequiredService<ILogger<SystemCatalog>>(), SystemCatalog.CurrentAppVersion()));
 
 var app = builder.Build();
 
