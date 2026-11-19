@@ -202,6 +202,10 @@ public sealed partial class WorldChat
 
         try
         {
+            // The open issues, in a line of counts, once per message and after the message itself: stored with the history, so every
+            // later request carries it byte for byte (the cached prefix stays the same). Never in the system prompt, never the list.
+            if (await builder.IssueSummaryAsync(campaign, access) is { } summary) history.Add(new ChatMessage(ChatRole.User, summary));
+
             // Each round of the tool loop sends the tools, the system prompt and the whole history again: worth a prompt cache.
             var (reply, cutShort) = await RunTurnAsync(client, system,
                 PromptCachingChatClient.WithPromptCaching(new ChatOptions { Tools = Tools(OnStep), Temperature = 0.8f, MaxOutputTokens = MaxReplyTokens }),

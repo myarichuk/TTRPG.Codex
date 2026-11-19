@@ -19,7 +19,8 @@ public sealed record WorldBuildResult(
     IReadOnlyList<BestiaryEntry> Shortlisted,
     IReadOnlyList<WorldEdit>? Edits = null,
     int Retagged = 0,
-    int Picked = 0)
+    int Picked = 0,
+    ApplyRecheck? Recheck = null)
 {
     /// <summary>The existing entries whose text the proposal replaced.</summary>
     public IReadOnlyList<WorldEdit> Changes => Edits ?? Array.Empty<WorldEdit>();
@@ -27,6 +28,46 @@ public sealed record WorldBuildResult(
     /// <summary>Entries saved: <see cref="Retagged"/> counts the pages and homebrew entries whose tags changed, <see cref="Picked"/>
     /// the Library creatures put on the Bestiary by an entry of their own (a new homebrew creature put there is one entry, not two).</summary>
     public int Count => Entries.Count + Pages.Count + Actors.Count + Facts.Count + Places.Count + Changes.Count + Retagged + Picked;
+}
+
+/// <summary>
+/// What the app's own checks say after an apply (docs/WORLD_BUILDER.md, section 9), from the issues before and after, not from the model's
+/// <c>resolves</c> claims. Null on <see cref="WorldBuildResult.Recheck"/> when no entry claimed anything, so no snapshot was paid for.
+/// Every list is ordered the way the checker orders it.
+/// </summary>
+/// <param name="Failed">The re-check itself could not run; nothing below is known, and the apply stands.</param>
+/// <param name="Resolved">Claimed, and gone now.</param>
+/// <param name="StillOpen">Claimed, and still an issue: the change did not fix it.</param>
+/// <param name="NotFound">Claimed, but not an issue before or after.</param>
+/// <param name="ResolvedUnclaimed">Gone now though nothing claimed it.</param>
+/// <param name="New">Issue ids that were not there before the apply: it broke something.</param>
+public sealed record ApplyRecheck(bool Failed, IReadOnlyList<string> Resolved, IReadOnlyList<string> StillOpen, IReadOnlyList<string> NotFound,
+    IReadOnlyList<string> ResolvedUnclaimed, IReadOnlyList<string> New)
+{
+    public static ApplyRecheck Couldnt { get; } = new(true, Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>());
+
+    public static ApplyRecheck From(Codex.Core.Consistency.Recheck r) =>
+        new(false, r.Resolved, r.StillOpen, r.NotFound, r.ResolvedUnclaimed, r.New.Select(i => i.Id).ToList());
+
+    /// <summary>What the model is told, in words that say the checks decided and its claim did not. Only the parts that have something in them.</summary>
+    public string Describe()
+    {
+        if (Failed)
+        {
+            return " The app tried to re-run its checks after the apply and could not, so whether anything you listed in \"resolves\" is fixed is unknown: do not say it is. " +
+                   "The apply itself went through. Call list_issues to see what is open.";
+        }
+
+        var parts = new List<string>();
+        if (Resolved.Count > 0) parts.Add("resolved: " + string.Join(", ", Resolved));
+        if (StillOpen.Count > 0) parts.Add("still open (the change did not fix them): " + string.Join(", ", StillOpen));
+        if (NotFound.Count > 0) parts.Add("not issues before or after the apply: " + string.Join(", ", NotFound));
+        if (ResolvedUnclaimed.Count > 0) parts.Add("also gone, though you did not claim them: " + string.Join(", ", ResolvedUnclaimed));
+        if (New.Count > 0) parts.Add("new, introduced by the apply: " + string.Join(", ", New));
+        return " The app re-ran its checks after the apply; what its checks find, not what you claimed, decides what is fixed. " +
+               (parts.Count == 0 ? "Nothing changed." : string.Join("; ", parts) + ".") +
+               (StillOpen.Count > 0 || New.Count > 0 ? " Tell the game master what is left open or new; do not propose another fix unless they ask." : string.Empty);
+    }
 }
 
 /// <summary>An existing entry a proposal changed: what kind of text, its id (a page's slug), and its name.</summary>
@@ -51,7 +92,7 @@ public sealed partial class WorldBuilderService(ISystemCatalog catalog, Campaign
     private const int ContextCap = 40;
     private const int MaxPageText = 6000;
 
-    private static IEnumerable<WorldDraft> Kept(WorldBundle bundle) => bundle.Drafts.Where(d => d.Selected && !string.IsNullOrWhiteSpace(d.Name));
+    internal static IEnumerable<WorldDraft> Kept(WorldBundle bundle) => bundle.Drafts.Where(d => d.Selected && !string.IsNullOrWhiteSpace(d.Name));
 
     // Wiki tags are the DM's own words, so the ones the builder adds are written in the DM's language.
     private static string Tag(Localizer l, string key) => l.Has($"WorldBuilder.Tag.{key}") ? l[$"WorldBuilder.Tag.{key}"] : key;

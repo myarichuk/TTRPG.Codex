@@ -248,6 +248,30 @@ that is not an open issue is refused). The document `ConsistencyDismissals/{camp
   A revision of an edit (same ref, same target) keeps what the earlier one resolved (`WorldChat.CarryOver`); `add_entries` re-checks the waiting entries'
   claims together with the new ones.
 
-*Still to do (phase 3).* The re-check after an apply: `ConsistencyChecker.Compare` reports, from the code's own before and after, which claimed ids are
-resolved, which are still open and what is new, and the model's claim of resolution is never trusted; the note to the model and to the DM that says
-so, and the regression test that this does not disturb the prompt cache.
+*Wired now (phase 3).*
+- **The re-check after an apply.** `WorldChat.ApplyNowAsync` reads the ids the kept entries resolve before anything is cleared, takes the open issues just
+  before `WorldBuilderService.SaveAsync` and again just after (`WorldBuilderService.OpenIssuesAsync`, DM only: one full uncached snapshot each), and sets
+  them side by side with `ConsistencyChecker.Compare`. The claim is only what is checked: the model's word that a fix worked decides nothing. It runs only
+  when some kept entry has `resolves` (no claim, no two snapshots, and the note reads as it always did). Unticked entries' claims are not checked.
+  The result is `WorldBuildResult.Recheck` (`ApplyRecheck`: `Failed`, `Resolved`, `StillOpen`, `NotFound`, `ResolvedUnclaimed`, `New` as issue ids, in the
+  checker's order), null when it did not run. The model is told in the "(A note from the app ...)" message: "The app re-ran its checks after the apply;
+  what its checks find, not what you claimed, decides what is fixed. resolved: ...; still open (the change did not fix them): ...; ..." (only the parts
+  that have something in them). If the re-check itself throws, the apply still succeeded and the note says the checks could not run and that nothing
+  may be said to be fixed. Nothing is retried or fixed automatically; a `StillOpen` or `New` issue is the game master's to ask about.
+- **The issue summary.** At the start of each message of a game master with open issues, the chat adds one line to the history after the message, as a
+  note of its own: "(A note from the app, not from the game master: N open issues (E errors, W warnings, I info); call list_issues for details.)". Counts
+  only, in the checker's own words, once per message (never on a later round of the tool loop), never in the system prompt, and absent when nothing is open or
+  the check fails. It is stored with the history, so every later request repeats it byte for byte and the prefix before it stays cached. It costs one
+  snapshot per message.
+- **The prompt cache.** `PromptCacheRegressionTests` captures the requests below `PromptCachingChatClient` for two messages of two agent steps each and
+  asserts that tools and system prompt are identical, in the same tool order, with no date, time, GUID or request id, that the breakpoints are on the last
+  tool, the system prompt and the last message of every step, that each request repeats the one before it, and that the issue summary changes only the
+  user turn.
+
+*Still to do.*
+- The `sheet` edit target: a sheet issue (`fix_via: sheet`) cannot yet be fixed by a proposal, so it cannot be claimed in `resolves`.
+- v2 checks (a system's own `issueChecks`, and compiled checks) and layers 2 and 3 of the design.
+- The UI: showing issues and the re-check to the DM (a panel, the "Applied" line, resx strings). Today the typed result exists and the model is told.
+- Dismissals are not in the campaign export or restore.
+- Point-buy and similar derived budgets are out of scope for the sheet checks.
+- The unknown-audience check relies on the opening-line text of a secret block.

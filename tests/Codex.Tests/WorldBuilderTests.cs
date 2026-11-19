@@ -416,6 +416,12 @@ public class WorldBuilderTests
         /// <summary>When set, storing a place fails once this many have been stored, as a save that breaks half-way would.</summary>
         public int? FailPlacesAfter { get; set; }
 
+        /// <summary>How many full consistency snapshots were taken (each reads the dismissals once).</summary>
+        public int Snapshots { get; set; }
+
+        /// <summary>When set, a consistency check fails once this many snapshots have been taken.</summary>
+        public int? FailChecksAfter { get; set; }
+
         /// <summary>The campaign as stored; its Bestiary shortlist is what saving added to it.</summary>
         public CampaignDocument Stored { get; } = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
     }
@@ -465,6 +471,14 @@ public class WorldBuilderTests
         {
             var page = ci.Arg<WikiPageDocument>();
             // As the repository does: a page that already has an id is updated, not stored again.
+            // A page the campaign already had is updated in place too (a snapshot taken after an edit sees the edit).
+            var held = existingPages is List<WikiPageDocument> own && !string.IsNullOrEmpty(page.Id) ? own.FindIndex(p => p.Id == page.Id) : -1;
+            if (held >= 0)
+            {
+                ((List<WikiPageDocument>)existingPages!)[held] = page;
+                return ci.Arg<CampaignAccess>().IsDm ? SaveOutcome.Saved : SaveOutcome.Refused;
+            }
+
             var stored = string.IsNullOrEmpty(page.Id) ? -1 : pages.FindIndex(p => p.Id == page.Id);
             if (stored >= 0)
             {
@@ -509,9 +523,15 @@ public class WorldBuilderTests
         // No model is set up: picking a cast member's gear fails quietly and they are saved without it.
         var ai = new AiFeatures(providers, registry, catalog);
         var dismissals = Substitute.For<IConsistencyDismissalRepository>();
-        dismissals.ListAsync(Arg.Any<CampaignAccess>()).Returns(Array.Empty<IssueDismissal>());
+        Saving? created = null;
+        dismissals.ListAsync(Arg.Any<CampaignAccess>()).Returns(_ =>
+        {
+            created!.Snapshots++;
+            if (created.FailChecksAfter is { } limit && created.Snapshots > limit) throw new InvalidOperationException("the checks broke");
+            return Task.FromResult<IReadOnlyList<IssueDismissal>>(Array.Empty<IssueDismissal>());
+        });
         var consistency = new ConsistencyService(catalog, library, wiki, actorRepo, regions, factRepo, dismissals);
-        var saving = new Saving(new WorldBuilderService(catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns, actorRepo, ai, consistency: consistency), pages, entries, actors, facts);
+        var saving = created = new Saving(new WorldBuilderService(catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns, actorRepo, ai, consistency: consistency), pages, entries, actors, facts);
         regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => existingRegions.Concat(saving.NewRegions).ToList().AsEnumerable());
         campaigns.UpdateAsDmAsync(Arg.Any<CampaignAccess>(), Arg.Any<Action<CampaignDocument>>()).Returns(ci =>
         {

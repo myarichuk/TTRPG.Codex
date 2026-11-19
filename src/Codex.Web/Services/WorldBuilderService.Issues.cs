@@ -31,4 +31,36 @@ public sealed partial class WorldBuilderService
         if (consistency == null) return "Nothing was listed: the consistency checker is not available here.";
         return IssueListing.Render(await consistency.ListAsync(campaign, access, new IssueFilter(scope, least)));
     }
+
+    /// <summary>
+    /// The open issues right now, one full snapshot, for the apply path to compare before and after a save; null when no checker is
+    /// available here. Dismissed issues are not in it. DM only. The caller treats a throw as "could not re-check", never as a failed apply.
+    /// </summary>
+    public async Task<IReadOnlyList<Issue>?> OpenIssuesAsync(CampaignDocument campaign, CampaignAccess access)
+    {
+        DmOnly(access);
+        return consistency == null ? null : (await consistency.CheckAsync(campaign, access)).Open;
+    }
+
+    /// <summary>The one line the chat adds to the DM's message, counts only (never the list): null when nothing is open, when no checker
+    /// is available, or when the check fails (a message is never held up by it). Deterministic: the same issues give the same words.</summary>
+    public async Task<string?> IssueSummaryAsync(CampaignDocument campaign, CampaignAccess access)
+    {
+        try
+        {
+            return IssueSummaryOf(await OpenIssuesAsync(campaign, access));
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
+    internal static string? IssueSummaryOf(IReadOnlyList<Issue>? open)
+    {
+        if (open is not { Count: > 0 }) return null;
+        int Count(IssueSeverity s) => open.Count(i => i.Severity == s);
+        return $"(A note from the app, not from the game master: {open.Count} open issues ({Count(IssueSeverity.Error)} errors, {Count(IssueSeverity.Warning)} warnings, " +
+               $"{Count(IssueSeverity.Info)} info); call list_issues for details.)";
+    }
 }
