@@ -51,6 +51,11 @@ public sealed record SecretBlock(int Block, SecretAudience Marked, bool UnderDm,
 
     /// <summary>How many blocks it is inside: 0 for a block at the top level of the text.</summary>
     public int Depth { get; init; }
+
+    /// <summary>The word that opened it, exactly as written (<c>dm</c>, <c>party</c>, <c>partyy</c>): what <see cref="Marked"/> was read from. A word this
+    /// version does not know (a typo) is read as <see cref="SecretAudience.Dm"/>, and only this tells the two apart. Informational: nothing in the parsing,
+    /// the audiences or the fail-closed reading depends on it.</summary>
+    public string OpenerWord { get; init; } = string.Empty;
 }
 
 /// <summary>
@@ -99,7 +104,7 @@ public static class SecretText
     /// <summary>Every block of the text, in the order their opening lines come.</summary>
     public static IReadOnlyList<SecretBlock> Blocks(string? text) => Walk(text).Blocks;
 
-    private sealed record Frame(SecretAudience Marked, int Block, IReadOnlyList<string> Knowers, DateTime? RevealedAt, int Line, bool UnderDm, int Depth);
+    private sealed record Frame(SecretAudience Marked, int Block, IReadOnlyList<string> Knowers, DateTime? RevealedAt, int Line, bool UnderDm, int Depth, string Word);
 
     private static (List<SecretSegment> Segments, List<SecretBlock> Blocks) Walk(string? text)
     {
@@ -138,7 +143,7 @@ public static class SecretText
                 var rest = m.Groups["rest"].Value;
                 var knowers = marked == SecretAudience.Some ? ActorToken.Matches(rest).Select(t => t.Groups["id"].Value).Distinct().ToList() : new List<string>();
                 var underDm = open.Any(o => o.Marked == SecretAudience.Dm);
-                open.Add(new Frame(marked, blocks.Count, knowers, StampOf(rest), i, underDm, open.Count));
+                open.Add(new Frame(marked, blocks.Count, knowers, StampOf(rest), i, underDm, open.Count, m.Groups["word"].Value));
                 blocks.Add(null!); // filled in when it closes, so Inner can hold its lines
             }
             else if (open.Count > 0)
@@ -165,7 +170,8 @@ public static class SecretText
                 string.Join("\n", lines[(frame.Line + 1)..closingLine]), frame.Knowers, frame.RevealedAt, frame.Line)
             {
                 ClosingLine = closingLine < lines.Length ? closingLine : null,
-                Depth = frame.Depth
+                Depth = frame.Depth,
+                OpenerWord = frame.Word
             };
 
         void Flush()

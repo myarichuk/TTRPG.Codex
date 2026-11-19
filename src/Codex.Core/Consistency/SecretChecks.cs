@@ -1,12 +1,8 @@
-using System.Text.RegularExpressions;
-
 namespace Codex.Core.Consistency;
 
 /// <summary>What the secret-block checks share: the blocks of every text field, each with the text of its opening line.</summary>
 internal static class SecretScan
 {
-    private static readonly Regex Opener = new(@"^\s*:::\s*(?<word>\S+)", RegexOptions.Compiled);
-
     public static IEnumerable<(TextField Field, SecretBlock Block, string Opening)> Blocks(WorldSnapshot s)
     {
         foreach (var field in TextFields.Of(s))
@@ -20,8 +16,6 @@ internal static class SecretScan
             }
         }
     }
-
-    public static string? OpeningWord(string line) => Opener.Match(line) is { Success: true } m ? m.Groups["word"].Value : null;
 }
 
 /// <summary>A secret block that is never closed. It runs to the end of the text: everything after its opening line is the DM's alone.</summary>
@@ -52,8 +46,9 @@ public sealed class SecretUnknownAudienceCheck : IConsistencyCheck
     {
         foreach (var (field, block, opening) in SecretScan.Blocks(s).Where(b => b.Block.Marked == SecretAudience.Dm))
         {
-            var word = SecretScan.OpeningWord(opening);
-            if (word == null || word.Equals("dm", StringComparison.OrdinalIgnoreCase)) continue;
+            // The word the block was opened with, as the parser read it: any word that is not "dm" yet came out as DM-only is one the app does not know.
+            var word = block.OpenerWord;
+            if (word.Length == 0 || word.Equals("dm", StringComparison.OrdinalIgnoreCase)) continue;
             yield return Make.Issue(Name, IssueSeverity.Warning, field.Kind, field.EntityId, field.Field, block.Block.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 "Consistency.SecretUnknownAudience", new[] { Make.Quote(word), Make.Quote(opening), (block.Line + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) },
                 $"The block opened by \"{Make.Quote(opening)}\" (line {block.Line + 1}) names an audience the app does not know (\":::{Make.Quote(word)}\"), so only the DM can read it.",
