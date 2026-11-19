@@ -72,7 +72,11 @@ public sealed record Issue(
         c = string.CompareOrdinal(a.EntityId, b.EntityId);
         if (c != 0) return c;
         c = string.CompareOrdinal(a.Field, b.Field);
-        return c != 0 ? c : string.CompareOrdinal(a.Id, b.Id);
+        c = string.CompareOrdinal(a.Id, b.Id);
+        if (c != 0) return c;
+        // Two issues that would share an id are told apart by what they say, never by the order a check happened to produce them in.
+        c = string.CompareOrdinal(a.Message, b.Message);
+        return c != 0 ? c : string.CompareOrdinal(a.FixHint, b.FixHint);
     });
 }
 

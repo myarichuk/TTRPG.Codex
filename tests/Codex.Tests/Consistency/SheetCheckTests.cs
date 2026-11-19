@@ -60,7 +60,7 @@ public class SheetCheckTests
 
         var issue = Assert.Single(issues, i => i.Code == "Actor.Rule.NotInLibrary");
         Assert.Equal(IssueSeverity.Error, issue.Severity);
-        Assert.Equal("sheet-rule:actor:actors/1-A:class:Actor.Rule.NotInLibrary:class-ghost", issue.Id);
+        Assert.Equal("sheet-rule:actor:actors/1-A:class:Actor.Rule.NotInLibrary:ghost", issue.Id);
         Assert.Equal(FixVia.Sheet, issue.FixVia);
         Assert.Equal(new[] { "Class", "ghost" }, issue.Args);
     }

@@ -98,7 +98,9 @@ public sealed class SheetRuleCheck : IConsistencyCheck
         {
             if (v.Key != null && v.Key.StartsWith("Actor.Rule.PointBuy", StringComparison.Ordinal)) continue;
             var args = (v.Args ?? Array.Empty<object?>()).Select(ArgText).ToList();
-            var detail = (v.Key ?? "rule") + (args.Count > 0 ? ":" + Slug(string.Join(' ', args)) : v.Key == null ? ":" + Slug(v.Message) : string.Empty);
+            // The rule's key and the field (already in the id), and, for a rule that is about one item among several on the field, which item: never
+            // the numbers or the whole sentence, which a partial fix changes (a score lowered from 25 to 20 is still the same problem).
+            var detail = (v.Key ?? "rule") + Item(v.Key, args);
             // Fixable through a sheet edit only when the rule is about a key an edit may set; a derived value is the sheet's own to compute.
             var fixable = SheetProposal.IsEditable(system, v.FieldKey);
             yield return Make.Issue(Name, severity, "actor", actor.Id, v.FieldKey, detail, v.Key ?? "Consistency.SheetRule", args,
@@ -108,6 +110,26 @@ public sealed class SheetRuleCheck : IConsistencyCheck
                     : "This is a value the sheet works out itself, which no proposal can set. Tell the DM which rule the sheet breaks; do not guess.",
                 fixable ? FixVia.Sheet : FixVia.ReportOnly);
         }
+    }
+
+    // For these rules, the args that name the item the violation is about (the entry, the missing id). Any other rule is one per field and key; two
+    // that still share an id are told apart by order (ConsistencyChecker.Run), the one limit of the scheme.
+    private static readonly Dictionary<string, int[]> ItemArgs = new(StringComparer.Ordinal)
+    {
+        ["Actor.Rule.NotInLibrary"] = new[] { 1 }, ["Actor.Rule.Pick"] = new[] { 1 }, ["Actor.Rule.Once"] = new[] { 1 }, ["Actor.Rule.SlotHolds"] = new[] { 1 },
+        ["Actor.Rule.Prerequisite"] = new[] { 0 }, ["Actor.Rule.ArmorUntrained"] = new[] { 0 }, ["Actor.Rule.ArmorStrength"] = new[] { 0 },
+        ["Actor.Rule.ArmorStealth"] = new[] { 0 }, ["Actor.Rule.WeaponUntrained"] = new[] { 0 }, ["Actor.Rule.FeatureError"] = new[] { 0 },
+        ["Actor.Rule.SpendNoPool"] = new[] { 0 }, ["Actor.Rule.NoHitDie"] = new[] { 0 }, ["Actor.Rule.NoHitPointsPerLevel"] = new[] { 0 },
+        ["Actor.Rule.NoSpellAbility"] = new[] { 0 }, ["Actor.Rule.NoSpellTable"] = new[] { 0 }, ["Actor.Rule.RuneNotFound"] = new[] { 1, 2 },
+        ["Actor.Rule.RuneWrongItem"] = new[] { 1, 2 }, ["Actor.Rule.IncNone"] = new[] { 1 }, ["Actor.Rule.IncRemaining"] = new[] { 1 },
+        ["Actor.Rule.IncGrants"] = new[] { 1 }, ["Actor.Rule.IncCant"] = new[] { 1 }
+    };
+
+    private static string Item(string? key, IReadOnlyList<string> args)
+    {
+        if (key == null || !ItemArgs.TryGetValue(key, out var indexes)) return string.Empty;
+        var item = string.Join('-', indexes.Where(i => i < args.Count).Select(i => Slug(args[i])).Where(t => t.Length > 0));
+        return item.Length == 0 ? string.Empty : ":" + item;
     }
 
     private static string ArgText(object? arg) => arg switch

@@ -204,7 +204,16 @@ the same data gives the same issues in the same order (`ConsistencyChecker.Run`,
 
 **An issue** is `{ id, check, severity (error|warning|info), entity_kind, entity_id, field, code, args, message, fix_hint, bundle, fix_via }`.
 `id` is `check:kind:entityId:field[:detail]`, built from document ids and never from a slug or a title, so it survives a rename;
-two issues that would share one are numbered `~2`, `~3`. `code` and `args` are for the app to show the sentence in the reader's
+two issues that would share one are numbered `~2`, `~3`. **Stability:** an id names the problem, not its position or its numbers, so a dismissal or a
+`resolves` claim stays on the same problem when something else changes. A secret-block issue's detail is the slug of the block's opening line (cut at 40
+characters; `.2`, `.3` only for a later block of the same field that opens with the very same line), never the block's number, so adding a block earlier in
+the text moves no other id. A `sheet-rule` issue's detail is the rule's key (the field is already in the id) and, for a rule about one item among several
+(`Actor.Rule.NotInLibrary`, `Pick`, `Once`, `Prerequisite`, the armor and weapon training rules and the like; `SheetChecks.ItemArgs`), the slug of that item; never
+the numbers or the sentence, which a partial fix changes (five feats picked where two are allowed is the same issue at four). Every id detail made from text a person
+typed is a bounded slug. The `~n` suffix is the fallback for two issues a check cannot tell apart (two violations of one rule with no item, two blocks with one opening
+line): it is given in the order of what the issues say (`Issue.Order` ends on message and hint), so it does not depend on the order a check produced them in, but
+fixing the first of two such issues still gives the bare id to the other; that is the one limit of the scheme. (Dismissals made before this scheme keep their old
+ids, which then read as "the problem is gone", and can be restored and made again.) `code` and `args` are for the app to show the sentence in the reader's
 language; `message` and `fix_hint` are English, for the model. `bundle` groups a screen or a list by entity. `fix_via` says which
 kind of proposal can fix it (`page`, `place`, `fact`, `actor-biography`, `sheet`, `homebrew`), or `report-only`: the review gate cannot change a
 page's structural links, who owns a character, the campaign's packs and the like, so those are for the DM. A proposal may resolve an issue only with
