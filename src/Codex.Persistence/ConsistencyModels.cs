@@ -31,6 +31,24 @@ public class ConsistencyDismissalsDocument
     public string Id { get; set; } = string.Empty;
     public string CampaignId { get; set; } = string.Empty;
     public List<IssueDismissal> Dismissed { get; set; } = new();
+
+    /// <summary>The document as a campaign import may keep it: what the file holds, with the limits the repository applies to a dismissal made in the app. Ids that are
+    /// empty or too long are dropped, an id given twice keeps its first entry, a note is cut. An id whose problem is gone is kept: it applies again if the same
+    /// problem comes back, as in the app.</summary>
+    public ConsistencyDismissalsDocument Sanitized(string campaignId)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var kept = new List<IssueDismissal>();
+        foreach (var d in Dismissed ?? new List<IssueDismissal>())
+        {
+            var id = (d?.IssueId ?? string.Empty).Trim();
+            if (id.Length == 0 || id.Length > RavenConsistencyDismissalRepository.MaxIdLength || !seen.Add(id)) continue;
+            var note = string.IsNullOrWhiteSpace(d!.Note) ? null : d.Note.Trim()[..Math.Min(d.Note.Trim().Length, RavenConsistencyDismissalRepository.MaxNoteLength)];
+            kept.Add(new IssueDismissal { IssueId = id, DismissedBy = d.DismissedBy ?? string.Empty, DismissedAt = d.DismissedAt, Note = note });
+        }
+
+        return new ConsistencyDismissalsDocument { Id = IdFor(campaignId), CampaignId = campaignId, Dismissed = kept };
+    }
 }
 
 public interface IConsistencyDismissalRepository
@@ -45,6 +63,13 @@ public interface IConsistencyDismissalRepository
     Task<bool> RestoreAsync(CampaignAccess access, string issueId);
 
     Task DeleteAllForCampaignAsync(string campaignId);
+
+    /// <summary>The campaign's whole dismissals document, for the campaign export; null when the DM never dismissed anything. No access check: the
+    /// caller (the export service) has already required the campaign's DM.</summary>
+    Task<ConsistencyDismissalsDocument?> GetDocumentAsync(string campaignId);
+
+    /// <summary>Writes the document over what is stored (a campaign import). The caller has already required the campaign's DM.</summary>
+    Task SaveDocumentAsync(ConsistencyDismissalsDocument document);
 }
 
 public sealed class RavenConsistencyDismissalRepository(RavenDbService dbService) : IConsistencyDismissalRepository
@@ -111,6 +136,20 @@ public sealed class RavenConsistencyDismissalRepository(RavenDbService dbService
     {
         using var session = dbService.Store.OpenAsyncSession();
         session.Delete(ConsistencyDismissalsDocument.IdFor(campaignId));
+        await session.SaveChangesAsync();
+    }
+
+    public async Task<ConsistencyDismissalsDocument?> GetDocumentAsync(string campaignId)
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+        return await session.LoadAsync<ConsistencyDismissalsDocument>(ConsistencyDismissalsDocument.IdFor(campaignId));
+    }
+
+    public async Task SaveDocumentAsync(ConsistencyDismissalsDocument document)
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+        // An upsert: what the file holds replaces what is stored, as every other document of an import does.
+        await session.StoreAsync(document, ConsistencyDismissalsDocument.IdFor(document.CampaignId));
         await session.SaveChangesAsync();
     }
 }

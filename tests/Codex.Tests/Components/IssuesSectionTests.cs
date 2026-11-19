@@ -41,6 +41,10 @@ public class IssuesSectionTests : ComponentTestBase
         public Task<bool> RestoreAsync(CampaignAccess access, string issueId) => Task.FromResult(access.IsDm && Held.RemoveAll(d => d.IssueId == issueId) > 0);
 
         public Task DeleteAllForCampaignAsync(string campaignId) => Task.CompletedTask;
+
+        public Task<ConsistencyDismissalsDocument?> GetDocumentAsync(string campaignId) => Task.FromResult<ConsistencyDismissalsDocument?>(null);
+
+        public Task SaveDocumentAsync(ConsistencyDismissalsDocument document) => Task.CompletedTask;
     }
 
     private readonly MemoryDismissals dismissals = new();
