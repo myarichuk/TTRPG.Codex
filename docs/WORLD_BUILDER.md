@@ -275,8 +275,11 @@ the Library does not have is refused, so nothing is invented) and against the sy
 (a violation that was there stays the DM's; `enforcement: off` skips the rules, never the Library; the point-buy rules are left out). A retired character,
 a bestiary creature and a character that is gone are refused; a player's character is allowed, since the DM reviews every change and the sheet checks
 cover them. The review card shows each key now and after; applying checks again that the sheet still holds what the card showed (`BeforeStamp`, otherwise
-`EditChanged`), runs the check again, sets the keys, lets the rules recompute what they derive (what the sheet page does after every edit), syncs the live
-state and saves. `resolves` works as for every edit and also requires the issue's `fix_via` to match the kind of edit, so a sheet issue cannot be claimed by
+`EditChanged`), runs the check again, sets the keys, lets the rules recompute what they derive (what the sheet page does after every edit), syncs the state and saves it
+the way the sheet page does (`CastService.SaveSheetAsync` -> `CampaignRuntimeManager.TrySaveActorAsync`): a character at a live table is saved through the table
+(`ReplaceActorCommand`, merged with the table's current state against the sheet as it was before the edit, so the edit shows at the table at once and the table's
+next write cannot put the old value back), anyone else with an ordinary guarded save. (A creature's stat block laid over a character with `stats` on an
+actor edit is still saved straight to the store; that is not a sheet edit.) `resolves` works as for every edit and also requires the issue's `fix_via` to match the kind of edit, so a sheet issue cannot be claimed by
 an edit of the history or the other way round, and the post-apply re-check sees the result like any other.
 
 **A system's own checks (layers 2 and 3).** `issueChecks` in `system.yaml` (model in `Codex.Plugin.Abstractions/IssueChecks.cs`, loader checks in

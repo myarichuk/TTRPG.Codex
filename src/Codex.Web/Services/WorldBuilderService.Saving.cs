@@ -446,7 +446,9 @@ public sealed partial class WorldBuilderService
                     new SheetRuleEngine(system, resolver).Recompute(next);
                     actor.Sheet = next;
                     cast.SyncState(actor, system);
-                    if (!await actorRepository.TrySaveAsync(actor, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                    // As the sheet page saves: a character at a live table goes through the table (merged with its state, so the edit is not written back
+                    // over by the table's copy at its next event), anyone else is an ordinary save. The baseline is the sheet as stored before the edit.
+                    if (!await cast.SaveSheetAsync(actor, current, access, system)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
                     return new WorldEdit(target, id, actor.Name, actor.Visibility == ActorVisibility.Known || actor.Kind == ActorKind.PlayerCharacter, Text: false);
                 }
             case EditTarget.Region:
