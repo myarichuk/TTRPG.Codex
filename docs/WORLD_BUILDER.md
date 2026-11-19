@@ -272,7 +272,10 @@ a derived value, a collection row or an image); the model reads them, with how e
 A value is checked for shape (type, bounds, options, at most 30 keys, 100 list entries), then in `WorldBuilderService.SheetsAsync` against the Library (an id
 the Library does not have is refused, so nothing is invented) and against the system's own rules: the changed sheet is run through
 `SheetRuleEngine.Recompute` beside the old one and the proposal is refused when it introduces a rule violation the sheet did not have
-(a violation that was there stays the DM's; `enforcement: off` skips the rules, never the Library; the point-buy rules are left out). A retired character,
+(a violation that was there stays the DM's; `enforcement: off` skips the rules, never the Library; the point-buy rules are left out). The rules run with the sheets the character's links point to
+(`ILinkedSheets`), as on the sheet page: loaded with the campaign's own access for the propose-time check and the apply, read from the snapshot's actors
+(`SnapshotLinkedSheets`) for `sheet-rule`; without them a value that depends on a link (a track's maximum) is left stale instead of recomputed.
+A retired character,
 a bestiary creature and a character that is gone are refused; a player's character is allowed, since the DM reviews every change and the sheet checks
 cover them. The review card shows each key now and after; applying checks again that the sheet still holds what the card showed (`BeforeStamp`, otherwise
 `EditChanged`), runs the check again, sets the keys, lets the rules recompute what they derive (what the sheet page does after every edit), syncs the state and saves it

@@ -119,12 +119,21 @@ public sealed partial class WorldBuilderService
             var sheet = actor.Sheet ?? new Dictionary<string, object>();
             draft.BeforeSheet = SheetProposal.Current(sheet, draft.SheetSet.Keys.Concat(draft.SheetClear)).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
             draft.BeforeStamp = Stamp(string.Join("\n", draft.BeforeSheet.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => p.Key + "=" + p.Value)));
-            var (e, w) = SheetProposal.Check(system, resolver, enforcement, sheet, draft.SheetSet, draft.SheetClear, label);
+            var (e, w) = SheetProposal.Check(system, resolver, enforcement, sheet, draft.SheetSet, draft.SheetClear, label, await LinkedSheetsAsync(system, access, sheet));
             errors.AddRange(e);
             warnings.AddRange(w);
         }
 
         return (errors, warnings);
+    }
+
+    /// <summary>The sheets the character's links point to, loaded as the sheet page loads them (the campaign's own access, a system with sheet kinds,
+    /// the ids the sheet's link keys name); null when there is nothing to load. Without them the rules cannot tell what a link brings.</summary>
+    private async Task<ILinkedSheets?> LinkedSheetsAsync(SystemDefinition system, CampaignAccess access, IReadOnlyDictionary<string, object> sheet)
+    {
+        if (system.SheetKinds.Count == 0) return null;
+        var ids = Codex.Persistence.Runtime.ActorLinkedSheets.LinkedIds(sheet);
+        return ids.Count == 0 ? null : new Codex.Persistence.Runtime.ActorLinkedSheets(await actorRepository.GetForRulesAsync(access, ids));
     }
 
     /// <summary>The system's hazard type (HAZARDS_DESIGN.md 5), or null when it has none: then a place's hazard is ignored and its trap stays text.</summary>

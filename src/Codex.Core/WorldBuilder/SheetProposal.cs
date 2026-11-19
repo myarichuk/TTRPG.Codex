@@ -270,9 +270,11 @@ public static class SheetProposal
     /// What the Library and the system's rules say about the change, against the sheet as it is now. Errors refuse the proposal: an id that is
     /// not in the Library, or a rule violation the new sheet has and the old one did not (<paramref name="enforcement"/> <c>off</c>: no rules are
     /// run). Warnings are rule warnings the change introduces. The point-buy rules are left out, as in the consistency check.
+    /// <paramref name="linked"/> are the sheets the character's links point to, as the sheet page runs the rules with them: without them a value that
+    /// depends on a link is not recomputed, so a change would be judged against a stale derived value.
     /// </summary>
     public static (IReadOnlyList<string> Errors, IReadOnlyList<string> Warnings) Check(SystemDefinition system, IEntryResolver library, string enforcement,
-        IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, string> set, IEnumerable<string> clear, string label)
+        IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, string> set, IEnumerable<string> clear, string label, ILinkedSheets? linked = null)
     {
         var errors = new List<string>();
         var warnings = new List<string>();
@@ -298,8 +300,8 @@ public static class SheetProposal
         if (errors.Count > 0 || system.SheetRules == null || string.Equals(enforcement, "off", StringComparison.OrdinalIgnoreCase)) return (errors, warnings);
 
         var engine = new SheetRuleEngine(system, library);
-        var before = Evaluate(engine, new Dictionary<string, object>(sheet));
-        var after = Evaluate(engine, Apply(sheet, set, clear));
+        var before = Evaluate(engine, new Dictionary<string, object>(sheet), linked);
+        var after = Evaluate(engine, Apply(sheet, set, clear), linked);
         if (after == null)
         {
             errors.Add($"{label}: the sheet rules could not be evaluated for the changed sheet; the change was refused.");
@@ -326,11 +328,11 @@ public static class SheetProposal
     // only less) is not one the change introduced.
     private static string Signature(RuleViolation v) => v.Key == null ? $"{v.FieldKey}||{v.Message}" : $"{v.FieldKey}|{v.Key}";
 
-    private static SheetEvaluation? Evaluate(SheetRuleEngine engine, Dictionary<string, object> sheet)
+    private static SheetEvaluation? Evaluate(SheetRuleEngine engine, Dictionary<string, object> sheet, ILinkedSheets? linked)
     {
         try
         {
-            return engine.Recompute(sheet);
+            return engine.Recompute(sheet, linked);
         }
         catch (Exception e) when (e is not OutOfMemoryException)
         {

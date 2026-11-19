@@ -1,6 +1,7 @@
 using Codex.Core;
 using Codex.Core.Components;
 using Codex.Core.Consistency;
+using Codex.Core.Rules;
 using Codex.Persistence;
 using Codex.Persistence.Runtime;
 using Codex.Plugin.Abstractions;
@@ -31,10 +32,7 @@ public class LiveTableSheetEditTests : IClassFixture<RavenDbFixture>, IDisposabl
 
     private sealed record Table(WorldBuilderService Service, CampaignRuntimeManager Manager, ActorRepository Actors, CampaignDocument Campaign, CampaignAccess Dm, ActorDocument Actor);
 
-    private async Task<Table> OpenAsync(bool live)
-    {
-        Directory.CreateDirectory(Path.Combine(root, "street"));
-        File.WriteAllText(Path.Combine(root, "street", "system.yaml"), """
+    private const string Street = """
             id: street
             name: Street
             version: 1.0.0
@@ -42,7 +40,12 @@ public class LiveTableSheetEditTests : IClassFixture<RavenDbFixture>, IDisposabl
               - { key: str, label: Strength, default: 10, min: 3, max: 18 }
             resources:
               - { key: Grit, label: Grit, maxKey: Grit_Max, default: 4 }
-            """);
+            """;
+
+    private async Task<Table> OpenAsync(bool live, string yaml = Street, string systemId = "street", ContentRegistry? registry = null, Func<string, IEnumerable<ActorDocument>>? extraActors = null)
+    {
+        Directory.CreateDirectory(Path.Combine(root, systemId));
+        File.WriteAllText(Path.Combine(root, systemId, "system.yaml"), yaml);
         var components = new ComponentRegistry();
         components.Register<ResourcePoolComponent>();
         var actorRepo = new ActorRepository(db);
@@ -56,7 +59,7 @@ public class LiveTableSheetEditTests : IClassFixture<RavenDbFixture>, IDisposabl
         var manager = new CampaignRuntimeManager(actorRepo, sessions, campaigns, encounters, components, loader, NullLoggerFactory.Instance, hooks);
 
         var campaignId = Guid.NewGuid().ToString();
-        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Night City", SystemId = "street" };
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Night City", SystemId = systemId };
         await campaigns.SaveAsync(campaign);
         var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
         var pool = new ResourcePoolComponent();
@@ -67,8 +70,9 @@ public class LiveTableSheetEditTests : IClassFixture<RavenDbFixture>, IDisposabl
             Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Rook", Kind = ActorKind.PlayerCharacter, Biography = "A runner.",
             Sheet = new Dictionary<string, object> { ["str"] = 10, ["Grit"] = 4, ["Grit_Max"] = 4 }
         };
-        ActorSheetSync.ApplySheetToState(actor, loader.GetDefinition("street"), components);
+        ActorSheetSync.ApplySheetToState(actor, loader.GetDefinition(systemId), components);
         await actorRepo.SaveAsync(actor);
+        foreach (var other in extraActors?.Invoke(campaignId) ?? Array.Empty<ActorDocument>()) await actorRepo.SaveAsync(other);
         if (live) await manager.GetOrStartAsync(campaign, dm);
 
         var homebrew = Substitute.For<IHomebrewRepository>();
@@ -79,8 +83,8 @@ public class LiveTableSheetEditTests : IClassFixture<RavenDbFixture>, IDisposabl
         regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => Array.Empty<RegionDocument>().AsEnumerable());
         var facts = Substitute.For<IFactRepository>();
         facts.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>(), Arg.Any<IReadOnlySet<string>>()).Returns(_ => Array.Empty<FactDocument>().AsEnumerable());
-        var library = new CampaignLibrary(new ContentRegistry(), homebrew, loader);
-        var cast = new CastService(manager, new ContentRegistry(), components, loader, actorRepo, wiki);
+        var library = new CampaignLibrary(registry ??= new ContentRegistry(), homebrew, loader);
+        var cast = new CastService(manager, registry, components, loader, actorRepo, wiki);
         var service = new WorldBuilderService(loader, library, homebrew, wiki, facts, cast, regions, campaigns, actorRepo, null!);
         return new Table(service, manager, actorRepo, campaign, dm, actor);
     }
@@ -129,5 +133,76 @@ public class LiveTableSheetEditTests : IClassFixture<RavenDbFixture>, IDisposabl
 
         var stored = (await t.Actors.GetVisibleAsync(t.Actor.Id, t.Dm))!;
         Assert.Equal(12, Convert.ToInt32(stored.Sheet["str"]));
+    }
+
+    // ---- a character whose sheet depends on the sheet its link points to ----
+
+    private const string Crew = """
+        id: link-hosts
+        name: Link hosts
+        actorFields:
+          - { key: body, label: Body, type: Number, min: 0, max: 10 }
+        entityTypes:
+          - { type: upgrade, label: Upgrade }
+        sheetKinds:
+          - kind: member
+            label: Member
+            links:
+              - { key: group, kind: group, label: Group }
+            features:
+              - { link: group, list: upgrades, property: members }
+            tracks:
+              - { key: stress, max: "9 + body + modifiers('stressBoxes')" }
+            layout:
+              - { section: Standing, widgets: [{ widget: link, key: group }] }
+          - kind: group
+            label: Group
+            lists:
+              - { key: upgrades, label: Upgrades, type: upgrade }
+            layout:
+              - { section: Standing, widgets: [{ widget: members }] }
+        """;
+
+    [Fact]
+    public async Task ASheetEdit_RecomputesWhatTheCharactersLinkBrings_AsTheSheetPageDoes()
+    {
+        var registry = new ContentRegistry();
+        registry.RegisterEntry(LinkFixture.Composed, 0);
+        var group = default(ActorDocument)!;
+        var t = await OpenAsync(live: false, Crew, "link-hosts", registry, campaignId =>
+        {
+            group = LinkFixture.Group(campaignId, upgrades: new[] { "composed" });
+            return new[] { group };
+        });
+        // The member is the one the harness made; link it to the group and give it the values the sheet page would have stored.
+        t.Actor.Sheet["kind"] = "member";
+        t.Actor.Sheet["link__group"] = group.Id;
+        t.Actor.Sheet["body"] = 2L;
+        t.Actor.Sheet["stress_Max"] = 12L; // 9 + body 2 + the upgrade's one box
+        await t.Actors.SaveAsync(t.Actor);
+
+        await ApplyAsync(t, """{"body": 5}""");
+
+        var stored = (await t.Actors.GetVisibleAsync(t.Actor.Id, t.Dm))!;
+        Assert.Equal(5, Convert.ToInt32(stored.Sheet["body"]));
+        Assert.Equal(15, Convert.ToInt32(stored.Sheet["stress_Max"])); // not the stale 12 a recompute without the group's sheet leaves
+    }
+}
+
+public class SnapshotLinkedSheetsTests
+{
+    [Fact]
+    public void TheSnapshotsActors_AreWhatALinkResolvesTo_AsTheSheetPagesAre()
+    {
+        var group = Fx.Actor("actors/g", "Group", sheet: new Dictionary<string, object> { ["kind"] = "group" });
+        var gone = Fx.Actor("actors/r", "Old", retired: true, sheet: new Dictionary<string, object> { ["kind"] = "group" });
+        var linked = new SnapshotLinkedSheets(new[] { group, gone });
+
+        Assert.Equal("group", linked.Sheet("actors/g")!["kind"]);
+        Assert.Equal(LinkedActorStatus.Available, linked.Status("actors/g"));
+        Assert.Null(linked.Sheet("actors/r")); // a retired actor's sheet is never handed out
+        Assert.Equal(LinkedActorStatus.Deleted, linked.Status("actors/r"));
+        Assert.Null(linked.Sheet("actors/nope"));
+        Assert.Equal(LinkedActorStatus.NotFound, linked.Status("actors/nope"));
     }
 }

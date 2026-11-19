@@ -439,11 +439,12 @@ public sealed partial class WorldBuilderService
                     var current = actor.Sheet ?? new Dictionary<string, object>();
                     if (draft.BeforeSheet != null && !SheetProposal.Unchanged(current, draft.BeforeSheet)) throw changed;
                     var resolver = await CachedEntryResolver.LoadAsync(library, campaign, access, system);
-                    var (refused, _) = SheetProposal.Check(system, resolver, SheetRuleEngine.EffectiveEnforcement(system, campaign.RulesEnforcement), current, draft.SheetSet, draft.SheetClear, draft.Name);
+                    var linked = await LinkedSheetsAsync(system, access, current);
+                    var (refused, _) = SheetProposal.Check(system, resolver, SheetRuleEngine.EffectiveEnforcement(system, campaign.RulesEnforcement), current, draft.SheetSet, draft.SheetClear, draft.Name, linked);
                     if (refused.Count > 0) throw new LocalizedException("WorldBuilder.Error.SheetRefused", draft.Name);
                     var next = SheetProposal.Apply(current, draft.SheetSet, draft.SheetClear);
                     // What the sheet page runs after every edit, so what the rules derive (hit points, bonuses) follows the change.
-                    new SheetRuleEngine(system, resolver).Recompute(next);
+                    new SheetRuleEngine(system, resolver).Recompute(next, linked);
                     actor.Sheet = next;
                     cast.SyncState(actor, system);
                     // As the sheet page saves: a character at a live table goes through the table (merged with its state, so the edit is not written back

@@ -59,10 +59,12 @@ public sealed class SheetRuleCheck : IConsistencyCheck
     {
         if (s.System?.SheetRules == null || s.Enforcement == "off") yield break;
         var engine = new SheetRuleEngine(s.System, s.Library);
+        // The sheets a character's links point to, from the same snapshot, as the sheet page runs the rules with them.
+        var linked = new SnapshotLinkedSheets(s.Actors);
 
         foreach (var a in s.Actors.Where(a => a.Role != ActorRole.Monster && !a.Retired))
         {
-            var (evaluation, failure) = Evaluate(engine, a);
+            var (evaluation, failure) = Evaluate(engine, a, linked);
             if (evaluation == null)
             {
                 yield return Make.Issue(Name, IssueSeverity.Info, "actor", a.Id, "sheet", "evaluation-failed", "Consistency.SheetEvaluationFailed",
@@ -77,12 +79,12 @@ public sealed class SheetRuleCheck : IConsistencyCheck
     }
 
     // One bad sheet must not hide every other character's issues; it becomes an issue of its own. Not in the iterator: it cannot yield from a catch.
-    private static (SheetEvaluation? Evaluation, string? Failure) Evaluate(SheetRuleEngine engine, ActorView actor)
+    private static (SheetEvaluation? Evaluation, string? Failure) Evaluate(SheetRuleEngine engine, ActorView actor, ILinkedSheets linked)
     {
         try
         {
             // Recompute writes the values it derives onto the sheet it is given: a copy, so the snapshot stays as it was taken.
-            return (engine.Recompute(new Dictionary<string, object>(actor.Sheet)), null);
+            return (engine.Recompute(new Dictionary<string, object>(actor.Sheet), linked), null);
         }
         catch (Exception e) when (e is not OutOfMemoryException)
         {
@@ -122,4 +124,18 @@ public sealed class SheetRuleCheck : IConsistencyCheck
         var slug = WikiText.Slugify(text);
         return slug.Length > 60 ? slug[..60].TrimEnd('-') : slug;
     }
+}
+
+/// <summary>The sheets a character's links point to, read from the snapshot's own actors (plain data; the checker never reaches a store). Same
+/// rule as the sheet page's: a retired actor's sheet is never handed out, so the link is then "deleted", and an id the campaign does not have is "not found".</summary>
+internal sealed class SnapshotLinkedSheets : ILinkedSheets
+{
+    private readonly Dictionary<string, ActorView> actors;
+
+    public SnapshotLinkedSheets(IEnumerable<ActorView> all) => actors = all.GroupBy(a => a.Id, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+
+    public IReadOnlyDictionary<string, object>? Sheet(string actorId) => actors.GetValueOrDefault(actorId) is { Retired: false } a ? a.Sheet : null;
+
+    public LinkedActorStatus Status(string actorId) =>
+        !actors.TryGetValue(actorId, out var a) ? LinkedActorStatus.NotFound : a.Retired ? LinkedActorStatus.Deleted : LinkedActorStatus.Available;
 }
