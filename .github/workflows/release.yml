@@ -148,7 +148,9 @@ jobs:
         with:
           name: packages-systems
           if-no-files-found: ignore
-          path: dist/system-*.zip
+          path: |
+            dist/system-*.zip
+            dist/systems.json
 
   release:
     needs: [version, package, systems]

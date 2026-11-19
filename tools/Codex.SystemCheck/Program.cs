@@ -16,6 +16,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 // check passes (a system with compiled code cannot be one: it is installed by copying its folder). --quiet lists only what is
 // wrong.
 //
+// --catalog-entry <entry.json> (with --pack) also writes the system's line of the release's systems.json (id, name, version,
+// description, licence, scripts, the archive's file name, size and sha256); --catalog <systems.json> <entry.json>... merges those
+// lines into the catalog the release carries (none: an empty list). packaging/pack-systems.sh uses both.
+//
 // --schema writes system.schema.json (into <folder>/schema) and SYSTEM_YAML_REFERENCE.md (into <folder>), generated from the
 // app's model: the repository keeps them in docs/.
 //
@@ -41,11 +45,28 @@ if (args.Contains("--schema"))
     return 0;
 }
 
-var pack = Option("--pack");
-var folder = args.Where((a, i) => !a.StartsWith("--", StringComparison.Ordinal) && (i == 0 || args[i - 1] != "--pack")).FirstOrDefault();
-if (folder == null || !Directory.Exists(folder) || (args.Contains("--pack") && pack == null))
+if (args.Contains("--catalog"))
 {
-    Console.Error.WriteLine("usage: <system folder> [--types] [--pack <file.zip>] [--quiet]  |  --schema <folder>");
+    // --catalog <systems.json> <entry.json>...: merges the entries --catalog-entry wrote into the release's catalog (none: an empty one).
+    var at = Array.IndexOf(args, "--catalog");
+    if (at + 1 >= args.Length)
+    {
+        Console.Error.WriteLine("usage: --catalog <systems.json> [<entry.json>...]");
+        return 2;
+    }
+
+    var entries = args.Skip(at + 2).Select(f => System.Text.Json.JsonSerializer.Deserialize<SystemCatalogEntry>(File.ReadAllText(f), SystemCatalogFile.Json)!).ToList();
+    File.WriteAllText(args[at + 1], SystemCatalogFile.Write(entries) + "\n");
+    Console.WriteLine($"WROTE   {Path.GetFullPath(args[at + 1])} ({entries.Count} systems)");
+    return 0;
+}
+
+var pack = Option("--pack");
+var catalogEntry = Option("--catalog-entry");
+var folder = args.Where((a, i) => !a.StartsWith("--", StringComparison.Ordinal) && (i == 0 || args[i - 1] is not ("--pack" or "--catalog-entry"))).FirstOrDefault();
+if (folder == null || !Directory.Exists(folder) || (args.Contains("--pack") && pack == null) || (args.Contains("--catalog-entry") && (catalogEntry == null || pack == null)))
+{
+    Console.Error.WriteLine("usage: <system folder> [--types] [--pack <file.zip> [--catalog-entry <entry.json>]] [--quiet]  |  --schema <folder>  |  --catalog <systems.json> [<entry.json>...]");
     return 2;
 }
 
@@ -76,6 +97,15 @@ using (var output = File.Create(pack))
 }
 
 if (!quiet) Console.WriteLine($"WROTE   {Path.GetFullPath(pack)}");
+
+if (catalogEntry != null)
+{
+    var definition = SystemDefinitionLoader.Load(Path.Combine(folder, SystemDefinitionLoader.FileName));
+    var entry = SystemCatalogFile.EntryFor(definition, pack, SystemScripts.FilesNamed(definition).Count > 0);
+    File.WriteAllText(catalogEntry, System.Text.Json.JsonSerializer.Serialize(entry, SystemCatalogFile.Json));
+    if (!quiet) Console.WriteLine($"WROTE   {Path.GetFullPath(catalogEntry)}");
+}
+
 return 0;
 
 namespace Codex.SystemCheck
