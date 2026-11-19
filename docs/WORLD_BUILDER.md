@@ -251,6 +251,13 @@ reported, the Bestiary) and the homebrew entries (`HomebrewView`); `ConsistencyS
 They run only for `list_issues` scope `noise` (or one of their names) or the Issues panel's "show minor findings" switch
 (`IssueFilter.WantsNoise`, `ConsistencyChecker.For`), so they never reach the default list, the issue-count note or a `resolves` claim.
 
+**Cost and the time budget.** The plain-text mention scan walks a trie of the pages' names word by word (`UnlinkedMentionCheck`), so a position in a text costs
+as many steps as the name it could be, not the length of the longest title (500 pages of 1000 words with a 40-word title: 10.7 s before, 0.24 s after; 1000 pages of
+2000 words with a 60-word title: 80 s before, 0.56 s after, snapshot included). Which mentions are reported is unchanged; a test keeps the first, simple
+version as an oracle on generated worlds. `ConsistencyChecker.Run` takes a `CancellationToken` and looks at it between checks (a check is never interrupted, so
+every check stays pure); the per-message count note (`WorldBuilderService.IssueSummaryAsync`) runs under a budget (`IssueSummaryBudget`, 5 s) and is left out, silently,
+when the check goes over it, so a pathological campaign cannot stall a chat message.
+
 **Loading cost.** The count note runs a snapshot per DM message, so the v2 checks add no heavy reading: members, packs, the system's changes and
 what the loader reported are in memory, and the only new read is the campaign's homebrew list, one query beside the several the Library's resolver
 already makes for the sheet's types (`ConsistencyService`). It is always read, never skipped by scope, so an issue is the same issue whichever scope

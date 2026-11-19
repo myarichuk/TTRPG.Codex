@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Codex.Core.Consistency;
 using Codex.Persistence;
 
 namespace Codex.Tests.Consistency;
@@ -63,5 +64,28 @@ public class V2ThroughTheServiceTests
 
         Assert.Equal(1, saving.Snapshots - before);
         Assert.Contains("2 open issues (2 errors, 0 warnings, 0 info)", note);
+    }
+
+    [Fact]
+    public async Task TheCountNote_IsLeftOutSilently_WhenTheCheckTakesLongerThanItsBudget_AndNeverHoldsUpTheMessage()
+    {
+        var saving = World();
+        saving.Entries.Add(new HomebrewEntryDocument { Id = "hb/1", Type = "spell", EntryId = "dup", Name = "One", SystemId = "srd5e" });
+        saving.Entries.Add(new HomebrewEntryDocument { Id = "hb/2", Type = "spell", EntryId = "dup", Name = "Two", SystemId = "srd5e" });
+
+        saving.Service.IssueSummaryBudget = TimeSpan.Zero; // already spent when the check starts
+        Assert.Null(await saving.Service.IssueSummaryAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm));
+
+        saving.Service.IssueSummaryBudget = TimeSpan.FromSeconds(30);
+        Assert.Contains("2 open issues", await saving.Service.IssueSummaryAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm));
+    }
+
+    [Fact]
+    public void TheChecker_LooksAtTheTokenBetweenChecks_AndStopsWithACancellation()
+    {
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+        Assert.Throws<OperationCanceledException>(() => ConsistencyChecker.Run(Fx.Snap(), cancel: cancelled.Token));
+        Assert.Empty(ConsistencyChecker.Run(Fx.Snap(), cancel: CancellationToken.None));
     }
 }

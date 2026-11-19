@@ -75,6 +75,13 @@ public sealed class BrokenLinkCheck : IConsistencyCheck
     }
 }
 
+/// <summary>One word of a page name in <see cref="UnlinkedMentionCheck"/>'s trie; <see cref="Page"/> is set where a whole name ends.</summary>
+internal sealed class NameNode
+{
+    public Dictionary<string, NameNode>? Next;
+    public PageView? Page;
+}
+
 /// <summary>
 /// A page's text that names another page in plain words, where a <c>[[link]]</c> was meant. Only a name of two words or more counts (one word
 /// is too often an ordinary one), written with a capital or three words long; a page already linking the target anywhere is left alone (links go
@@ -87,17 +94,27 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
     public IEnumerable<Issue> Run(WorldSnapshot s)
     {
         var lookup = new PageLookup(s.Pages);
-        var candidates = new Dictionary<string, PageView>(StringComparer.Ordinal);
-        var maxWords = 0;
+        // The names a page may be mentioned by, as a trie of their words: a position in a text walks it word by word and stops at the first word
+        // that no name continues with, so the work at a position is the length of the name it could be, never the length of the longest title.
+        var root = new NameNode();
+        var candidates = 0;
         foreach (var (canonical, list) in lookup.Canonicals)
         {
-            var words = canonical.Split(' ').Length;
-            if (words < 2 || list.Count != 1) continue;
-            candidates[canonical] = list[0];
-            maxWords = Math.Max(maxWords, words);
+            var words = canonical.Split(' ');
+            if (words.Length < 2 || list.Count != 1) continue;
+            var node = root;
+            foreach (var word in words)
+            {
+                node.Next ??= new Dictionary<string, NameNode>(StringComparer.Ordinal);
+                if (!node.Next.TryGetValue(word, out var next)) node.Next[word] = next = new NameNode();
+                node = next;
+            }
+
+            node.Page = list[0];
+            candidates++;
         }
 
-        if (candidates.Count == 0) yield break;
+        if (candidates == 0) yield break;
 
         foreach (var page in s.Pages)
         {
@@ -112,11 +129,13 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
                 {
                     PageView? target = null;
                     var length = 0;
-                    for (var n = Math.Min(maxWords, run.Count - i); n >= 2 && target == null; n--)
+                    var at = root;
+                    for (var k = i; k < run.Count && at.Next != null && at.Next.TryGetValue(run[k].Norm, out var step); k++)
                     {
-                        if (!candidates.TryGetValue(string.Join(' ', run.Skip(i).Take(n).Select(t => t.Norm)), out var found)) continue;
-                        target = found;
-                        length = n;
+                        at = step;
+                        if (at.Page == null) continue;
+                        target = at.Page; // the longest name wins: keep walking while a longer one is still possible
+                        length = k - i + 1;
                     }
 
                     if (target == null) continue;

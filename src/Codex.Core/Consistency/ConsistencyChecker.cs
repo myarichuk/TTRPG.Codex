@@ -51,10 +51,19 @@ public static class ConsistencyChecker
     public static IReadOnlyList<IConsistencyCheck> For(IssueFilter filter) => filter.WantsNoise ? Default.Concat(Noisy).ToList() : Default;
 
     /// <summary>Every issue the checks find, in <see cref="Issue.Order"/>, each id once. Two issues that would share an id (the same rule
-    /// broken twice with the same words) get <c>~2</c>, <c>~3</c> in that order, so an id always names one issue.</summary>
-    public static IReadOnlyList<Issue> Run(WorldSnapshot snapshot, IEnumerable<IConsistencyCheck>? checks = null)
+    /// broken twice with the same words) get <c>~2</c>, <c>~3</c> in that order, so an id always names one issue. The checks stay pure and know
+    /// nothing of time; <paramref name="cancel"/> is looked at between them, so a caller with a time budget can give up on a run (an
+    /// <see cref="OperationCanceledException"/>) without a check being interrupted halfway.</summary>
+    public static IReadOnlyList<Issue> Run(WorldSnapshot snapshot, IEnumerable<IConsistencyCheck>? checks = null, CancellationToken cancel = default)
     {
-        var all = (checks ?? Default).SelectMany(c => c.Run(snapshot)).OrderBy(i => i, Issue.Order).ToList();
+        var found = new List<Issue>();
+        foreach (var check in checks ?? Default)
+        {
+            cancel.ThrowIfCancellationRequested();
+            found.AddRange(check.Run(snapshot));
+        }
+
+        var all = found.OrderBy(i => i, Issue.Order).ToList();
         var seen = new Dictionary<string, int>(StringComparer.Ordinal);
         for (var i = 0; i < all.Count; i++)
         {
@@ -74,8 +83,8 @@ public static class ConsistencyChecker
     }
 
     /// <summary>The issues <paramref name="filter"/> asks for.</summary>
-    public static IReadOnlyList<Issue> Run(WorldSnapshot snapshot, IssueFilter filter, IEnumerable<IConsistencyCheck>? checks = null) =>
-        filter.Apply(Run(snapshot, checks));
+    public static IReadOnlyList<Issue> Run(WorldSnapshot snapshot, IssueFilter filter, IEnumerable<IConsistencyCheck>? checks = null, CancellationToken cancel = default) =>
+        filter.Apply(Run(snapshot, checks, cancel));
 
     /// <summary>
     /// The ids a proposal says it resolves that are not issues right now, sorted and each once. A proposal naming any is refused whole:

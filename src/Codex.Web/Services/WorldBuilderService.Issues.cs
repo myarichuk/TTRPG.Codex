@@ -37,22 +37,28 @@ public sealed partial class WorldBuilderService
     /// The open issues right now, one full snapshot, for the apply path to compare before and after a save; null when no checker is
     /// available here. Dismissed issues are not in it. DM only. The caller treats a throw as "could not re-check", never as a failed apply.
     /// </summary>
-    public async Task<IReadOnlyList<Issue>?> OpenIssuesAsync(CampaignDocument campaign, CampaignAccess access)
+    public async Task<IReadOnlyList<Issue>?> OpenIssuesAsync(CampaignDocument campaign, CampaignAccess access, CancellationToken cancel = default)
     {
         DmOnly(access);
-        return consistency == null ? null : (await consistency.CheckAsync(campaign, access)).Open;
+        return consistency == null ? null : (await consistency.CheckAsync(campaign, access, cancel: cancel)).Open;
     }
 
+    /// <summary>How long the per-message count note may take before it is left out. The checks are pure code over one snapshot and are quick
+    /// for any real campaign; this only means a pathological one can never hold up a chat message.</summary>
+    public TimeSpan IssueSummaryBudget { get; set; } = TimeSpan.FromSeconds(5);
+
     /// <summary>The one line the chat adds to the DM's message, counts only (never the list): null when nothing is open, when no checker
-    /// is available, or when the check fails (a message is never held up by it). Deterministic: the same issues give the same words.</summary>
+    /// is available, when the check fails, or when it takes longer than <see cref="IssueSummaryBudget"/> (a message is never held up by it). Deterministic: the same issues give the same words.</summary>
     public async Task<string?> IssueSummaryAsync(CampaignDocument campaign, CampaignAccess access)
     {
+        using var budget = new CancellationTokenSource(IssueSummaryBudget);
         try
         {
-            return IssueSummaryOf(await OpenIssuesAsync(campaign, access));
+            return IssueSummaryOf(await OpenIssuesAsync(campaign, access, budget.Token));
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (ex is not OperationCanceledException || budget.IsCancellationRequested)
         {
+            // Over the budget or failed: no note (silently), the message goes on.
             return null;
         }
     }

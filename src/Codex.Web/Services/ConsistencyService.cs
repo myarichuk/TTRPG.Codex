@@ -22,10 +22,10 @@ public sealed class ConsistencyService(ISystemCatalog catalog, CampaignLibrary l
     /// the like) run only with <paramref name="noise"/>, so by default they are never in the list, the count or the DM's issue panel. The one load the
     /// v2 checks add is the campaign's homebrew list (one query, beside the several the Library's resolver already makes for the sheet's types); the
     /// rest (members, packs, the system's changes and load problems) is in memory. It is always read, so an issue is the same issue whatever scope asked for it.</summary>
-    public async Task<ConsistencyReport> CheckAsync(CampaignDocument campaign, CampaignAccess access, bool noise = false)
+    public async Task<ConsistencyReport> CheckAsync(CampaignDocument campaign, CampaignAccess access, bool noise = false, CancellationToken cancel = default)
     {
         DmOnly(access);
-        var all = await RunAsync(campaign, access, noise);
+        var all = await RunAsync(campaign, access, noise, cancel);
         var dismissed = (await dismissals.ListAsync(access)).Select(d => d.IssueId).ToHashSet(StringComparer.Ordinal);
         var (open, set) = IssueDismissals.Split(all, dismissed);
         return new ConsistencyReport(open, set);
@@ -58,8 +58,9 @@ public sealed class ConsistencyService(ISystemCatalog catalog, CampaignLibrary l
         return dismissals.RestoreAsync(access, issueId);
     }
 
-    private async Task<IReadOnlyList<Issue>> RunAsync(CampaignDocument campaign, CampaignAccess access, bool noise)
+    private async Task<IReadOnlyList<Issue>> RunAsync(CampaignDocument campaign, CampaignAccess access, bool noise, CancellationToken cancel)
     {
+        cancel.ThrowIfCancellationRequested();
         var system = catalog.GetDefinition(campaign.SystemId);
         var brews = homebrew != null ? (await homebrew.GetVisibleForCampaignAsync(access)).ToList() : null;
         // A system that is not installed has no Library to read: the checks that need one are left out, the rest still run.
@@ -78,7 +79,7 @@ public sealed class ConsistencyService(ISystemCatalog catalog, CampaignLibrary l
             await regions.GetVisibleForCampaignAsync(access),
             await facts.GetVisibleForCampaignAsync(access, new HashSet<string>()),
             campaign, system, resolver, brews, context);
-        return ConsistencyChecker.Run(snapshot, noise ? ConsistencyChecker.Default.Concat(ConsistencyChecker.Noisy).ToList() : null);
+        return ConsistencyChecker.Run(snapshot, noise ? ConsistencyChecker.Default.Concat(ConsistencyChecker.Noisy).ToList() : null, cancel);
     }
 
     /// <summary>The sheet's resolver, and for any other entry a check names (a creature, a hazard, a field of a homebrew entry) the pack's entry or the
