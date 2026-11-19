@@ -293,6 +293,32 @@
   <data name="Page.About.Install" xml:space="preserve"><value>Install a system</value></data>
   <data name="Page.About.InstallHint" xml:space="preserve"><value>A system is a zip of its folder: system.yaml, its translations, scripts and content packs, at most {0} MB. It is checked before anything is installed. A system with compiled code (DLLs) cannot be uploaded: whoever runs the server copies its folder there.</value></data>
   <data name="Page.About.InstallChoose" xml:space="preserve"><value>Choose a system zip</value></data>
+  <data name="Page.Systems.Title" xml:space="preserve"><value>Get more game systems</value></data>
+  <data name="Page.Systems.GetLink" xml:space="preserve"><value>Get more game systems</value></data>
+  <data name="Page.Systems.Subtitle" xml:space="preserve"><value>Game systems released for this version of the app. Install one and campaigns on this server can use it.</value></data>
+  <data name="Page.Systems.Available" xml:space="preserve"><value>Available systems</value></data>
+  <data name="Page.Systems.Review" xml:space="preserve"><value>Review before installing</value></data>
+  <data name="Page.Systems.Loading" xml:space="preserve"><value>Looking for released systems…</value></data>
+  <data name="Page.Systems.Off" xml:space="preserve"><value>The list of released systems is turned off on this server. You can still install a downloaded file.</value></data>
+  <data name="Page.Systems.Failed" xml:space="preserve"><value>Couldn't reach the list of systems. You can still install a downloaded file.</value></data>
+  <data name="Page.Systems.Retry" xml:space="preserve"><value>Try again</value></data>
+  <data name="Page.Systems.FromLatest" xml:space="preserve"><value>This copy of the app is not a released version, so this list comes from the latest release.</value></data>
+  <data name="Page.Systems.Empty" xml:space="preserve"><value>No separate game systems are released for this version.</value></data>
+  <data name="Page.Systems.Licence" xml:space="preserve"><value>Licence: {0}</value></data>
+  <data name="Page.Systems.HasScripts" xml:space="preserve"><value>Has scripts</value></data>
+  <data name="Page.Systems.Install" xml:space="preserve"><value>Install</value></data>
+  <data name="Page.Systems.Update" xml:space="preserve"><value>Update to v{0}</value></data>
+  <data name="Page.Systems.Installed" xml:space="preserve"><value>Installed</value></data>
+  <data name="Page.Systems.InstalledVersion" xml:space="preserve"><value>Installed: v{0}</value></data>
+  <data name="Page.Systems.Bundled" xml:space="preserve"><value>Bundled with the app</value></data>
+  <data name="Page.Systems.Downloading" xml:space="preserve"><value>Downloading {0}…</value></data>
+  <data name="Page.Systems.Checking" xml:space="preserve"><value>Checking {0}…</value></data>
+  <data name="Page.Systems.Ready" xml:space="preserve"><value>{0} is downloaded and checked. Review it below before installing.</value></data>
+  <data name="Page.Systems.DownloadFailed" xml:space="preserve"><value>Couldn't download {0}. Check the connection and try again, or install a downloaded file.</value></data>
+  <data name="Page.Systems.DownloadRefused" xml:space="preserve"><value>The file for {0} was not the one the list described, so it was not used. Nothing was installed.</value></data>
+  <data name="Page.Systems.FileHeading" xml:space="preserve"><value>Install from a file</value></data>
+  <data name="Page.Systems.FileHint" xml:space="preserve"><value>For a server with no internet, or a system from someone else: choose a system zip you downloaded (at most {0} MB). It is checked before anything is installed.</value></data>
+  <data name="Page.Systems.AboutLink" xml:space="preserve"><value>Back to About</value></data>
   <data name="Page.About.InstallScripts" xml:space="preserve"><value>scripts</value></data>
   <data name="Page.About.ScriptsOff" xml:space="preserve"><value>Scripts off</value></data>
   <data name="Page.About.ScriptsOffHint" xml:space="preserve"><value>Some of this system's rules are done by hand, because scripts are turned off on this server.</value></data>

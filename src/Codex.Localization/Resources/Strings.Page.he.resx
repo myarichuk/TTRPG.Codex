@@ -293,6 +293,32 @@
   <data name="Page.About.Install" xml:space="preserve"><value>התקנת מערכת</value></data>
   <data name="Page.About.InstallHint" xml:space="preserve"><value>מערכת היא קובץ zip של התיקייה שלה: system.yaml, התרגומים, הסקריפטים וחבילות התוכן שלה, עד {0} MB. היא נבדקת לפני שמשהו מותקן. אי אפשר להעלות מערכת עם קוד מהודר (DLL): מי שמריץ את השרת מעתיק אליו את התיקייה שלה.</value></data>
   <data name="Page.About.InstallChoose" xml:space="preserve"><value>בחירת קובץ zip של מערכת</value></data>
+  <data name="Page.Systems.Title" xml:space="preserve"><value>להוסיף מערכות משחק</value></data>
+  <data name="Page.Systems.GetLink" xml:space="preserve"><value>להוסיף מערכות משחק</value></data>
+  <data name="Page.Systems.Subtitle" xml:space="preserve"><value>מערכות משחק שהופצו לגרסה הזאת של האפליקציה. אחרי ההתקנה אפשר ליצור בשרת הזה קמפיינים במערכת.</value></data>
+  <data name="Page.Systems.Available" xml:space="preserve"><value>מערכות זמינות</value></data>
+  <data name="Page.Systems.Review" xml:space="preserve"><value>בדיקה לפני ההתקנה</value></data>
+  <data name="Page.Systems.Loading" xml:space="preserve"><value>מחפשים מערכות שהופצו…</value></data>
+  <data name="Page.Systems.Off" xml:space="preserve"><value>רשימת המערכות שהופצו כבויה בשרת הזה. עדיין אפשר להתקין קובץ שהורדתם.</value></data>
+  <data name="Page.Systems.Failed" xml:space="preserve"><value>לא הצלחנו להגיע לרשימת המערכות. עדיין אפשר להתקין קובץ שהורדתם.</value></data>
+  <data name="Page.Systems.Retry" xml:space="preserve"><value>לנסות שוב</value></data>
+  <data name="Page.Systems.FromLatest" xml:space="preserve"><value>העותק הזה של האפליקציה אינו גרסה שהופצה, ולכן הרשימה לקוחה מההפצה האחרונה.</value></data>
+  <data name="Page.Systems.Empty" xml:space="preserve"><value>לגרסה הזאת לא הופצו מערכות משחק נפרדות.</value></data>
+  <data name="Page.Systems.Licence" xml:space="preserve"><value>רישיון: {0}</value></data>
+  <data name="Page.Systems.HasScripts" xml:space="preserve"><value>כוללת סקריפטים</value></data>
+  <data name="Page.Systems.Install" xml:space="preserve"><value>התקנה</value></data>
+  <data name="Page.Systems.Update" xml:space="preserve"><value>עדכון לגרסה {0}</value></data>
+  <data name="Page.Systems.Installed" xml:space="preserve"><value>מותקנת</value></data>
+  <data name="Page.Systems.InstalledVersion" xml:space="preserve"><value>מותקנת: גרסה {0}</value></data>
+  <data name="Page.Systems.Bundled" xml:space="preserve"><value>מגיעה עם האפליקציה</value></data>
+  <data name="Page.Systems.Downloading" xml:space="preserve"><value>מורידים את {0}…</value></data>
+  <data name="Page.Systems.Checking" xml:space="preserve"><value>בודקים את {0}…</value></data>
+  <data name="Page.Systems.Ready" xml:space="preserve"><value>{0} הורדה ונבדקה. אפשר לעיין למטה במה שישתנה לפני ההתקנה.</value></data>
+  <data name="Page.Systems.DownloadFailed" xml:space="preserve"><value>לא הצלחנו להוריד את {0}. בדקו את החיבור ונסו שוב, או התקינו קובץ שהורדתם.</value></data>
+  <data name="Page.Systems.DownloadRefused" xml:space="preserve"><value>הקובץ של {0} אינו הקובץ שהרשימה תיארה, ולכן לא נעשה בו שימוש. דבר לא הותקן.</value></data>
+  <data name="Page.Systems.FileHeading" xml:space="preserve"><value>התקנה מקובץ</value></data>
+  <data name="Page.Systems.FileHint" xml:space="preserve"><value>לשרת בלי אינטרנט, או למערכת שמקורה במישהו אחר: בחרו קובץ zip של מערכת שהורדתם (עד {0} מ״ב). הוא נבדק לפני שמתקינים משהו.</value></data>
+  <data name="Page.Systems.AboutLink" xml:space="preserve"><value>חזרה לעמוד האודות</value></data>
   <data name="Page.About.InstallScripts" xml:space="preserve"><value>סקריפטים</value></data>
   <data name="Page.About.ScriptsOff" xml:space="preserve"><value>סקריפטים כבויים</value></data>
   <data name="Page.About.ScriptsOffHint" xml:space="preserve"><value>חלק מהכללים של מערכת זו מבוצעים ידנית, כי הסקריפטים כבויים בשרת הזה.</value></data>

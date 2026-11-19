@@ -293,6 +293,32 @@
   <data name="Page.About.Install" xml:space="preserve"><value>Установить систему</value></data>
   <data name="Page.About.InstallHint" xml:space="preserve"><value>Система — это zip-архив её папки: system.yaml, переводы, скрипты и пакеты контента, не больше {0} МБ. Перед установкой он проверяется. Систему со скомпилированным кодом (DLL) загрузить нельзя: её папку копирует на сервер тот, кто его запускает.</value></data>
   <data name="Page.About.InstallChoose" xml:space="preserve"><value>Выбрать zip с системой</value></data>
+  <data name="Page.Systems.Title" xml:space="preserve"><value>Получить другие игровые системы</value></data>
+  <data name="Page.Systems.GetLink" xml:space="preserve"><value>Получить другие игровые системы</value></data>
+  <data name="Page.Systems.Subtitle" xml:space="preserve"><value>Игровые системы, выпущенные для этой версии приложения. Установите систему, и кампании на этом сервере смогут её использовать.</value></data>
+  <data name="Page.Systems.Available" xml:space="preserve"><value>Доступные системы</value></data>
+  <data name="Page.Systems.Review" xml:space="preserve"><value>Проверьте перед установкой</value></data>
+  <data name="Page.Systems.Loading" xml:space="preserve"><value>Ищем выпущенные системы…</value></data>
+  <data name="Page.Systems.Off" xml:space="preserve"><value>Список выпущенных систем на этом сервере выключен. Скачанный файл всё равно можно установить.</value></data>
+  <data name="Page.Systems.Failed" xml:space="preserve"><value>Не удалось получить список систем. Скачанный файл всё равно можно установить.</value></data>
+  <data name="Page.Systems.Retry" xml:space="preserve"><value>Повторить</value></data>
+  <data name="Page.Systems.FromLatest" xml:space="preserve"><value>Эта копия приложения не является выпущенной версией, поэтому список взят из последнего выпуска.</value></data>
+  <data name="Page.Systems.Empty" xml:space="preserve"><value>Для этой версии нет отдельных игровых систем.</value></data>
+  <data name="Page.Systems.Licence" xml:space="preserve"><value>Лицензия: {0}</value></data>
+  <data name="Page.Systems.HasScripts" xml:space="preserve"><value>Есть скрипты</value></data>
+  <data name="Page.Systems.Install" xml:space="preserve"><value>Установить</value></data>
+  <data name="Page.Systems.Update" xml:space="preserve"><value>Обновить до v{0}</value></data>
+  <data name="Page.Systems.Installed" xml:space="preserve"><value>Установлена</value></data>
+  <data name="Page.Systems.InstalledVersion" xml:space="preserve"><value>Установлена: v{0}</value></data>
+  <data name="Page.Systems.Bundled" xml:space="preserve"><value>Входит в приложение</value></data>
+  <data name="Page.Systems.Downloading" xml:space="preserve"><value>Скачиваем «{0}»…</value></data>
+  <data name="Page.Systems.Checking" xml:space="preserve"><value>Проверяем «{0}»…</value></data>
+  <data name="Page.Systems.Ready" xml:space="preserve"><value>Система «{0}» скачана и проверена. Посмотрите, что изменится, ниже и подтвердите установку.</value></data>
+  <data name="Page.Systems.DownloadFailed" xml:space="preserve"><value>Не удалось скачать «{0}». Проверьте соединение и повторите или установите скачанный файл.</value></data>
+  <data name="Page.Systems.DownloadRefused" xml:space="preserve"><value>Файл системы «{0}» не совпал с тем, что описан в списке, поэтому он не использован. Ничего не установлено.</value></data>
+  <data name="Page.Systems.FileHeading" xml:space="preserve"><value>Установить из файла</value></data>
+  <data name="Page.Systems.FileHint" xml:space="preserve"><value>Для сервера без интернета или для системы от другого автора: выберите скачанный zip с системой (не больше {0} МБ). Перед установкой он проверяется.</value></data>
+  <data name="Page.Systems.AboutLink" xml:space="preserve"><value>Назад к странице «О приложении»</value></data>
   <data name="Page.About.InstallScripts" xml:space="preserve"><value>скрипты</value></data>
   <data name="Page.About.ScriptsOff" xml:space="preserve"><value>Скрипты выключены</value></data>
   <data name="Page.About.ScriptsOffHint" xml:space="preserve"><value>Часть правил этой системы выполняется вручную, потому что на этом сервере скрипты выключены.</value></data>
