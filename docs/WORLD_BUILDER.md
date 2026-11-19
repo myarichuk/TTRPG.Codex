@@ -206,8 +206,9 @@ the same data gives the same issues in the same order (`ConsistencyChecker.Run`,
 `id` is `check:kind:entityId:field[:detail]`, built from document ids and never from a slug or a title, so it survives a rename;
 two issues that would share one are numbered `~2`, `~3`. `code` and `args` are for the app to show the sentence in the reader's
 language; `message` and `fix_hint` are English, for the model. `bundle` groups a screen or a list by entity. `fix_via` says which
-kind of proposal can fix it (`page`, `place`, `fact`, `actor-biography`), or `report-only`: the review gate cannot change an actor's
-sheet or a page's structural links, so those are for the DM.
+kind of proposal can fix it (`page`, `place`, `fact`, `actor-biography`, `sheet`, `homebrew`), or `report-only`: the review gate cannot change a
+page's structural links, who owns a character, the campaign's packs and the like, so those are for the DM. A proposal may resolve an issue only with
+the kind of edit its `fix_via` names (a sheet issue by a sheet edit, never by an edit of the history).
 
 **Checks (v1).**
 
@@ -219,24 +220,93 @@ sheet or a page's structural links, so those are for the DM.
 | `dangling-mention` | `[[actor:id]]` / `[[place:id]]` whose target is gone, in any text; a retired character still exists | error |
 | `dangling-reference` | a page's `ActorId`/`PlaceId`, a character's or place's `WikiPageId`, naming a document that is gone | error, report-only |
 | `empty-bio`, `empty-body`, `todo-marker` | nothing written; placeholder words. Never filled in by a model | info |
-| `empty-inventory` | no gear where a class or background entry carries a starting kit (`startingEquipment` / `equipment`); the free text is noticed, not parsed | info, report-only |
+| `empty-inventory` | no gear where a class or background entry carries a starting kit (`startingEquipment` / `equipment`); the free text is noticed, not parsed. Fixable only by a DM-approved sheet edit: the hint says to ask the DM, to propose only items the kit's own text names and the Library has, and never to fill gear in on its own | info, `sheet` |
 | `secret-unclosed`, `secret-unknown-audience`, `secret-for-missing` | a `:::` block never closed; an opening word the app does not know (it is treated as DM-only); a `:::for` block naming nobody or a character who is gone | warning |
-| `sheet-rule` | what the system's own sheet rules say about a saved character (`SheetRuleEngine.Recompute` on a copy): violations are errors, warnings are warnings. Not for retired characters or bestiary creatures, nothing when the campaign's enforcement is `off`, and the point-buy rules are left out | error / warning, report-only |
+| `sheet-rule` | what the system's own sheet rules say about a saved character (`SheetRuleEngine.Recompute` on a copy): violations are errors, warnings are warnings. Not for retired characters or bestiary creatures, nothing when the campaign's enforcement is `off`, and the point-buy rules are left out | error / warning, `sheet` where the rule is about a key a sheet edit may set, otherwise report-only |
 
 A system reaches this today through its own `sheetRules` (constraints, lists, multiclass, `SheetCheckDefinition` formulas), which
-the `sheet-rule` check surfaces. Later, a system may add checks of its own over world data (`issueChecks` in `system.yaml`, the same
-formula engine) and, if that is not enough, a compiled check named like an `ICodexFunction`.
+the `sheet-rule` check surfaces, and through its own `issueChecks` (below).
+
+**Checks (v2).** All are pure functions of the snapshot with ids built from document ids, a repeated-run test and a fixture
+(`WorldStructureCheckTests`). The snapshot (`WorldSnapshot`) now also carries each place's parent, hazard and creature, a fact's related ids and knowers,
+a page's tags and kind, a character's owner, blueprint and hazard link, the campaign (`CampaignView`: owner, members, system, packs, what the loader
+reported, the Bestiary) and the homebrew entries (`HomebrewView`); `ConsistencySnapshots.From` maps the documents into them.
+
+| Check | Finds | Severity, fix |
+|---|---|---|
+| `place-tree` | a place inside a place that is gone, inside itself, inside a place of another region, or in a loop (reported once, on the loop's lowest id) | error, `place` (an edit that moves the place) |
+| `duplicate-slug`, `near-duplicate-title` | pages that share a slug (a link reaches one of them); titles equal once articles and doubled words are ignored (`TextNorm.Canonical`) | warning / info, report-only (merging or renaming is the DM's call) |
+| `fact-reference` | a secret's stored related id (`actor:`, `place:`, `item:`) that is gone and that the text no longer mentions (a mention still in the text is `dangling-mention`'s), and a knower that is not on the cast | warning, report-only |
+| `dangling-placement` | a place whose feature names a creature that is not on the cast; a hazard on the table standing on a place that is gone; a Library hazard placed on a place that the Library no longer has | error / warning, report-only |
+| `owner-not-member` | a character whose player is not a member of the campaign | warning, report-only |
+| `homebrew-reference`, `homebrew-duplicate` | a homebrew entry's reference field naming a Library entry that is not there; two entries with one `type/entryId` | warning / error, `homebrew` / report-only |
+| `hazard-shape` | a homebrew hazard whose scaled rows, routes, damage or numbers do not hold together: `HazardNumbers.Problems`, the editor's own messages | warning, `homebrew` |
+| `tag-case` | one tag written in two cases across pages and homebrew; the less used spelling is reported | info, `homebrew` for an entry, report-only for a page |
+| `system-unknown`, `system-drift`, `pack-drift`, `pack-problem` | the campaign's system is not installed; the system changed since the campaign last played under it (`SystemStamp.ChangesTo`); the pack choice names a pack the system lacks; what loading the system's packs reported | error / warning / info / warning, report-only |
+| `library-reference` | a creature's source (`BlueprintId`) the Library no longer has; gear on a sheet the Library lacks (only where the sheet rules do not already say so); a Bestiary entry that is gone | info / warning, report-only |
+| `system-rule`, `check-failed` | the checks of the campaign's game system (below); one that could not run | as the system says / info |
+
+**Noisy checks.** `orphan-page` (nothing links to a page), `backlink-mismatch` (a page and a character or place point at each other on one side only),
+`person-page-no-actor` and `retired-mention` are true but rarely worth a DM's time, so they are in `ConsistencyChecker.Noisy`, never in `Default`.
+They run only for `list_issues` scope `noise` (or one of their names) or the Issues panel's "show minor findings" switch
+(`IssueFilter.WantsNoise`, `ConsistencyChecker.For`), so they never reach the default list, the issue-count note or a `resolves` claim.
+
+**Loading cost.** The count note runs a snapshot per DM message, so the v2 checks add no heavy reading: members, packs, the system's changes and
+what the loader reported are in memory, and the only new read is the campaign's homebrew list, one query beside the several the Library's resolver
+already makes for the sheet's types (`ConsistencyService`). It is always read, never skipped by scope, so an issue is the same issue whichever scope
+asked for it. Entries a check names (a hazard, a creature) are found one by one (`LookupResolver`: the pack's entry or the homebrew one), never by
+loading a whole type.
+
+**The sheet edit target.** `existing:sheet:<actorId>` (`EditTarget.Sheet`), with `"sheet": {"key": value, "other": null}` on an edit entry (null clears
+a key). Only the keys the system declares can be set (`SheetProposal.EditableKeys`: attributes, actor fields, the inventory, the system's lists; never
+a derived value, a collection row or an image); the model reads them, with how each is written and its value now, through `get_page` on that key.
+A value is checked for shape (type, bounds, options, at most 30 keys, 100 list entries), then in `WorldBuilderService.SheetsAsync` against the Library (an id
+the Library does not have is refused, so nothing is invented) and against the system's own rules: the changed sheet is run through
+`SheetRuleEngine.Recompute` beside the old one and the proposal is refused when it introduces a rule violation the sheet did not have
+(a violation that was there stays the DM's; `enforcement: off` skips the rules, never the Library; the point-buy rules are left out). A retired character,
+a bestiary creature and a character that is gone are refused; a player's character is allowed, since the DM reviews every change and the sheet checks
+cover them. The review card shows each key now and after; applying checks again that the sheet still holds what the card showed (`BeforeStamp`, otherwise
+`EditChanged`), runs the check again, sets the keys, lets the rules recompute what they derive (what the sheet page does after every edit), syncs the live
+state and saves. `resolves` works as for every edit and also requires the issue's `fix_via` to match the kind of edit, so a sheet issue cannot be claimed by
+an edit of the history or the other way round, and the post-apply re-check sees the result like any other.
+
+**A system's own checks (layers 2 and 3).** `issueChecks` in `system.yaml` (model in `Codex.Plugin.Abstractions/IssueChecks.cs`, loader checks in
+`IssueCheckProblems`, run by `SystemRuleCheck`; the schema and reference in `docs/` are generated). Layer 2 is data, no expression language:
+
+```yaml
+issueChecks:
+  - id: wizard-needs-spells          # lower-case id, unique; part of every issue id
+    rule: required                   # required | empty | range | reference | count
+    field: spells                    # an attribute, actor field, the inventory or a list key
+    when: { field: class, is: wizard }   # optional; exactly one of is, in, notEmpty, empty
+    severity: warning                # error | warning (default) | info
+    message: "{name} is a wizard with no {field}."   # {name} {field} {value} {min} {max}
+```
+
+Unknown keys under `issueChecks`, an unknown rule or severity or blank, a field that is not a sheet key, a `range` over a non-number and the like refuse
+the system at load with a sentence naming the check. A rule is about player and non-player characters unless `roles` says otherwise, never a retired
+one, and nothing is reported where the campaign's enforcement is `off`; it is fixable by a sheet edit where its field can be set. Layer 3 is compiled: an
+entry with `type: "Namespace.Type, Assembly"` names a class in a DLL beside `system.yaml` that implements `ICodexIssueCheck` (plain data in and out, like
+the other compiled suppliers; it references only `Codex.Plugin.Abstractions`), resolved by `CompiledSuppliers` like a function. It is given plain copies of
+the cast, pages and places and returns `CodexIssue`s; the host builds ids (`system-rule:<kind>:<entity>:<field>:<check id>[.<detail>]`), sorts and shows
+them. One that is missing, throws, or returns what cannot be read becomes one `info` issue, `check-failed`, and the other checks and the run go on. Nothing
+limits what compiled code does or how long it takes (as for every compiled supplier: it runs with the server's rights and is installed by copying it onto
+the server), so it must be deterministic and quick. A sample is `LongNameCheck` in `tests/Codex.ContractFixture`, tested in `SystemIssueCheckTests`.
 
 **Dismissals.** A red link that is meant to stay red is dismissed by the DM, and only the DM (`ConsistencyService.DismissAsync`; an id
-that is not an open issue is refused). The document `ConsistencyDismissals/{campaignId}` holds the ids; results are never stored.
+that is not an open issue is refused). The document `ConsistencyDismissals/{campaignId}` holds the ids and the DM's optional note; results are never stored.
+The campaign export carries the document (`CampaignBundle.Dismissals`, null in an older bundle, which restores as it always did and leaves stored dismissals
+alone); importing a bundle replaces the stored document with the file's, tidied like a dismissal made in the app (empty or over-long ids dropped, notes cut).
+Ids of problems that are gone are kept, harmlessly: they apply again if the same problem comes back. Imported as a copy, the ids follow the documents' new ids,
+because an issue id is built from them.
 
 **Fixes** are proposals through the review gate that name the issue ids they resolve.
 
 *Wired now (phase 2).*
 - `list_issues(scope?, severity?)` is a read-only tool of the chat (DM only, like every tool). It lists the open issues (never the dismissed ones) in
   `Issue.Order` as snake_case JSON, one issue to a line, fenced like the other data tools, at most 50 (`IssueListing.MaxShown`); a longer list ends with
-  a line `(N more not shown, of M; narrow with scope or severity to see them)`. `scope` is `all`, a check name, or `page:<id>` / `actor:<id>` / `place:<id>` /
-  `fact:<id>`; `severity` is the least severe level (`warning` gives errors and warnings). An unknown scope or severity is answered in words ("Nothing
+  a line `(N more not shown, of M; narrow with scope or severity to see them)`. `scope` is `all`, a check name, `noise` (the noisy checks only), or `page:<id>` / `actor:<id>` / `place:<id>` /
+  `fact:<id>` / `homebrew:<type/id>` / `campaign:<id>`; `severity` is the least severe level (`warning` gives errors and warnings). An unknown scope or severity is answered in words ("Nothing
   was listed: ...", `IssueFilter.IsKnownScope`), never with an empty list that would read as all clear. The tool sits at a fixed place in the tool list
   (after `list_tags`) so the tools prompt cache is built once. The system prompt says, in a sentence that never changes, that code decides what is an issue
   and how severe, that an `info` issue is never filled in with invented content, and that a report-only issue cannot be fixed by a proposal.
@@ -268,10 +338,26 @@ that is not an open issue is refused). The document `ConsistencyDismissals/{camp
   tool, the system prompt and the last message of every step, that each request repeats the one before it, and that the issue summary changes only the
   user turn.
 
+*Wired now (the rest).*
+- **The Issues panel** (`IssuesSection`, the campaign's "Issues" section, DM only: not in the rail or the menu for anyone else, and a player who opens its
+  address sees only that it is for the game master, with nothing read). Open issues by severity, filters by severity and by kind, the minor-findings
+  switch, dismissal with an optional note (`ConsistencyService.DismissAsync`; an id that is not open is refused in words), the dismissed list with restore
+  (including dismissals whose problem is gone) and, from `IssueRecheckLog`, what the last apply's re-check found (`ApplyRecheckNote`, also shown under the
+  world builder's proposal after an apply). Every call of `ConsistencyService` refuses anyone but the DM.
+- **Localisation.** The sentences are made at read time from `code` + `args` (`IssueText.Message`) with the `Consistency.*` keys in `Strings.Consistency*.resx`
+  (every code is in `ConsistencyCodes.Known`; a test sees that each has text in en, he and ru, that the English text equals the message the model reads, and
+  that no source literal is missing). The sheet rules use their own `Actor.Rule.*` keys; a system's own check falls back to its English message. The model
+  still gets English.
+- **The secret opener.** `SecretBlock.OpenerWord` is the word a block was opened with, as written; the parsing and its fail-closed reading are unchanged.
+  `secret-unknown-audience` reads it instead of re-reading the opening line.
+
+*The prompt cache.* One-time invalidation of the cached prefix when this shipped: the `propose_changes` / `add_entries` schema gained the `sheet` field and
+its `target` text names `existing:sheet:<id>`, `get_page`'s description and parameter text mention the sheet, and the system prompt's `list_issues` sentence
+says what a `sheet` issue is. The tool order is unchanged (`list_issues` stays after `list_tags`, nothing was added), and `PromptCacheRegressionTests` still holds.
+
 *Still to do.*
-- The `sheet` edit target: a sheet issue (`fix_via: sheet`) cannot yet be fixed by a proposal, so it cannot be claimed in `resolves`.
-- v2 checks (a system's own `issueChecks`, and compiled checks) and layers 2 and 3 of the design.
-- The UI: showing issues and the re-check to the DM (a panel, the "Applied" line, resx strings). Today the typed result exists and the model is told.
-- Dismissals are not in the campaign export or restore.
-- Point-buy and similar derived budgets are out of scope for the sheet checks.
-- The unknown-audience check relies on the opening-line text of a secret block.
+- Point-buy and similar derived budgets are out of scope for the sheet checks (the bridge leaves `Actor.Rule.PointBuy*` out, and a sheet edit never
+  judges them): the budget is a derived total that no single key fixes, and the rules engine already shows it on the sheet.
+- Deferred, with reasons: a proposal cannot claim a `tags` entry or a homebrew `delete` in `resolves` (only `edit` entries carry `resolves`), so `tag-case` on pages is
+  report-only; the compiled-check sandbox is the supplier contract's (no time or memory limit), which a bounded worker would change for every supplier at once;
+  a system's own `issueChecks` sentence is English-only in the app unless the app has text for its `code`.
