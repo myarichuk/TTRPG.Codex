@@ -14,6 +14,7 @@
         <StatusMessage Message="flash" OnDismiss="() => flash = null" />
         @if (mayInstall)
         {
+            <p class="mb-2"><a href="/systems/get" data-testid="get-systems-link">@L["Page.Systems.GetLink"]</a></p>
             <p class="small-muted">@L["Page.About.InstallHint", SystemArchive.MaxBytes / (1024 * 1024)]</p>
             @if (plan == null)
             {
@@ -24,83 +25,7 @@
             }
             else
             {
-                var check = plan.Check;
-                <article class="mt-2" data-testid="install-plan">
-                    @if (check.Id != null)
-                    {
-                        <h3 class="h6 mb-1">@check.Name <span class="small-muted">v@(check.Version) · @check.Id</span>
-                            @if (check.NamesScripts)
-                            {
-                                <span class="pill ms-1">@L["Page.About.InstallScripts"]</span>
-                            }
-                        </h3>
-                        @if (check.Packs > 0)
-                        {
-                            <div class="small-muted">@L["Page.About.InstallPacks", check.Packs]</div>
-                        }
-                        @if (plan.Replaces != null)
-                        {
-                            <p class="mb-1 mt-2" data-testid="install-replaces">@L["Page.About.InstallReplaces", plan.Replaces, plan.CampaignsUsing]</p>
-                            @if (plan.Changes.Count > 0)
-                            {
-                                <ul class="mb-2">
-                                    @foreach (var change in plan.Changes)
-                                    {
-                                        <li>@Describe(change)</li>
-                                    }
-                                </ul>
-                            }
-                            else
-                            {
-                                <p class="small-muted mb-2">@L["Page.About.InstallSame"]</p>
-                            }
-                        }
-                    }
-                    @if (plan.Conflict != null || check.Errors.Count > 0)
-                    {
-                        <div class="text-danger mb-2" role="alert" data-testid="install-errors">
-                            <div>@L["Page.About.InstallCannot"]</div>
-                            <ul class="mb-0">
-                                @if (plan.Conflict != null)
-                                {
-                                    <li>@plan.Conflict</li>
-                                }
-                                @foreach (var error in check.Errors)
-                                {
-                                    <li>@error</li>
-                                }
-                            </ul>
-                        </div>
-                    }
-                    @if (check.NamesScripts && !Installer.ScriptsAllowed)
-                    {
-                        @* A warning, not an error: it installs, and loads without its scripts. *@
-                        <ScriptsOffNote Link="mayReload" Class="mb-2" TestId="install-scripts-off" />
-                    }
-                    @* The scripts-off warning is said once, above, in the reader's language. *@
-                    @{ var warnings = check.Warnings.Where(w => !w.StartsWith(SystemArchive.ScriptsOffWarningStart, StringComparison.Ordinal)).ToList(); }
-                    @if (warnings.Count > 0)
-                    {
-                        <details class="mb-2" data-testid="install-warnings">
-                            <summary>@L["Page.About.InstallWarnings", warnings.Count]</summary>
-                            <ul class="mb-0 mt-1">
-                                @foreach (var warning in warnings)
-                                {
-                                    <li>@warning</li>
-                                }
-                            </ul>
-                        </details>
-                    }
-                    <div class="row-actions">
-                        @if (plan.CanInstall)
-                        {
-                            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="InstallAsync" Busy="busy" data-testid="install-confirm">
-                                @(plan.Replaces != null ? L["Page.About.InstallReplace"] : L["Page.About.InstallConfirm"])
-                            </CodexButton>
-                        }
-                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="Cancel" Disabled="busy" data-testid="install-cancel">@L["Common.Cancel"]</CodexButton>
-                    </div>
-                </article>
+                <SystemPlanView Plan="plan" Busy="busy" LinkToScriptsSwitch="mayReload" OnConfirm="InstallAsync" OnCancel="Cancel" />
             }
         }
         @if (mayReload)
@@ -199,12 +124,4 @@
 
         string List(IReadOnlyList<string> ids) => ids.Count == 0 ? "—" : string.Join(", ", ids);
     }
-
-    private string Describe(SystemChange change) => change.Kind switch
-    {
-        SystemChangeKind.Version => L["Campaign.SystemChanged.Version", change.Before ?? "", change.After ?? ""],
-        SystemChangeKind.Added => L["Campaign.SystemChanged.Added", change.File ?? ""],
-        SystemChangeKind.Removed => L["Campaign.SystemChanged.Removed", change.File ?? ""],
-        _ => L["Campaign.SystemChanged.Changed", change.File ?? ""]
-    };
 }

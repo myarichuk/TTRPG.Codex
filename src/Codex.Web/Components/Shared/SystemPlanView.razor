@@ -1,0 +1,105 @@
+@using Codex.Core
+@using Codex.Core.Systems
+@using Codex.Plugin.Abstractions
+@inject SystemInstaller Installer
+
+@* A checked system archive and what installing it would do (what it is, what it replaces, what is wrong, what is only a warning),
+   with the buttons to install or drop it. Shared by the About page's upload and the "Get more game systems" page, which both end
+   here: an archive that came from a file and one that came from the release's list are checked and confirmed the same way. *@
+<article class="mt-2" data-testid="install-plan">
+    @if (Plan.Check.Id != null)
+    {
+        <h3 class="h6 mb-1">@Plan.Check.Name <span class="small-muted">v@(Plan.Check.Version) · @Plan.Check.Id</span>
+            @if (Plan.Check.NamesScripts)
+            {
+                <span class="pill ms-1">@L["Page.About.InstallScripts"]</span>
+            }
+        </h3>
+        @if (Plan.Check.Packs > 0)
+        {
+            <div class="small-muted">@L["Page.About.InstallPacks", Plan.Check.Packs]</div>
+        }
+        @if (Plan.Replaces != null)
+        {
+            <p class="mb-1 mt-2" data-testid="install-replaces">@L["Page.About.InstallReplaces", Plan.Replaces, Plan.CampaignsUsing]</p>
+            @if (Plan.Changes.Count > 0)
+            {
+                <ul class="mb-2">
+                    @foreach (var change in Plan.Changes)
+                    {
+                        <li>@Describe(change)</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="small-muted mb-2">@L["Page.About.InstallSame"]</p>
+            }
+        }
+    }
+    @if (Plan.Conflict != null || Plan.Check.Errors.Count > 0)
+    {
+        <div class="text-danger mb-2" role="alert" data-testid="install-errors">
+            <div>@L["Page.About.InstallCannot"]</div>
+            <ul class="mb-0">
+                @if (Plan.Conflict != null)
+                {
+                    <li>@Plan.Conflict</li>
+                }
+                @foreach (var error in Plan.Check.Errors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+    @if (Plan.Check.NamesScripts && !Installer.ScriptsAllowed)
+    {
+        @* A warning, not an error: it installs, and loads without its scripts. *@
+        <ScriptsOffNote Link="LinkToScriptsSwitch" Class="mb-2" TestId="install-scripts-off" />
+    }
+    @* The scripts-off warning is said once, above, in the reader's language. *@
+    @{ var warnings = Plan.Check.Warnings.Where(w => !w.StartsWith(SystemArchive.ScriptsOffWarningStart, StringComparison.Ordinal)).ToList(); }
+    @if (warnings.Count > 0)
+    {
+        <details class="mb-2" data-testid="install-warnings">
+            <summary>@L["Page.About.InstallWarnings", warnings.Count]</summary>
+            <ul class="mb-0 mt-1">
+                @foreach (var warning in warnings)
+                {
+                    <li>@warning</li>
+                }
+            </ul>
+        </details>
+    }
+    <div class="row-actions">
+        @if (Plan.CanInstall)
+        {
+            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OnConfirm" Busy="Busy" data-testid="install-confirm">
+                @(Plan.Replaces != null ? L["Page.About.InstallReplace"] : L["Page.About.InstallConfirm"])
+            </CodexButton>
+        }
+        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="OnCancel" Disabled="Busy" data-testid="install-cancel">@L["Common.Cancel"]</CodexButton>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public SystemInstallPlan Plan { get; set; } = null!;
+
+    /// <summary>Whether something is under way (installing), so the buttons wait.</summary>
+    [Parameter] public bool Busy { get; set; }
+
+    /// <summary>Whether the scripts-off note may link to the switch for them (the server admin only).</summary>
+    [Parameter] public bool LinkToScriptsSwitch { get; set; }
+
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string Describe(SystemChange change) => change.Kind switch
+    {
+        SystemChangeKind.Version => L["Campaign.SystemChanged.Version", change.Before ?? "", change.After ?? ""],
+        SystemChangeKind.Added => L["Campaign.SystemChanged.Added", change.File ?? ""],
+        SystemChangeKind.Removed => L["Campaign.SystemChanged.Removed", change.File ?? ""],
+        _ => L["Campaign.SystemChanged.Changed", change.File ?? ""]
+    };
+}
