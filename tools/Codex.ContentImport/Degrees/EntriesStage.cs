@@ -311,10 +311,10 @@ public static partial class EntriesStage
         }
 
         // The redaction rows name an entry by id alone, so an id may not repeat even across types.
-        var duplicate = entries.GroupBy(e => e.Id, StringComparer.Ordinal).FirstOrDefault(g => g.Count() > 1);
-        if (duplicate != null)
+        var duplicates = entries.GroupBy(e => e.Id, StringComparer.Ordinal).Where(g => g.Count() > 1).ToList();
+        if (duplicates.Count > 0)
         {
-            throw new DegreesException($"{duplicate.Count()} entries ({string.Join(", ", duplicate.Select(e => e.Type).Distinct())}) share one id ({duplicate.Key}); ids come from names, so a name is repeated.");
+            throw new DegreesException($"{duplicates.Count} ids are shared by entries ({string.Join("; ", duplicates.Select(g => $"{g.Count()} {string.Join("/", g.Select(e => e.Type).Distinct())} entries share one id ({g.Key})"))}); ids come from names, so a name is repeated.");
         }
 
         return entries.OrderBy(e => e.Type, StringComparer.Ordinal).ThenBy(e => e.Id, StringComparer.Ordinal).ToList();
@@ -322,7 +322,9 @@ public static partial class EntriesStage
 
     private static List<ParsedEntry> ParseRule(TakenRange range, List<Block> slice, string book, HashSet<string> compounds)
     {
-        var name = range.Own ? range.Row.OwnName ?? range.Row.PathOf(range)[^1] : range.Row.PathOf(range)[^1];
+        // A path named by a hash (a reserved title) takes the bookmark's own title as the entry's name until a redaction row renames it.
+        var last = SpineStage.IsHashSegment(range.Row.PathOf(range)[^1]) ? range.Node.Title : range.Row.PathOf(range)[^1];
+        var name = range.Own ? range.Row.OwnName ?? last : last;
         if (range.Row.EntryNames.TryGetValue(range.Row.PathOf(range)[^1], out var renamed))
         {
             name = renamed;
@@ -337,15 +339,27 @@ public static partial class EntriesStage
 
         var reader = new BodyReader(entry, compounds, false, range.Row.TableRows, null, range.Row.Subheadings, range.Row.ProseBoxes);
         var skipping = false;
+        var boxesLast = new List<Block>();
+        var boxOpen = false;
         foreach (var block in slice)
         {
             // A stat table is the items rows' (see StatTables), and the caption under a picture of an item is no text.
-            if (block.Role == StatTables.Role || (range.Row.ArtLabels && IsArtLabel(block)))
+            if (block.Role == StatTables.Role || (range.Row.ArtLabels && IsArtLabel(block)) || IsArtPageLabel(range.Row, block))
             {
                 continue;
             }
 
-            if (range.Row.FoldChildren && block.Role == "entry-header")
+            if (boxOpen && block.Role == "body")
+            {
+                // The text of a box that is read last (see TakeRow.BoxesLast).
+                boxesLast.Add(block);
+                boxOpen = false;
+                continue;
+            }
+
+            boxOpen = false;
+
+            if ((range.Row.FoldChildren && block.Role == "entry-header") || (range.Row.FoldSections && block.Role == "section"))
             {
                 // A child section whose title is in the entry-header font is a paragraph of the entry (its title, then its text), or is read past when the row names it.
                 var title = Clean(string.Join(' ', block.Lines));
@@ -370,8 +384,16 @@ public static partial class EntriesStage
                 // A heading that has no bookmark (a sub-subsection, an activity's name): a paragraph of its own, in title case. A heading with a bracket or a parenthesis in it is a format
                 // line (an example of how a stat block is set out) and stays as printed.
                 var text = Clean(string.Join(' ', block.Lines));
+                var heading = block with { Role = "body", Lines = new List<string> { text.Contains('[') || text.Contains('(') ? text : TitleCase(text) }, Info = null };
+                if (range.Row.BoxesLast.Contains(heading.Lines[0], StringComparer.OrdinalIgnoreCase))
+                {
+                    boxesLast.Add(heading);
+                    boxOpen = true;
+                    continue;
+                }
+
                 reader.EndParagraph();
-                reader.Read(block with { Role = "body", Lines = new List<string> { text.Contains('[') || text.Contains('(') ? text : TitleCase(text) }, Info = null });
+                reader.Read(heading);
                 reader.EndParagraph();
                 continue;
             }
@@ -381,6 +403,14 @@ public static partial class EntriesStage
             {
                 reader.EndParagraph(); // the trait line under a heading is a paragraph of its own
             }
+        }
+
+        foreach (var box in boxesLast)
+        {
+            // A box set over the column the text runs on in: its heading and text are the entry's last paragraphs, so they do not cut a sentence in two.
+            reader.EndParagraph();
+            reader.Read(box);
+            reader.EndParagraph();
         }
 
         reader.Finish();
@@ -985,12 +1015,54 @@ public static partial class EntriesStage
             finished.Finish();
         }
 
+        // A heading that is followed at once by actions or by another heading (the group of basic actions, whose text is the actions under it) holds no text: no entry.
+        // Only for a row of groups (a heading with no text on a row of single actions or skills is a lost text, not a group).
+        if (row.ActionGroups)
+        {
+            result.RemoveAll(e => e.Type == "rule" && e.Parts.Count == 0);
+        }
+
         foreach (var entry in result.Where(e => e.Type == "action"))
         {
+            if (row.SplitLoneFields)
+            {
+                SplitLoneFieldParagraph(entry);
+            }
+
             ExtractFields(entry, ActionFieldKeys);
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// An action whose whole text is one paragraph that opens with a field label (a requirements line whose next sentence the layout did not set on a line of its own) has that paragraph cut after
+    /// its first sentence: the field is one sentence, and the rest is the action's text. An entry with other paragraphs, or a field of one sentence, is left as it was.
+    /// </summary>
+    internal static void SplitLoneFieldParagraph(ParsedEntry entry)
+    {
+        if (entry.Parts.Count != 1 || entry.Parts[0].Label.Length == 0
+            || !ActionFieldKeys.Contains(entry.Parts[0].Label.TrimEnd('.', ':', ' ').ToLowerInvariant()))
+        {
+            return;
+        }
+
+        var part = entry.Parts[0];
+        var sentences = SpanText.Sentences(part.Text).ToList();
+        if (sentences.Count < 2)
+        {
+            return;
+        }
+
+        var first = part with { Text = part.Text[..sentences[0].End].TrimEnd() };
+        var at = entry.Fields.IndexOf(part);
+        if (at >= 0)
+        {
+            entry.Fields[at] = first;
+        }
+
+        entry.Parts[0] = first;
+        entry.Parts.Add(new LabelledText(string.Empty, part.Text[sentences[1].Start..].Trim()));
     }
 
     internal static bool IsStrayLabel(Block block, List<Block> slice, TakeRow row)
@@ -1048,7 +1120,7 @@ public static partial class EntriesStage
             var lower = w.ToLowerInvariant();
             return i > 0 && SmallWords.Contains(lower)
                 ? lower
-                : string.Join('-', lower.Split('-').Select(p => p.Length == 0 ? p : char.ToUpperInvariant(p[0]) + p[1..]));
+                : string.Join('-', lower.Split('-').Select(p => p.Length == 0 ? p : p.Length > 1 && p[^1] == 'd' && p[..^1].All(char.IsDigit) ? p.ToUpperInvariant() : char.ToUpperInvariant(p[0]) + p[1..]));
         }));
     }
 
@@ -1066,7 +1138,8 @@ public static partial class EntriesStage
             Type = type ?? range.Row.Target,
             Folder = folder ?? range.Row.FolderName,
             Chapter = range.Row.Chapter,
-            Source = SpanText.Normalize(book + " > " + string.Join(" > ", range.Row.PathOf(range)) + (sourceTail == null ? string.Empty : " > " + sourceTail)),
+            // A title the take-list names by its hash (a reserved name) is not in the source either.
+            Source = SpanText.Normalize(book + " > " + string.Join(" > ", range.Row.PathOf(range).Where(s => !SpineStage.IsHashSegment(s))) + (sourceTail == null ? string.Empty : " > " + sourceTail)),
             // An actions row's or a spells row's category is for the rule entries it also writes (an action or a spell has no category field).
             Category = type != null ? category : range.Row.Parser == "actions" || range.Row.Boxes.Count > 0 ? null : range.Row.Category,
             Approved = range.Row.Approved,
@@ -1202,6 +1275,8 @@ public static partial class EntriesStage
             _proseBoxes = proseBoxes;
         }
 
+        private static readonly Regex NumberedItem = new(@"^\d+\.\s", RegexOptions.CultureInvariant);
+
         private readonly bool _bodyRunOn;
 
         private readonly bool _proseBoxes;
@@ -1292,21 +1367,28 @@ public static partial class EntriesStage
                     && !(_stat != null && _parts[^1].Label.Length == 0);
                 var startsParagraph = _parts.Count == 0 || text.StartsWith('•') || indented || (i == 0 ? (samePlace && !_runOn) || _previousShort : _previousShort);
                 var optionLine = _stat != null && ActionOptionLine.IsMatch(text); // a spell's option for one number of actions opens its own paragraph
-                if (_runOn && _parts.Count > 0 && _parts[^1].Label.Length > 0 && !text.StartsWith('•'))
+                if (_runOn && _parts.Count > 0 && (_parts[^1].Label.Length > 0 || _hangsUnlabelled) && !text.StartsWith('•'))
                 {
                     // A labelled paragraph wraps with a hanging indent: its lines after the first are set in from the edge, and a line at the edge is the next paragraph.
                     // In text set ragged or slanted (the lines start at four or more places) a hanging indent means nothing: only a line set short before this one ends the paragraph.
                     // A page whose lines are shifted by a few points, from one line to the next (the archetype feats, set around art), is read against the line that opened the paragraph, not the block's edge.
-                    startsParagraph = raggedLeft ? _previousShort : info.Left - (HangingFromStart && _startLeft is { } opened ? opened : block.Left) <= Indent;
+                    startsParagraph = raggedLeft ? _previousShort : info.Left - (HangingFromStart && _startLeft is { } opened ? opened : block.Left) <= Indent || (_hangsUnlabelled && _previousShort);
                 }
 
                 // A list item's wrapped lines are set in beyond its bullet; a line back at the bullet's own edge, with no bullet, after a line that ended a sentence, is the paragraph that follows the list.
                 // Only for the rows that set LowerContinues (the class feats of chapters 8b and after), so the earlier chapters' entries read as they did.
                 var afterItem = _parts.Count > 0 && (_parts[^1].Label.StartsWith("• ", StringComparison.Ordinal) || _parts[^1].Text.ToString().StartsWith('•'));
-                if (LowerContinues && afterItem && !text.StartsWith('•') && !(label.Length > 0 && rawLabel.StartsWith("• ", StringComparison.Ordinal)) && _bulletLeft is { } edge && Math.Abs(info.Left - edge) < 2
+                if (LowerContinues && afterItem && !text.StartsWith('•') && !(label.Length > 0 && rawLabel.StartsWith("• ", StringComparison.Ordinal)) && _bulletLeft is { } edge && (Math.Abs(info.Left - edge) < 2 || (ListEndsAtStop && info.Left - block.Left > Indent))
                     && _parts[^1].Text.ToString().TrimEnd() is { Length: > 0 } itemTail && ".!?".Contains(itemTail[^1]))
                 {
                     startsParagraph = true;
+                }
+
+                // A numbered item that has not ended its sentence goes on with the line under it, though that line is set in further than the number: it is no new paragraph.
+                if (startsParagraph && _parts.Count > 0 && _parts[^1].Label.Length == 0 && NumberedItem.IsMatch(_parts[^1].Text.ToString()) && !NumberedItem.IsMatch(text) && text.Length > 0 && char.IsLower(text[0])
+                    && _parts[^1].Text.ToString().TrimEnd() is { Length: > 0 } numbered && !".!?:;\"”)".Contains(numbered[^1]))
+                {
+                    startsParagraph = false;
                 }
 
                 if (text.StartsWith('•') || rawLabel.StartsWith("• ", StringComparison.Ordinal))
@@ -1346,6 +1428,9 @@ public static partial class EntriesStage
                     startsParagraph = true;
                 }
 
+                // A bold run that opens a formula (it holds an equals sign, or an opening parenthesis or an equals sign follows it) is no label: the period a label gets would cut the formula in two.
+                var formulaLead = _runOn && startsParagraph && label.Length > 0 && !KnownLabels.Contains(label.ToLowerInvariant()) && text.StartsWith(rawLabel, StringComparison.Ordinal) && text.Length > rawLabel.Length
+                    && (rawLabel.Contains('=', StringComparison.Ordinal) || text[rawLabel.Length..].TrimStart() is ['(' or '=', ..]);
                 if (label.Length > 0 && (KnownLabels.Contains(label.ToLowerInvariant()) || (_stat != null && _stat.Contains(StatKey(label)))))
                 {
                     Start(label);
@@ -1357,7 +1442,7 @@ public static partial class EntriesStage
                         text = text[(close + 1)..].TrimStart();
                     }
                 }
-                else if (_runOn && startsParagraph && label.Length > 0 && text.StartsWith(rawLabel, StringComparison.Ordinal) && text.Length > rawLabel.Length)
+                else if (_runOn && startsParagraph && label.Length > 0 && text.StartsWith(rawLabel, StringComparison.Ordinal) && text.Length > rawLabel.Length && !formulaLead)
                 {
                     // A bold run-in heading at the start of a paragraph (a pet's statistics, say) is a label like the known ones.
                     Start(label);
@@ -1366,6 +1451,7 @@ public static partial class EntriesStage
                 else if (startsParagraph)
                 {
                     Start(string.Empty);
+                    _hangsUnlabelled = formulaLead; // the bold opening is part of a formula or a name line, not a label: the lines under it wrap with a hanging indent all the same
                 }
 
                 if (_stat != null && info.Bold != null)
@@ -1412,13 +1498,26 @@ public static partial class EntriesStage
         /// </summary>
         public bool HangingFromStart { get; init; }
 
-        private void Start(string label) => _parts.Add((label, new StringBuilder()));
+        private void Start(string label)
+        {
+            _parts.Add((label, new StringBuilder()));
+            _hangsUnlabelled = false;
+        }
+
+        /// <summary>True while the paragraph being read opened with a bold run that is no label (see the formula test in <c>ReadBlock</c>): it wraps with a hanging indent as a labelled one does.</summary>
+        private bool _hangsUnlabelled;
 
         /// <summary>
         /// A line set in from the block's edge that starts in lowercase, after a sentence that has not ended, goes on the sentence (text set around a piece of art is pushed in line by line). Set for the class
         /// feats of chapters 8b and after, so the earlier chapters' entries read as they did.
         /// </summary>
         public bool LowerContinues { get; init; }
+
+        /// <summary>
+        /// With <see cref="LowerContinues"/>: a line set in by a first-line indent, after a list item that ended a sentence, is the paragraph that follows the list, though the list's own lines are set in from the
+        /// edge as well. Only for the taken sidebars a row names (<see cref="TakeRow.BodySidebars"/>).
+        /// </summary>
+        public bool ListEndsAtStop { get; init; }
 
         private void Append(string line)
         {

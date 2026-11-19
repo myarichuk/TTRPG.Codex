@@ -177,8 +177,14 @@ public static class DegreesCommand
         if (result.Ranges.Any(r => r.Row.Parser == "actions"))
         {
             var counts = ImportPipeline.CheckActionCounts(spine, blocks, result.Ranges, result.Parsed);
-            output.WriteLine($"actions: {counts.Children} bookmark children = {counts.Units} headings in the ranges; {counts.Headers} action headings, {counts.TraitLines} trait lines, {counts.Icons} action icons; " +
+            output.WriteLine($"actions: {counts.Children} bookmark children = {counts.Units} headings in the ranges; {counts.Headers} action headings, {counts.TraitLines} trait lines, {counts.Icons} action icons; {counts.EmptyGroups} group heading(s) with no text of their own make no rule; " +
                 $"the overview table lists {counts.TableNames} (name, proficiency) pairs, and the parsed actions have the same");
+        }
+
+        if (result.Ranges.Any(r => r.Row.Sidebars.Count > 0))
+        {
+            var sidebars = ImportPipeline.CheckSidebarDegrees(blocks, result.Ranges, result.Parsed);
+            output.WriteLine($"taken sidebars: {blocks.TakenSidebars?.Count ?? 0} kept apart, with {sidebars.Labels} degree labels at line starts = {sidebars.Degrees} degree sections of their entries");
         }
 
         if (result.Ranges.Any(r => r.Row.Parser == "ancestries"))

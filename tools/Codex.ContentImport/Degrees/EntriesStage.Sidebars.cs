@@ -11,31 +11,47 @@ public static partial class EntriesStage
         var result = new List<ParsedEntry>();
         foreach (var path in range.Row.Sidebars)
         {
-            var node = SpineStage.FindUnique(spine, path) ?? throw new DegreesException($"Chapter {range.Row.Chapter}: a sidebar path of the row is not a bookmark of the book.");
-            var titles = ImportPipeline.SidebarTitles(node.Title).ToList();
-            if (!node.Sidebar || titles.Count != 1)
-            {
-                throw new DegreesException($"Chapter {range.Row.Chapter}: a sidebar path of the row must be one sidebar bookmark.");
-            }
-
-            var key = BlocksStage.SidebarTitleSet.Key(titles[0]);
+            var (node, title) = ImportPipeline.ResolveSidebar(spine, path) ?? throw new DegreesException($"Chapter {range.Row.Chapter}: a sidebar path of the row must be one sidebar of the book.");
+            title = title.TrimStart('=');
+            var key = BlocksStage.SidebarTitleSet.Key(title);
             if (blocks.TakenSidebars == null || !blocks.TakenSidebars.TryGetValue(key, out var taken) || taken.Count == 0)
             {
-                throw new DegreesException($"Chapter {range.Row.Chapter}: the sidebar the row takes was not found among the page's blocks.");
+                throw new DegreesException($"Chapter {range.Row.Chapter}: the sidebar the row takes ({title}) was not found among the page's blocks.");
             }
 
-            var entry = NewEntry(range, book, Clean(titles[0]), compounds);
-            entry.Source = SpanText.Normalize(book + " > " + string.Join(" > ", path)); // the bookmark path as the outline has it, prefix and all
-            var reader = new BodyReader(entry, compounds, false, range.Row.TableRows, null, range.Row.Subheadings, range.Row.ProseBoxes);
+            var entry = NewEntry(range, book, Clean(range.Row.EntryNames.TryGetValue(path[^1], out var renamed) || range.Row.EntryNames.TryGetValue(title, out renamed) ? renamed : title), compounds);
+            // The bookmark path as the outline has it, prefix and all; a title the take-list names by its hash (a reserved word) is not in the source either: the source says "Sidebar" there.
+            entry.Source = SpanText.Normalize(book + " > " + string.Join(" > ", path.Select(s => SpineStage.IsHashSegment(s) ? "Sidebar" : s)));
+            // A sidebar the row names has its body-font blocks read as the body of a rule is (ragged lines that run on, bold labels that open a paragraph), as the page's own text of that font is.
+            var asBody = range.Row.Subheadings && range.Row.BodySidebars.Any(s => SpineStage.SegmentIs(s, title) || SpineStage.SegmentIs(s, node.Title));
+            var reader = new BodyReader(entry, compounds, false, range.Row.TableRows, null, range.Row.Subheadings, range.Row.ProseBoxes) { LowerContinues = asBody, ListEndsAtStop = asBody };
+            // A title set across the gutter is two headings, each a part of the title and each in its own column: a heading that is a part of the title but alone in its column is a subheading.
+            bool PartOfTitle(Block block)
+            {
+                var headingKey = BlocksStage.SidebarTitleSet.Key(string.Join(' ', block.Lines));
+                return block.Role == "block-header" && headingKey.Length >= 4 && key.Length > headingKey.Length && (key.StartsWith(headingKey, StringComparison.Ordinal) || key.EndsWith(headingKey, StringComparison.Ordinal));
+            }
+
+            var acrossGutter = taken.Where(PartOfTitle).Select(b => b.Column).Distinct().Count() > 1;
             foreach (var block in taken)
             {
                 // The sidebar's own heading is its name; its paragraphs are read as running text.
-                if (block.Role == "block-header" && BlocksStage.SidebarTitleSet.Key(string.Join(' ', block.Lines)) == key)
+                var headingKey = BlocksStage.SidebarTitleSet.Key(string.Join(' ', block.Lines));
+                if (block.Role == "block-header" && (headingKey == key || (acrossGutter && PartOfTitle(block))))
                 {
                     continue;
                 }
 
-                reader.Read(block with { Role = "rules" });
+                if (asBody && block.Role == "block-header")
+                {
+                    // A subheading of the sidebar is a paragraph of its own.
+                    reader.EndParagraph();
+                    reader.Read(block with { Role = "rules" });
+                    reader.EndParagraph();
+                    continue;
+                }
+
+                reader.Read(asBody && block.Role == "body" ? block : block with { Role = "rules" });
             }
 
             reader.Finish();

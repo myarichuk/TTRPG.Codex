@@ -363,6 +363,8 @@ public static class TakeStage
         var allowed = Claims[range.Row.Parser].Concat(range.Row.HeaderRole == null ? Array.Empty<string>() : new[] { range.Row.HeaderRole })
             .Concat(range.Row.Subheadings ? new[] { "block-header" } : Array.Empty<string>())
             .Concat(range.Row.FoldChildren ? new[] { "entry-header" } : Array.Empty<string>())
+            .Concat(range.Row.FoldSections ? new[] { "section" } : Array.Empty<string>())
+            .Concat(range.Row.ArtPages.Count > 0 ? new[] { "display" } : Array.Empty<string>())
             .Concat(range.Row.Groups ? new[] { "section" } : Array.Empty<string>()).ToArray();
         // A row that names its boxes (or says how many it reads past) holds headings of the header role that have no entry's shape: each starts a box.
         var boxes = range.Row.Boxes.Count > 0 || range.Row.ReadPastBoxes > 0;
@@ -388,5 +390,7 @@ public static class TakeStage
     /// <summary>Every block that no range takes, with the dropped sidebar and opener blocks: the text the denylist is made from.</summary>
     public static IEnumerable<Block> LeftOut(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<(int Start, int End)>? planned = null) =>
         blocks.Blocks.Where((_, i) => !ranges.Any(r => r.Contains(i) || r.InLead(i)) && !(planned ?? Array.Empty<(int Start, int End)>()).Any(r => i >= r.Start && i < r.End))
-            .Concat(blocks.Dropped ?? new List<Block>());
+            .Concat(blocks.Dropped ?? new List<Block>())
+            // The labels of a picture that a row skips (see TakeRow.ArtPages) are no entry's text, so the denylist hashes them like any other text left out.
+            .Concat(blocks.Blocks.Where((b, i) => ranges.Any(r => (r.Row.ArtPages.Count > 0 || r.Row.SidebarSpill.Count > 0) && r.Contains(i) && EntriesStage.IsArtPageLabel(r.Row, b))));
 }

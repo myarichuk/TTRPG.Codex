@@ -127,18 +127,13 @@ public static partial class ImportPipeline
         var takenSidebars = new Dictionary<int, IReadOnlySet<string>>();
         foreach (var path in rows.SelectMany(r => r.Sidebars))
         {
-            var node = SpineStage.FindUnique(spine, path);
-            var named = node is { Sidebar: true } ? SidebarTitles(node.Title).ToList() : new List<string>();
-            if (named.Count != 1)
-            {
-                throw new DegreesException("A rules row names a sidebar path that is not one sidebar bookmark of the book.");
-            }
+            var (node, title) = ResolveSidebar(spine, path) ?? throw new DegreesException("A rules row names a sidebar path that is not one sidebar of the book.");
 
             // Taken on the bookmark's own pages only, so a sidebar of the same title elsewhere stays a dropped one.
-            for (var page = node!.PageStart; page <= node.PageEnd; page++)
+            for (var page = node.PageStart; page <= node.PageEnd; page++)
             {
                 var keys = takenSidebars.TryGetValue(page, out var held) ? (HashSet<string>)held : new HashSet<string>(StringComparer.Ordinal);
-                keys.Add(BlocksStage.SidebarTitleSet.Key(named[0]));
+                keys.Add(BlocksStage.SidebarTitleSet.Key(title));
                 takenSidebars[page] = keys;
             }
         }
@@ -155,6 +150,29 @@ public static partial class ImportPipeline
             StatTablePages = tables.ToDictionary(t => t.Key, t => (IReadOnlyList<IReadOnlyList<string>>)t.Value),
             GearTablePages = gearTables.ToDictionary(t => t.Key, t => new GearPage(t.Value, twoUp.Contains(t.Key))),
         };
+    }
+
+    /// <summary>
+    /// The one sidebar a take-list path names: the path of a sidebar bookmark that holds one sidebar, or the path of a bookmark of several ("Sidebars: X &amp; Y") with the title of the one taken as its last
+    /// segment. The partner stays a dropped sidebar. Null when the path is neither.
+    /// </summary>
+    public static (SpineNode Node, string Title)? ResolveSidebar(IReadOnlyList<SpineNode> spine, IReadOnlyList<string> path)
+    {
+        var node = SpineStage.FindUnique(spine, path);
+        if (node is { Sidebar: true })
+        {
+            var named = SidebarTitles(node.Title).ToList();
+            return named.Count == 1 ? (node, named[0]) : null;
+        }
+
+        if (node == null && path.Count > 1 && SpineStage.FindUnique(spine, path.Take(path.Count - 1).ToList()) is { Sidebar: true } several)
+        {
+            var want = BlocksStage.SidebarTitleSet.Key(path[^1]);
+            var hits = SidebarTitles(several.Title).Where(t => BlocksStage.SidebarTitleSet.Key(t) == want).ToList();
+            return hits.Count == 1 ? (several, hits[0]) : null;
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -192,6 +210,7 @@ public static partial class ImportPipeline
         CheckFamiliarCounts(spine, blocks, ranges, parsed);
         CheckArchetypeCounts(spine, blocks, ranges, parsed);
         CheckActionCounts(spine, blocks, ranges, parsed);
+        CheckSidebarDegrees(blocks, ranges, parsed);
         CheckSpellCounts(blocks, ranges, parsed);
         CheckSpellDegrees(blocks, ranges, parsed);
         CheckRankLists(blocks, ranges, parsed);
@@ -630,7 +649,8 @@ public static partial class ImportPipeline
 /// <param name="TraitLines">Headings that have a trait line right below.</param>
 /// <param name="Icons">Headings that have an action icon in the line.</param>
 /// <param name="TableNames">Distinct (name, proficiency) pairs of the overview table of actions, or -1 when the book has none in a tail the take-list reads past.</param>
-public sealed record ActionCounts(int Children, int Units, int Headers, int TraitLines, int Icons, int TableNames);
+/// <param name="EmptyGroups">The group headings of the <c>actionGroups</c> rows that hold no text of their own and so make no rule (the rest are rules; a rule the row's lead names is not a group).</param>
+public sealed record ActionCounts(int Children, int Units, int Headers, int TraitLines, int Icons, int TableNames, int EmptyGroups = 0);
 
 private static readonly HashSet<string> DegreeLabels = new(StringComparer.Ordinal) { "critical success", "success", "failure", "critical failure" };
 
@@ -649,7 +669,7 @@ private static readonly Regex ActionIconToken = new(@"\[(?:(?:one|two|three|free
 /// </summary>
 public static ActionCounts CheckActionCounts(IReadOnlyList<SpineNode> spine, BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<ParsedEntry> parsed)
 {
-    int children = 0, units = 0, headers = 0, tags = 0, icons = 0;
+    int children = 0, units = 0, headers = 0, tags = 0, icons = 0, emptyGroups = 0;
     foreach (var range in ranges.Where(r => !r.Own && r.Row.Parser == "actions"))
     {
         var slice = range.BlocksIn(blocks);
@@ -658,7 +678,14 @@ public static ActionCounts CheckActionCounts(IReadOnlyList<SpineNode> spine, Blo
         var iconed = heads.Count(i => slice[i].Lines.Any(l => ActionIconToken.IsMatch(l)));
         var kids = spine.Count(n => n.Depth == range.Node.Depth + 1 && n.Path.Length == range.Node.Path.Length + 1 && n.Path.Take(range.Node.Path.Length).SequenceEqual(range.Node.Path) && !n.Sidebar);
         var sections = slice.Count(b => b.Role == "section");
-        var unit = sections > 0 ? sections : heads.Count;
+        // A section of groups of actions (the basic and the specialty basic actions): each child bookmark is a group heading in the entry-header font that holds several actions.
+        var unit = range.Row.ActionGroups ? slice.Count(b => b.Role == "entry-header") : sections > 0 ? sections : heads.Count;
+        if (range.Row.ActionGroups)
+        {
+            // The group headings that made no rule: the row's rules are its lead's and the groups that have text.
+            emptyGroups += unit - (parsed.Count(e => e.Type == "rule" && e.RowNumber == range.RowNumber) - (range.Row.LeadName != null ? 1 : 0));
+        }
+
         headers += heads.Count;
         tags += tagged;
         icons += iconed;
@@ -670,6 +697,12 @@ public static ActionCounts CheckActionCounts(IReadOnlyList<SpineNode> spine, Blo
             {
                 throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: the taken section has {kids} bookmark children (sidebars left out) but {unit} {(sections > 0 ? "skill headings" : "action headings")} in its range, and the book has no section whose children differ from its headings, so no reason is accepted.");
             }
+        }
+
+        if (range.Row.NoTraitLine is { } noTrait && range.Row.NoIcon is { } noIcon && (heads.Count - tagged != noTrait || heads.Count - iconed != noIcon))
+        {
+            // The row's reason is for these numbers: the headings with no trait line and the headings with no icon.
+            throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: {heads.Count - tagged} of {heads.Count} action headings have no trait line and {heads.Count - iconed} have no action icon, but the row's countsDiffer reason is for {noTrait} and {noIcon}.");
         }
 
         if ((heads.Count != tagged || heads.Count != iconed) && string.IsNullOrWhiteSpace(range.Row.CountsDiffer))
@@ -702,13 +735,33 @@ public static ActionCounts CheckActionCounts(IReadOnlyList<SpineNode> spine, Blo
         throw new DegreesException("An actions row is taken and a rules row reads its tail past, but no tail holds the overview table of actions, so the actions cannot be counted against it.");
     }
 
-    var names = parsed.Where(e => e.Type == "action").Select(e => (e.Name.ToLowerInvariant(), e.Proficiency ?? string.Empty)).ToHashSet();
+    // The overview table lists the skills chapter's actions: the actions of the chapters whose tail it is in (another chapter's actions, the basic ones, are in no such table).
+    var tableChapters = ranges.Where(r => r.TailEnd >= 0 && r.Row.Parser == "rules").Select(r => r.Row.Chapter).ToHashSet(StringComparer.Ordinal);
+    var names = parsed.Where(e => e.Type == "action" && tableChapters.Contains(e.Chapter)).Select(e => (e.Name.ToLowerInvariant(), e.Proficiency ?? string.Empty)).ToHashSet();
     if (table != null && !table.SetEquals(names))
     {
         throw new DegreesException($"The overview table of actions lists {table.Count} (name, proficiency) pairs, of which {table.Except(names).Count()} are not among the {names.Count} parsed actions' ({names.Except(table).Count()} parsed pairs are not in the table).");
     }
 
-    return new ActionCounts(children, units, headers, tags, icons, table?.Count ?? -1);
+    return new ActionCounts(children, units, headers, tags, icons, table?.Count ?? -1, emptyGroups);
+}
+
+/// <summary>
+/// Degrees of success of the sidebars the take-list takes, counted from the document: the bold degree labels that open a line of their blocks, against the degree sections the parser made of the sidebars' entries.
+/// A sidebar that lost its degrees to the text beside it (or took another's) makes them differ, so a later change of the split cannot pass silently.
+/// </summary>
+public static (int Labels, int Degrees) CheckSidebarDegrees(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<ParsedEntry> parsed)
+{
+    var labels = (blocks.TakenSidebars?.Values.SelectMany(b => b) ?? Enumerable.Empty<Block>()).Where(b => b.Info != null).SelectMany(b => b.Info!)
+        .Count(i => DegreeLabels.Contains(SpanText.Normalize(i.Label).Trim().ToLowerInvariant()));
+    var rows = ranges.Where(r => r.Row.Sidebars.Count > 0).Select(r => r.RowNumber).ToHashSet();
+    var degrees = parsed.Where(e => e.Type == "rule" && rows.Contains(e.RowNumber) && e.Source != null && e.Source.Contains("Sidebar", StringComparison.Ordinal)).Sum(e => e.Degrees.Count);
+    if (labels != degrees)
+    {
+        throw new DegreesException($"The taken sidebars have {labels} degree labels at line starts but the parser made {degrees} degree sections of their entries, so a sidebar's degrees may have gone with the text beside it.");
+    }
+
+    return (labels, degrees);
 }
 
 /// <summary>
@@ -865,7 +918,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
     public static List<string> CommonWords(BlocksResult blocks, int commonAfter = 3)
     {
         var lower = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var block in blocks.Blocks.Concat(blocks.Dropped ?? new List<Block>()))
+        foreach (var block in blocks.Blocks.Concat(blocks.Dropped ?? new List<Block>()).Concat(blocks.TakenSidebars?.Values.SelectMany(b => b) ?? Enumerable.Empty<Block>()))
         {
             foreach (var word in block.Lines.SelectMany(PackWordCheck.Words).Where(w => !char.IsUpper(w[0])).Select(w => w.ToLowerInvariant()))
             {
@@ -904,6 +957,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         }
 
         paragraphs.AddRange((blocks.Dropped ?? new List<Block>()).Select(b => string.Join(' ', b.Lines)));
+        paragraphs.AddRange((blocks.TakenSidebars?.Values.SelectMany(b => b) ?? Enumerable.Empty<Block>()).Select(b => string.Join(' ', b.Lines)));
 
         var starts = new HashSet<string>(StringComparer.Ordinal);
         var inside = new HashSet<string>(StringComparer.Ordinal);
@@ -1160,7 +1214,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         var gone = existing.Where(h => !next.Contains(h)).ToList();
         if (gone.Any(neverDropped.Contains))
         {
-            throw new DegreesException($"{file}: --fresh would drop {gone.Count(neverDropped.Contains)} hash(es) of the words a redaction row removes or of a dropped entry's name.");
+            throw new DegreesException($"{file}: --fresh would drop {gone.Count(neverDropped.Contains)} hash(es) of the words a redaction row removes or of a dropped entry's name ({string.Join(", ", gone.Where(neverDropped.Contains))}).");
         }
 
         var waived = gone.Where(lifted.Contains).ToList();
@@ -1169,7 +1223,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         var unexplained = explained == null ? new List<string>() : rest.Where(h => !explained.Contains(h)).ToList();
         if (unexplained.Count > 0)
         {
-            throw new DegreesException($"{file}: --fresh would drop {unexplained.Count} pair(s) that no waiver, take-list title or denied word explains; a pair is never removed because a range has since been taken.");
+            throw new DegreesException($"{file}: --fresh would drop {unexplained.Count} pair(s) that no waiver, take-list title or denied word explains; a pair is never removed because a range has since been taken ({string.Join(", ", unexplained)}).");
         }
 
         return new FreshReview(file, next.Count, next.Count(existing.Contains), next.Count(h => !existing.Contains(h)), waived.Count, explained == null ? rest.Count : 0, explained == null ? 0 : rest.Count, retiredHere.Select(h => $"{h}: {retired![h]}").ToList());

@@ -9,6 +9,30 @@ public static partial class EntriesStage
     /// <summary>The description of one item: the name its paragraph opens with (bold, then a colon) and the paragraphs.</summary>
     internal sealed record ItemDescription(string Name, List<string> Paragraphs);
 
+    /// <summary>
+    /// A label of a picture on a page the row names in <see cref="TakeRow.ArtPages"/>: a display block, a body block of up to five words with no full stop, or a heading in the block-header
+    /// font of up to four words that opens with a digit (a distance on a diagram).
+    /// </summary>
+    internal static bool IsArtPageLabel(TakeRow row, Block block)
+    {
+        // A page where a sidebar's lines run on past the gutter into the column of the page's own text: its body-font blocks are the sidebar's (the page's own text is in the rules font).
+        if (row.SidebarSpill.Contains(block.Page) && block.Role == "body")
+        {
+            return true;
+        }
+
+        if (!row.ArtPages.Contains(block.Page))
+        {
+            return false;
+        }
+
+        var text = string.Join(' ', block.Lines);
+        var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+        return block.Role == "display"
+            || (block.Role == "body" && words <= 5 && !text.Contains('.'))
+            || (block.Role == "block-header" && words <= 4 && text.Length > 0 && char.IsDigit(text[0]));
+    }
+
     /// <summary>A body block set entirely in capitals is the label under a picture (an item's name over its drawing), not text.</summary>
     internal static bool IsArtLabel(Block block) =>
         block.Role == "body" && block.Lines.All(l => l.Any(char.IsLetter) && !l.Any(char.IsLower));

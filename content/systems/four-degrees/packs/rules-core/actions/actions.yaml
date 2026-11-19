@@ -14,6 +14,45 @@
     skill: "medicine"
     proficiency: "untrained"
     requirements: "You're wearing or holding a healer's toolkit."
+- id: "aid"
+  name: "Aid"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    You try to help your ally with a task. To use this reaction, you must first prepare to help, usually by using an action during your turn. You must explain to the GM exactly how you're trying to help, and they determine whether you can Aid your ally.
+    When you use your Aid reaction, attempt a skill check or attack roll of a type decided by the GM. The typical DC is 15, but the GM might adjust this DC for particularly hard or easy tasks. The GM can add any relevant traits to your preparatory action or to your Aid reaction depending on the situation, or even allow you to Aid checks other than skill checks and attack rolls.
+    **Critical Success.** You grant your ally a +2 circumstance bonus to the triggering check. If you're a master with the check you attempted, the bonus is +3, and if you're legendary, it's +4.
+    **Success.** You grant your ally a +1 circumstance bonus to the triggering check.
+    **Critical Failure.** Your ally takes a -1 circumstance penalty to the triggering check.
+  properties:
+    actions: "reaction"
+    proficiency: "untrained"
+    trigger: "An ally is about to use an action that requires a skill check or attack roll."
+    requirements: "The ally is willing to accept your aid, and you have prepared to help (see below)."
+- id: "arrest-a-fall"
+  name: "Arrest a Fall"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    You attempt your choice of an Acrobatics check or Reflex save to slow your fall. The DC is typically 15, but it might be higher due to air turbulence or other circumstances.
+    **Success.** You take no damage from the fall.
+  properties:
+    actions: "reaction"
+    proficiency: "untrained"
+    trigger: "You fall."
+    requirements: "You have a fly Speed."
+- id: "avert-gaze"
+  name: "Avert Gaze"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You avert your gaze from danger, such as a medusa's gaze. You gain a +2 circumstance bonus to saves against visual abilities that require you to look at a creature or object, such as a medusa's petrifying gaze. Your gaze remains averted until the start of your next turn."
+  properties:
+    actions: "one"
+    proficiency: "untrained"
+- id: "avoid-notice"
+  name: "Avoid Notice"
+  source: "pc > Chapter 8: Playing the Game > Exploration Mode > Exploration Activities"
+  description: "You attempt a Stealth check to avoid notice while traveling at half speed. If you're Avoiding Notice at the start of an encounter, you usually roll a Stealth check instead of a Perception check both to determine your initiative and to see if the enemies notice you (based on their Perception DCs, as normal for Sneak, regardless of their initiative check results)."
+  properties:
+    traits: ["exploration"]
+    proficiency: "untrained"
 - id: "balance"
   name: "Balance"
   source: "pc > Chapter 4: Skills > Skills > Acrobatics"
@@ -40,6 +79,15 @@
     traits: ["concentrate", "exploration"]
     skill: "arcana"
     proficiency: "trained"
+- id: "burrow"
+  name: "Burrow"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You dig your way through dirt, sand, or a similar loose material at a rate up to your burrow Speed. You can't burrow through rock or other substances denser than dirt unless you have an ability that allows you to do so."
+  properties:
+    actions: "one"
+    traits: ["move"]
+    proficiency: "untrained"
+    requirements: "You have a burrow Speed."
 - id: "climb"
   name: "Climb"
   source: "pc > Chapter 4: Skills > Skills > Athletics"
@@ -126,6 +174,15 @@
     traits: ["downtime", "manipulate"]
     skill: "crafting"
     proficiency: "trained"
+- id: "crawl"
+  name: "Crawl"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You move 5 feet by crawling and continue to stay prone."
+  properties:
+    actions: "one"
+    traits: ["move"]
+    proficiency: "untrained"
+    requirements: "You are prone and your Speed is at least 10 feet."
 - id: "create-a-diversion"
   name: "Create a Diversion"
   source: "pc > Chapter 4: Skills > Skills > Deception"
@@ -171,6 +228,23 @@
   properties:
     traits: ["concentrate", "exploration", "secret"]
     proficiency: "trained"
+- id: "defend"
+  name: "Defend"
+  source: "pc > Chapter 8: Playing the Game > Exploration Mode > Exploration Activities"
+  description: "You move at half your travel speed with your shield raised. If combat breaks out, you gain the benefits of Raising a Shield before your first turn begins."
+  properties:
+    traits: ["exploration"]
+    proficiency: "untrained"
+- id: "delay"
+  name: "Delay"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    You wait for the right moment to act. The rest of your turn doesn't happen yet. Instead, you're removed from the initiative order. You can return to the initiative order as a free action triggered by the end of any other creature's turn. This permanently changes your initiative to the new position. You can't use reactions until you return to the initiative order. If you Delay an entire round without returning to the initiative order, the actions from the Delayed turn are lost, your initiative doesn't change, and your next turn occurs at your original position in the initiative order.
+    When you Delay, any persistent damage or other negative effects that normally occur at the start or end of your turn occur immediately when you use the Delay action. Any beneficial effects that would end at any point during your turn also end. The GM might determine that other effects end when you Delay as well. Essentially, you can't Delay to avoid negative consequences that would happen on your turn or to extend beneficial effects that would end on your turn.
+  properties:
+    actions: "free"
+    proficiency: "untrained"
+    trigger: "Your turn begins."
 - id: "demoralize"
   name: "Demoralize"
   source: "pc > Chapter 4: Skills > Skills > Intimidation"
@@ -182,6 +256,13 @@
     actions: "one"
     traits: ["auditory", "concentrate", "emotion", "fear", "mental"]
     skill: "intimidation"
+    proficiency: "untrained"
+- id: "detect-magic-action"
+  name: "Detect Magic"
+  source: "pc > Chapter 8: Playing the Game > Exploration Mode > Exploration Activities"
+  description: "You cast detect magic at regular intervals. You move at half your travel speed or slower. You have no chance of accidentally overlooking a magic aura at a travel speed up to 300 feet per minute, but must be traveling no more than 150 feet per minute to detect magic auras before the party moves into them."
+  properties:
+    traits: ["concentrate", "exploration"]
     proficiency: "untrained"
 - id: "disable-a-device"
   name: "Disable a Device"
@@ -211,6 +292,22 @@
     skill: "athletics"
     proficiency: "trained"
     requirements: "You have at least one hand free. The target can't be more than one size larger than you."
+- id: "dismiss"
+  name: "Dismiss"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You end an effect that states you can Dismiss it. Dismissing ends the entire effect unless noted otherwise."
+  properties:
+    actions: "one"
+    traits: ["concentrate"]
+    proficiency: "untrained"
+- id: "drop-prone"
+  name: "Drop Prone"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You fall prone."
+  properties:
+    actions: "one"
+    traits: ["move"]
+    proficiency: "untrained"
 - id: "earn-income"
   name: "Earn Income"
   source: "pc > Chapter 4: Skills > General Skill Actions"
@@ -232,6 +329,18 @@
   properties:
     traits: ["downtime"]
     proficiency: "trained"
+- id: "escape"
+  name: "Escape"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    You attempt to escape from being grabbed, immobilized, or restrained. Choose one creature, object, spell effect, hazard, or other impediment imposing any of those conditions on you. Attempt a check using your unarmed attack modifier against the DC of the effect. This is typically the Athletics DC of a creature grabbing you, the Thievery DC of a creature who tied you up, the spell DC for a spell effect, or the listed Escape DC of an object, hazard, or other impediment. You can attempt an Acrobatics or Athletics check instead of using your attack modifier if you choose (but this action still has the attack trait).
+    **Critical Success.** You get free and remove the grabbed, immobilized, and restrained conditions imposed by your chosen target. You can then Stride up to 5 feet.
+    **Success.** You get free and remove the grabbed, immobilized, and restrained conditions imposed by your chosen target.
+    **Critical Failure.** You don't get free, and you can't attempt to Escape again until your next turn.
+  properties:
+    actions: "one"
+    traits: ["attack"]
+    proficiency: "untrained"
 - id: "feint"
   name: "Feint"
   source: "pc > Chapter 4: Skills > Skills > Deception"
@@ -246,6 +355,24 @@
     skill: "deception"
     proficiency: "trained"
     requirements: "You are within melee reach of the target you attempt to Feint."
+- id: "fly-action"
+  name: "Fly"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You move through the air up to your fly Speed. Moving upward (straight up or diagonally) uses the rules for moving through difficult terrain. You can move straight down 10 feet for every 5 feet of movement you spend. If you Fly to the ground, you don't take falling damage. You can use an action to Fly 0 feet to hover in place. If you're airborne at the end of your turn and didn't use a Fly action this round, you fall."
+  properties:
+    actions: "one"
+    traits: ["move"]
+    proficiency: "untrained"
+    requirements: "You have a fly Speed."
+- id: "follow-the-expert"
+  name: "Follow the Expert"
+  source: "pc > Chapter 8: Playing the Game > Exploration Mode > Exploration Activities"
+  description: |-
+    Choose an ally attempting a recurring skill check while exploring, such as climbing, or performing a different exploration tactic that requires a skill check (like Avoiding Notice). The ally must be at least an expert in that skill and must be willing to provide assistance. While Following the Expert, you match their tactic or attempt similar skill checks.
+    Thanks to your ally's assistance, you can add your level as a proficiency bonus to the associated skill check, even if you're untrained. Additionally, you gain a circumstance bonus to your skill check based on your ally's proficiency (+2 for expert, +3 for master, and +4 for legendary).
+  properties:
+    traits: ["auditory", "concentrate", "exploration", "visual"]
+    proficiency: "untrained"
 - id: "force-open"
   name: "Force Open"
   source: "pc > Chapter 4: Skills > Skills > Athletics"
@@ -270,6 +397,20 @@
     traits: ["exploration", "secret"]
     skill: "diplomacy"
     proficiency: "untrained"
+- id: "grab-an-edge"
+  name: "Grab an Edge"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    When you fall off or past an edge or other handhold, you can try to grab it, potentially stopping your fall. You must succeed at your choice of an Acrobatics check or a Reflex save, usually at the Climb DC. If you grab the edge or handhold, you can then Climb up using Athletics.
+    **Critical Success.** You grab the edge or handhold, whether or not you have a hand free, typically by using a suitable held item to catch yourself (catching a battle axe on a ledge, for example). You still take damage from the distance fallen so far, but you treat the fall as though it were 30 feet shorter.
+    **Success.** If you have at least one hand free, you grab the edge or handhold, stopping your fall. You still take damage from the distance fallen so far, but you treat the fall as though it were 20 feet shorter. If you have no hands free, you continue to fall as if you had failed the check.
+    **Critical Failure.** You continue to fall, and if you've fallen 20 feet or more before you use this reaction, you take 10 bludgeoning damage from the impact for every 20 feet fallen.
+  properties:
+    actions: "reaction"
+    traits: ["manipulate"]
+    proficiency: "untrained"
+    trigger: "You fall from or past an edge or handhold."
+    requirements: "Your hands are not tied behind your back or otherwise restrained."
 - id: "grapple"
   name: "Grapple"
   source: "pc > Chapter 4: Skills > Skills > Athletics"
@@ -308,6 +449,13 @@
   properties:
     actions: "two"
     skill: "athletics"
+    proficiency: "untrained"
+- id: "hustle"
+  name: "Hustle"
+  source: "pc > Chapter 8: Playing the Game > Exploration Mode > Exploration Activities"
+  description: "You strain yourself to move at double your travel speed. You can Hustle only for a number of minutes equal to your Constitution modifier × 10 (minimum 10 minutes). If you are in a group that is Hustling, use the lowest Constitution modifier among everyone to determine how fast the group can Hustle together."
+  properties:
+    traits: ["exploration", "move"]
     proficiency: "untrained"
 - id: "identify-alchemy"
   name: "Identify Alchemy"
@@ -349,6 +497,32 @@
   properties:
     traits: ["concentrate", "exploration", "manipulate", "secret"]
     skill: "deception"
+    proficiency: "untrained"
+- id: "interact"
+  name: "Interact"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You use your hand or hands to manipulate an object or the terrain. You can grab an unattended or stored object, draw a weapon, swap a held item for another, open a door, or achieve a similar effect. On rare occasions, you might have to attempt a skill check to determine if your Interact action was successful."
+  properties:
+    actions: "one"
+    traits: ["manipulate"]
+    proficiency: "untrained"
+- id: "investigate"
+  name: "Investigate"
+  source: "pc > Chapter 8: Playing the Game > Exploration Mode > Exploration Activities"
+  description: "You seek out information about your surroundings while traveling at half speed. You use Recall Knowledge as a secret check to discover clues among the various things you can see and engage with as you journey along. You can use any skill that has a Recall Knowledge action while Investigating, but the GM determines whether the skill is relevant to the clues you could find."
+  properties:
+    traits: ["concentrate", "exploration"]
+    proficiency: "untrained"
+- id: "leap"
+  name: "Leap"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    You take a short horizontal or vertical jump. Jumping a greater distance requires using the Athletics skill for a High Jump or Long Jump.
+    - **Horizontal.** Jump up to 10 feet horizontally if your Speed is at least 15 feet, or up to 15 feet horizontally if your Speed is at least 30 feet. You land in the space where your Leap ends (meaning you can typically clear a 5-foot gap, or a 10-foot gap if your Speed is 30 feet or more). You can't make a horizontal Leap if your Speed is less than 15 feet.
+    - **Vertical.** Jump up to 3 feet vertically and 5 feet horizontally onto an elevated surface.
+  properties:
+    actions: "one"
+    traits: ["move"]
     proficiency: "untrained"
 - id: "learn-a-spell"
   name: "Learn a Spell"
@@ -431,6 +605,15 @@
     skill: "acrobatics"
     proficiency: "trained"
     requirements: "You have a fly Speed."
+- id: "mount"
+  name: "Mount"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You move onto the creature and ride it. If you're already mounted, you can instead use this action to dismount, moving off the mount into a space adjacent to it."
+  properties:
+    actions: "one"
+    traits: ["move"]
+    proficiency: "untrained"
+    requirements: "You are adjacent to a creature that is at least one size larger than you and is willing to be your mount."
 - id: "palm-an-object"
   name: "Palm an Object"
   source: "pc > Chapter 4: Skills > Skills > Thievery"
@@ -471,6 +654,33 @@
     skill: "thievery"
     proficiency: "trained"
     requirements: "You're holding or wearing a thieves' toolkit."
+- id: "point-out"
+  name: "Point Out"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You indicate a creature that you can see to one or more allies, gesturing in a direction and describing the distance verbally. That creature is hidden to your allies, rather than undetected. This works only for allies who can see you and are in a position where they could potentially detect the target. If your allies can't hear or understand you, they must succeed at a Perception check against the creature's Stealth DC or they misunderstand and believe the target is in a different location."
+  properties:
+    actions: "one"
+    traits: ["auditory", "manipulate", "visual"]
+    proficiency: "untrained"
+    requirements: "A creature is undetected by one or more of your allies but isn't undetected by you."
+- id: "raise-a-shield"
+  name: "Raise a Shield"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You position your shield to protect yourself. When you have Raised a Shield, you gain its listed circumstance bonus to AC. Your shield remains raised until the start of your next turn."
+  properties:
+    actions: "one"
+    proficiency: "untrained"
+    requirements: "You are wielding a shield."
+- id: "ready"
+  name: "Ready"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    You prepare to use an action that will occur outside your turn. Choose a single action or free action you can use, and designate a trigger. Your turn then ends. If the trigger you designated occurs before the start of your next turn, you can use the chosen action as a reaction (provided you still meet the requirements to use it). You can't Ready a free action that already has a trigger.
+    If you have a multiple attack penalty and your readied action is an attack action, your readied attack takes the multiple attack penalty you had at the time you used Ready. This is one of the few times the multiple attack penalty applies when it's not your turn.
+  properties:
+    actions: "two"
+    traits: ["concentrate"]
+    proficiency: "untrained"
 - id: "recall-knowledge"
   name: "Recall Knowledge"
   source: "pc > Chapter 4: Skills > General Skill Actions"
@@ -486,6 +696,16 @@
     actions: "one"
     traits: ["concentrate", "secret"]
     proficiency: "untrained"
+- id: "release"
+  name: "Release"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    You release something you're holding in your hand or hands. This might mean dropping an item, removing one hand from your weapon while continuing to hold it in another hand, releasing a rope suspending a chandelier, or performing a similar action. Unlike most manipulate actions, Release does not trigger reactions that can be triggered by actions with the manipulate trait (such as Reactive Strike).
+    If you want to prepare to Release something outside of your turn, use the Ready activity.
+  properties:
+    actions: "free"
+    traits: ["manipulate"]
+    proficiency: "untrained"
 - id: "repair"
   name: "Repair"
   source: "pc > Chapter 4: Skills > Skills > Crafting"
@@ -499,6 +719,13 @@
     skill: "crafting"
     proficiency: "untrained"
     requirements: "You are holding or wearing a repair toolkit."
+- id: "repeat-a-spell"
+  name: "Repeat a Spell"
+  source: "pc > Chapter 8: Playing the Game > Exploration Mode > Exploration Activities"
+  description: "You repeatedly cast the same spell while moving at half speed. Typically, this spell is a cantrip that you want to have in effect in the event a combat breaks out, and it must be one you can cast in 2 actions or fewer. Repeating a spell that requires making complex decisions, such as figment, can make you fatigued, as determined by the GM."
+  properties:
+    traits: ["concentrate", "exploration"]
+    proficiency: "untrained"
 - id: "reposition"
   name: "Reposition"
   source: "pc > Chapter 4: Skills > Skills > Athletics"
@@ -527,6 +754,32 @@
     traits: ["auditory", "concentrate", "linguistic", "mental"]
     skill: "diplomacy"
     proficiency: "untrained"
+- id: "scout-action"
+  name: "Scout"
+  source: "pc > Chapter 8: Playing the Game > Exploration Mode > Exploration Activities"
+  description: "You scout ahead and behind the group to watch danger, moving at half speed. At the start of the next encounter, every creature in your party gains a +1 circumstance bonus to their initiative rolls."
+  properties:
+    traits: ["concentrate", "exploration"]
+    proficiency: "untrained"
+- id: "search"
+  name: "Search"
+  source: "pc > Chapter 8: Playing the Game > Exploration Mode > Exploration Activities"
+  description: "You Seek meticulously for hidden doors, concealed hazards, and so on. You can usually make an educated guess as to which locations are best to check and move at half speed, but if you want to be thorough and guarantee you checked everything, you need to travel at a Speed of no more than 300 feet per minute, or 150 feet per minute to ensure you check everything before you walk into it. You can always move more slowly while Searching to cover the area more thoroughly, and the Expeditious Search feat increases these maximum Speeds. If you come across a secret door, item, or hazard while Searching, the GM will attempt a free secret check to Seek to see if you notice the hidden object or hazard. In locations with many objects to search, you have to stop and spend significantly longer to search thoroughly."
+  properties:
+    traits: ["concentrate", "exploration"]
+    proficiency: "untrained"
+- id: "seek"
+  name: "Seek"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    You scan an area for signs of creatures or objects, possibly including secret doors or hazards. Choose an area to scan. The GM determines the area you can scan with one Seek action—almost always 30 feet or less in any dimension. The GM might impose a penalty if you search far away from you or adjust the number of actions it takes to Seek a particularly cluttered area.
+    The GM attempts a single secret Perception check for you and compares the result to the Stealth DCs of any undetected or hidden creatures in the area, or the DC to detect each object in the area (as determined by the GM or by someone Concealing the Object). A creature you detect might remain hidden, rather than becoming observed, if you're using an imprecise sense or if an effect (such as invisibility) prevents the subject from being observed.
+    **Critical Success.** Any undetected or hidden creature you critically succeeded against becomes observed by you. You learn the location of objects in the area you critically succeeded against.
+    **Success.** Any undetected creature you succeeded against becomes hidden from you instead of undetected, and any hidden creature you succeeded against becomes observed by you. You learn the location of any object or get a clue to its whereabouts, as determined by the GM.
+  properties:
+    actions: "one"
+    traits: ["concentrate", "secret"]
+    proficiency: "untrained"
 - id: "sense-direction"
   name: "Sense Direction"
   source: "pc > Chapter 4: Skills > Skills > Survival"
@@ -537,6 +790,19 @@
   properties:
     traits: ["exploration", "secret"]
     skill: "survival"
+    proficiency: "untrained"
+- id: "sense-motive"
+  name: "Sense Motive"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    You try to tell whether a creature's behavior is abnormal. Choose one creature and assess it for odd body language, signs of nervousness, and other indicators that it might be trying to deceive someone. The GM attempts a single secret Perception check for you and compares the result to the Deception DC of the creature, the DC of a spell affecting the creature's mental state, or another appropriate DC determined by the GM. You typically can't try to Sense the Motive of the same creature again until the situation changes significantly.
+    **Critical Success.** You determine the creature's true intentions and get a solid idea of any mental magic affecting it.
+    **Success.** You can tell whether the creature is behaving normally, but you don't know its exact intentions or what magic might be affecting it.
+    **Failure.** You detect what a deceptive creature wants you to believe. If they're not being deceptive, you believe they're behaving normally.
+    **Critical Failure.** You get a false sense of the creature's intentions.
+  properties:
+    actions: "one"
+    traits: ["concentrate", "secret"]
     proficiency: "untrained"
 - id: "shove"
   name: "Shove"
@@ -578,6 +844,14 @@
     traits: ["exploration", "move"]
     skill: "acrobatics"
     proficiency: "trained"
+- id: "stand"
+  name: "Stand"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You stand up from being prone."
+  properties:
+    actions: "one"
+    traits: ["move"]
+    proficiency: "untrained"
 - id: "steal"
   name: "Steal"
   source: "pc > Chapter 4: Skills > Skills > Thievery"
@@ -591,6 +865,37 @@
     actions: "one"
     traits: ["manipulate"]
     skill: "thievery"
+    proficiency: "untrained"
+- id: "step"
+  name: "Step"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    You carefully move 5 feet. Unlike most types of movement, Stepping doesn't trigger reactions, such as Reactive Strike, that can be triggered by move actions or upon leaving or entering a square.
+    You can't Step into difficult terrain, and you can't Step using a Speed other than your land Speed.
+  properties:
+    actions: "one"
+    traits: ["move"]
+    proficiency: "untrained"
+    requirements: "Your Speed is at least 10 feet."
+- id: "stride"
+  name: "Stride"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You move up to your Speed."
+  properties:
+    actions: "one"
+    traits: ["move"]
+    proficiency: "untrained"
+- id: "strike"
+  name: "Strike"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    You attack with a weapon you're wielding or with an unarmed attack, targeting one creature within your reach (for a melee attack) or within range (for a ranged attack). Roll an attack roll using the attack modifier for the weapon or unarmed attack you're using, and compare the result to the target creature's AC to determine the effect.
+    **Critical Success.** You make a damage roll according to the weapon or unarmed attack and deal double damage.
+    **Success.** You make a damage roll according to the weapon or unarmed attack and deal damage.
+    The damage roll for a Strike uses the damage die of the weapon or unarmed attack, plus any modifiers, bonuses, and penalties you have to damage. If you're using a type of attack other than a Strike, such as a spell attack or Grapple action, you calculate damage differently (or not at all).
+  properties:
+    actions: "one"
+    traits: ["attack"]
     proficiency: "untrained"
 - id: "subsist"
   name: "Subsist"
@@ -606,6 +911,24 @@
   properties:
     traits: ["downtime"]
     proficiency: "untrained"
+- id: "sustain"
+  name: "Sustain"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: |-
+    Choose one of your effects that has a sustained duration or lists a special benefit when you Sustain it. Most such effects come from spells or magic item activations. If the effect has a sustained duration, its duration extends until the end of your next turn. (Sustaining more than once in the same turn doesn't extend the duration to subsequent turns.) If an ability can be sustained but doesn't list how long, it can be sustained up to 10 minutes.
+    An effect might list an additional benefit that occurs if you Sustain it, and this can even appear on effects that don't have a sustained duration. If the effect has both a special benefit and a sustained duration, your Sustain action extends the duration as well as having the special benefit.
+    If your Sustain action is disrupted, the ability ends.
+  properties:
+    actions: "one"
+    traits: ["concentrate"]
+    proficiency: "untrained"
+- id: "sustain-an-effect"
+  name: "Sustain an Effect"
+  source: "pc > Chapter 8: Playing the Game > Exploration Mode > Exploration Activities"
+  description: "You Sustain one effect with a sustained duration while moving at half speed. Most such effects can be sustained for 10 minutes, though some specify they can be sustained for a different duration. Sustaining an effect that requires making complex decisions, such as spiritual armament, can make you fatigued, as determined by the GM."
+  properties:
+    traits: ["concentrate", "exploration"]
+    proficiency: "untrained"
 - id: "swim"
   name: "Swim"
   source: "pc > Chapter 4: Skills > Skills > Athletics"
@@ -620,6 +943,14 @@
     traits: ["move"]
     skill: "athletics"
     proficiency: "untrained"
+- id: "take-cover"
+  name: "Take Cover"
+  source: "pc > Chapter 8: Playing the Game > Actions > Basic Actions"
+  description: "You press yourself against a wall or duck behind an obstacle to take better advantage of cover. If you would have standard cover, you instead gain greater cover, which provides a +4 circumstance bonus to AC; to Reflex saves against area effects; and to Stealth checks to Hide, Sneak, or otherwise avoid detection. Otherwise, you gain standard cover (a +2 circumstance bonus instead). If you're prone, you gain greater cover against ranged attacks. Take Cover lasts until you move from your current space, use an attack action, become unconscious, or end it as a free action."
+  properties:
+    actions: "one"
+    proficiency: "untrained"
+    requirements: "You are benefiting from standard cover, are near a feature that allows you to take cover, or are prone."
 - id: "track"
   name: "Track"
   source: "pc > Chapter 4: Skills > Skills > Survival"
