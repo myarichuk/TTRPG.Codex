@@ -344,13 +344,19 @@ because an issue id is built from them.
   (`ConsistencyChecker.UnknownIds`; the error names the ids and says to call `list_issues`), an id the gate cannot fix (`report-only`), an entry that is not
   an edit, or an issue about something other than what the edit changes (kind and document id; a page is matched by its document id, through
   `ProposalRules.ExistingPageIds`). A proposal with no `resolves` reads as it always did, and the checker only runs for a proposal that has the word.
-  A revision of an edit (same ref, same target) keeps what the earlier one resolved (`WorldChat.CarryOver`); `add_entries` re-checks the waiting entries'
-  claims together with the new ones.
+  A claim list is read whole or refused: more than 50 ids (`WorldBundleParser.MaxResolves`) or a member that is not text refuses the proposal (it used to cut at 50
+  and skip the rest without a word, so the model believed it had claimed them). A revision of an edit (same ref, same target) keeps what the earlier one resolved
+  (`WorldChat.CarryOver`) unless it lists its own `resolves`, even an empty list, which replaces them: that is how a claim is withdrawn (`WorldDraft.ResolvesGiven`; the
+  refusal for an unknown id says so). `add_entries` re-checks the waiting entries' claims together with the new ones, except that a claim on a waiting entry that
+  is no longer an open issue (dismissed or fixed meanwhile) is dropped, not held against the new entries (`add_entries` cannot change a waiting entry, so refusing
+  would leave the model nothing to do); the result names the dropped ids, and the entry stays without them. A made-up id on a new entry is still refused whole.
 
 *Wired now (phase 3).*
 - **The re-check after an apply.** `WorldChat.ApplyNowAsync` reads the ids the kept entries resolve before anything is cleared, takes the open issues just
   before `WorldBuilderService.SaveAsync` and again just after (`WorldBuilderService.OpenIssuesAsync`, DM only: one full uncached snapshot each), and sets
-  them side by side with `ConsistencyChecker.Compare`. The claim is only what is checked: the model's word that a fix worked decides nothing. It runs only
+  them side by side with `ConsistencyChecker.Compare`. The claim is only what is checked: the model's word that a fix worked decides nothing. An apply that is tried again after part of it was saved compares with the issues open before the first attempt
+  (`WorldChatDocument.ApplyBeforeIssueIds`, kept until the proposal is applied or discarded), so the claim of an entry already saved is `resolved`, not "not an issue".
+  It runs only
   when some kept entry has `resolves` (no claim, no two snapshots, and the note reads as it always did). Unticked entries' claims are not checked.
   The result is `WorldBuildResult.Recheck` (`ApplyRecheck`: `Failed`, `Resolved`, `StillOpen`, `NotFound`, `ResolvedUnclaimed`, `New` as issue ids, in the
   checker's order), null when it did not run. The model is told in the "(A note from the app ...)" message: "The app re-ran its checks after the apply;

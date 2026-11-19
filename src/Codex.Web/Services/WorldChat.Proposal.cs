@@ -55,6 +55,13 @@ public sealed partial class WorldChat
         try
         {
             before = await BeforeApplyAsync(claimedIds, ct);
+            // The ids open before the first attempt are kept with the chat until the proposal is done: a retry after a part was saved takes its own
+            // "before" after that part, where the fixed issues are already gone and their claims would read as "never an issue".
+            if (before != null)
+            {
+                Document.ApplyBeforeIssueIds = before.Select(i => i.Id).Concat(Document.ApplyBeforeIssueIds ?? new List<string>()).Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToList();
+            }
+
             // Each entry is kept in the chat the moment it is stored, so an apply cut short by anything (a failure, a closed tab,
             // a restart) leaves a chat that knows what it made: Apply again only adds the rest.
             result = await builder.SaveAsync(campaign, access, proposal, ct, SaveAsync);
@@ -70,8 +77,10 @@ public sealed partial class WorldChat
         // The save went through; nothing about the re-check can turn it into a failure.
         if (claimedIds.Count > 0)
         {
-            result = result with { Recheck = await RecheckAsync(before, claimedIds) };
+            result = result with { Recheck = await RecheckAsync(before, Document.ApplyBeforeIssueIds, claimedIds) };
         }
+
+        Document.ApplyBeforeIssueIds = null;
 
         Proposal = null;
         Held = null;
@@ -139,13 +148,13 @@ public sealed partial class WorldChat
     }
 
     // The checks again, after the save, set against the checks before it. The model's claim is the thing being checked.
-    private async Task<ApplyRecheck> RecheckAsync(IReadOnlyList<Codex.Core.Consistency.Issue>? before, List<string> claimedIds)
+    private async Task<ApplyRecheck> RecheckAsync(IReadOnlyList<Codex.Core.Consistency.Issue>? before, IReadOnlyList<string>? earlierIds, List<string> claimedIds)
     {
         if (before == null) return ApplyRecheck.Couldnt;
         try
         {
             return await builder.OpenIssuesAsync(campaign, access) is { } after
-                ? ApplyRecheck.From(Codex.Core.Consistency.ConsistencyChecker.Compare(before, after, claimedIds))
+                ? ApplyRecheck.From(Codex.Core.Consistency.ConsistencyChecker.Compare(before.Select(i => i.Id).Concat(earlierIds ?? Array.Empty<string>()), after, claimedIds))
                 : ApplyRecheck.Couldnt;
         }
         catch (Exception)
@@ -192,6 +201,7 @@ public sealed partial class WorldChat
         var kept = await builder.SavedLinksAsync(proposal, access);
         Proposal = null;
         Held = null;
+        Document.ApplyBeforeIssueIds = null;
         Document.ProposalWarnings = new List<string>();
         Document.Decided = new List<string>();
         var l = Localizer.For(Lang);

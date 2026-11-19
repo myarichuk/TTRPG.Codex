@@ -161,6 +161,37 @@ public class PostApplyRecheckTests
     }
 
     [Fact]
+    public async Task AnApplyRetriedAfterAPartWasSaved_StillSeesTheClaimOfTheEntryAlreadySaved_AsResolved()
+    {
+        var pages = new List<WikiPageDocument> { Road("Past [[The Mere of Dead Men]]."), new() { Id = "wikipages/2-A", Slug = "inn", Title = "Inn", Body = "Old.", Visibility = WikiVisibility.Party } };
+        var saving = WorldBuilderTests.ServiceWithPages(pages);
+        var proposal = "{\"proposal\": {\"entries\": [" +
+            "{\"ref\": \"e\", \"kind\": \"edit\", \"target\": \"existing:road\", \"text\": \"Past the mere.\", \"resolves\": [\"" + Mere + "\"]}," +
+            "{\"ref\": \"f\", \"kind\": \"edit\", \"target\": \"existing:inn\", \"text\": \"New.\"}]}}";
+        var model = new WorldBuilderTests.ScriptedModel(
+            _ => WorldBuilderTests.Calls("c1", "propose_changes", proposal),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready to review."),
+            _ => new ChatMessage(ChatRole.Assistant, "Noted."));
+        var chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(model), WorldBuilderTests.Campaign, WorldBuilderTests.Dm);
+        await chat.SendAsync("Fix it.", _ => { }, CancellationToken.None);
+        pages[1].Body = "Changed meanwhile."; // the second entry is refused at apply, after the first was saved
+
+        await Assert.ThrowsAsync<Codex.Localization.LocalizedException>(() => chat.ApplyAsync());
+
+        Assert.Equal("Past the mere.", pages[0].Body);
+        Assert.Equal(new[] { Mere }, chat.Document.ApplyBeforeIssueIds);
+        pages[1].Body = "Old.";
+
+        var result = await chat.ApplyAsync();
+
+        var recheck = result.Recheck!;
+        Assert.Equal(new[] { Mere }, recheck.Resolved);
+        Assert.Empty(recheck.NotFound);
+        Assert.Empty(recheck.StillOpen);
+        Assert.Null(chat.Document.ApplyBeforeIssueIds); // done: nothing is kept for the next proposal
+    }
+
+    [Fact]
     public async Task AClaimOnAnEntryTheGameMasterUnticked_IsNotChecked()
     {
         var run = await ProposedAsync("Past [[The Mere of Dead Men]].", Edit("Past the mere.", Mere));

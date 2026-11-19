@@ -126,6 +126,38 @@ public class ResolvesTests
     }
 
     [Fact]
+    public void MoreThanFiftyIds_AreRefused_NotQuietlyCut()
+    {
+        var ids = string.Join(", ", Enumerable.Range(0, 51).Select(i => $"\"made-up:{i}\""));
+        var check = Parse(Edit("existing:road", $"[{ids}]"));
+
+        Assert.False(check.Ok);
+        Assert.Contains("names 51 issues, and one entry may name at most 50", string.Join(" ", check.Errors));
+        // Fifty is not too many; here they are not issues, which is the other refusal, and the cut is not what said so.
+        Assert.DoesNotContain("at most 50", string.Join(" ", Parse(Edit("existing:road", $"[{string.Join(", ", Enumerable.Range(0, 50).Select(i => $"\"made-up:{i}\""))}]")).Errors));
+    }
+
+    [Fact]
+    public void AMemberThatIsNotText_RefusesTheProposal_NotQuietlyLeftOut()
+    {
+        var check = Parse(Edit("existing:road", $"[\"{BrokenLink}\", 3]"));
+        Assert.False(check.Ok);
+        Assert.Contains("one of its members is not text", string.Join(" ", check.Errors));
+
+        var notAList = Parse(Edit("existing:road", "{\"a\": 1}"));
+        Assert.False(notAList.Ok);
+        Assert.Contains("is a list of issue ids as text", string.Join(" ", notAList.Errors));
+    }
+
+    [Fact]
+    public void AnEntryThatWritesItsOwnResolves_EvenAnEmptyList_IsToldApartFromOneThatDoesNot()
+    {
+        Assert.True(Parse(Edit("existing:road", "[]"), open: Array.Empty<Issue>()).Bundle.Drafts.Single().ResolvesGiven);
+        Assert.False(Parse(Edit("existing:road", null), open: Array.Empty<Issue>()).Bundle.Drafts.Single().ResolvesGiven);
+        Assert.False(Parse(Edit("existing:road", "null"), open: Array.Empty<Issue>()).Bundle.Drafts.Single().ResolvesGiven);
+    }
+
+    [Fact]
     public void TheDraftsResolves_SurviveBeingStoredWithTheChat()
     {
         var draft = Parse(Edit("existing:road", $"[\"{BrokenLink}\"]")).Bundle.Drafts.Single();
@@ -283,5 +315,69 @@ public class ListIssuesToolTests
         var refused = WorldBuilderTests.ToolResult(model.Calls[3]);
         Assert.StartsWith("Nothing was", refused);
         Assert.Contains("nope", refused);
+    }
+
+    private static WorldChat ChatOf(WorldBuilderTests.Saving saving, WorldBuilderTests.ScriptedModel model) =>
+        new(saving.Service, () => Task.FromResult<IChatClient>(model), WorldBuilderTests.Campaign, WorldBuilderTests.Dm);
+
+    [Fact]
+    public async Task AClaimOnAWaitingEntryThatIsNoLongerOpen_IsDropped_AndTheModelIsTold_NotRefusedForIt()
+    {
+        var road = Road();
+        var saving = WorldBuilderTests.ServiceWithPages(new[] { road, Empty() });
+        var model = new WorldBuilderTests.ScriptedModel(
+            _ => WorldBuilderTests.Calls("c1", "propose_changes", $$$"""{"proposal": {"entries": [{"ref": "e", "kind": "edit", "target": "existing:road", "text": "Past the mere.", "resolves": ["{{{BrokenLink}}}"]}]}}"""),
+            _ =>
+            {
+                road.Body = "Past the mere, already fixed by hand."; // the red link is gone while the proposal waits
+                return WorldBuilderTests.Calls("c2", "add_entries", """{"additions": {"entries": [{"ref": "m", "kind": "wiki", "name": "The Mere", "text": "Water."}]}}""");
+            },
+            _ => new ChatMessage(ChatRole.Assistant, "Ready to review."));
+        var chat = ChatOf(saving, model);
+
+        await chat.SendAsync("Fix the red link.", _ => { }, CancellationToken.None);
+
+        var result = WorldBuilderTests.ToolResult(model.Calls[2]);
+        Assert.DoesNotContain("Nothing was", result);
+        Assert.Contains("Dropped from waiting entries, because they are no longer open issues", result);
+        Assert.Contains($"e: [\"{BrokenLink}\"]", result);
+        Assert.Equal(2, chat.Proposal!.Drafts.Count);
+        Assert.Empty(chat.Proposal.Drafts[0].Resolves); // not carried back over
+    }
+
+    [Fact]
+    public async Task AClaimThatIsStillOpen_IsKeptWhenEntriesAreAdded_AndAMadeUpIdOnANewEntryStillRefuses()
+    {
+        var saving = WorldBuilderTests.ServiceWithPages(new[] { Road(), Empty() });
+        var model = new WorldBuilderTests.ScriptedModel(
+            _ => WorldBuilderTests.Calls("c1", "propose_changes", $$$"""{"proposal": {"entries": [{"ref": "e", "kind": "edit", "target": "existing:road", "text": "Past the mere.", "resolves": ["{{{BrokenLink}}}"]}]}}"""),
+            _ => WorldBuilderTests.Calls("c2", "add_entries", """{"additions": {"entries": [{"ref": "x", "kind": "edit", "target": "existing:empty", "text": "Something.", "resolves": ["nope"]}]}}"""),
+            _ => WorldBuilderTests.Calls("c3", "add_entries", """{"additions": {"entries": [{"ref": "m", "kind": "wiki", "name": "The Mere", "text": "Water."}]}}"""),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready to review."));
+        var chat = ChatOf(saving, model);
+
+        await chat.SendAsync("Fix the red link.", _ => { }, CancellationToken.None);
+
+        Assert.Contains("nope", WorldBuilderTests.ToolResult(model.Calls[2]));
+        Assert.Equal(new[] { BrokenLink }, chat.Proposal!.Drafts[0].Resolves);
+        Assert.DoesNotContain("Dropped", WorldBuilderTests.ToolResult(model.Calls[3]));
+    }
+
+    [Fact]
+    public async Task ARevisionThatListsItsOwnResolves_ReplacesTheEarlierClaims_AndAnEmptyListWithdrawsThem()
+    {
+        var saving = WorldBuilderTests.ServiceWithPages(new[] { Road() });
+        string Proposal(string text, string? resolves) =>
+            $$$"""{"proposal": {"entries": [{"ref": "e", "kind": "edit", "target": "existing:road", "text": "{{{text}}}"{{{(resolves == null ? "" : $", \"resolves\": {resolves}")}}}}]}}""";
+        var model = new WorldBuilderTests.ScriptedModel(
+            _ => WorldBuilderTests.Calls("c1", "propose_changes", Proposal("Past the mere.", $"[\"{BrokenLink}\"]")),
+            _ => WorldBuilderTests.Calls("c2", "propose_changes", Proposal("Past the mere and the fen.", "[]")),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready to review."));
+        var chat = ChatOf(saving, model);
+
+        await chat.SendAsync("Fix the red link.", _ => { }, CancellationToken.None);
+
+        Assert.Empty(chat.Proposal!.Drafts.Single().Resolves);
+        Assert.Equal("Past the mere and the fen.", chat.Proposal.Drafts.Single().Body);
     }
 }

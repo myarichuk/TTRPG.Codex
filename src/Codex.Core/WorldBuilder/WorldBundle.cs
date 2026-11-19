@@ -243,6 +243,10 @@ public sealed class WorldDraft
     /// an edit changes. A claim only: the app re-checks after applying and never takes the model's word that something is fixed. Empty
     /// for an entry that fixes nothing in particular, which is every entry that does not cite one.</summary>
     public List<string> Resolves { get; set; } = new();
+
+    /// <summary>True when the entry wrote its own <c>resolves</c> (an empty list too). A revision of an edit that does replaces what the earlier version
+    /// claimed (so a claim can be withdrawn); one that leaves it out keeps the earlier claims (<c>WorldChat.CarryOver</c>).</summary>
+    public bool ResolvesGiven { get; set; }
 }
 
 /// <summary>Something a tags entry changes: its key, its name and its tags before the change.</summary>
@@ -637,7 +641,8 @@ public static class WorldBundleParser
                     : new List<string>();
                 links.AddRange(WikiLink.Matches(text).Select(m => m.Groups[1].Value.Trim()));
                 rawLinks[draft] = links;
-                draft.Resolves = ReadIds(element, "resolves");
+                draft.Resolves = ReadIds(element, "resolves", label, errors, out var resolvesGiven);
+                draft.ResolvesGiven = resolvesGiven;
                 bundle.Drafts.Add(draft);
             }
 
@@ -735,13 +740,33 @@ public static class WorldBundleParser
     /// <summary>The most issue ids one entry may cite.</summary>
     public const int MaxResolves = 50;
 
-    private static List<string> ReadIds(JsonElement element, string name)
+    /// <summary>The ids an entry cites, trimmed and each once. Refused (an error, so the whole proposal is) rather than cut: an id past
+    /// <see cref="MaxResolves"/>, or a member that is not a string, would otherwise be left out without a word, and the model would believe it claimed it.
+    /// <paramref name="given"/> says the entry wrote the field at all (a revision's own list, even an empty one, replaces what it claimed before).</summary>
+    private static List<string> ReadIds(JsonElement element, string name, string label, List<string> errors, out bool given)
     {
         var ids = new List<string>();
-        if (!element.TryGetProperty(name, out var value)) return ids;
+        given = false;
+        if (!element.TryGetProperty(name, out var value) || value.ValueKind == JsonValueKind.Null) return ids;
+        given = true;
         if (value.ValueKind == JsonValueKind.String) ids.Add(value.GetString()!);
-        else if (value.ValueKind == JsonValueKind.Array) ids.AddRange(value.EnumerateArray().Where(v => v.ValueKind == JsonValueKind.String).Select(v => v.GetString()!));
-        return ids.Select(id => id.Trim()).Where(id => id.Length > 0).Distinct(StringComparer.Ordinal).Take(MaxResolves).ToList();
+        else if (value.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var member in value.EnumerateArray())
+            {
+                if (member.ValueKind == JsonValueKind.String) ids.Add(member.GetString()!);
+                else errors.Add($"{label}: \"{name}\" is a list of issue ids as text, exactly as list_issues gives them; one of its members is not text, so the proposal was refused.");
+            }
+        }
+        else errors.Add($"{label}: \"{name}\" is a list of issue ids as text, exactly as list_issues gives them.");
+
+        var distinct = ids.Select(id => id.Trim()).Where(id => id.Length > 0).Distinct(StringComparer.Ordinal).ToList();
+        if (distinct.Count > MaxResolves)
+        {
+            errors.Add($"{label}: \"{name}\" names {distinct.Count} issues, and one entry may name at most {MaxResolves}; none was dropped, so the proposal was refused. Claim fewer, or put the rest on another entry.");
+        }
+
+        return distinct;
     }
 
     /// <summary>
@@ -761,7 +786,7 @@ public static class WorldBundleParser
             {
                 errors.Add($"{label}: resolves names {(unknown.Count == 1 ? "an id that is not an open issue" : "ids that are not open issues")}: {string.Join(", ", unknown)}. " +
                            "Call list_issues and copy the ids exactly; an issue that was fixed, or that the game master dismissed, is no longer open. " +
-                           "The whole proposal was refused; send it again with the right ids, or without \"resolves\".");
+                           "The whole proposal was refused; send it again with the right ids, or without \"resolves\" (a revision of an entry that lists its own \"resolves\", even an empty list, replaces the claims it made before).");
             }
 
             var (kind, targetId) = EditedThing(draft, rules);

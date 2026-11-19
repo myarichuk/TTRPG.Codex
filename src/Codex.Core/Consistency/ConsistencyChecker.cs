@@ -102,9 +102,17 @@ public static class ConsistencyChecker
     /// there, and the ones that are new. A model's claim to have fixed something is checked against this, never taken as the answer.
     /// <paramref name="claimed"/> are the ids a proposal said it resolves.
     /// </summary>
-    public static Recheck Compare(IEnumerable<Issue> before, IEnumerable<Issue> after, IEnumerable<string> claimed)
+    public static Recheck Compare(IEnumerable<Issue> before, IEnumerable<Issue> after, IEnumerable<string> claimed) =>
+        Compare(before.Select(i => i.Id), after, claimed);
+
+    /// <summary>
+    /// <see cref="Compare(IEnumerable{Issue}, IEnumerable{Issue}, IEnumerable{string})"/> with the ids that were open before as ids: an apply that is
+    /// retried after part of it was saved passes the ids from before the first attempt as well, so a claim of an entry already saved is still seen as an
+    /// issue that was there (and is now gone), not as one that was never an issue.
+    /// </summary>
+    public static Recheck Compare(IEnumerable<string> beforeIssueIds, IEnumerable<Issue> after, IEnumerable<string> claimed)
     {
-        var beforeIds = before.Select(i => i.Id).ToHashSet(StringComparer.Ordinal);
+        var beforeIds = beforeIssueIds.ToHashSet(StringComparer.Ordinal);
         var afterById = after.GroupBy(i => i.Id, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
         var claims = claimed.Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToList();
 

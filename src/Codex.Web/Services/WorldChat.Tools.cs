@@ -154,10 +154,59 @@ public sealed partial class WorldChat
                    "Add fewer, or tell the game master to apply the proposal first and ask for the rest after.";
         }
 
-        var merged = new ProposalInput { Summary = input.Summary, Region = input.Region, RegionKind = input.RegionKind, Entries = (input.Entries ?? new List<ProposalEntry>()).Concat(added).ToList() };
+        // A claim on a waiting entry that is no longer an open issue (the game master dismissed it, or something fixed it, since) is dropped, not held
+        // against the new entries: add_entries cannot change a waiting entry, so refusing would leave the model nothing it could do. The result says which.
+        var (waiting, dropped) = await WithoutStaleClaimsAsync(input.Entries ?? new List<ProposalEntry>());
+        var merged = new ProposalInput { Summary = input.Summary, Region = input.Region, RegionKind = input.RegionKind, Entries = waiting.Concat(added).ToList() };
         var result = await ProposeAsync(merged, "add_entries", $"only the new entries (the {input.Entries?.Count ?? 0} waiting ones come first when errors are numbered, so your first new entry is entries[{input.Entries?.Count ?? 0}])", fresh: false);
-        if (!ReferenceEquals(Proposal, before) && Proposal != null) CarryOver(before, Proposal, decisions: true);
+        if (!ReferenceEquals(Proposal, before) && Proposal != null)
+        {
+            CarryOver(before, Proposal, decisions: true);
+            if (dropped.Count > 0)
+            {
+                result += "\nDropped from waiting entries, because they are no longer open issues (the game master dismissed them or they were fixed): " +
+                          string.Join("; ", dropped.Select(d => $"{d.Ref}: {JsonSerializer.Serialize(d.Ids, ProposalJson)}")) + ". Those entries stay in the proposal without those claims.";
+            }
+        }
+
         return result;
+    }
+
+    // The waiting entries as copies, each with only the claims that are still open issues; the ones that lost a claim carry an explicit (possibly
+    // empty) list, so the claims they had are replaced and not carried back over them. No check runs when no waiting entry claims anything.
+    private async Task<(List<ProposalEntry> Entries, List<(string Ref, List<string> Ids)> Dropped)> WithoutStaleClaimsAsync(List<ProposalEntry> waiting)
+    {
+        var dropped = new List<(string Ref, List<string> Ids)>();
+        if (!waiting.Any(e => e.Resolves is { Count: > 0 })) return (waiting, dropped);
+        IReadOnlyList<Codex.Core.Consistency.Issue>? open;
+        try
+        {
+            open = await builder.OpenIssuesAsync(campaign, access);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            open = null; // the checks could not run: nothing is dropped, and the check of the proposal says what it says
+        }
+
+        if (open == null) return (waiting, dropped);
+        var openIds = open.Select(i => i.Id).ToHashSet(StringComparer.Ordinal);
+        var kept = new List<ProposalEntry>();
+        foreach (var entry in waiting)
+        {
+            var stale = entry.Resolves?.Select(id => id.Trim()).Where(id => id.Length > 0 && !openIds.Contains(id)).Distinct(StringComparer.Ordinal).ToList();
+            if (stale is not { Count: > 0 })
+            {
+                kept.Add(entry);
+                continue;
+            }
+
+            var copy = JsonSerializer.Deserialize<ProposalEntry>(JsonSerializer.Serialize(entry, ProposalJson), ProposalJson)!;
+            copy.Resolves = entry.Resolves!.Where(id => !stale.Contains(id.Trim())).ToList();
+            kept.Add(copy);
+            dropped.Add((entry.Ref ?? string.Empty, stale));
+        }
+
+        return (kept, dropped);
     }
 
     /// <summary>Puts what belongs to the entries of <paramref name="before"/> on the same entries (by ref and kind) of
@@ -171,8 +220,9 @@ public sealed partial class WorldChat
         foreach (var draft in after.Drafts)
         {
             if (before.Find(draft.Ref) is not { } old || old.Kind != draft.Kind) continue;
-            // The issues an edit says it fixes belong to what it edits: a revision of it keeps them, and one that now edits something else does not.
-            if (old.Resolves.Count > 0 && string.Equals(old.Target, draft.Target, StringComparison.OrdinalIgnoreCase))
+            // The issues an edit says it fixes belong to what it edits: a revision of it keeps them (unless it lists its own "resolves", even an empty
+            // list, which replaces them: the way to withdraw a claim), and one that now edits something else does not.
+            if (old.Resolves.Count > 0 && !draft.ResolvesGiven && string.Equals(old.Target, draft.Target, StringComparison.OrdinalIgnoreCase))
             {
                 draft.Resolves = draft.Resolves.Concat(old.Resolves).Distinct(StringComparer.Ordinal).ToList();
             }
