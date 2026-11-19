@@ -9,7 +9,30 @@ internal static class Make
 {
     /// <summary><c>check:kind:entityId:field[:detail]</c>. Readable on purpose: the model cites ids, and a person debugs with them.</summary>
     public static string Id(string check, string kind, string entityId, string field, string? detail = null) =>
-        detail == null ? $"{check}:{kind}:{entityId}:{field}" : $"{check}:{kind}:{entityId}:{field}:{detail}";
+        detail == null ? $"{check}:{kind}:{Part(entityId)}:{Part(field)}" : $"{check}:{kind}:{Part(entityId)}:{Part(field)}:{Part(detail)}";
+
+    /// <summary>The longest part of an id that is kept whole.</summary>
+    public const int MaxPart = 80;
+
+    /// <summary>
+    /// One part of an id as it is written: letters, digits and <c>- _ . : / @ +</c> only, anything else (a space, a line break, a quote, a bracket, a
+    /// backtick, the <c>~</c> that numbers duplicates) as <c>-</c>, and at most <see cref="MaxPart"/> long (cut, with a short hash of the whole so two long
+    /// parts stay apart). An id is shown to the model and kept in lists, and some details come from text a person typed (a mention's id, a property value, an
+    /// item id on a sheet), so no id can carry a sentence. Ids made of document ids and fixed words are unchanged.
+    /// </summary>
+    public static string Part(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return string.Empty;
+        var clean = new StringBuilder(Math.Min(text.Length, MaxPart + 9));
+        foreach (var c in text)
+        {
+            clean.Append(char.IsLetterOrDigit(c) || c is '-' or '_' or '.' or ':' or '/' or '@' or '+' ? c : '-');
+        }
+
+        if (clean.Length <= MaxPart) return clean.ToString();
+        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(text)))[..6].ToLowerInvariant();
+        return clean.ToString(0, MaxPart).TrimEnd('-') + "-" + hash;
+    }
 
     public static Issue Issue(string check, IssueSeverity severity, string kind, string entityId, string field, string? detail, string code,
         IReadOnlyList<string> args, string message, string fixHint, FixVia fix) =>
