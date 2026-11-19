@@ -248,7 +248,8 @@ in JS or C# is callable from an expression exactly like a built-in.
 6. **Dependencies are known.** A function declares what it reads (`reads: [might, grit]`), or the host records the
    reads through the view proxy on first evaluation. Results are cached by the inputs' values, never recomputed per
    render.
-7. **Install rights.** YAML and scripts may be uploaded by a GM or admin; a server setting can turn scripts off. DLLs
+7. **Install rights.** YAML and scripts may be uploaded by a GM or admin; the admin can turn scripts off (a system that names
+   them then still loads, without them, and says so; the Game Master does those rules by hand). DLLs
    only by copying on the server machine. The Library labels a system "contains compiled code".
 8. **Versioned.** A campaign records the system version and a hash of the YAML, each script and each DLL, and says so
    when one changes.
@@ -732,7 +733,19 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      - A table keeps the definition it started with until it ends: `CampaignRuntime.System` is taken at start.
      - A system folder's DLLs are read from their bytes (never locked) into a load context keyed by their hashes, so a
        replaced DLL gets a new context.
-     - `Codex:Systems:Scripts: false` fails a system that names a script, saying why (rule 7).
+     - Scripts off (rule 7): the admin's setting (`ServerSettingsDocument.SystemScripts`, else `Codex:Systems:Scripts`, on by
+       default) sets `PluginLoader.ScriptsAllowed`. Off, a system that names scripts still loads, without them
+       (`SystemScripts.LeaveOut`): a scripted event has no handler, a scripted function gives 0, nothing is read or run, the
+       fingerprint is unchanged, and one load warning names what was left out (`SystemDefinition.ScriptsLeftOut`,
+       `SystemSummary.ScriptsLeftOut`). The archive check says the same as a warning, so an upload still installs.
+       Saving the setting reloads the systems.
+     - A handler reads `sheet.conditionValues` (each valued condition's number, 0 when it does not hold) and `sheet.resources`
+       (each resource and its maximum), and writes a valued condition with `{ condition: { add, value | by } }` or
+       `{ condition: { remove } }`, within 0 and its maximum. At the table the pools are laid over both, and a changed valued
+       condition is written to the pool and logged as `Condition.Level` or `Condition.None`.
+     - The first shipped script is four-degrees' `rules.js#onTurnStart`, the recovery check of a dying creature. Gaining dying
+       when knocked out, raising it on damage while dying, massive damage and heroic recovery are not done yet: the GM sets
+       Dying on the console, and they wait for an after-damage event.
 
      **Versions** (rule 8). `SystemFingerprint` is the version and SHA-256 of system.yaml, its translations, its scripts and
      every DLL beside it, with line endings normalized. `ChangesSince` lists the version and each file added, removed or changed.

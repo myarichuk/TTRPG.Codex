@@ -339,6 +339,10 @@ values:
   Character: Персонаж
   Trinkets: Безделушки
   Gear: Снаряжение
+  Hero Points: Очки героизма
+  Recovery check: Проверка восстановления
+  Dead: Мёртв
+  turnStart: Начало хода
 
 sheetRules:
   lists:

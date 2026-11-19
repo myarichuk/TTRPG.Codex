@@ -339,6 +339,10 @@ values:
   Character: דמות
   Trinkets: קמעות
   Gear: ציוד
+  Hero Points: נקודות גבורה
+  Recovery check: בדיקת התאוששות
+  Dead: מת
+  turnStart: תחילת התור
 
 sheetRules:
   boostSources:

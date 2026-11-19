@@ -145,7 +145,8 @@ Events and intents, as step 5 built them:
   deep. `set` never overflows. `mark` and `clear` move a box track by one (or `by`); on a slot track they put `text` into a
   free slot or take it out. Slots in levels fill `level` (the first, unset); a full level puts it a level up with
   `whenFull: pushUp`, and past the last brings `beyond`'s condition onto the sheet. `condition { add | remove }` changes the
-  sheet's own conditions. Thresholds and bands are not applied: they follow from the new values. What the sheet cannot do
+  sheet's own conditions; for a valued condition (one with `value` in its `conditionEffects`), `add` with `value` sets its number,
+  `add` with `by` raises or lowers it, and `remove` sets it to 0, always within 0 and its `max`. Thresholds and bands are not applied: they follow from the new values. What the sheet cannot do
   (another actor's intents, `roll`, `ask`, `log`, a full level that does not push up) is left for the table.
 - A track the sheet has no value for starts at `start` (`max`, `min`, a number or formula); with none declared, at nothing
   (0, within its bounds). Recompute writes each numeric track's maximum (`{key}_Max`) and its declared start onto the
@@ -225,7 +226,8 @@ Scripts, as step 8 built them (`Codex.Core.Rules.SystemScripts`, Jint):
 - A handler is `export(ev, sheet, ctx)`. `ev` is the event's fields. `sheet` is plain data: `kind`, `attributes`, `values`
   (keyed-list entries as `skills.handgun`), `tracks` (each one's current number; a slot track's text), `lists` (a keyed list
   as a map by key, each entry its fields and derived values; a list of picks as an array of entries with `id`) and
-  `conditions` (thresholds' included). `ctx.call(name, ...args)` calls a named function; `ctx.d(sides)` rolls a die through
+  `conditions` (thresholds' included), `conditionValues` (each valued condition's number by name, 0 when it does not hold) and
+  `resources` (each of the system's resources and its maximum, by key; at the table, the table's numbers). `ctx.call(name, ...args)` calls a named function; `ctx.d(sides)` rolls a die through
   the host, and the table logs the faces. It returns a list of intents in system.yaml's shape, with plain values, not
   formulas.
 - More intents, for scripts and lines alike: `set { list, key, field, to }` and `adjust { list, key, field, by }` change a
