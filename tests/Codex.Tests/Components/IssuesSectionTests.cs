@@ -176,6 +176,56 @@ public class IssuesSectionTests : ComponentTestBase
         Assert.Empty(cut.FindAll(Id("issues-dismissed")));
     }
 
+    private const string Lonely = "orphan-page:page:wikipages/3-A:links";
+
+    [Fact]
+    public async Task AMinorFinding_CanBeDismissed_AndRestored_WithoutEverEnteringTheDefaultList()
+    {
+        var dm = new CampaignAccess("c1", "dm", CampaignRole.DM);
+        Assert.DoesNotContain((await Service.CheckAsync(campaign, dm)).Open, i => i.Id == Lonely);
+
+        Assert.True(await Service.DismissAsync(campaign, dm, Lonely, "fine"));
+
+        Assert.Equal(Lonely, Assert.Single(dismissals.Held).IssueId);
+        // Dismissing it does not make noise part of the default report, the count or what a filter without noise lists.
+        var plain = await Service.CheckAsync(campaign, dm);
+        Assert.DoesNotContain(plain.Open.Concat(plain.Dismissed), i => i.Check == CheckNames.OrphanPage);
+        Assert.DoesNotContain(await Service.ListAsync(campaign, dm, new IssueFilter(null, null)), i => i.Id == Lonely);
+        var noisy = await Service.CheckAsync(campaign, dm, noise: true);
+        Assert.Contains(noisy.Dismissed, i => i.Id == Lonely);
+        Assert.DoesNotContain(noisy.Open, i => i.Id == Lonely);
+
+        Assert.True(await Service.RestoreAsync(dm, Lonely));
+        Assert.Contains((await Service.CheckAsync(campaign, dm, noise: true)).Open, i => i.Id == Lonely);
+    }
+
+    [Fact]
+    public async Task ABogusId_IsStillRefused_AndSoIsAPlayer()
+    {
+        var dm = new CampaignAccess("c1", "dm", CampaignRole.DM);
+        Assert.False(await Service.DismissAsync(campaign, dm, "orphan-page:page:wikipages/99-Z:links", null));
+        Assert.False(await Service.DismissAsync(campaign, dm, "nonsense", null));
+        Assert.Empty(dismissals.Held);
+        await Assert.ThrowsAsync<LocalizedException>(() => Service.DismissAsync(campaign, new CampaignAccess("c1", "p1", CampaignRole.Player), Lonely, null));
+    }
+
+    [Fact]
+    public async Task ThePanel_DismissesAMinorFinding_ItShows()
+    {
+        var cut = Draw();
+        cut.WaitForState(() => cut.FindAll(Id("issue")).Count == 3);
+        await cut.Find(Id("issues-noise")).ChangeAsync(new Microsoft.AspNetCore.Components.ChangeEventArgs { Value = true });
+        cut.WaitForState(() => cut.FindAll(Id("issue")).Count > 3);
+
+        var row = cut.FindAll(Id("issue")).First(i => i.GetAttribute("data-issue-id") == Lonely);
+        row.QuerySelector("[data-testid=issue-dismiss]")!.Click();
+        cut.Find(Id("issue-dismiss-confirm")).Click();
+
+        cut.WaitForState(() => cut.FindAll(Id("issue")).All(i => i.GetAttribute("data-issue-id") != Lonely));
+        Assert.DoesNotContain("could not be dismissed", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(Lonely, Assert.Single(dismissals.Held).IssueId);
+    }
+
     [Fact]
     public void ADismissalWhoseProblemIsGone_IsListedByItsId_AndCanBeRestored()
     {

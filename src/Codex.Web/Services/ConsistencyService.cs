@@ -35,12 +35,14 @@ public sealed class ConsistencyService(ISystemCatalog catalog, CampaignLibrary l
     public async Task<IReadOnlyList<Issue>> ListAsync(CampaignDocument campaign, CampaignAccess access, IssueFilter filter) =>
         filter.Apply((await CheckAsync(campaign, access, filter.WantsNoise)).Open);
 
-    /// <summary>Sets an issue aside. Only an issue that is open right now can be: an id made up, or one already fixed, is refused.
-    /// Only the DM does this; no model call ever reaches it.</summary>
+    /// <summary>Sets an issue aside. Only an issue that is open right now can be: an id made up, or one already fixed, is refused. "Open" here
+    /// includes the noisy checks' issues (the panel's "show minor findings" lists them, and they can be dismissed from it); that never puts them into
+    /// the default list, the count note or a <c>resolves</c> claim, which read <see cref="CheckAsync"/> without noise. Only the DM does this; no model
+    /// call ever reaches it.</summary>
     public async Task<bool> DismissAsync(CampaignDocument campaign, CampaignAccess access, string issueId, string? note)
     {
         DmOnly(access);
-        var report = await CheckAsync(campaign, access);
+        var report = await CheckAsync(campaign, access, noise: true);
         return report.Open.Any(i => i.Id == issueId) && await dismissals.DismissAsync(access, issueId, note);
     }
 

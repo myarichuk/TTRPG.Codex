@@ -249,7 +249,9 @@ reported, the Bestiary) and the homebrew entries (`HomebrewView`); `ConsistencyS
 **Noisy checks.** `orphan-page` (nothing links to a page), `backlink-mismatch` (a page and a character or place point at each other on one side only),
 `person-page-no-actor` and `retired-mention` are true but rarely worth a DM's time, so they are in `ConsistencyChecker.Noisy`, never in `Default`.
 They run only for `list_issues` scope `noise` (or one of their names) or the Issues panel's "show minor findings" switch
-(`IssueFilter.WantsNoise`, `ConsistencyChecker.For`), so they never reach the default list, the issue-count note or a `resolves` claim.
+(`IssueFilter.WantsNoise`, `ConsistencyChecker.For`), so they never reach the default list, the issue-count note or a `resolves` claim. They can still be dismissed: `ConsistencyService.DismissAsync` tests "is this id open" against the default and the noisy checks together (the panel lists them
+with the switch on), which changes nothing about what the default list, the note or `resolves` see; a made-up id is still refused. (A dismissed minor finding shows as
+"the problem is gone" in the dismissed list while the switch is off, since its check does not run then.)
 
 **Cost and the time budget.** The plain-text mention scan walks a trie of the pages' names word by word (`UnlinkedMentionCheck`), so a position in a text costs
 as many steps as the name it could be, not the length of the longest title (500 pages of 1000 words with a 40-word title: 10.7 s before, 0.24 s after; 1000 pages of
