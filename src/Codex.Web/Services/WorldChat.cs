@@ -204,7 +204,7 @@ public sealed partial class WorldChat
         {
             // The open issues, in a line of counts, once per message and after the message itself: stored with the history, so every
             // later request carries it byte for byte (the cached prefix stays the same). Never in the system prompt, never the list.
-            if (await builder.IssueSummaryAsync(campaign, access) is { } summary) history.Add(new ChatMessage(ChatRole.User, summary));
+            if (await builder.IssueSummaryAsync(campaign, access) is { } summary) history.Add(new AppNoteMessage(summary));
 
             // Each round of the tool loop sends the tools, the system prompt and the whole history again: worth a prompt cache.
             var (reply, cutShort) = await RunTurnAsync(client, system,
@@ -398,12 +398,12 @@ public sealed partial class WorldChat
     /// has long since used them, and it can look them up again; the stored history keeps them whole for the DM.</summary>
     public static List<ChatMessage> ForModel(ChatMessage system, IReadOnlyList<ChatMessage> history)
     {
-        // Where the DM's last few messages begin; a chat with fewer than that has nothing old yet. It moves in steps of CutStep (see
+        // Where the DM's last few messages begin (the lines the app added itself, AppNoteMessage, are not the DM's); a chat with fewer than that has nothing old yet. It moves in steps of CutStep (see
         // there), and depends on nothing but the history, so a chat opened again is cut where it was.
         var asked = new List<int>();
         for (var i = 0; i < history.Count; i++)
         {
-            if (history[i].Role == ChatRole.User && !history[i].Contents.OfType<FunctionResultContent>().Any()) asked.Add(i);
+            if (history[i].Role == ChatRole.User && history[i] is not AppNoteMessage && !history[i].Contents.OfType<FunctionResultContent>().Any()) asked.Add(i);
         }
 
         var old = asked.Count > FreshMessages ? (asked.Count - FreshMessages) / CutStep * CutStep : 0;

@@ -61,6 +61,11 @@ public class WorldChatMessage
     public string Role { get; set; } = string.Empty;
 
     public string? Text { get; set; }
+
+    /// <summary>True for a line the app added on its own (the per-message count of open issues): not one of the game master's messages, so it
+    /// is not counted as one when old tool results are cut. Null (not written) for every other message, and in every chat stored before.</summary>
+    public bool? AppNote { get; set; }
+
     public List<WorldChatCall>? Calls { get; set; }
     public List<WorldChatResult>? Results { get; set; }
 }

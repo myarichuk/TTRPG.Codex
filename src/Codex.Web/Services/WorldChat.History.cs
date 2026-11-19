@@ -5,6 +5,16 @@ using Microsoft.Extensions.AI;
 namespace Codex.Web.Services;
 
 // The world-building chat's history as the database keeps it, and back.
+/// <summary>A user-role line the app added to the history on its own, such as the count of open issues: not one of the game master's messages, so
+/// <see cref="WorldChat.ForModel"/> does not count it when it finds the DM's last few messages (the note must not halve how long old tool results are kept).
+/// It is a message like any other to the model, stored with a flag (<see cref="WorldChatMessage.AppNote"/>) so a chat opened again is cut where it was.</summary>
+public sealed class AppNoteMessage(ChatRole role, IList<AIContent> contents) : ChatMessage(role, contents)
+{
+    public AppNoteMessage(string text) : this(ChatRole.User, new List<AIContent> { new TextContent(text) })
+    {
+    }
+}
+
 public sealed partial class WorldChat
 {
     /// <summary>A message as the database keeps it: its words, its tool calls and its tool results. Reasoning is not kept (the
@@ -23,6 +33,7 @@ public sealed partial class WorldChat
         {
             Role = message.Role.Value,
             Text = text.Length == 0 ? null : text,
+            AppNote = message is AppNoteMessage ? true : null,
             Calls = calls.Count == 0 ? null : calls,
             Results = results.Count == 0 ? null : results
         };
@@ -53,6 +64,6 @@ public sealed partial class WorldChat
             contents.Add(new FunctionResultContent(result.CallId, result.Result));
         }
 
-        return new ChatMessage(new ChatRole(stored.Role), contents);
+        return stored.AppNote == true ? new AppNoteMessage(new ChatRole(stored.Role), contents) : new ChatMessage(new ChatRole(stored.Role), contents);
     }
 }

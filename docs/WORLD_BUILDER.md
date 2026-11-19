@@ -362,7 +362,7 @@ because an issue id is built from them.
 - **The issue summary.** At the start of each message of a game master with open issues, the chat adds one line to the history after the message, as a
   note of its own: "(A note from the app, not from the game master: N open issues (E errors, W warnings, I info); call list_issues for details.)". Counts
   only, in the checker's own words, once per message (never on a later round of the tool loop), never in the system prompt, and absent when nothing is open or
-  the check fails. It is stored with the history, so every later request repeats it byte for byte and the prefix before it stays cached. It costs one
+  the check fails. It is stored with the history, so every later request repeats it byte for byte and the prefix before it stays cached. It is stored flagged as the app's own (`WorldChatMessage.AppNote`, `AppNoteMessage`), and `WorldChat.ForModel` does not count it as one of the game master's last few messages, so it does not shorten how long old tool results are kept whole; the flag is stored so a chat opened again is cut where it was (chats stored before have no notes, so their cut is unchanged). It costs one
   snapshot per message.
 - **The prompt cache.** `PromptCacheRegressionTests` captures the requests below `PromptCachingChatClient` for two messages of two agent steps each and
   asserts that tools and system prompt are identical, in the same tool order, with no date, time, GUID or request id, that the breakpoints are on the last
