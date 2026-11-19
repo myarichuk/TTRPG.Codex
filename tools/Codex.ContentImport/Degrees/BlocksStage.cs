@@ -73,6 +73,12 @@ public sealed class BlocksOptions
     /// </summary>
     public IReadOnlyDictionary<int, double> PinnedGutters { get; init; } = new Dictionary<int, double>();
 
+    /// <summary>Pages that are one column with strips of two columns (see <see cref="TakeRow.Bands"/>): by page, each strip's top, bottom and gutter x.</summary>
+    public IReadOnlyDictionary<int, IReadOnlyList<IReadOnlyList<double>>> Bands { get; init; } = new Dictionary<int, IReadOnlyList<IReadOnlyList<double>>>();
+
+    /// <summary>Rectangles of a page that a picture's own text fills (see <see cref="TakeRow.ArtRegions"/>): by page, each one's left, top, right and bottom.</summary>
+    public IReadOnlyDictionary<int, IReadOnlyList<IReadOnlyList<double>>> ArtRegions { get; init; } = new Dictionary<int, IReadOnlyList<IReadOnlyList<double>>>();
+
     /// <summary>Pages where a sidebar fills a whole column (<see cref="TakeRow.SidebarFillsColumn"/>): the text that opens the next column is the page's own, not the sidebar's continuation.</summary>
     public IReadOnlySet<int> SidebarFillsColumn { get; init; } = new HashSet<int>();
 
@@ -90,6 +96,9 @@ public sealed record GearPage(IReadOnlyList<IReadOnlyList<string>> Sets, bool Tw
 /// </summary>
 public static class BlocksStage
 {
+    /// <summary>The role of a block that lies wholly inside a rectangle of <see cref="BlocksOptions.ArtRegions"/>: the text of a picture, which no parser claims as text and the denylist hashes with the text left out.</summary>
+    public const string ArtRole = "art";
+
     private const double GutterMin = 8;
     private const double LineTolerance = 2.5;
     private const double BlockGap = 6;
@@ -281,6 +290,14 @@ public static class BlocksStage
                 throw new DegreesException($"A gutter is pinned at x {pin} on page {page.Number}, which is {page.Width} points wide.");
             }
 
+            if (options.Bands.TryGetValue(page.Number, out var bands))
+            {
+                // One column with strips of two: each strip is cut at its own gutter, and the blocks follow from the top of the page to its foot (a strip's left column before its right).
+                multi++;
+                blocks.AddRange(BandBlocks(page.Number, body, bands, rejected));
+                continue;
+            }
+
             var gutters = options.PinnedGutters.TryGetValue(page.Number, out var pinned) ? new List<double> { pinned } : FindGutters(body, page.Width, options.MaxColumns(page.Number));
             if (gutters.Count == 0)
             {
@@ -371,9 +388,64 @@ public static class BlocksStage
             }
         }
 
+        if (options.ArtRegions.Count > 0)
+        {
+            for (var i = 0; i < blocks.Count; i++)
+            {
+                if (options.ArtRegions.TryGetValue(blocks[i].Page, out var regions) && regions.Any(r => InRegion(blocks[i], r)))
+                {
+                    blocks[i] = blocks[i] with { Role = ArtRole };
+                }
+            }
+        }
+
         var byRole = blocks.GroupBy(b => b.Role).ToDictionary(g => g.Key, g => g.Count());
         return new BlocksResult(blocks, one, multi, furniture, byRole, suspect, dropped, oneNumbers, three, sidebarBlocks, openerWords, blocks.Count(b => b.Role == "table"), problems, rejected[0], legacy, takenSidebars);
     }
+
+    /// <summary>True when a block lies wholly inside a rectangle given as <c>[left, top, right, bottom]</c>.</summary>
+    private static bool InRegion(Block block, IReadOnlyList<double> region) =>
+        region.Count == 4 && block.Left >= region[0] && block.Top <= region[1] && block.Right <= region[2] && block.Bottom >= region[3];
+
+    /// <summary>
+    /// The blocks of a page that is one column with strips of two (see <see cref="TakeRow.Bands"/>): the words are cut by the height of their middle into the strips and the stretches between them, and each
+    /// part gives its own blocks, from the top of the page down. A stretch between strips is one column; a strip is two, cut at the strip's gutter.
+    /// </summary>
+    private static List<Block> BandBlocks(int page, List<LayoutWord> words, IReadOnlyList<IReadOnlyList<double>> bands, int[] rejected)
+    {
+        var strips = bands.OrderByDescending(b => b[0]).ToList();
+        var parts = new List<(List<LayoutWord> Words, double? Gutter)>();
+        var rest = words.ToList();
+        foreach (var strip in strips)
+        {
+            var inside = rest.Where(w => Middle(w) <= strip[0] && Middle(w) >= strip[1]).ToList();
+            var above = rest.Where(w => Middle(w) > strip[0]).ToList();
+            parts.Add((above, null));
+            parts.Add((inside, strip[2]));
+            rest = rest.Where(w => Middle(w) < strip[1]).ToList();
+        }
+
+        parts.Add((rest, null));
+        var result = new List<Block>();
+        foreach (var (part, gutter) in parts.Where(p => p.Words.Count > 0))
+        {
+            if (gutter is not { } x)
+            {
+                result.AddRange(ColumnBlocks(page, 0, part, rejected));
+                continue;
+            }
+
+            var which = AssignColumns(part, new List<double> { x });
+            for (var c = 0; c < 2; c++)
+            {
+                result.AddRange(ColumnBlocks(page, c, part.Where((_, i) => which[i] == c).ToList(), rejected));
+            }
+        }
+
+        return result;
+    }
+
+    private static double Middle(LayoutWord w) => (w.Top + w.Bottom) / 2;
 
     /// <summary>
     /// The column of each word: how many gutters lie left of its centre. A heading in the section or display font that runs across a gutter (a title

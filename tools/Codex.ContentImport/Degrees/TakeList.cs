@@ -33,6 +33,32 @@ public sealed class TakeRow
     /// </summary>
     public Dictionary<int, double> GutterAt { get; set; } = new();
 
+    /// <summary>
+    /// For a <c>rules</c> row: a page of the row (its number) that is set in one column with strips of two columns between its full-width paragraphs (a list of attributes set in pairs), as the strips' y ranges and the
+    /// x of the gutter in each: <c>[top, bottom, x]</c>, in points from the foot of the page, the top the larger. The words of a strip are cut into two columns at that x (the left column read first), and the words
+    /// above, between and below the strips are read as one column, so the blocks come out in reading order. A page of a row that gives none is cut as before. Not for a page a sidebar bookmark covers.
+    /// </summary>
+    public Dictionary<int, List<List<double>>> Bands { get; set; } = new();
+
+    /// <summary>
+    /// For a <c>rules</c> row: pages that hold a picture of a form with its own text (a character sheet shown whole), as the rectangles it covers, <c>[left, top, right, bottom]</c> in points from the foot of the
+    /// page. A block that lies wholly inside one is the picture's text, no entry's: it is skipped and, like any text left out, hashed for the denylist (see <see cref="BlocksStage.ArtRole"/>).
+    /// </summary>
+    public Dictionary<int, List<List<double>>> ArtRegions { get; set; } = new();
+
+    /// <summary>
+    /// For a <c>rules</c> row that takes sections with children, one by one (a chapter of creation steps): the sections below the taken ones that the row leaves out (an overview of what other chapters
+    /// import, a sample). Left out and hashed as ever. When the row gives the list (even an empty one), every bookmark below a taken section must be an entry's own, a heading inside a taken path or one of
+    /// these, and the run counts them from the document (see <see cref="ImportPipeline.CheckBookmarkCoverage"/>). Without it nothing is counted this way.
+    /// </summary>
+    public List<List<string>>? LeftOutSections { get; set; }
+
+    /// <summary>
+    /// For a <c>rules</c> row: pages whose text is set in the font of the sidebars (the body font) though it is the page's own, justified with first-line indents as the rules text is: the body-font blocks there are read
+    /// as rules text (paragraphs by their first-line indents), not as ragged text with hanging indents. A page of the row that is not listed reads as before.
+    /// </summary>
+    public List<int> BodyAsRules { get; set; } = new();
+
     /// <summary>Bookmark paths, top level first. Each path is a section or an entry.</summary>
     public List<List<string>> Paths { get; set; } = new();
 

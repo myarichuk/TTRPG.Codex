@@ -71,6 +71,8 @@ public static partial class ImportPipeline
     {
         var columns = new Dictionary<int, int>();
         var pinned = new Dictionary<int, double>();
+        var bands = new Dictionary<int, IReadOnlyList<IReadOnlyList<double>>>();
+        var art = new Dictionary<int, IReadOnlyList<IReadOnlyList<double>>>();
         foreach (var row in rows)
         {
             var pages = TakeStage.PagesOf(spine, row);
@@ -87,6 +89,29 @@ public static partial class ImportPipeline
                 }
 
                 pinned[page] = x;
+            }
+
+            foreach (var (page, strips) in row.Bands)
+            {
+                var ok = row.Parser == "rules" && pages.Contains(page) && !pinned.ContainsKey(page) && !bands.ContainsKey(page) && strips.Count > 0
+                    && strips.All(s => s.Count == 3 && s[0] > s[1] && s[2] > 0) && !spine.Any(n => n.Sidebar && page >= n.PageStart && page <= n.PageEnd);
+                if (!ok)
+                {
+                    throw new DegreesException($"Take-list row for chapter {row.Chapter}: bands name a page the row does not cover (a rules row), a page a sidebar bookmark covers, a page that is pinned or banded already, or a strip that is not [top, bottom, x] with the top above the bottom.");
+                }
+
+                bands[page] = strips.Select(s => (IReadOnlyList<double>)s).ToList();
+            }
+
+            foreach (var (page, regions) in row.ArtRegions)
+            {
+                var ok = row.Parser == "rules" && pages.Contains(page) && !art.ContainsKey(page) && regions.Count > 0 && regions.All(r => r.Count == 4 && r[0] < r[2] && r[1] > r[3]);
+                if (!ok)
+                {
+                    throw new DegreesException($"Take-list row for chapter {row.Chapter}: artRegions name a page the row does not cover (a rules row), a page another row names already, or a rectangle that is not [left, top, right, bottom] with the left before the right and the top above the bottom.");
+                }
+
+                art[page] = regions.Select(r => (IReadOnlyList<double>)r).ToList();
             }
         }
 
@@ -143,6 +168,8 @@ public static partial class ImportPipeline
             TakenSidebarKeys = takenSidebars,
             MaxColumns = page => columns.GetValueOrDefault(page, 2),
             PinnedGutters = pinned,
+            Bands = bands,
+            ArtRegions = art,
             SidebarFillsColumn = rows.SelectMany(r => r.SidebarFillsColumn).ToHashSet(),
             SidebarPages = sidebars,
             SidebarStarts = starts,
@@ -198,6 +225,7 @@ public static partial class ImportPipeline
         CheckLevelCounts(blocks, ranges);
         CheckRuleSectionCounts(spine, blocks, ranges);
         CheckFoldCounts(spine, blocks, ranges);
+        CheckBookmarkCoverage(spine, ranges);
         CheckTableLabels(spine, blocks, rows);
         var parsed = EntriesStage.Run(blocks, ranges, book, shippedIds, spine);
         CheckItemCounts(spine, blocks, ranges, parsed);
