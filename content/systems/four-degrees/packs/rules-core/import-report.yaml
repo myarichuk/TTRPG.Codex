@@ -2013,6 +2013,13 @@
   droppedSidebarBlocks: 6
   droppedOpenerBlocks: 3
   pageReferencesLeft: 0
+  bookmarkCoverage:
+    bookmarks: 65
+    own: 47
+    folded: 6
+    leftOut: 12
+    sidebarsTaken: 5
+    sidebarsLeftOut: 2
   redactionRows: [498, 503, 506, 507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 560, 561, 562, 563, 564, 565, 567, 568, 569, 570, 571, 572]
   ids:
     - "age"
@@ -2050,8 +2057,8 @@
 - chapter: "introduction"
   parser: "rules"
   target: "rule"
-  entries: 19
-  droppedSidebarBlocks: 4
+  entries: 20
+  droppedSidebarBlocks: 2
   droppedOpenerBlocks: 0
   pageReferencesLeft: 0
   redactionRows: [499, 500, 501, 502, 504, 505, 520, 521, 552, 553, 554, 555, 556, 557, 558, 559, 566]
@@ -2061,6 +2068,7 @@
     - "attribute-boosts"
     - "attribute-flaws"
     - "attribute-modifier-overview"
+    - "character-sheet-notes"
     - "charisma"
     - "constitution"
     - "dexterity"

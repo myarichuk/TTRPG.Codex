@@ -85,6 +85,15 @@ public class DegreesIntroductionTests
         Assert.Contains("artRegions", Assert.Throws<DegreesException>(() => ImportPipeline.OptionsFor(OneSpine, TakeList.Parse(Row("artRegions: { 1: [[250, 500, 50, 400]] }")).Rows)).Message);
         Assert.Throws<DegreesException>(() => ImportPipeline.OptionsFor(OneSpine, TakeList.Parse(Row("bands: { 1: [[700, 600, 300]] }", "entries")).Rows));
 
+        // Strips that overlap fail (a word in the overlap would go to the upper strip); strips that touch or are apart do not.
+        Assert.Contains("overlap", Assert.Throws<DegreesException>(() => ImportPipeline.OptionsFor(OneSpine, TakeList.Parse(Row("bands: { 1: [[400, 300, 300], [500, 350, 300]] }")).Rows)).Message);
+        Assert.Equal(2, ImportPipeline.OptionsFor(OneSpine, TakeList.Parse(Row("bands: { 1: [[700, 500, 300], [500, 300, 300]] }")).Rows).Bands[1].Count);
+
+        // bodyAsRules is held to the same rule: a page the row covers, in a rules row.
+        Assert.Contains("bodyAsRules", Assert.Throws<DegreesException>(() => ImportPipeline.OptionsFor(OneSpine, TakeList.Parse(Row("bodyAsRules: [2]")).Rows)).Message);
+        Assert.Contains("bodyAsRules", Assert.Throws<DegreesException>(() => ImportPipeline.OptionsFor(OneSpine, TakeList.Parse(Row("bodyAsRules: [1]", "entries")).Rows)).Message);
+        ImportPipeline.OptionsFor(OneSpine, TakeList.Parse(Row("bodyAsRules: [1]")).Rows);
+
         // A page a sidebar bookmark covers keeps its sidebar split by titles, which strips would break up.
         var withSidebar = OneSpine.Append(new SpineNode(2, "Sidebar: Box", new[] { "Book", "Part", "Sidebar: Box" }, 1, 1, true)).ToList();
         Assert.Contains("bands", Assert.Throws<DegreesException>(() => ImportPipeline.OptionsFor(withSidebar, TakeList.Parse(Row("bands: { 1: [[700, 600, 300]] }")).Rows)).Message);
@@ -229,7 +238,7 @@ public class DegreesIntroductionTests
 
         // The part's own text and alpha are entries, alpha's heading is inside alpha's path, beta and its heading are named as left out; of the three sidebars one is taken.
         var covered = Assert.Single(ImportPipeline.CheckBookmarkCoverage(CoverSpine, Ranges("leftOutSections: [[\"Book\", \"Part\", \"Beta\"]], ")));
-        Assert.Equal(new BookmarkCoverage(5, 2, 1, 2, 1, 2), covered);
+        Assert.Equal(new BookmarkCoverage(5, 2, 1, 2, 1, 2, "a"), covered);
 
         // A row that gives no list is not counted this way; a row whose list leaves a section out fails the run, and so does a name that is no section below the taken ones.
         Assert.Empty(ImportPipeline.CheckBookmarkCoverage(CoverSpine, Ranges(string.Empty)));

@@ -761,9 +761,10 @@ xp
 inventory
 # Chapter 9, second half: the introduction's sections that the take-list leaves out (the key terms, the example of play, the notes on using the book) are left-out text now that nothing is planned, and capitalize these ordinary words at the start of a sentence or of a heading
 # (a skill feat's name, a kind of runner in a feat's name, a verb). Each was read in the pack's sentence; none names a person, place, faith or people.
+# One word of this group is also a surname in the book's credits, so it passes only as the noun of the one sentence that needs it (a compound line: the word, then the word that follows it) and stays denied everywhere else.
+compound chase or
 assurance
 runner
-chase
 hone
 sketch
 # Pairs of game terms (a name and its kind, two ranks, two kinds of action, a statistic and a label) that the same left-out text makes and the pack's text says.

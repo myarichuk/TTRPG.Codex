@@ -2452,3 +2452,5 @@ inventory
 modifiers
 strikes
 boosts
+# The word of the name of the step 1 sidebar that this review took (Character Sheet Notes).
+notes

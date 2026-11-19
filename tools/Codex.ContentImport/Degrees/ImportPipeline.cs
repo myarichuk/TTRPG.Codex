@@ -100,7 +100,22 @@ public static partial class ImportPipeline
                     throw new DegreesException($"Take-list row for chapter {row.Chapter}: bands name a page the row does not cover (a rules row), a page a sidebar bookmark covers, a page that is pinned or banded already, or a strip that is not [top, bottom, x] with the top above the bottom.");
                 }
 
+                // A word in the overlap of two strips would go to the upper one and cut the lower one short: the strips must not overlap.
+                var byTop = strips.OrderByDescending(s => s[0]).ToList();
+                for (var i = 0; i + 1 < byTop.Count; i++)
+                {
+                    if (byTop[i][1] < byTop[i + 1][0])
+                    {
+                        throw new DegreesException($"Take-list row for chapter {row.Chapter}: the strips of bands on page {page} overlap (the bottom of a strip must not be below the top of the next one).");
+                    }
+                }
+
                 bands[page] = strips.Select(s => (IReadOnlyList<double>)s).ToList();
+            }
+
+            if (row.BodyAsRules.Any(page => row.Parser != "rules" || !pages.Contains(page)))
+            {
+                throw new DegreesException($"Take-list row for chapter {row.Chapter}: bodyAsRules names a page the row does not cover, or a row that is not a rules row.");
             }
 
             foreach (var (page, regions) in row.ArtRegions)
@@ -888,6 +903,7 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
     {
         var result = new List<ReportRow>();
         var counted = new HashSet<int>();
+        var coverages = CheckBookmarkCoverage(spine, ranges);
         for (var i = 0; i < rows.Count; i++)
         {
             var row = rows[i];
@@ -932,7 +948,8 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
                     t == 0 ? dropped.Count(b => b.Role == "opener") : 0,
                     t == 0 ? redactions.Rows.Select((r, n) => (r, n)).Where(x => (x.r.Book == null || x.r.Book == book) && ids.Any(x.r.Names)).Select(x => x.n + 1).ToList() : new List<int>(),
                     ofType.Count(e => PageReference().IsMatch(e.Description) || e.Extracted.Any(x => PageReference().IsMatch(x.Text)) || e.Features.Any(f => PageReference().IsMatch(f.Description))),
-                    t == 0 ? readPast : 0));
+                    t == 0 ? readPast : 0,
+                    t == 0 && row.LeftOutSections != null ? coverages.FirstOrDefault(c => c.Chapter == row.Chapter) : null));
             }
         }
 

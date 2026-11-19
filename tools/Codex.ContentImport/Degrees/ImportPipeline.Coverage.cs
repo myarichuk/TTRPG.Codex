@@ -7,7 +7,8 @@ namespace Codex.ContentImport.Degrees;
 /// <param name="LeftOut">Bookmarks of sections the row names as left out, with their children.</param>
 /// <param name="TakenSidebars">Sidebars below the taken sections that the row takes.</param>
 /// <param name="LeftOutSidebars">Sidebars below the taken sections that stay out.</param>
-public sealed record BookmarkCoverage(int Bookmarks, int Entries, int Folded, int LeftOut, int TakenSidebars, int LeftOutSidebars);
+/// <param name="Chapter">The take-list chapter key of the row that names the left-out sections (the report lists the counts on that row).</param>
+public sealed record BookmarkCoverage(int Bookmarks, int Entries, int Folded, int LeftOut, int TakenSidebars, int LeftOutSidebars, string Chapter = "");
 
 public static partial class ImportPipeline
 {
@@ -63,7 +64,7 @@ public static partial class ImportPipeline
 
             var sidebars = scope.Where(n => n.Sidebar).SelectMany(n => SidebarTitles(n.Title).Select(t => (Node: n, Title: t))).ToList();
             var takenSidebars = sidebars.Count(s => sidebarPaths.Any(p => ResolveSidebar(spine, p) is { } hit && ReferenceEquals(hit.Node, s.Node) && BlocksStage.SidebarTitleSet.Key(hit.Title) == BlocksStage.SidebarTitleSet.Key(s.Title)));
-            result.Add(new BookmarkCoverage(bookmarks, entries, folded, leftOut, takenSidebars, sidebars.Count - takenSidebars));
+            result.Add(new BookmarkCoverage(bookmarks, entries, folded, leftOut, takenSidebars, sidebars.Count - takenSidebars, row.Chapter));
         }
 
         return result;

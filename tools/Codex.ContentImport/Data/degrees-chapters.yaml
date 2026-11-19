@@ -1206,8 +1206,8 @@ rows:
       Skills: Skill Modifiers
       Hero Points: Starting Hero Points
       Bulk: Bulk Limit
-  # The first steps of character creation, on the pages of the character sheet's picture. The children of step 1 are headings in three fonts, so their count by one font does not apply (the bookmarks are counted
-  # against the entries by `leftOutSections` above).
+  # The first steps of character creation, on the pages of the character sheet's picture. The children of step 1 are headings in two fonts (three in the entry-header font, the others in the block-header font) and the children of the
+  # attribute modifiers and of the overview are all in the block-header font, so their count by the entry-header font does not apply (the bookmarks are counted against the entries by the other row's leftOutSections).
   - chapter: introduction
     book: pc
     parser: rules
@@ -1216,7 +1216,7 @@ rows:
     approved: true
     tableRows: true
     subheadings: true
-    countsDiffer: The children of step 1 are headings in three fonts (the entry-header font, the block-header font and the section font), so the count by one font does not apply; the bookmarks are counted against the entries by the other row's leftOutSections.
+    countsDiffer: The children of step 1 are headings in two fonts (three in the entry-header font, the others in the block-header font) and the children of the six attribute modifiers and of the overview are headings in the block-header font, so the count by the entry-header font does not apply; the bookmarks are counted against the entries by the other row's leftOutSections.
     own:
       - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept"]
       - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", The Six Attribute Modifiers]
@@ -1252,10 +1252,12 @@ rows:
       23: [[90, 700, 510, 368]]
       24: [[118, 700, 470, 368]]
     sidebars:
+      - ["Chapter 1: Introduction", Character Creation, "Step 1: Create a Concept", "Sidebar: Character Sheet"]
       - ["Chapter 1: Introduction", Character Creation, "Sidebars: Alternate Ancestry Boosts & Optional: Voluntary Flaws", Alternate Ancestry Boosts]
       - ["Chapter 1: Introduction", Character Creation, "Sidebars: Alternate Ancestry Boosts & Optional: Voluntary Flaws", "Optional: Voluntary Flaws"]
-    # The sidebar whose title has a prefix is named without it.
+    # The sidebar whose title has a prefix is named without it; the box of step 1 (what to write on the sheet) is an entry of its own, as the other steps' boxes are paragraphs of theirs.
     entryNames:
+      Character Sheet: Character Sheet Notes
       "Optional: Voluntary Flaws": Voluntary Flaws
 # Nothing is planned any more: the rules parts of the introduction were the last, and they are taken above. Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed.
 planned: []

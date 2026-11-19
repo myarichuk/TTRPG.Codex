@@ -401,7 +401,7 @@
 - id: "basics-of-play"
   name: "Basics of Play"
   source: "pc > Chapter 1: Introduction > Basics of Play"
-  description: "Before creating your first character or adventure, you should understand a number of basic concepts used in the game. New concepts are presented in bold to make them easy to find, but this is only an introduction to the basics of play. The complete game rules are defined in later chapters, and the glossary will help you find specific rules you need."
+  description: "Before creating your first character or adventure, you should understand a number of basic concepts used in the game. New concepts are presented in bold to make them easy to find, but this is only an introduction to the basics of play. The rules that follow set out the complete game."
   properties:
     category: "Introduction"
 - id: "bulk"
@@ -531,6 +531,12 @@
     This section provides a step-by-step guide for creating a character using the rules of the game, preceded by a guide to help you understand attribute modifiers. These modifiers are a critical part of your character, and you will be asked to make choices about them during many of the following steps. The steps of character creation are presented in a suggested order, but you can complete them in whatever order you prefer.
     Many of the steps instruct you to fill out fields on your character sheet. The character sheet is designed to be easy to use when you're actually playing the game, but creating a character happens in a different order, so you'll move back and forth through the character sheet as you go through the character creation process. Additionally, the character sheet includes every field you might need, even though not all characters will have something to put in each field. If a field on your character sheet is not applicable to your character, you can just leave that field blank.
     If you're creating a higher-level character, it's a good idea to begin with the instructions here, then follow the rules for leveling up characters.
+  properties:
+    category: "Introduction"
+- id: "character-sheet-notes"
+  name: "Character Sheet Notes"
+  source: "pc > Chapter 1: Introduction > Character Creation > Step 1: Create a Concept > Sidebar: Character Sheet"
+  description: "Once you've developed your character's concept, jot down a few sentences summarizing your ideas under the Notes section on the third page of your character sheet. Record any of the details you've already decided, such as your character's name, on the appropriate lines on the first page."
   properties:
     category: "Introduction"
 - id: "charisma"
@@ -1316,7 +1322,7 @@
     You will see standards of format throughout the rules that might look a bit unusual at first. These standards are in place to make the rules elements easier to recognize.
     The names of specific statistics, skills, feats, actions, and some other mechanical elements in the game are capitalized. This way, when you see the statement "a Strike targets Armor Class," you know that both Strike and Armor Class are referring to rules.
     If a word or a phrase is italicized, it's describing a spell or a magic item. This way, when you see the statement "the door is sealed by lock," you know that the word denotes the lock spell, rather than a physical item.
-    The game also uses many terms that are typically expressed as abbreviations, like AC for Armor Class, DC for Difficulty Class, and HP for Hit Points. If you're ever confused about a game term or an abbreviation, you can always look it up in the glossary.
+    The game also uses many terms that are typically expressed as abbreviations, like AC for Armor Class, DC for Difficulty Class, and HP for Hit Points. Every game term and abbreviation is explained in the rules.
   properties:
     category: "Introduction"
 - id: "formulas"
