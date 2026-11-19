@@ -531,7 +531,7 @@ public class WorldBuilderTests
             if (created.FailChecksAfter is { } limit && created.Snapshots > limit) throw new InvalidOperationException("the checks broke");
             return Task.FromResult<IReadOnlyList<IssueDismissal>>(Array.Empty<IssueDismissal>());
         });
-        var consistency = new ConsistencyService(catalog, library, wiki, actorRepo, regions, factRepo, dismissals);
+        var consistency = new ConsistencyService(catalog, library, wiki, actorRepo, regions, factRepo, dismissals, homebrew);
         var saving = created = new Saving(new WorldBuilderService(catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns, actorRepo, ai, consistency: consistency), pages, entries, actors, facts);
         regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => existingRegions.Concat(saving.NewRegions).ToList().AsEnumerable());
         campaigns.UpdateAsDmAsync(Arg.Any<CampaignAccess>(), Arg.Any<Action<CampaignDocument>>()).Returns(ci =>
@@ -577,7 +577,8 @@ public class WorldBuilderTests
         Assert.Contains("Kinds of factions: rival criminal gangs", AiPrompts.WorldChat(request));
     }
 
-    internal static readonly CampaignDocument Campaign = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
+    // A new document on every read: saving a proposal adds to the campaign it is given (the Bestiary shortlist), and a shared one carried that into later tests.
+    internal static CampaignDocument Campaign => new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
     internal static readonly CampaignAccess Dm = new("c1", "dm", CampaignRole.DM);
 
     [Fact]

@@ -115,10 +115,28 @@ public sealed class RavenConsistencyDismissalRepository(RavenDbService dbService
     }
 }
 
+/// <summary>What the service knows about the campaign's system and packs that the documents do not say: whether the system is installed, the changes since
+/// the campaign last played under it, what loading reported, and the packs the system has.</summary>
+public sealed record SnapshotContext(bool SystemInstalled, IReadOnlyList<string> Changes, IReadOnlyList<string> LoadProblems, IReadOnlyList<string> KnownPacks)
+{
+    public static SnapshotContext Unknown { get; } = new(true, Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>());
+
+    /// <summary>The differences between two fingerprints, one line each, in the order <see cref="SystemFingerprint.ChangesSince"/> gives them.</summary>
+    public static IReadOnlyList<string> Describe(IEnumerable<SystemChange> changes) => changes.Select(c => c.Kind switch
+    {
+        SystemChangeKind.Version => $"version {c.Before} to {c.After}",
+        SystemChangeKind.Added => $"{c.File} added",
+        SystemChangeKind.Removed => $"{c.File} removed",
+        _ => $"{c.File} changed"
+    }).ToList();
+}
+
 /// <summary>Reads the campaign's documents into the plain values the checks take (<see cref="WorldSnapshot"/>). Pure: no database, so it is
 /// tested without one; the caller loads the documents with the DM's access.</summary>
 public static class ConsistencySnapshots
 {
+    /// <param name="homebrew">The campaign's homebrew entries, or null when the scope asked for does not read them.</param>
+    /// <param name="context">The system and packs as the loader knows them; null reads as an installed system with nothing to report.</param>
     public static WorldSnapshot From(
         IEnumerable<WikiPageDocument> pages,
         IEnumerable<ActorDocument> actors,
@@ -126,15 +144,29 @@ public static class ConsistencySnapshots
         IEnumerable<FactDocument> facts,
         CampaignDocument campaign,
         SystemDefinition? system,
-        IEntryResolver library) =>
-        WorldSnapshot.Create(
-            pages.Select(p => new PageView(p.Id, p.Slug, p.Title, p.Body ?? string.Empty, p.Visibility == WikiVisibility.Party, Blank(p.ActorId), Blank(p.PlaceId))),
-            actors.Where(a => !a.IsVault).Select(a => new ActorView(a.Id, a.Name, RoleOf(a), a.Retired, a.Biography, a.DmNotes, Blank(a.WikiPageId), a.Sheet ?? new Dictionary<string, object>())),
-            regions.SelectMany(r => r.Locations.Select(l => new PlaceView(l.Id, r.Id, l.Name, l.Description, Blank(l.WikiPageId)))),
-            facts.Select(f => new FactView(f.Id, f.Summary, f.Details)),
+        IEntryResolver library,
+        IEnumerable<HomebrewEntryDocument>? homebrew = null,
+        SnapshotContext? context = null)
+    {
+        context ??= SnapshotContext.Unknown;
+        return WorldSnapshot.Create(
+            pages.Select(p => new PageView(p.Id, p.Slug, p.Title, p.Body ?? string.Empty, p.Visibility == WikiVisibility.Party, Blank(p.ActorId), Blank(p.PlaceId),
+                p.Tags.ToList(), p.Kind.ToString().ToLowerInvariant())),
+            actors.Where(a => !a.IsVault).Select(a => new ActorView(a.Id, a.Name, RoleOf(a), a.Retired, a.Biography, a.DmNotes, Blank(a.WikiPageId), a.Sheet ?? new Dictionary<string, object>(),
+                Blank(a.OwnerUserId), Blank(a.BlueprintId),
+                a.Hazard == null ? null : new HazardLinkView(a.Hazard.RegionId, a.Hazard.LocationId, a.Hazard.Entry, a.Hazard.IsHomebrew))),
+            regions.SelectMany(r => r.Locations.Select(l => new PlaceView(l.Id, r.Id, l.Name, l.Description, Blank(l.WikiPageId), Blank(l.ParentId),
+                Blank(l.Feature?.Hazard?.Entry), l.Feature?.Hazard?.IsHomebrew ?? false, Blank(l.Feature?.CreatureActorId)))),
+            facts.Select(f => new FactView(f.Id, f.Summary, f.Details, f.RelatedEntityIds.ToList(), f.KnownBy.Select(k => k.EntityId).ToList())),
             system,
             library,
-            SheetRuleEngine.EffectiveEnforcement(system, campaign.RulesEnforcement));
+            SheetRuleEngine.EffectiveEnforcement(system, campaign.RulesEnforcement),
+            new CampaignView(campaign.Id, campaign.OwnerId, campaign.SystemId, context.SystemInstalled, campaign.Members.Select(m => m.UserId).ToList(),
+                campaign.ActivePacks.Concat(campaign.PacksOn).Concat(campaign.PacksOff).ToList(), context.KnownPacks, context.Changes, context.LoadProblems,
+                campaign.Bestiary.Select(b => new BestiaryView(b.EntryType, b.EntryId, b.IsHomebrew, b.Name)).ToList()),
+            homebrew?.Select(h => new HomebrewView(h.Id, h.Type, h.EntryId, h.Name, h.Tags.ToList(), h.Properties ?? new Dictionary<string, object>())),
+            homebrewLoaded: homebrew != null);
+    }
 
     // A creature taken from the bestiary, and a hazard that takes a turn, have no history to write and no kit to carry.
     public static ActorRole RoleOf(ActorDocument a) => a.Hazard != null ? ActorRole.Monster : a.Kind switch

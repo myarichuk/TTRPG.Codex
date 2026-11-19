@@ -23,7 +23,9 @@ public enum FixVia
     Fact,
     ActorBiography,
     /// <summary>An edit of a character's sheet (<c>existing:sheet:&lt;actorId&gt;</c>): setting or clearing a key the system declares.</summary>
-    Sheet
+    Sheet,
+    /// <summary>An edit of a homebrew entry (<c>existing:homebrew:&lt;type&gt;/&lt;id&gt;</c>): its fields, text or tags.</summary>
+    Homebrew
 }
 
 /// <summary>
@@ -91,10 +93,49 @@ public static class CheckNames
     public const string VisibilityLeak = "visibility-leak";
     public const string SheetRule = "sheet-rule";
 
+    // v2: the structure of the world.
+    public const string PlaceTree = "place-tree";
+    public const string DuplicateSlug = "duplicate-slug";
+    public const string NearDuplicateTitle = "near-duplicate-title";
+    public const string FactReference = "fact-reference";
+    public const string DanglingPlacement = "dangling-placement";
+    public const string OwnerNotMember = "owner-not-member";
+    public const string HomebrewReference = "homebrew-reference";
+    public const string HomebrewDuplicate = "homebrew-duplicate";
+    public const string HazardShape = "hazard-shape";
+    public const string TagCase = "tag-case";
+    public const string CampaignSystem = "system-unknown";
+    public const string SystemDrift = "system-drift";
+    public const string PackDrift = "pack-drift";
+    public const string PackProblem = "pack-problem";
+    public const string LibraryReference = "library-reference";
+
+    // Noise: true but rarely worth the DM's time, so off unless asked for (scope "noise" or the check's name).
+    public const string OrphanPage = "orphan-page";
+    public const string BacklinkMismatch = "backlink-mismatch";
+    public const string PersonPageNoActor = "person-page-no-actor";
+    public const string RetiredMention = "retired-mention";
+
+    /// <summary>The checks added in v2 (the structure of the world, the campaign and the Library), apart from the noisy ones.</summary>
+    public static readonly IReadOnlyList<string> V2 = new[]
+    {
+        PlaceTree, DuplicateSlug, NearDuplicateTitle, FactReference, DanglingPlacement, OwnerNotMember, HomebrewReference, HomebrewDuplicate, HazardShape,
+        TagCase, CampaignSystem, SystemDrift, PackDrift, PackProblem, LibraryReference
+    };
+
+    /// <summary>The checks that are off unless asked for, in the order they run.</summary>
+    public static readonly IReadOnlyList<string> Noise = new[] { OrphanPage, BacklinkMismatch, PersonPageNoActor, RetiredMention };
+
+    /// <summary>The scope word that lists every noise check.</summary>
+    public const string NoiseScope = "noise";
+
     public static readonly IReadOnlyList<string> All = new[]
     {
         BrokenLink, UnlinkedMention, DanglingMention, DanglingReference, EmptyBio, EmptyBody, TodoMarker, EmptyInventory,
-        SecretUnclosed, SecretUnknownAudience, SecretForMissing, VisibilityLeak, SheetRule
+        SecretUnclosed, SecretUnknownAudience, SecretForMissing, VisibilityLeak, SheetRule,
+        PlaceTree, DuplicateSlug, NearDuplicateTitle, FactReference, DanglingPlacement, OwnerNotMember, HomebrewReference, HomebrewDuplicate, HazardShape,
+        TagCase, CampaignSystem, SystemDrift, PackDrift, PackProblem, LibraryReference,
+        OrphanPage, BacklinkMismatch, PersonPageNoActor, RetiredMention
     };
 }
 
@@ -108,12 +149,13 @@ public static class CheckNames
 /// <param name="MinSeverity">The least severe level to include: <see cref="IssueSeverity.Warning"/> gives errors and warnings.</param>
 public sealed record IssueFilter(string? Scope = null, IssueSeverity? MinSeverity = null)
 {
-    private static readonly string[] EntityKinds = { "page", "actor", "place", "fact" };
+    private static readonly string[] EntityKinds = { "page", "actor", "place", "fact", "homebrew", "campaign" };
 
     public static bool IsKnownScope(string? scope)
     {
         if (string.IsNullOrWhiteSpace(scope) || scope.Trim().Equals("all", StringComparison.OrdinalIgnoreCase)) return true;
         scope = scope.Trim();
+        if (scope == CheckNames.NoiseScope) return true;
         if (CheckNames.All.Contains(scope, StringComparer.Ordinal)) return true;
         var colon = scope.IndexOf(':');
         return colon > 0 && colon < scope.Length - 1 && EntityKinds.Contains(scope[..colon], StringComparer.Ordinal);
@@ -124,11 +166,16 @@ public sealed record IssueFilter(string? Scope = null, IssueSeverity? MinSeverit
         if (MinSeverity is { } min && issue.Severity > min) return false;
         if (string.IsNullOrWhiteSpace(Scope) || Scope.Trim().Equals("all", StringComparison.OrdinalIgnoreCase)) return true;
         var scope = Scope.Trim();
+        if (scope == CheckNames.NoiseScope) return CheckNames.Noise.Contains(issue.Check, StringComparer.Ordinal);
         if (CheckNames.All.Contains(scope, StringComparer.Ordinal)) return issue.Check == scope;
         var colon = scope.IndexOf(':');
         if (colon <= 0 || !EntityKinds.Contains(scope[..colon], StringComparer.Ordinal)) return false;
         return issue.EntityKind == scope[..colon] && issue.EntityId == scope[(colon + 1)..];
     }
+
+    /// <summary>True when this filter asks for noise: the scope <c>noise</c>, or one noise check by name. Nothing else ever lists a noise issue,
+    /// so a caller runs the noise checks only for such a filter.</summary>
+    public bool WantsNoise => Scope?.Trim() is { } scope && (scope == CheckNames.NoiseScope || CheckNames.Noise.Contains(scope, StringComparer.Ordinal));
 
     /// <summary>The issues that match, in <see cref="Issue.Order"/>.</summary>
     public IReadOnlyList<Issue> Apply(IEnumerable<Issue> issues) => issues.Where(Matches).OrderBy(i => i, Issue.Order).ToList();

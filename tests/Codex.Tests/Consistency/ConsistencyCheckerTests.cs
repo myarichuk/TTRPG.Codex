@@ -37,7 +37,8 @@ public class ConsistencyCheckerTests
     public void TheWorldUnderTest_TripsEveryCheck()
     {
         var found = ConsistencyChecker.Run(Snapshot()).Select(i => i.Check).Distinct().OrderBy(c => c, StringComparer.Ordinal).ToList();
-        Assert.Equal(CheckNames.All.OrderBy(c => c, StringComparer.Ordinal), found);
+        // The v1 world trips every v1 check; the v2 and noisy checks have worlds of their own (WorldStructureCheckTests).
+        Assert.Equal(CheckNames.All.Except(CheckNames.V2).Except(CheckNames.Noise).OrderBy(c => c, StringComparer.Ordinal), found);
     }
 
     [Fact]

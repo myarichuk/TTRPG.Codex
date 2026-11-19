@@ -795,6 +795,7 @@ public static class WorldBundleParser
         FixVia.ActorBiography => "history",
         FixVia.Place => "place",
         FixVia.Fact => "secret",
+        FixVia.Homebrew => "homebrew entry",
         _ => "page"
     };
 
@@ -809,6 +810,7 @@ public static class WorldBundleParser
             case EditTarget.Actor: return ("actor", id);
             case EditTarget.Fact: return ("fact", id);
             case EditTarget.Sheet: return ("actor", id);
+            case EditTarget.Homebrew: return ("homebrew", id);
             case EditTarget.Page:
                 var pageId = rules.ExistingPageIds is { } ids ? ids.FirstOrDefault(p => string.Equals(p.Key, id, StringComparison.OrdinalIgnoreCase)).Value : null;
                 return pageId == null ? (null, null) : ("page", pageId);

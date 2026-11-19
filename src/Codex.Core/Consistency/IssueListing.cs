@@ -52,6 +52,7 @@ public static class IssueListing
         FixVia.Fact => "fact",
         FixVia.ActorBiography => "actor-biography",
         FixVia.Sheet => "sheet",
+        FixVia.Homebrew => "homebrew",
         _ => "report-only"
     };
 

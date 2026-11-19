@@ -13,17 +13,55 @@ public enum ActorRole
 }
 
 /// <summary>A wiki page as the checks read it. Not the stored document: Core knows nothing of the database.</summary>
-public sealed record PageView(string Id, string Slug, string Title, string Body, bool PartyVisible, string? ActorId = null, string? PlaceId = null);
+/// <param name="Tags">The page's tags as stored.</param>
+/// <param name="Kind">The page's kind in lower case: <c>general</c>, <c>person</c>, <c>place</c>, <c>faction</c> or <c>quest</c>.</param>
+public sealed record PageView(string Id, string Slug, string Title, string Body, bool PartyVisible, string? ActorId = null, string? PlaceId = null,
+    IReadOnlyList<string>? Tags = null, string Kind = "general");
+
+/// <summary>The hazard a complex hazard's actor stands for: where it stands (empty for one taken straight from the Library) and which Library entry.</summary>
+public sealed record HazardLinkView(string RegionId, string LocationId, string Entry, bool IsHomebrew);
 
 /// <summary>A cast member as the checks read it.</summary>
+/// <param name="OwnerUserId">The player who owns the character; null for the DM's own.</param>
+/// <param name="BlueprintId">The pack creature the actor was made from (<c>system:id</c>); null for none.</param>
+/// <param name="Hazard">Set on a hazard that took a turn in initiative.</param>
 public sealed record ActorView(string Id, string Name, ActorRole Role, bool Retired, string? Biography, string? DmNotes, string? WikiPageId,
-    IReadOnlyDictionary<string, object> Sheet);
+    IReadOnlyDictionary<string, object> Sheet, string? OwnerUserId = null, string? BlueprintId = null, HazardLinkView? Hazard = null);
 
 /// <summary>A place on a region's map as the checks read it.</summary>
-public sealed record PlaceView(string Id, string RegionId, string Name, string? Description, string? WikiPageId);
+/// <param name="ParentId">The place in the same region this one is inside; null for one straight in the region.</param>
+/// <param name="HazardEntry">The Library hazard placed here as <c>type/id</c>, if any; <paramref name="HazardIsHomebrew"/> says whose.</param>
+/// <param name="CreatureActorId">The cast member the place's feature names as what lives in it.</param>
+public sealed record PlaceView(string Id, string RegionId, string Name, string? Description, string? WikiPageId, string? ParentId = null,
+    string? HazardEntry = null, bool HazardIsHomebrew = false, string? CreatureActorId = null);
 
 /// <summary>A piece of lore as the checks read it.</summary>
-public sealed record FactView(string Id, string Summary, string? Details);
+/// <param name="RelatedEntityIds">What the fact says it is about, as stored (<c>actor:id</c>, <c>place:id</c>, <c>wiki:slug</c>, <c>item:type/id</c>).</param>
+/// <param name="KnownBy">The ids of the characters that know it.</param>
+public sealed record FactView(string Id, string Summary, string? Details, IReadOnlyList<string>? RelatedEntityIds = null, IReadOnlyList<string>? KnownBy = null);
+
+/// <summary>A homebrew entry as the checks read it. <paramref name="Id"/> is the document id.</summary>
+public sealed record HomebrewView(string Id, string Type, string EntryId, string Name, IReadOnlyList<string> Tags, IReadOnlyDictionary<string, object> Properties)
+{
+    /// <summary>The key an issue names it by: <c>type/entryId</c>.</summary>
+    public string Key => $"{Type}/{EntryId}";
+}
+
+/// <summary>A creature on the campaign's Bestiary shortlist.</summary>
+public sealed record BestiaryView(string EntryType, string EntryId, bool IsHomebrew, string Name);
+
+/// <summary>
+/// The campaign itself as the checks read it. <paramref name="Changes"/> are the differences, one line each, between the system as the campaign last
+/// played under it and the one loaded now; <paramref name="LoadProblems"/> are what loading the system and its packs reported; both are English
+/// text made by code (a file name, a version).
+/// </summary>
+public sealed record CampaignView(string Id, string OwnerId, string SystemId, bool SystemInstalled, IReadOnlyList<string> MemberIds,
+    IReadOnlyList<string> NamedPacks, IReadOnlyList<string> KnownPacks, IReadOnlyList<string> Changes, IReadOnlyList<string> LoadProblems,
+    IReadOnlyList<BestiaryView> Bestiary)
+{
+    public static CampaignView Empty { get; } = new("", "", "", true, Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(),
+        Array.Empty<string>(), Array.Empty<string>(), Array.Empty<BestiaryView>());
+}
 
 /// <summary>
 /// Everything the checks read, taken once, as plain values. A check is a pure function of this: no database, no clock, no random, and
@@ -38,6 +76,15 @@ public sealed class WorldSnapshot
     public IReadOnlyList<ActorView> Actors { get; private init; } = Array.Empty<ActorView>();
     public IReadOnlyList<PlaceView> Places { get; private init; } = Array.Empty<PlaceView>();
     public IReadOnlyList<FactView> Facts { get; private init; } = Array.Empty<FactView>();
+
+    /// <summary>The campaign's homebrew entries, sorted by document id. Empty when none were loaded (see <see cref="HomebrewLoaded"/>).</summary>
+    public IReadOnlyList<HomebrewView> Homebrew { get; private init; } = Array.Empty<HomebrewView>();
+
+    /// <summary>True when the homebrew was read. A snapshot taken for a scope that needs none leaves it out, and the checks that read it have nothing to find.</summary>
+    public bool HomebrewLoaded { get; private init; }
+
+    /// <summary>The campaign: its owner and members, system, packs and Bestiary.</summary>
+    public CampaignView Campaign { get; private init; } = CampaignView.Empty;
 
     /// <summary>The campaign's game system, or null when it is not installed (the sheet checks then have nothing to read).</summary>
     public SystemDefinition? System { get; private init; }
@@ -56,7 +103,10 @@ public sealed class WorldSnapshot
         IEnumerable<FactView>? facts = null,
         SystemDefinition? system = null,
         IEntryResolver? library = null,
-        string enforcement = "off") => new()
+        string enforcement = "off",
+        CampaignView? campaign = null,
+        IEnumerable<HomebrewView>? homebrew = null,
+        bool homebrewLoaded = false) => new()
     {
         Pages = (pages ?? Array.Empty<PageView>()).OrderBy(p => p.Id, StringComparer.Ordinal).ToList(),
         Actors = (actors ?? Array.Empty<ActorView>()).OrderBy(a => a.Id, StringComparer.Ordinal).ToList(),
@@ -64,7 +114,10 @@ public sealed class WorldSnapshot
         Facts = (facts ?? Array.Empty<FactView>()).OrderBy(f => f.Id, StringComparer.Ordinal).ToList(),
         System = system,
         Library = library ?? NullEntryResolver.Instance,
-        Enforcement = enforcement
+        Enforcement = enforcement,
+        Campaign = campaign ?? CampaignView.Empty,
+        Homebrew = (homebrew ?? Array.Empty<HomebrewView>()).OrderBy(h => h.Id, StringComparer.Ordinal).ToList(),
+        HomebrewLoaded = homebrewLoaded || homebrew != null
     };
 }
 

@@ -18,8 +18,9 @@ public sealed partial class WorldBuilderService
         if (!IssueFilter.IsKnownScope(scope))
         {
             var shown = scope!.Length > 80 ? scope[..80] + "…" : scope;
+            var noise = string.Join(", ", CheckNames.Noise);
             return $"Nothing was listed: \"{shown}\" is not a scope. Use \"all\" (or leave it out), the name of a check ({string.Join(", ", CheckNames.All)}), " +
-                   "or one thing as page:<id>, actor:<id>, place:<id> or fact:<id>, with an issue's entity_id.";
+                   $"or one thing as page:<id>, actor:<id>, place:<id> or fact:<id>, with an issue's entity_id; \"noise\" lists the checks that are off by default ({noise}).";
         }
 
         if (!IssueListing.TryParseSeverity(severity, out var least))

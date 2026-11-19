@@ -6,7 +6,7 @@ namespace Codex.Core.Consistency;
 /// </summary>
 public static class ConsistencyChecker
 {
-    /// <summary>The checks of v1, in a fixed order. A system's own checks join here later (docs: the layered design).</summary>
+    /// <summary>The checks run by default, in a fixed order. A system's own checks join here later (docs: the layered design).</summary>
     public static IReadOnlyList<IConsistencyCheck> Default { get; } = new IConsistencyCheck[]
     {
         new BrokenLinkCheck(),
@@ -21,8 +21,32 @@ public static class ConsistencyChecker
         new SecretUnclosedCheck(),
         new SecretUnknownAudienceCheck(),
         new SecretForMissingCheck(),
-        new SheetRuleCheck()
+        new SheetRuleCheck(),
+        // v2: the structure of the world, the campaign and the Library it points at.
+        new PlaceTreeCheck(),
+        new DuplicateTitleCheck(),
+        new FactReferenceCheck(),
+        new PlacementCheck(),
+        new OwnerMembershipCheck(),
+        new HomebrewChecks(),
+        new HazardShapeCheck(),
+        new TagCaseCheck(),
+        new CampaignHealthCheck(),
+        new LibraryReferenceCheck()
     };
+
+    /// <summary>The noisy checks: true but rarely worth the DM's time. Never part of <see cref="Default"/>; a caller that asks for them
+    /// (<see cref="IssueFilter.WantsNoise"/>) runs <see cref="Default"/> and these together.</summary>
+    public static IReadOnlyList<IConsistencyCheck> Noisy { get; } = new IConsistencyCheck[]
+    {
+        new OrphanPageCheck(),
+        new BacklinkMismatchCheck(),
+        new PersonPageNoActorCheck(),
+        new RetiredMentionCheck()
+    };
+
+    /// <summary>The checks a filter lists from: <see cref="Default"/>, and the noisy ones only when the filter asks for them.</summary>
+    public static IReadOnlyList<IConsistencyCheck> For(IssueFilter filter) => filter.WantsNoise ? Default.Concat(Noisy).ToList() : Default;
 
     /// <summary>Every issue the checks find, in <see cref="Issue.Order"/>, each id once. Two issues that would share an id (the same rule
     /// broken twice with the same words) get <c>~2</c>, <c>~3</c> in that order, so an id always names one issue.</summary>
