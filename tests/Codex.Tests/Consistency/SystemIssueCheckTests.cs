@@ -197,6 +197,21 @@ public class SystemIssueCheckTests : IDisposable
     }
 
     [Fact]
+    public void ARuleAboutCreatures_IsReportOnly_ForNoSheetEditReachesThem_AndOneAboutCharactersIsStillSheet()
+    {
+        var system = System("""
+            issueChecks:
+              - { id: monsters-need-level, rule: required, field: level, roles: [monster], message: "{name} has no level." }
+              - { id: pcs-need-level, rule: required, field: level, roles: [pc], message: "{name} has no level." }
+            """);
+        var issues = Run(system, Fx.Actor("actors/1-A", "Pc", ActorRole.PlayerCharacter), Fx.Actor("actors/2-A", "Orc", ActorRole.Monster));
+
+        Assert.Equal(FixVia.ReportOnly, issues.Single(i => i.EntityId == "actors/2-A").FixVia);
+        Assert.Equal(FixVia.Sheet, issues.Single(i => i.EntityId == "actors/1-A").FixVia);
+        Assert.True(SheetProposal.IsEditable(system, "level")); // the key itself is editable; it is the creature that is out of reach
+    }
+
+    [Fact]
     public void ARuleThatIsOnlyTrueWhenItsConditionHolds_AndARangeWithNothingToJudge_SayNothing()
     {
         var issues = Run(System(), Pc("actors/1-A", "Plain", ("class", "fighter")), Pc("actors/2-A", "NoLevel", ("class", "wizard"), ("spells", new List<object> { "light" })));

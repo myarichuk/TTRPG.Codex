@@ -46,7 +46,7 @@ public sealed class SystemRuleCheck : IConsistencyCheck
         var label = LabelOf(system, field);
         var roles = check.Roles.Count == 0 ? new[] { "pc", "npc" } : check.Roles.ToArray();
         var severity = check.Severity switch { "error" => IssueSeverity.Error, "info" => IssueSeverity.Info, _ => IssueSeverity.Warning };
-        var fixable = SheetProposal.IsEditable(system, field);
+        var editable = SheetProposal.IsEditable(system, field);
 
         foreach (var actor in s.Actors.Where(a => !a.Retired && roles.Contains(RoleWord(a.Role))))
         {
@@ -58,7 +58,8 @@ public sealed class SystemRuleCheck : IConsistencyCheck
             var args = new[] { actor.Name, label, shown };
             yield return Make.Issue(Name, severity, "actor", actor.Id, field, check.Id, check.Code ?? "Consistency.System." + Pascal(check.Id), args, message,
                 check.FixHint ?? DefaultHint(check, label),
-                fixable ? FixVia.Sheet : FixVia.ReportOnly);
+                // A sheet edit never reaches a bestiary creature or a hazard (the checks of their sheets are not the gate's), so a rule that names them is report-only.
+                editable && actor.Role != ActorRole.Monster ? FixVia.Sheet : FixVia.ReportOnly);
         }
     }
 

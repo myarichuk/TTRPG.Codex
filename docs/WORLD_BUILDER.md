@@ -309,7 +309,7 @@ issueChecks:
 
 Unknown keys under `issueChecks`, an unknown rule or severity or blank, a field that is not a sheet key, a `range` over a non-number and the like refuse
 the system at load with a sentence naming the check. A rule is about player and non-player characters unless `roles` says otherwise, never a retired
-one, and nothing is reported where the campaign's enforcement is `off`; it is fixable by a sheet edit where its field can be set. Layer 3 is compiled: an
+one, and nothing is reported where the campaign's enforcement is `off`; it is fixable by a sheet edit where its field can be set and the character is not a bestiary creature or a hazard (a rule with `roles: [monster]` is report-only: no sheet edit reaches them). Layer 3 is compiled: an
 entry with `type: "Namespace.Type, Assembly"` names a class in a DLL beside `system.yaml` that implements `ICodexIssueCheck` (plain data in and out, like
 the other compiled suppliers; it references only `Codex.Plugin.Abstractions`), resolved by `CompiledSuppliers` like a function. It is given plain copies of
 the cast, pages and places and returns `CodexIssue`s; the host builds ids (`system-rule:<kind>:<entity>:<field>:<check id>[.<detail>]`), sorts and shows
