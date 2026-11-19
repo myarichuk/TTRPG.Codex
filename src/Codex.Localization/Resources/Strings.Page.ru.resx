@@ -294,6 +294,9 @@
   <data name="Page.About.InstallHint" xml:space="preserve"><value>Система — это zip-архив её папки: system.yaml, переводы, скрипты и пакеты контента, не больше {0} МБ. Перед установкой он проверяется. Систему со скомпилированным кодом (DLL) загрузить нельзя: её папку копирует на сервер тот, кто его запускает.</value></data>
   <data name="Page.About.InstallChoose" xml:space="preserve"><value>Выбрать zip с системой</value></data>
   <data name="Page.About.InstallScripts" xml:space="preserve"><value>скрипты</value></data>
+  <data name="Page.About.ScriptsOff" xml:space="preserve"><value>Скрипты выключены</value></data>
+  <data name="Page.About.ScriptsOffHint" xml:space="preserve"><value>Часть правил этой системы выполняется вручную, потому что на этом сервере скрипты выключены.</value></data>
+  <data name="Page.About.ScriptsTurnOn" xml:space="preserve"><value>Включить скрипты</value></data>
   <data name="Page.About.InstallPacks" xml:space="preserve"><value>Пакетов контента: {0}</value></data>
   <data name="Page.About.InstallReplaces" xml:space="preserve"><value>Заменяет установленную версию {0}, по которой играют кампании: {1}. С этого момента они играют по новой версии, и каждому мастеру покажут, что изменилось. Идущий стол работает по старой версии до конца.</value></data>
   <data name="Page.About.InstallSame" xml:space="preserve"><value>Она совпадает с установленной версией.</value></data>

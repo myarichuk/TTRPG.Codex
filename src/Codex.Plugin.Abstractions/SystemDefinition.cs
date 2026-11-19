@@ -732,6 +732,14 @@ public class SystemDefinition
     /// <summary>Adds a script file's source, under the name <c>{ script: file#export }</c> uses.</summary>
     public void AddScript(string file, string source) => _scripts[file] = source;
 
+    /// <summary>The script references (<c>rules.js#onTurnStart</c>) the loader left out because the server has scripts turned off: an event
+    /// handler that was one has none now, and a function that was one gives 0. Empty for a system that runs its scripts. Not part of system.yaml.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyList<string> ScriptsLeftOut { get; private set; } = System.Array.Empty<string>();
+
+    /// <summary>Records what the loader left out (<see cref="ScriptsLeftOut"/>).</summary>
+    public void SetScriptsLeftOut(IReadOnlyList<string> references) => ScriptsLeftOut = references;
+
     private readonly Dictionary<string, CompiledSupplier> _compiled = new(System.StringComparer.Ordinal);
 
     /// <summary>The compiled types the system names (overhaul step 9), by the name system.yaml gives (<c>"Acme.Street.HitPoints,

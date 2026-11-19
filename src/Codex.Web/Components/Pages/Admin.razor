@@ -10,6 +10,7 @@
 @inject AccountDeletion Deletion
 @inject StorageQuota Quota
 @inject IJSRuntime JS
+@inject SystemInstaller Installer
 
 @* The server admin's page (docs/SERVER_ACCESS_AND_VAULT.md 3): accounts, waiting ones first; the server's settings; and the log. *@
 
@@ -183,7 +184,7 @@ else
     <section class="mb-5" aria-labelledby="admin-settings">
         <h2 id="admin-settings">@L["Admin.Settings"]</h2>
         <form @onsubmit="SaveSettingsAsync" @onsubmit:preventDefault="true" data-testid="admin-settings-form">
-            <ServerSettingsForm Value="draft" Exposed="@ExposurePolicy.IsExposed(Configuration)" />
+            <ServerSettingsForm Value="draft" Exposed="@ExposurePolicy.IsExposed(Configuration)" ScriptsConfigured="@Configuration.GetValue(SystemInstaller.ScriptsKey, true)" />
             @* Not a setup step: a server starts with no limit (docs/SERVER_ACCESS_AND_VAULT.md 15). *@
             <div class="mb-4">
                 <label for="admin-storage-limit" class="field-label">@L["Admin.Settings.StorageLimit"]</label>
@@ -484,8 +485,16 @@ else
             s.StorageLimitMb = chosen.StorageLimitMb is > 0 ? chosen.StorageLimitMb : null;
             s.WebFetch = chosen.WebFetch;
             s.FetchSites = chosen.FetchSites.ToList();
+            s.SystemScripts = chosen.SystemScripts;
         });
         if (SettingsChange.Describe(before, stored) is { } change) await LogAsync(AdminAction.SettingsChanged, null, change);
+        // The systems follow the choice now, with no restart: they are loaded again with or without their scripts.
+        if (before.SystemScripts != stored.SystemScripts && (await Auth.GetAuthenticationStateAsync()).User is { } admin)
+        {
+            var applied = await Installer.ApplyScriptsSettingAsync(stored, admin);
+            if (!applied.Succeeded) return Flash.Error(applied.Error ?? "");
+        }
+
         return Flash.Success(L["Admin.Settings.Saved"]);
     });
 }

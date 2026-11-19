@@ -1179,6 +1179,8 @@ public sealed class SheetModel
 
     internal double CallFunction(string name, params object?[] arguments)
     {
+        // A script the server left out (scripts turned off) gives 0, and is never run.
+        if (_system.Functions.TryGetValue(name, out var left) && left.Script != null && _system.ScriptsLeftOut.Contains(left.Script, StringComparer.Ordinal)) return 0;
         if (_system.Functions.TryGetValue(name, out var definition) && (definition.Type ?? definition.Script) is { } supplied)
         {
             var plain = arguments.Select(a => Plain(a) switch

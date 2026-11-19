@@ -330,7 +330,7 @@ using (var scope = app.Services.CreateScope())
     var roots = ContentRoots.Resolve(app.Configuration, env.ContentRootPath).Append(installer.Root).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
     logger.LogInformation("Loading systems and content packs from: {Roots}", string.Join(", ", roots));
-    loader.ScriptsAllowed = app.Configuration.GetValue("Codex:Systems:Scripts", true);
+    loader.ScriptsAllowed = SystemInstaller.ScriptsOn(app.Configuration, await scope.ServiceProvider.GetRequiredService<IServerSettingsStore>().GetAsync());
     await loader.LoadAndInitializeAsync(roots);
     logger.LogInformation("Loaded systems: {Systems}", string.Join(", ", loader.LoadedSystemIds));
 

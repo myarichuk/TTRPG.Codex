@@ -72,6 +72,17 @@
                             </ul>
                         </div>
                     }
+                    @if (check.NamesScripts && !Installer.ScriptsAllowed)
+                    {
+                        @* A warning, not an error: it installs, and loads without its scripts. *@
+                        <p class="mb-2" role="status" data-testid="install-scripts-off">
+                            <LucideIcon IconName="alert-triangle" Size="14" /> @L["Page.About.ScriptsOffHint"]
+                            @if (mayReload)
+                            {
+                                <a class="ms-1" href="/admin#settings-scripts" data-testid="install-turn-on-scripts">@L["Page.About.ScriptsTurnOn"]</a>
+                            }
+                        </p>
+                    }
                     @if (check.Warnings.Count > 0)
                     {
                         <details class="mb-2" data-testid="install-warnings">

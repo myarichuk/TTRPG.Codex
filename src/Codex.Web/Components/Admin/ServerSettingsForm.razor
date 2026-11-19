@@ -60,8 +60,31 @@
     </fieldset>
 }
 
+@if (Part is SettingsPart.Scripts or SettingsPart.All)
+{
+    @* Not a setup step: scripts are on unless the admin turns them off here (or the configuration does). *@
+    <fieldset class="mb-4" id="settings-scripts" data-testid="settings-scripts">
+        <legend class="@LegendClass">@L["Admin.Settings.Scripts"]</legend>
+        <div class="field-check align-items-start mb-2">
+            <input id="scripts-on" type="checkbox" class="field-box" checked="@ScriptsOn" @onchange="ScriptsChanged" aria-describedby="scripts-on-hint" data-testid="scripts-on" />
+            <div>
+                <label for="scripts-on">@L["Admin.Settings.Scripts.Switch"]</label>
+                <div id="scripts-on-hint" class="field-hint" data-testid="scripts-on-hint">@L["Admin.Settings.Scripts.Hint"]</div>
+            </div>
+        </div>
+    </fieldset>
+}
+
 @code {
-    public enum SettingsPart { All, SignUp, Campaigns, ServerAi, Fetching }
+    public enum SettingsPart { All, SignUp, Campaigns, ServerAi, Fetching, Scripts }
+
+    /// <summary>What the server's configuration says about scripts (<c>Codex:Systems:Scripts</c>), which the switch shows until the admin chooses.</summary>
+    [Parameter]
+    public bool ScriptsConfigured { get; set; } = true;
+
+    private bool ScriptsOn => Value.SystemScripts ?? ScriptsConfigured;
+
+    private void ScriptsChanged(ChangeEventArgs e) => Value.SystemScripts = e.Value is true;
 
     /// <summary>The server is open to the internet: with no choice stored, only the admin uses the server's key (shown as such).</summary>
     [Parameter]

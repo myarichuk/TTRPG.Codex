@@ -119,6 +119,9 @@
   <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} of {1}</value></data>
   <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>Storage per account, in MB</value></data>
   <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Pictures and files: covers, portraits, art, book pictures and the book's copies of web files. Everything in a campaign counts against its owner, whoever added it. Leave empty for no limit. An account's own limit, set from its row above, takes the place of this one.</value></data>
+  <data name="Admin.Settings.Scripts" xml:space="preserve"><value>Game system scripts</value></data>
+  <data name="Admin.Settings.Scripts.Switch" xml:space="preserve"><value>Let game systems run their scripts</value></data>
+  <data name="Admin.Settings.Scripts.Hint" xml:space="preserve"><value>Some game systems include small scripts for rules that plain data can't describe, such as rolling a recovery check at the start of a turn. Scripts run in a locked-down sandbox: they can't read your files, reach the internet or see other campaigns, and they are stopped if they run too long. The risk is a system you don't trust giving wrong results in your games. With scripts off, those systems still load, and the Game Master does the scripted rules by hand.</value></data>
   <data name="Admin.Accounts.StorageCounting" xml:space="preserve"><value>counting…</value></data>
   <data name="Admin.Accounts.Delete.StillOwns" xml:space="preserve"><value>{0} made a campaign while being deleted. The account is turned off; delete it again to pass that campaign on too.</value></data>
   <data name="Admin.Log.DeletedOwn" xml:space="preserve"><value>{0} deleted their own account</value></data>

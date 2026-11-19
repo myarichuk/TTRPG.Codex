@@ -80,21 +80,53 @@ public sealed class SystemScripts
     public static IReadOnlyList<string> FilesNamed(SystemDefinition system) =>
         References(system).Select(r => Split(r.Reference).File).Where(f => f.Length > 0).Distinct(StringComparer.Ordinal).ToList();
 
-    /// <summary>Every <c>file#export</c> the system names, with what names it.</summary>
+    /// <summary>Every <c>file#export</c> the system names, with what names it. A script the loader left out
+    /// (<see cref="SystemDefinition.ScriptsLeftOut"/>) is not named any more: nothing runs it, so nothing checks it.</summary>
     private static IEnumerable<(string What, string Reference)> References(SystemDefinition system)
     {
         foreach (var (name, function) in system.Functions)
         {
-            if (function.Script != null) yield return ($"The function \"{name}\"", function.Script);
+            if (function.Script != null && !system.ScriptsLeftOut.Contains(function.Script, StringComparer.Ordinal)) yield return ($"The function \"{name}\"", function.Script);
         }
 
         foreach (var (type, raw) in system.Events)
         {
-            if (YamlValues.Normalize(raw) is IDictionary<string, object> map && map.TryGetValue("script", out var script) && script != null)
+            if (YamlValues.Normalize(raw) is IDictionary<string, object> map && map.TryGetValue("script", out var script) && script != null
+                && !system.ScriptsLeftOut.Contains(script.ToString()!, StringComparer.Ordinal))
             {
                 yield return ($"The {type} handler", script.ToString()!);
             }
         }
+    }
+
+    /// <summary>
+    /// Leaves the scripts out of a system a server with scripts turned off loads (the setting is the server's, and the files did not change, so the
+    /// fingerprint is left as it is): an event whose handler is a script gets no handler, as if system.yaml had none, so the table does that step by hand,
+    /// and a function that is a script gives 0 (<see cref="SystemDefinition.ScriptsLeftOut"/>). No script is read, parsed or run. Returns the references
+    /// left out, in the order the system names them; none when it names no script.
+    /// </summary>
+    public static IReadOnlyList<string> LeaveOut(SystemDefinition system)
+    {
+        var left = References(system).Select(r => r.Reference).Distinct(StringComparer.Ordinal).ToList();
+        if (left.Count == 0) return left;
+        foreach (var type in system.Events.Where(e => YamlValues.Normalize(e.Value) is IDictionary<string, object> map && map.TryGetValue("script", out var s) && s != null && left.Contains(s.ToString()!, StringComparer.Ordinal))
+                     .Select(e => e.Key).ToList())
+        {
+            system.Events.Remove(type);
+        }
+
+        system.SetScriptsLeftOut(left);
+        return left;
+    }
+
+    /// <summary>How many parameters the exported function declares, read from the source text without running it (<c>export function hitPoints(body, will)</c>:
+    /// two). Null when the file or the export is not there, or is not written as a plain function declaration.</summary>
+    public static int? DeclaredArity(SystemDefinition system, string reference)
+    {
+        var (file, export) = Split(reference);
+        if (!system.Scripts.TryGetValue(file, out var source) || export.Length == 0) return null;
+        var found = System.Text.RegularExpressions.Regex.Match(source, @"export\s+function\s+" + System.Text.RegularExpressions.Regex.Escape(export) + @"\s*\(([^)]*)\)");
+        return found.Success ? found.Groups[1].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Length : null;
     }
 
     internal static (string File, string Export) Split(string reference)

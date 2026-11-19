@@ -123,6 +123,10 @@ else
                 {
                     <div class="field-hint">@description</div>
                 }
+                @if (SelectedSystem?.ScriptsLeftOut is { Count: > 0 })
+                {
+                    <div class="field-hint" role="status" data-testid="new-campaign-scripts-off"><LucideIcon IconName="alert-triangle" Size="14" /> @L["Page.About.ScriptsOffHint"]</div>
+                }
                 @if (Loader.FailedSystems.Count > 0)
                 {
                     @* A system with a broken system.yaml is not in the list above; say which, so the GM doesn't hunt for it. *@

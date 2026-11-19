@@ -6,7 +6,10 @@ namespace Codex.Plugin.Abstractions;
 /// <param name="ContainsCompiledCode">A compiled plugin, or a data system whose system.yaml names types in its DLLs (overhaul
 /// section 4, rule 7): code that runs with the server's rights, which the Library says.</param>
 /// <param name="Version">The version it says it is, as loaded (<see cref="SystemFingerprint.Version"/>).</param>
-public record SystemSummary(string Id, string Name, string? Description, string? Compatibility, LicenseInfo? License, bool IsDataDriven, bool ContainsCompiledCode = false, string? Version = null);
+/// <param name="ScriptsLeftOut">The script references the loader left out because scripts are turned off on this server (its rules for them are done
+/// by hand); null when it runs its scripts or names none.</param>
+public record SystemSummary(string Id, string Name, string? Description, string? Compatibility, LicenseInfo? License, bool IsDataDriven, bool ContainsCompiledCode = false, string? Version = null,
+    IReadOnlyList<string>? ScriptsLeftOut = null);
 
 /// <summary>
 /// The set of system plugin ids currently loaded into the process. Persistence uses this to

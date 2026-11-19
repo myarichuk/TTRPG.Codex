@@ -148,25 +148,51 @@ public sealed class SystemReloadTests : IDisposable
     }
 
     [Fact]
-    public async Task ScriptsTurnedOff_ASystemNamingOneDoesNotLoad_AndSaysWhy()
+    public async Task ScriptsTurnedOff_ASystemNamingOneStillLoads_WithoutIt_AndSaysSo()
     {
-        System("scripted", extra: "functions:\n  twice: { script: rules.js#twice }\n");
-        Write("scripted/rules.js", "export function twice(x) { return x * 2; }\n");
+        System("scripted", extra: "functions:\n  twice: { script: rules.js#twice }\nevents:\n  poke: { script: rules.js#poke }\n  tap:\n    - { intents: [{ adjust: { track: hp, by: 1 } }] }\n");
+        Write("scripted/rules.js", "export function twice(x) { return x * 2; }\nexport function poke() { return []; }\n");
         System("plain");
         _loader.ScriptsAllowed = false;
 
         await _loader.LoadAndInitializeAsync(_root);
 
-        Assert.Equal(new[] { "plain" }, _loader.LoadedSystemIds);
-        var failed = Assert.Single(_loader.FailedSystems);
-        Assert.Equal("scripted", failed.Id);
-        Assert.Contains("rules.js", Assert.Single(failed.Errors));
-        Assert.Contains("scripts turned off", failed.Errors[0]);
+        Assert.Equal(new[] { "plain", "scripted" }, _loader.LoadedSystemIds.Order(StringComparer.Ordinal));
+        Assert.Empty(_loader.FailedSystems);
+        var definition = _loader.GetDefinition("scripted")!;
+        Assert.DoesNotContain("poke", definition.Events.Keys); // the scripted handler has none, as if system.yaml had none
+        Assert.Contains("tap", definition.Events.Keys); // a handler of lines stays
+        Assert.Equal(new[] { "rules.js#twice", "rules.js#poke" }, definition.ScriptsLeftOut);
+        Assert.Equal(definition.ScriptsLeftOut, _loader.Systems.Single(s => s.Id == "scripted").ScriptsLeftOut);
+        Assert.Null(_loader.Systems.Single(s => s.Id == "plain").ScriptsLeftOut);
+        var problem = Assert.Single(_loader.LoadProblems, p => p.SystemId == "scripted");
+        Assert.Contains("loaded without its scripts (rules.js#twice, rules.js#poke)", problem.Text);
+        Assert.Contains("scripts turned off", problem.Text);
+        Assert.Contains("by hand", problem.Text);
+        // The files did not change, so the fingerprint is the same as with scripts on.
+        Assert.Contains("rules.js", definition.Fingerprint!.Files.Keys);
 
         _loader.ScriptsAllowed = true;
         var reload = await _loader.ReloadAsync();
-        Assert.Equal(new[] { "scripted" }, reload.Added);
-        Assert.Empty(_loader.FailedSystems);
+        Assert.Empty(reload.Changed); // the files are the same, so the fingerprint is; the definition is a new one, and its rules run
+        Assert.Empty(_loader.GetDefinition("scripted")!.ScriptsLeftOut);
+        Assert.Contains("poke", _loader.GetDefinition("scripted")!.Events.Keys);
+    }
+
+    [Fact]
+    public async Task ScriptsTurnedOff_AScriptFunctionGivesZero_WithoutRunningTheScript()
+    {
+        System("scripted", extra: "functions:\n  twice: { script: rules.js#twice }\nsheetKinds:\n  - kind: hero\n    label: Hero\n    values:\n      - { key: double, formula: \"twice(4) + 1\" }\n");
+        Write("scripted/rules.js", "export function twice(x) { throw new Error('this must not run'); }\n");
+        _loader.ScriptsAllowed = false;
+
+        await _loader.LoadAndInitializeAsync(_root);
+
+        var definition = _loader.GetDefinition("scripted")!;
+        var evaluated = new Codex.Core.Rules.SheetModel(definition, Codex.Core.Rules.NullEntryResolver.Instance, new Dictionary<string, object> { ["kind"] = "hero" }).Evaluate();
+        Assert.Equal(1d, evaluated.Values["double"]);
+        Assert.Empty(evaluated.Warnings);
+        Assert.Empty(Codex.Core.Rules.SystemScripts.Problems(definition));
     }
 
     [Fact]
