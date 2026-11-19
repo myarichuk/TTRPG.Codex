@@ -91,6 +91,13 @@ public sealed partial class WorldChat
                 "list_tags",
                 "Lists the tags the campaign's wiki pages and homebrew entries use, with how many of each, so new tags match the old ones."),
             AIFunctionFactory.Create(
+                ([Description("What to list: \"all\" (or empty), the name of a check such as broken-link, or one thing as page:<id>, actor:<id>, place:<id> or fact:<id>.")] string? scope = null,
+                    [Description("The least severe level to list: error, warning or info; empty lists all.")] string? severity = null) =>
+                    Step("list_issues", new { scope, severity }, string.IsNullOrWhiteSpace(scope) ? null : scope.Trim(), null, () => builder.IssuesAsync(campaign, access, scope, severity)),
+                "list_issues",
+                "Lists what the app's own checks found wrong or missing in the campaign (broken links, secrets that may leak, empty histories), most severe first, at most 50. " +
+                "The checks are code: you never judge whether something is broken. An edit entry fixes one by naming its id in \"resolves\"."),
+            AIFunctionFactory.Create(
                 (AdditionInput additions) =>
                     Step("add_entries", additions, null, additions.Entries?.Count ?? 0, () => WithGearAsync(AddEntriesAsync(additions)), data: false),
                 "add_entries",
@@ -164,6 +171,12 @@ public sealed partial class WorldChat
         foreach (var draft in after.Drafts)
         {
             if (before.Find(draft.Ref) is not { } old || old.Kind != draft.Kind) continue;
+            // The issues an edit says it fixes belong to what it edits: a revision of it keeps them, and one that now edits something else does not.
+            if (old.Resolves.Count > 0 && string.Equals(old.Target, draft.Target, StringComparison.OrdinalIgnoreCase))
+            {
+                draft.Resolves = draft.Resolves.Concat(old.Resolves).Distinct(StringComparer.Ordinal).ToList();
+            }
+
             if (decisions)
             {
                 draft.Selected = old.Selected;

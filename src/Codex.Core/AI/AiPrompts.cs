@@ -592,6 +592,9 @@ public static class AiPrompts
             "If propose_changes reports errors, fix them and call it again. After the game master applies a proposal, its entries exist and you can link to them. " +
             "To change a proposal, call propose_changes again with the whole revised proposal. " +
             "To add to a proposal that is already waiting (the game master asked for something its texts mention, or you left something out), call add_entries with ONLY the new entries: they may use the refs already in the proposal as parents and links. " +
+            "list_issues lists what the app's own checks found wrong in the campaign (broken links, hidden text that may leak, empty histories). The checks are code and decide what is an issue and how severe it is; never say something is or is not broken on your own. " +
+            "To fix one, add an edit entry about the very thing the issue names, with the issue's id in \"resolves\" (an unknown id refuses the whole proposal); the app re-checks after the game master applies it and says whether it is gone. " +
+            "An issue with fix_via \"report-only\" cannot be fixed by any proposal: tell the game master what it is and leave it. An \"info\" issue (an empty history or page) is never filled in with content you invent: ask the game master what they want there, and write only what they tell you. " +
             "When a text names a person, place or faction the world would need, link it as [[Name]]; what you did not write now, the game master can ask you for next. " +
             "To correct or extend something that already exists, add an entry of kind \"edit\" with a \"target\" (its key from search_world, get_page or list_places: existing:<slug> for a page, " +
             "existing:place:<id> for a place's short description, existing:actor:<id> for a cast member's history) and \"text\": the COMPLETE new text, which replaces the old one entirely. " +

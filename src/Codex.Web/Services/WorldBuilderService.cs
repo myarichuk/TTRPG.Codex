@@ -42,7 +42,7 @@ public sealed record WorldEdit(EditTarget Target, string Id, string Name, bool S
 /// </summary>
 public sealed partial class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary library, IHomebrewRepository homebrew, IWikiRepository wiki,
     IFactRepository facts, CastService cast, IRegionRepository regions, ICampaignRepository campaigns, IActorRepository actorRepository, AiFeatures ai,
-    ITemplateRepository? templates = null)
+    ITemplateRepository? templates = null, ConsistencyService? consistency = null)
 {
     /// <summary>The language the model writes in: the one the DM reads the app in.</summary>
     private static string Lang => SupportedCultures.Normalize(CultureInfo.CurrentUICulture.Name);

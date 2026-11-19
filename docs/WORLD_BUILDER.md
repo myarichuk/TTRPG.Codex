@@ -87,6 +87,7 @@ would pay the write premium for an entry nothing reads.
 | `get_entry(entry)` | One Library entry in full: where it comes from, its tags, every field as JSON, its rules text |
 | `homebrew_fields(type)` | The fields a homebrew entry of a type fills |
 | `list_tags()` | The tags the campaign's pages and homebrew use, with counts |
+| `list_issues(scope?, severity?)` | The consistency checker's open issues as JSON, most severe first, at most 50 (section 9) |
 | `propose_changes(proposal)` | Checks the proposal: errors per entry for the model to fix, or "ready for review" |
 | `add_entries(entries)` | Puts more entries beside the waiting proposal, keeping the GM's ticks |
 
@@ -229,8 +230,24 @@ formula engine) and, if that is not enough, a compiled check named like an `ICod
 **Dismissals.** A red link that is meant to stay red is dismissed by the DM, and only the DM (`ConsistencyService.DismissAsync`; an id
 that is not an open issue is refused). The document `ConsistencyDismissals/{campaignId}` holds the ids; results are never stored.
 
-**Fixes** are proposals through the review gate that name the issue ids they resolve. Built and tested, not yet wired into the gate:
-`ConsistencyChecker.UnknownIds` finds the claimed ids that are not open issues (the gate will refuse a proposal naming any, whole),
-and `ConsistencyChecker.Compare` reports, from the code's own before and after, which claimed ids are resolved, which are still open,
-which never existed, and what is new; the model's claim of resolution is never trusted. Still to do: the `list_issues(scope?, severity?)`
-tool (results fenced like the other data tools), the `resolves` field on a proposal, and the re-check and note after an apply.
+**Fixes** are proposals through the review gate that name the issue ids they resolve.
+
+*Wired now (phase 2).*
+- `list_issues(scope?, severity?)` is a read-only tool of the chat (DM only, like every tool). It lists the open issues (never the dismissed ones) in
+  `Issue.Order` as snake_case JSON, one issue to a line, fenced like the other data tools, at most 50 (`IssueListing.MaxShown`); a longer list ends with
+  a line `(N more not shown, of M; narrow with scope or severity to see them)`. `scope` is `all`, a check name, or `page:<id>` / `actor:<id>` / `place:<id>` /
+  `fact:<id>`; `severity` is the least severe level (`warning` gives errors and warnings). An unknown scope or severity is answered in words ("Nothing
+  was listed: ...", `IssueFilter.IsKnownScope`), never with an empty list that would read as all clear. The tool sits at a fixed place in the tool list
+  (after `list_tags`) so the tools prompt cache is built once. The system prompt says, in a sentence that never changes, that code decides what is an issue
+  and how severe, that an `info` issue is never filled in with invented content, and that a report-only issue cannot be fixed by a proposal.
+- `resolves` is an optional list of issue ids on a proposal entry (`ProposalEntry.Resolves`, `WorldDraft.Resolves`). `WorldBundleParser.ParseProposal(json,
+  rules, openIssues)` checks it, and any failure is an error that refuses the whole proposal: an id that is not an open issue
+  (`ConsistencyChecker.UnknownIds`; the error names the ids and says to call `list_issues`), an id the gate cannot fix (`report-only`), an entry that is not
+  an edit, or an issue about something other than what the edit changes (kind and document id; a page is matched by its document id, through
+  `ProposalRules.ExistingPageIds`). A proposal with no `resolves` reads as it always did, and the checker only runs for a proposal that has the word.
+  A revision of an edit (same ref, same target) keeps what the earlier one resolved (`WorldChat.CarryOver`); `add_entries` re-checks the waiting entries'
+  claims together with the new ones.
+
+*Still to do (phase 3).* The re-check after an apply: `ConsistencyChecker.Compare` reports, from the code's own before and after, which claimed ids are
+resolved, which are still open and what is new, and the model's claim of resolution is never trusted; the note to the model and to the DM that says
+so, and the regression test that this does not disturb the prompt cache.

@@ -103,6 +103,9 @@ public sealed class ProposalEntry
     [JsonPropertyName("remove"), Description("For a tags entry: the tags to take off every target.")]
     public List<string>? Remove { get; set; }
 
+    [JsonPropertyName("resolves"), Description("For an edit that fixes consistency issues: their ids exactly as list_issues gives them, each about the very thing this edit changes. Leave it out for any other entry. An id that is not an open issue, or is about something else, or cannot be fixed by a proposal (fix_via \"report-only\"), refuses the whole proposal. The app checks afterwards whether the issue is really gone.")]
+    public List<string>? Resolves { get; set; }
+
     [JsonPropertyName("properties"), Description("For a homebrew entry: its fields, by the keys homebrew_fields lists. For an edit of one: only the fields that change.")]
     public Dictionary<string, JsonElement>? Properties { get; set; }
 }

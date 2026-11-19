@@ -37,11 +37,16 @@ public sealed partial class WorldBuilderService
         var brewKeys = brews.GroupBy(h => $"{h.Type}/{h.EntryId}", StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
         var regionNames = (await regions.GetVisibleForCampaignAsync(access)).GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First().Name);
         var factNames = (await facts.GetVisibleForCampaignAsync(access, new HashSet<string>())).GroupBy(f => f.Id).ToDictionary(g => g.Key, g => g.First().Summary);
+        var pageIds = (await wiki.GetVisibleForCampaignAsync(access)).GroupBy(p => p.Slug, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+        // The checker runs only for a proposal that cites issues: it reads the whole campaign.
+        var open = json.Contains("\"resolves\"", StringComparison.Ordinal) && consistency != null
+            ? (await consistency.CheckAsync(campaign, access)).Open
+            : Array.Empty<Codex.Core.Consistency.Issue>();
         var culture = Lang;
         var rules = new ProposalRules(spellings, pages, places, key => fields.GetValueOrDefault(key) ?? Array.Empty<FieldSpec>(),
             system == null ? null : (key, value) => system.CanonicalOption(culture, key, value), castIds, brewKeys,
-            regionNames, factNames, HazardTypeOf(system));
-        var check = WorldBundleParser.ParseProposal(json, rules);
+            regionNames, factNames, HazardTypeOf(system), pageIds);
+        var check = WorldBundleParser.ParseProposal(json, rules, open);
 
         await FindStatsAsync(campaign, access, check.Bundle);
         var editErrors = await FillEditsAsync(check.Bundle, access);

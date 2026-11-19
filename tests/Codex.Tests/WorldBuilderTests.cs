@@ -435,6 +435,9 @@ public class WorldBuilderTests
         }
     };
 
+    /// <summary>The same fakes with pages the campaign already has, for the consistency tests.</summary>
+    internal static Saving ServiceWithPages(IEnumerable<WikiPageDocument> existingPages) => Service(existingPages, Array.Empty<RegionDocument>());
+
     private static Saving Service(IEnumerable<WikiPageDocument>? existingPages = null, params HomebrewEntryDocument[] existing) => Service(existingPages, Array.Empty<RegionDocument>(), existing);
 
     private static Saving Service(IEnumerable<WikiPageDocument>? existingPages, IEnumerable<RegionDocument> existingRegions, params HomebrewEntryDocument[] existing) =>
@@ -505,7 +508,10 @@ public class WorldBuilderTests
         var regions = Substitute.For<IRegionRepository>();
         // No model is set up: picking a cast member's gear fails quietly and they are saved without it.
         var ai = new AiFeatures(providers, registry, catalog);
-        var saving = new Saving(new WorldBuilderService(catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns, actorRepo, ai), pages, entries, actors, facts);
+        var dismissals = Substitute.For<IConsistencyDismissalRepository>();
+        dismissals.ListAsync(Arg.Any<CampaignAccess>()).Returns(Array.Empty<IssueDismissal>());
+        var consistency = new ConsistencyService(catalog, library, wiki, actorRepo, regions, factRepo, dismissals);
+        var saving = new Saving(new WorldBuilderService(catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns, actorRepo, ai, consistency: consistency), pages, entries, actors, facts);
         regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => existingRegions.Concat(saving.NewRegions).ToList().AsEnumerable());
         campaigns.UpdateAsDmAsync(Arg.Any<CampaignAccess>(), Arg.Any<Action<CampaignDocument>>()).Returns(ci =>
         {

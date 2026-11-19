@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Codex.Core.AI;
+using Codex.Core.Consistency;
 
 namespace Codex.Core.WorldBuilder;
 
@@ -224,6 +225,11 @@ public sealed class WorldDraft
 
     /// <summary>For a tags entry: what each target is called and the tags it has now, filled in by the check, for the review card.</summary>
     public List<TaggedThing> Tagged { get; set; } = new();
+
+    /// <summary>The ids of the consistency issues (<c>list_issues</c>) this entry says it fixes, each one an open issue about the thing
+    /// an edit changes. A claim only: the app re-checks after applying and never takes the model's word that something is fixed. Empty
+    /// for an entry that fixes nothing in particular, which is every entry that does not cite one.</summary>
+    public List<string> Resolves { get; set; } = new();
 }
 
 /// <summary>Something a tags entry changes: its key, its name and its tags before the change.</summary>
@@ -381,7 +387,8 @@ public sealed record MissingMention(string Name, IReadOnlyList<string> By, IRead
 /// <summary>What a proposal may refer to. <see cref="HomebrewTypes"/> maps every spelling the model might use for a type (its key,
 /// folder, English and translated labels) to the type key; <see cref="ExistingPages"/> maps the campaign's page slugs to their
 /// titles; <see cref="HomebrewFields"/> gives a type's fields; <see cref="ExistingHomebrew"/> maps the campaign's homebrew entries,
-/// as <c>type/entryId</c>, to their names.</summary>
+/// as <c>type/entryId</c>, to their names. <see cref="ExistingPageIds"/> maps the campaign's page slugs to their document ids, which is how
+/// an edit of a page is matched to the consistency issues about it (an issue names a page by document id, never by slug).</summary>
 public sealed record ProposalRules(
     IReadOnlyDictionary<string, string> HomebrewTypes,
     IReadOnlyDictionary<string, string> ExistingPages,
@@ -392,7 +399,8 @@ public sealed record ProposalRules(
     IReadOnlyDictionary<string, string>? ExistingHomebrew = null,
     IReadOnlyDictionary<string, string>? ExistingRegions = null,
     IReadOnlyDictionary<string, string>? ExistingFacts = null,
-    string? HazardType = null);
+    string? HazardType = null,
+    IReadOnlyDictionary<string, string>? ExistingPageIds = null);
 
 /// <summary>A checked proposal: the entries as they would be saved, and what is wrong with it (nothing is saved while there are
 /// <see cref="Errors"/>) or worth a second look (<see cref="Warnings"/>), each naming the entry it is about.</summary>
@@ -425,9 +433,12 @@ public static class WorldBundleParser
     /// <c>parent</c> (another entry's ref or <c>existing:place:&lt;id&gt;</c>); a page's <c>pageKind</c>; a homebrew entry's
     /// <c>type</c>, <c>tags</c> and <c>properties</c>. <c>links</c> (and <c>[[ref]]</c> in the text) point at other entries
     /// or <c>existing:&lt;slug&gt;</c> pages. An entry that can't be saved is an error naming it; one the parser had to guess
-    /// about is a warning.
+    /// about is a warning. An entry may list the consistency issues it fixes in <c>resolves</c> (ids from <c>list_issues</c>);
+    /// <paramref name="openIssues"/> are the issues open right now (null: none), and an id that is not one of them, one that no
+    /// proposal can fix, or one about something other than what the entry changes is an error, so the whole proposal is refused.
+    /// A proposal with no <c>resolves</c> reads exactly as it did before.
     /// </summary>
-    public static ProposalCheck ParseProposal(string json, ProposalRules rules)
+    public static ProposalCheck ParseProposal(string json, ProposalRules rules, IReadOnlyList<Issue>? openIssues = null)
     {
         var errors = new List<string>();
         var warnings = new List<string>();
@@ -601,10 +612,12 @@ public static class WorldBundleParser
                     : new List<string>();
                 links.AddRange(WikiLink.Matches(text).Select(m => m.Groups[1].Value.Trim()));
                 rawLinks[draft] = links;
+                draft.Resolves = ReadIds(element, "resolves");
                 bundle.Drafts.Add(draft);
             }
 
             ResolveHazards(bundle, rules, warnings);
+            CheckResolves(bundle, rules, openIssues ?? Array.Empty<Issue>(), errors);
 
             // Two pages may share a title ("Sister Maren", "Sister Maren"); a link by title reaches the first, as the wiki's does.
             var titles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -692,6 +705,73 @@ public static class WorldBundleParser
         }
 
         return new ProposalCheck(bundle, errors, warnings);
+    }
+
+    /// <summary>The most issue ids one entry may cite.</summary>
+    public const int MaxResolves = 50;
+
+    private static List<string> ReadIds(JsonElement element, string name)
+    {
+        var ids = new List<string>();
+        if (!element.TryGetProperty(name, out var value)) return ids;
+        if (value.ValueKind == JsonValueKind.String) ids.Add(value.GetString()!);
+        else if (value.ValueKind == JsonValueKind.Array) ids.AddRange(value.EnumerateArray().Where(v => v.ValueKind == JsonValueKind.String).Select(v => v.GetString()!));
+        return ids.Select(id => id.Trim()).Where(id => id.Length > 0).Distinct(StringComparer.Ordinal).Take(MaxResolves).ToList();
+    }
+
+    /// <summary>
+    /// What each entry's <c>resolves</c> may name. The checker, not the model, says what is broken, so an id must be an issue that is open
+    /// right now (<see cref="ConsistencyChecker.UnknownIds"/>), one the review gate can fix (not report-only), and about the very thing the
+    /// entry changes: an edit of that page, place, cast member's history or secret. Anything else is an error that names the ids, and the
+    /// whole proposal is refused with it.
+    /// </summary>
+    private static void CheckResolves(WorldBundle bundle, ProposalRules rules, IReadOnlyList<Issue> open, List<string> errors)
+    {
+        var byId = open.GroupBy(i => i.Id, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+        foreach (var draft in bundle.Drafts.Where(d => d.Resolves.Count > 0))
+        {
+            var label = $"{draft.Ref} ({draft.Kind} '{draft.Name}')";
+            var unknown = ConsistencyChecker.UnknownIds(draft.Resolves, open);
+            if (unknown.Count > 0)
+            {
+                errors.Add($"{label}: resolves names {(unknown.Count == 1 ? "an id that is not an open issue" : "ids that are not open issues")}: {string.Join(", ", unknown)}. " +
+                           "Call list_issues and copy the ids exactly; an issue that was fixed, or that the game master dismissed, is no longer open. " +
+                           "The whole proposal was refused; send it again with the right ids, or without \"resolves\".");
+            }
+
+            var (kind, targetId) = EditedThing(draft, rules);
+            foreach (var id in draft.Resolves.Where(byId.ContainsKey))
+            {
+                var issue = byId[id];
+                if (issue.FixVia == FixVia.ReportOnly)
+                {
+                    errors.Add($"{label}: resolves {id}, which no proposal can fix (the review gate cannot change it: {issue.Check}); leave it out and tell the game master it is theirs to fix by hand.");
+                }
+                else if (kind == null || kind != issue.EntityKind || !string.Equals(targetId, issue.EntityId, StringComparison.Ordinal))
+                {
+                    errors.Add($"{label}: resolves {id}, an issue about {issue.EntityKind} {issue.EntityId}, but this entry " +
+                               (kind == null ? "is not an edit of a page, place, cast member or secret" : $"changes {kind} {targetId}") +
+                               "; an entry may resolve only issues about the thing it edits. Put the fix in an edit entry whose target is that thing.");
+                }
+            }
+        }
+    }
+
+    /// <summary>What an entry changes, as the consistency checker names things (<c>page</c>, <c>place</c>, <c>actor</c>, <c>fact</c> and the
+    /// document id), or null for an entry that is not an edit of one of those.</summary>
+    private static (string? Kind, string? Id) EditedThing(WorldDraft draft, ProposalRules rules)
+    {
+        if (draft is not { Kind: DraftKinds.Edit, Target: { } target }) return (null, null);
+        switch (WorldBundle.ParseTarget(target, out var id))
+        {
+            case EditTarget.Place: return ("place", id);
+            case EditTarget.Actor: return ("actor", id);
+            case EditTarget.Fact: return ("fact", id);
+            case EditTarget.Page:
+                var pageId = rules.ExistingPageIds is { } ids ? ids.FirstOrDefault(p => string.Equals(p.Key, id, StringComparison.OrdinalIgnoreCase)).Value : null;
+                return pageId == null ? (null, null) : ("page", pageId);
+            default: return (null, null);
+        }
     }
 
     /// <summary>Reads an edit: what it targets (which must exist, and be changed only once) and what changes. A page, a place's
