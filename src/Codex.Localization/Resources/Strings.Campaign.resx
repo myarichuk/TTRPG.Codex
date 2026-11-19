@@ -1376,6 +1376,7 @@
   <data name="Campaign.Issues.DismissNote" xml:space="preserve"><value>Why? (optional)</value></data>
   <data name="Campaign.Issues.DismissConfirm" xml:space="preserve"><value>Dismiss this issue</value></data>
   <data name="Campaign.Issues.DismissFailed" xml:space="preserve"><value>That issue is no longer open, so it could not be dismissed.</value></data>
+  <data name="Campaign.Issues.DismissalsFull" xml:space="preserve"><value>That is as many dismissed issues as a campaign keeps ({0}). Restore some from the dismissed list before dismissing more.</value></data>
   <data name="Campaign.Issues.Open" xml:space="preserve"><value>Open</value></data>
   <data name="Campaign.Issues.From" xml:space="preserve"><value>Found by {0}</value></data>
   <data name="Campaign.Issues.DismissedTitle" xml:space="preserve"><value>Dismissed ({0})</value></data>

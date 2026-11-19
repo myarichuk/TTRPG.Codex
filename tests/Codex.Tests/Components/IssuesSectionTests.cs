@@ -24,6 +24,7 @@ public class IssuesSectionTests : ComponentTestBase
     {
         public List<IssueDismissal> Held { get; } = new();
         public int Reads { get; private set; }
+        public bool Full { get; set; }
 
         public Task<IReadOnlyList<IssueDismissal>> ListAsync(CampaignAccess access)
         {
@@ -34,6 +35,7 @@ public class IssuesSectionTests : ComponentTestBase
         public Task<bool> DismissAsync(CampaignAccess access, string issueId, string? note)
         {
             if (!access.IsDm || Held.Any(d => d.IssueId == issueId)) return Task.FromResult(false);
+            if (Full) throw new LocalizedException("Campaign.Issues.DismissalsFull", 2000);
             Held.Add(new IssueDismissal { IssueId = issueId, DismissedBy = access.UserId, Note = note });
             return Task.FromResult(true);
         }
@@ -174,6 +176,22 @@ public class IssuesSectionTests : ComponentTestBase
         cut.WaitForState(() => cut.FindAll(Id("issue")).Count == 3);
         Assert.Empty(dismissals.Held);
         Assert.Empty(cut.FindAll(Id("issues-dismissed")));
+    }
+
+    [Fact]
+    public void ADismissalPastTheLimit_SaysSo_InTheReadersLanguage_NotThatTheIssueIsNoLongerOpen()
+    {
+        dismissals.Full = true;
+        var cut = Draw();
+        cut.WaitForState(() => cut.FindAll(Id("issue")).Count == 3);
+
+        cut.FindAll(Id("issue-dismiss"))[1].Click();
+        cut.Find(Id("issue-dismiss-confirm")).Click();
+
+        cut.WaitForState(() => cut.Markup.Contains("2000"));
+        Assert.Contains("as many dismissed issues as a campaign keeps (2000)", cut.Markup);
+        Assert.DoesNotContain("no longer open", cut.Markup);
+        Assert.Empty(dismissals.Held);
     }
 
     private const string Lonely = "orphan-page:page:wikipages/3-A:links";

@@ -1376,6 +1376,7 @@
   <data name="Campaign.Issues.DismissNote" xml:space="preserve"><value>Почему? (необязательно)</value></data>
   <data name="Campaign.Issues.DismissConfirm" xml:space="preserve"><value>Отклонить проблему</value></data>
   <data name="Campaign.Issues.DismissFailed" xml:space="preserve"><value>Эта проблема уже не открыта, поэтому её нельзя отклонить.</value></data>
+  <data name="Campaign.Issues.DismissalsFull" xml:space="preserve"><value>Это максимальное число отклонённых проблем, которое хранит кампания ({0}). Восстановите несколько из списка отклонённых, прежде чем отклонять новые.</value></data>
   <data name="Campaign.Issues.Open" xml:space="preserve"><value>Открыть</value></data>
   <data name="Campaign.Issues.From" xml:space="preserve"><value>Нашла проверка {0}</value></data>
   <data name="Campaign.Issues.DismissedTitle" xml:space="preserve"><value>Отклонённые ({0})</value></data>

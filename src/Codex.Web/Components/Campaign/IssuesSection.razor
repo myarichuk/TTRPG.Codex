@@ -217,9 +217,18 @@ else
     private async Task DismissAsync(string id)
     {
         var ok = false;
-        await Ctx.WithCurrentRoleAsync(async () => ok = await Issues.DismissAsync(Ctx.Campaign, Ctx.Access, id, note));
+        string? full = null;
+        try
+        {
+            await Ctx.WithCurrentRoleAsync(async () => ok = await Issues.DismissAsync(Ctx.Campaign, Ctx.Access, id, note));
+        }
+        catch (LocalizedException ex) when (ex.Key == "Campaign.Issues.DismissalsFull")
+        {
+            full = L[ex.Key, ex.Args];
+        }
+
         dismissing = null;
-        message = ok ? null : L["Campaign.Issues.DismissFailed"];
+        message = full ?? (ok ? null : L["Campaign.Issues.DismissFailed"]);
         await LoadAsync();
     }
 

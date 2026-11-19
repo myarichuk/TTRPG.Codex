@@ -42,6 +42,22 @@ public class ConsistencySnapshotMapperTests
         Assert.DoesNotContain(ids, id => id.StartsWith("empty-bio:actor:actors/2-A") || id.StartsWith("empty-bio:actor:actors/3-A") || id.Contains("actors/4-A"));
     }
 
+    [Fact]
+    public void AFileWithManyDismissals_KeepsTheMostRecent_AndCutsWhoDidIt()
+    {
+        var max = RavenConsistencyDismissalRepository.MaxEntries;
+        var document = new ConsistencyDismissalsDocument { Id = "x", CampaignId = "other" };
+        for (var i = 0; i < max + 500; i++) document.Dismissed.Add(new IssueDismissal { IssueId = $"a:b:c:d:{i}", DismissedBy = new string('u', 5000) });
+
+        var tidy = document.Sanitized("campaigns/1");
+
+        Assert.Equal(max, tidy.Dismissed.Count);
+        Assert.Equal("a:b:c:d:500", tidy.Dismissed[0].IssueId); // the most recent are kept, in their order
+        Assert.Equal($"a:b:c:d:{max + 499}", tidy.Dismissed[^1].IssueId);
+        Assert.All(tidy.Dismissed, d => Assert.Equal(RavenConsistencyDismissalRepository.MaxDismissedByLength, d.DismissedBy.Length));
+        Assert.Equal("campaigns/1", tidy.CampaignId);
+    }
+
     [Theory]
     [InlineData(null, "off")] // the demo system is not loaded, so it has no sheet rules to enforce
     [InlineData("strict", "strict")]
@@ -128,6 +144,26 @@ public class ConsistencyDismissalTests : IClassFixture<RavenDbFixture>, IDisposa
 
         Assert.True(await _repo.DismissAsync(Dm(a), "same:id:in:both", null));
         Assert.Empty(await _repo.ListAsync(Dm(b)));
+    }
+
+    [Fact]
+    public async Task ADismissalPastTheLimit_IsRefusedInWords_AnOldOneStaysAndRestoringMakesRoom()
+    {
+        var id = await CampaignAsync();
+        // Fill the document the way a long-lived campaign or an import would, then try one more.
+        var document = new ConsistencyDismissalsDocument { Id = ConsistencyDismissalsDocument.IdFor(id), CampaignId = id };
+        for (var i = 0; i < RavenConsistencyDismissalRepository.MaxEntries; i++) document.Dismissed.Add(new IssueDismissal { IssueId = $"a:b:c:d:{i}", DismissedBy = "gm" });
+        await _repo.SaveDocumentAsync(document);
+
+        var full = await Assert.ThrowsAsync<Codex.Localization.LocalizedException>(() => _repo.DismissAsync(Dm(id), "one:too:many:x", null));
+        Assert.Equal("Campaign.Issues.DismissalsFull", full.Key);
+        Assert.Equal(RavenConsistencyDismissalRepository.MaxEntries, full.Args[0]);
+        Assert.Equal(RavenConsistencyDismissalRepository.MaxEntries, (await _repo.ListAsync(Dm(id))).Count);
+        // One already there is still "nothing changes", not "full".
+        Assert.False(await _repo.DismissAsync(Dm(id), "a:b:c:d:0", null));
+
+        Assert.True(await _repo.RestoreAsync(Dm(id), "a:b:c:d:0"));
+        Assert.True(await _repo.DismissAsync(Dm(id), "one:too:many:x", null));
     }
 
     [Fact]

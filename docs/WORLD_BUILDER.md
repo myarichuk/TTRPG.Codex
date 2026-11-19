@@ -326,6 +326,9 @@ the server), so it must be deterministic and quick. A sample is `LongNameCheck` 
 that is not an open issue is refused). The document `ConsistencyDismissals/{campaignId}` holds the ids and the DM's optional note; results are never stored.
 The campaign export carries the document (`CampaignBundle.Dismissals`, null in an older bundle, which restores as it always did and leaves stored dismissals
 alone); importing a bundle replaces the stored document with the file's, tidied like a dismissal made in the app (empty or over-long ids dropped, notes cut).
+The document is bounded: at most 2000 dismissals (`RavenConsistencyDismissalRepository.MaxEntries`) and `DismissedBy` at most 100 characters. An import keeps the most
+recent 2000 (the list is in the order they were made) and cuts the rest of what a crafted file holds; a DM at the limit who dismisses one more is refused in words
+(`Campaign.Issues.DismissalsFull`, en/he/ru) and restores some first.
 Ids of problems that are gone are kept, harmlessly: they apply again if the same problem comes back. Imported as a copy, the ids follow the documents' new ids,
 because an issue id is built from them.
 

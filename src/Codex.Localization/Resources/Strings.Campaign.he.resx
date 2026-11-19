@@ -1376,6 +1376,7 @@
   <data name="Campaign.Issues.DismissNote" xml:space="preserve"><value>למה? (לא חובה)</value></data>
   <data name="Campaign.Issues.DismissConfirm" xml:space="preserve"><value>דחיית הבעיה</value></data>
   <data name="Campaign.Issues.DismissFailed" xml:space="preserve"><value>הבעיה כבר לא פתוחה, ולכן אי אפשר היה לדחות אותה.</value></data>
+  <data name="Campaign.Issues.DismissalsFull" xml:space="preserve"><value>זה המספר המרבי של בעיות שנדחו ושקמפיין שומר ({0}). שחזרו כמה מרשימת הבעיות שנדחו לפני שדוחים עוד.</value></data>
   <data name="Campaign.Issues.Open" xml:space="preserve"><value>פתיחה</value></data>
   <data name="Campaign.Issues.From" xml:space="preserve"><value>נמצא על ידי {0}</value></data>
   <data name="Campaign.Issues.DismissedTitle" xml:space="preserve"><value>נדחו ({0})</value></data>

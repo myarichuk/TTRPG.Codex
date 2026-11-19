@@ -44,9 +44,11 @@ public class ConsistencyDismissalsDocument
             var id = (d?.IssueId ?? string.Empty).Trim();
             if (id.Length == 0 || id.Length > RavenConsistencyDismissalRepository.MaxIdLength || !seen.Add(id)) continue;
             var note = string.IsNullOrWhiteSpace(d!.Note) ? null : d.Note.Trim()[..Math.Min(d.Note.Trim().Length, RavenConsistencyDismissalRepository.MaxNoteLength)];
-            kept.Add(new IssueDismissal { IssueId = id, DismissedBy = d.DismissedBy ?? string.Empty, DismissedAt = d.DismissedAt, Note = note });
+            kept.Add(new IssueDismissal { IssueId = id, DismissedBy = RavenConsistencyDismissalRepository.CutBy(d.DismissedBy), DismissedAt = d.DismissedAt, Note = note });
         }
 
+        // A file may hold any number: the most recent ones (the list is in the order they were made) are kept, so the document stays what the app could have made.
+        if (kept.Count > RavenConsistencyDismissalRepository.MaxEntries) kept = kept.GetRange(kept.Count - RavenConsistencyDismissalRepository.MaxEntries, RavenConsistencyDismissalRepository.MaxEntries);
         return new ConsistencyDismissalsDocument { Id = IdFor(campaignId), CampaignId = campaignId, Dismissed = kept };
     }
 }
@@ -78,6 +80,15 @@ public sealed class RavenConsistencyDismissalRepository(RavenDbService dbService
     public const int MaxIdLength = 400;
     public const int MaxNoteLength = 500;
 
+    /// <summary>The most dismissals one campaign keeps. A campaign has far fewer issues than this; the limit stops a crafted import, or a runaway, from making the
+    /// document (read on every check) as large as the upload allows. A DM at the limit restores some first; an import keeps the most recent ones.</summary>
+    public const int MaxEntries = 2000;
+
+    /// <summary>The longest <see cref="IssueDismissal.DismissedBy"/> kept (a user id).</summary>
+    public const int MaxDismissedByLength = 100;
+
+    internal static string CutBy(string? by) => (by ?? string.Empty) is { Length: > MaxDismissedByLength } over ? over[..MaxDismissedByLength] : by ?? string.Empty;
+
     public async Task<IReadOnlyList<IssueDismissal>> ListAsync(CampaignAccess access)
     {
         if (!access.IsDm || string.IsNullOrEmpty(access.CampaignId)) return Array.Empty<IssueDismissal>();
@@ -96,7 +107,9 @@ public sealed class RavenConsistencyDismissalRepository(RavenDbService dbService
         return await ChangeAsync(current.CampaignId, dismissed =>
         {
             if (dismissed.Any(d => d.IssueId == issueId)) return false;
-            dismissed.Add(new IssueDismissal { IssueId = issueId, DismissedBy = current.UserId, DismissedAt = DateTime.UtcNow, Note = trimmed });
+            // Refused in words, not as "no longer open": the DM has to restore some before setting more aside.
+            if (dismissed.Count >= MaxEntries) throw new Codex.Localization.LocalizedException("Campaign.Issues.DismissalsFull", MaxEntries);
+            dismissed.Add(new IssueDismissal { IssueId = issueId, DismissedBy = CutBy(current.UserId), DismissedAt = DateTime.UtcNow, Note = trimmed });
             return true;
         });
     }
