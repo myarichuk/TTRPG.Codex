@@ -52,6 +52,10 @@ export interface Sheet {
   };
   /** The conditions that hold, those the tracks' thresholds bring included. */
   readonly conditions: readonly ConditionName[];
+  /** Each valued condition's number by name; 0 when it does not hold. */
+  readonly conditionValues: { readonly [key in string]?: number };
+  /** Each of the system's resources and its maximum, by key, as numbers (0 when the sheet has none). */
+  readonly resources: { readonly [key in string]?: number };
 }
 
 /** An event's fields, as the table or the GM gave them: numbers, text, flags, and lists and maps of them. What
@@ -71,7 +75,8 @@ export type Intent =
   | { set: { track: TrackKey; to: number; actor?: string } }
   | { mark: { track: TrackKey; by?: number; level?: number; text?: string; actor?: string } }
   | { clear: { track: TrackKey; by?: number; level?: number; text?: string; actor?: string } }
-  | { condition: { add: ConditionName; actor?: string } | { remove: ConditionName; actor?: string } }
+  /** A valued condition: add with value sets it, add with by raises or lowers it, remove sets it to 0 (always within 0 and its maximum). */
+  | { condition: { add: ConditionName; value?: number; by?: number; actor?: string } | { remove: ConditionName; actor?: string } }
   | { set: { list: "skills" | "implants" | "armor"; key: string; field: string; to: Plain; actor?: string } }
   | { adjust: { list: "skills" | "implants" | "armor"; key: string; field: string; by: number; actor?: string } }
   | { roll: { definition: RollKey; actor?: string; [input: string]: unknown } }

@@ -37,6 +37,10 @@
                         <span class="pill ms-1" title="@L["Page.About.ContainsCompiledCodeHint"]" data-testid="about-system-compiled">@L["Page.About.ContainsCompiledCode"]</span>
                     }
                 </h3>
+                @if (system.ScriptsLeftOut is { Count: > 0 })
+                {
+                    <ScriptsOffNote Pill="true" Link="mayReload" Class="mb-1" TestId="about-system-scripts-off" />
+                }
                 @if (Loader.LoadProblems.Any(p => string.Equals(p.SystemId, system.Id, StringComparison.OrdinalIgnoreCase)))
                 {
                     <a class="small" href="/about#problems-@system.Id"><LucideIcon IconName="alert-triangle" Size="14" /> @L["Page.About.HasProblems"]</a>
@@ -220,6 +224,7 @@
     private ConfirmDialog? confirm;
     private System.Security.Claims.ClaimsPrincipal? user;
     private bool mayInstall;
+    private bool mayReload;
     private bool removing;
     private Flash? flash;
 
@@ -227,6 +232,7 @@
     {
         user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
         mayInstall = Installer.MayInstall(user);
+        mayReload = Installer.MayReload(user);
     }
 
     /// <summary>Removes an installed system once asked: its campaigns become read-only until it is installed again.</summary>

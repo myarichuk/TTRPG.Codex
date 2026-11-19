@@ -91,7 +91,7 @@ a program on that computer.
 | `Codex:Systems:InstallDirectory` | Where systems installed from the app live. Default: `Systems` beside the data folder. |
 | `Codex:Systems:GmInstall` | `true` lets anyone signed in install and remove systems, not only the server admin; never while the server is open to the internet. |
 | `Codex:Systems:Watch` | `true` reloads the systems by itself when a file under a content root changes. Default: on in Development, off otherwise. |
-| `Codex:Systems:Scripts` | `false` turns system scripts off: a system that names one does not load, and an upload with one is refused. |
+| `Codex:Systems:Scripts` | `false` turns system scripts off (default on): a system that names one still loads, without its scripts, and the Game Master does those rules by hand. The admin page has the same switch, and its choice wins. |
 | `Codex:AdminUsername` | The account that is server admin, by name. Without it, the first account made on the server's own computer is. |
 | `Authentication:EnableLocalLogin` | `false` hides the name-and-password sign-in, leaving only the external providers configured under `Authentication:`. |
 | `Codex:DefaultCulture` | The language for a visitor who has not picked one (`en`, `he`, `ru`); without it the browser's language decides. *Launcher.* |

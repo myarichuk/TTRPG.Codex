@@ -121,7 +121,7 @@ public sealed class SystemInstallTests : IDisposable
     }
 
     [Fact]
-    public async Task Scripts_WhenTheServerHasThemOff_RefuseTheArchive()
+    public async Task Scripts_WhenTheServerHasThemOff_AreAWarning_AndTheArchiveStillInstalls()
     {
         var zip = new[] { ("system.yaml", System("street", extra: "functions:\n  twice: { script: rules.js#twice }\n")), ("rules.js", "export function twice(x) { return 2 * x; }\n") };
 
@@ -130,7 +130,14 @@ public sealed class SystemInstallTests : IDisposable
 
         Assert.True(on.CanInstall);
         Assert.True(on.NamesScripts);
-        Assert.Contains(off.Errors, e => e.Contains("rules.js") && e.Contains("scripts turned off"));
+        Assert.Empty(on.Warnings);
+        Assert.Empty(off.Errors);
+        Assert.True(off.CanInstall);
+        Assert.True(off.NamesScripts);
+        var warning = Assert.Single(off.Warnings);
+        Assert.Contains("rules.js", warning);
+        Assert.Contains("scripts turned off", warning);
+        Assert.Contains("by hand", warning);
     }
 
     [Fact]
@@ -286,6 +293,50 @@ public sealed class SystemInstallTests : IDisposable
         Assert.DoesNotContain("street", loader.LoadedSystemIds);
         Assert.False(Directory.Exists(Path.Combine(installer.Root, "street")));
         Assert.False(Directory.Exists(Path.Combine(installer.Root, ".trash")) && Directory.EnumerateFileSystemEntries(Path.Combine(installer.Root, ".trash")).Any());
+    }
+
+    [Fact]
+    public void TheScriptsSetting_FollowsTheConfigurationUntilTheAdminChoosesOne()
+    {
+        var none = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
+        var off = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { [SystemInstaller.ScriptsKey] = "false" }).Build();
+
+        Assert.True(SystemInstaller.ScriptsOn(none, new ServerSettingsDocument()));
+        Assert.False(SystemInstaller.ScriptsOn(off, new ServerSettingsDocument()));
+        Assert.True(SystemInstaller.ScriptsOn(off, new ServerSettingsDocument { SystemScripts = true }));
+        Assert.False(SystemInstaller.ScriptsOn(none, new ServerSettingsDocument { SystemScripts = false }));
+        Assert.Null(new ServerSettingsDocument().Copy().SystemScripts);
+        Assert.False(new ServerSettingsDocument { SystemScripts = false }.Copy().SystemScripts);
+        Assert.Contains("system scripts: as the server's configuration says → off", Codex.Web.SettingsChange.Describe(new ServerSettingsDocument(), new ServerSettingsDocument { SystemScripts = false }));
+    }
+
+    [Fact]
+    public async Task SavingTheScriptsSetting_ReloadsTheSystemsWithOrWithoutTheirScripts_AndOnlyForTheAdmin()
+    {
+        var (installer, loader, shipped) = await Server();
+        Directory.CreateDirectory(Path.Combine(shipped, "scripted"));
+        File.WriteAllText(Path.Combine(shipped, "scripted", "system.yaml"), System("scripted", extra: "events:\n  poke: { script: rules.js#poke }\n"));
+        File.WriteAllText(Path.Combine(shipped, "scripted", "rules.js"), "export function poke() { return []; }\n");
+        Assert.True((await installer.ReloadAsync(Admin)).Succeeded);
+        Assert.Empty(loader.GetDefinition("scripted")!.ScriptsLeftOut);
+
+        Assert.False((await installer.ApplyScriptsSettingAsync(new ServerSettingsDocument { SystemScripts = false }, User("gm"))).Succeeded);
+        Assert.True(loader.ScriptsAllowed);
+
+        var off = await installer.ApplyScriptsSettingAsync(new ServerSettingsDocument { SystemScripts = false }, Admin);
+        Assert.True(off.Succeeded, off.Error);
+        Assert.False(loader.ScriptsAllowed);
+        Assert.False(installer.ScriptsAllowed);
+        Assert.Equal(new[] { "rules.js#poke" }, loader.GetDefinition("scripted")!.ScriptsLeftOut);
+        Assert.DoesNotContain("poke", loader.GetDefinition("scripted")!.Events.Keys);
+
+        // Saving the same choice again does nothing; going back to "follow the configuration" (on) loads the scripts again.
+        Assert.Null((await installer.ApplyScriptsSettingAsync(new ServerSettingsDocument { SystemScripts = false }, Admin)).Reload);
+        var on = await installer.ApplyScriptsSettingAsync(new ServerSettingsDocument(), Admin);
+        Assert.True(on.Succeeded, on.Error);
+        Assert.True(loader.ScriptsAllowed);
+        Assert.Empty(loader.GetDefinition("scripted")!.ScriptsLeftOut);
+        Assert.Contains("poke", loader.GetDefinition("scripted")!.Events.Keys);
     }
 
     [Fact]

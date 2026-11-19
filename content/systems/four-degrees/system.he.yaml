@@ -339,6 +339,17 @@ values:
   Character: דמות
   Trinkets: קמעות
   Gear: ציוד
+  Hero Points: נקודות גבורה
+  Recovery check: בדיקת התאוששות
+  DC 11: דרגת קושי 11
+  DC 12: דרגת קושי 12
+  DC 13: דרגת קושי 13
+  Critical success: הצלחה קריטית
+  Success: הצלחה
+  Failure: כישלון
+  Critical failure: כישלון קריטי
+  Dead: מת
+  turnStart: תחילת התור
 
 sheetRules:
   boostSources:

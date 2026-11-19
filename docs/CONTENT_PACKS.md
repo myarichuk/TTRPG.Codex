@@ -412,8 +412,12 @@ copy does not load, the old one is put back.
 
 - **Who.** The server's admin. With `Codex:Systems:GmInstall: true`, anyone signed in, except while the server is open to the
   internet. Reloading is the admin's alone.
-- **Scripts.** `Codex:Systems:Scripts: false` turns scripts off: an upload naming one is refused, and an installed system
-  naming one does not load (About says why).
+- **Scripts.** The admin page has a switch, "Let game systems run their scripts" (it follows `Codex:Systems:Scripts`, on by
+  default, until the admin chooses). With scripts off, a system that names one still loads, and so does an upload: its script
+  events do nothing, its script functions give 0, and the Game Master does those rules by hand. About says so for each such
+  system (a "Scripts off" line, and for the admin a link to the switch), as do the install panel and the new-campaign dialog.
+  Saving the switch reloads the systems; no restart. A table that is already running keeps the rules it started with until it
+  ends, so a change shows at the next table.
 - **Compiled code** is never uploaded. A system with a DLL is installed by copying its folder onto the server, by whoever
   runs it; About > *Reload systems* then picks it up without a restart.
 - **What the app may change.** Only systems in its own install folder. One shipped with the app or copied into another

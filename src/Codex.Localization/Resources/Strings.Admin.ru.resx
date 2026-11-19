@@ -119,6 +119,10 @@
   <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} из {1}</value></data>
   <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>Место на учётную запись, МБ</value></data>
   <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Изображения и файлы: обложки, портреты, иллюстрации, картинки книги и копии веб-файлов книги. Всё в кампании засчитывается её владельцу, кто бы это ни добавил. Оставьте пустым, чтобы не ограничивать. Собственный лимит учётной записи, заданный в её строке выше, заменяет этот.</value></data>
+  <data name="Admin.Settings.Scripts" xml:space="preserve"><value>Скрипты игровых систем</value></data>
+  <data name="Admin.Settings.Scripts.Switch" xml:space="preserve"><value>Разрешить игровым системам запускать свои скрипты</value></data>
+  <data name="Admin.Settings.Scripts.Hint" xml:space="preserve"><value>Некоторые игровые системы содержат небольшие скрипты для правил, которые не описать обычными данными, например проверку восстановления в начале хода. Скрипты работают в закрытой песочнице: они не могут читать ваши файлы, выходить в интернет и видеть чужие кампании, а если работают слишком долго, их останавливают. Риск в том, что система, которой вы не доверяете, может давать неверные результаты в ваших играх. Если скрипты выключены, такие системы всё равно загружаются, а мастер выполняет скриптовые правила вручную. Уже идущий стол сохраняет правила, с которыми начал, до своего конца; новые столы используют новый выбор.</value></data>
+  <data name="Admin.Settings.Scripts.ReloadFailed" xml:space="preserve"><value>Ваш выбор сохранён, но системы не удалось перезагрузить: {0}</value></data>
   <data name="Admin.Accounts.StorageCounting" xml:space="preserve"><value>подсчёт…</value></data>
   <data name="Admin.Accounts.Delete.StillOwns" xml:space="preserve"><value>{0} создал кампанию во время удаления. Учётная запись отключена; удалите её ещё раз, чтобы передать и эту кампанию.</value></data>
   <data name="Admin.Log.DeletedOwn" xml:space="preserve"><value>{0} удалил(а) свою учётную запись</value></data>

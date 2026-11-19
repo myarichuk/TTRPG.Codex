@@ -123,6 +123,10 @@ else
                 {
                     <div class="field-hint">@description</div>
                 }
+                @if (SelectedSystem?.ScriptsLeftOut is { Count: > 0 })
+                {
+                    <ScriptsOffNote Class="field-hint" TestId="new-campaign-scripts-off" />
+                }
                 @if (Loader.FailedSystems.Count > 0)
                 {
                     @* A system with a broken system.yaml is not in the list above; say which, so the GM doesn't hunt for it. *@

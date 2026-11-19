@@ -294,6 +294,9 @@
   <data name="Page.About.InstallHint" xml:space="preserve"><value>A system is a zip of its folder: system.yaml, its translations, scripts and content packs, at most {0} MB. It is checked before anything is installed. A system with compiled code (DLLs) cannot be uploaded: whoever runs the server copies its folder there.</value></data>
   <data name="Page.About.InstallChoose" xml:space="preserve"><value>Choose a system zip</value></data>
   <data name="Page.About.InstallScripts" xml:space="preserve"><value>scripts</value></data>
+  <data name="Page.About.ScriptsOff" xml:space="preserve"><value>Scripts off</value></data>
+  <data name="Page.About.ScriptsOffHint" xml:space="preserve"><value>Some of this system's rules are done by hand, because scripts are turned off on this server.</value></data>
+  <data name="Page.About.ScriptsTurnOn" xml:space="preserve"><value>Turn on scripts</value></data>
   <data name="Page.About.InstallPacks" xml:space="preserve"><value>{0} content pack(s)</value></data>
   <data name="Page.About.InstallReplaces" xml:space="preserve"><value>Replaces the installed version {0}, which {1} campaign(s) play under. They play under the new version from now on, and each GM is told what changed. A table that is running keeps the old version until it ends.</value></data>
   <data name="Page.About.InstallSame" xml:space="preserve"><value>It is the same as the installed version.</value></data>

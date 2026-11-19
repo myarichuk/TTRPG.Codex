@@ -69,6 +69,7 @@ public static class SettingsChange
         if (before.CampaignCreation != after.CampaignCreation) parts.Add($"campaigns: {before.CampaignCreation} → {after.CampaignCreation}");
         if (before.ServerAi != after.ServerAi) parts.Add($"server AI key: {before.ServerAi?.ToString() ?? "as before"} → {after.ServerAi?.ToString() ?? "as before"}");
         if (before.StorageLimitMb != after.StorageLimitMb) parts.Add($"storage per account: {Mb(before.StorageLimitMb)} → {Mb(after.StorageLimitMb)}");
+        if (before.SystemScripts != after.SystemScripts) parts.Add($"system scripts: {Scripts(before.SystemScripts)} → {Scripts(after.SystemScripts)}");
         if (before.WebFetch != after.WebFetch) parts.Add($"fetching: {before.WebFetch} → {after.WebFetch}");
         var added = after.FetchSites.Except(before.FetchSites, StringComparer.Ordinal).ToList();
         var removed = before.FetchSites.Except(after.FetchSites, StringComparer.Ordinal).ToList();
@@ -77,6 +78,8 @@ public static class SettingsChange
         if (before.SetupDone != after.SetupDone && after.SetupDone) parts.Add("setup finished");
         return parts.Count == 0 ? null : string.Join("; ", parts);
     }
+
+    private static string Scripts(bool? on) => on switch { true => "on", false => "off", null => "as the server's configuration says" };
 
     private static string Mb(int? limit) => limit is { } mb ? $"{mb} MB" : "no limit";
 }

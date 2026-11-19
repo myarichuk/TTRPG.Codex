@@ -76,7 +76,7 @@ public static partial class SheetEvents
     /// <summary>The handlers built in, by name, with the options each reads (see <see cref="Damage"/>).</summary>
     public static readonly IReadOnlyList<string> Builtins = new[] { "damage" };
 
-    private static readonly string[] NumberFields = { "by", "to", "level", "slot" };
+    private static readonly string[] NumberFields = { "by", "to", "level", "slot", "value" };
 
     /// <summary>Fields that name something and are never formulas: a log line's translation key (<c>Harm.Taken</c>), a roll's
     /// definition, who is asked.</summary>
@@ -249,7 +249,8 @@ public static partial class SheetEvents
     /// <c>values</c> (every value of the sheet kind, keyed-list entries as <c>skills.handgun</c>); <c>tracks</c> (each track's
     /// current number, or for a slot track what its slots hold); <c>lists</c> (a keyed list as a map by key, each entry its fields
     /// and derived values; a list of picks as an array of its entries, each with its <c>id</c> and fields); and
-    /// <c>conditions</c> (those that hold, thresholds' included).
+    /// <c>conditions</c> (those that hold, thresholds' included); <c>conditionValues</c> (each valued condition's number by name, 0 when it
+    /// does not hold); and <c>resources</c> (each of the system's resources and its maximum, by key, as numbers).
     /// </summary>
     internal static Dictionary<string, object?> ScriptView(SystemDefinition system, SheetModel model, IReadOnlyDictionary<string, object> sheet)
     {
@@ -303,6 +304,21 @@ public static partial class SheetEvents
             }
         }
 
+        // Every valued condition by name, 0 when it does not hold; every resource and its maximum, by key (0 when the sheet has none).
+        var conditionValues = new Dictionary<string, object?>(StringComparer.Ordinal);
+        foreach (var (name, key, _) in SheetConditions.Valued(system))
+        {
+            conditionValues[name] = Math.Max(0, YamlValues.ToNumber(sheet.GetValueOrDefault(key)) ?? 0);
+        }
+
+        var resources = new Dictionary<string, object?>(StringComparer.Ordinal);
+        foreach (var resource in system.Resources)
+        {
+            resources[resource.Key] = YamlValues.ToNumber(sheet.GetValueOrDefault(resource.Key)) ?? 0;
+            var maxKey = system.MaxKeyOf(resource.Key);
+            resources[maxKey] = YamlValues.ToNumber(sheet.GetValueOrDefault(maxKey)) ?? 0;
+        }
+
         return new Dictionary<string, object?>(StringComparer.Ordinal)
         {
             ["kind"] = model.Kind?.Kind,
@@ -310,7 +326,9 @@ public static partial class SheetEvents
             ["values"] = evaluated.Values.ToDictionary(v => v.Key, v => (object?)v.Value, StringComparer.Ordinal),
             ["tracks"] = tracks,
             ["lists"] = lists,
-            ["conditions"] = evaluated.Conditions.Cast<object?>().ToList()
+            ["conditions"] = evaluated.Conditions.Cast<object?>().ToList(),
+            ["conditionValues"] = conditionValues,
+            ["resources"] = resources
         };
     }
 

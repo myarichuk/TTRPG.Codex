@@ -27,9 +27,14 @@ public class PluginLoader(
     public Exception? LoadException { get; private set; }
     public IReadOnlySet<string> LoadedSystemIds { get; private set; } = new HashSet<string>();
 
-    /// <summary>Whether a system may name scripts (<c>Codex:Systems:Scripts</c>, overhaul section 4, rule 7). Off, a system
-    /// that names one does not load, and says why: its rules would be missing a part, which is worse than not having it.</summary>
+    /// <summary>Whether a system's scripts run (the admin setting, else <c>Codex:Systems:Scripts</c>; overhaul section 4, rule 7). Off, a
+    /// system that names scripts still loads, without them, and says so (<see cref="ScriptsLeftOutMessage"/>): the table does those rules by hand.
+    /// It takes effect on the next load or <see cref="ReloadAsync"/>.</summary>
     public bool ScriptsAllowed { get; set; } = true;
+
+    /// <summary>The warning for a system loaded without its scripts: what was left out, and that the table does it by hand.</summary>
+    public static string ScriptsLeftOutMessage(IReadOnlyList<string> references) =>
+        $"loaded without its scripts ({string.Join(", ", references)}): this server has scripts turned off, so those rules are done by hand.";
 
     /// <summary>How many times the systems have been loaded: 1 after the start, one more for each <see cref="ReloadAsync"/>.</summary>
     public int Generation { get; private set; }
@@ -72,7 +77,8 @@ public class PluginLoader(
 
     public IEnumerable<SystemSummary> Systems => _pluginsBySystemId.Values
         .Select(p => new SystemSummary(p.SystemId, p.DisplayName, p.Definition?.Description, p.Definition?.Compatibility, p.Definition?.License, p is DataDrivenSystemPlugin,
-            p is not DataDrivenSystemPlugin || (p.Definition != null && Rules.CompiledSuppliers.Names(p.Definition)), GetFingerprint(p.SystemId)?.Version))
+            p is not DataDrivenSystemPlugin || (p.Definition != null && Rules.CompiledSuppliers.Names(p.Definition)), GetFingerprint(p.SystemId)?.Version,
+            p.Definition?.ScriptsLeftOut is { Count: > 0 } left ? left : null))
         .OrderBy(s => s.Name, StringComparer.OrdinalIgnoreCase)
         .ToList();
 
@@ -298,12 +304,10 @@ public class PluginLoader(
                         continue;
                     }
 
-                    if (!ScriptsAllowed && Rules.SystemScripts.FilesNamed(definition).ToList() is { Count: > 0 } scripts)
+                    // Scripts turned off: the system still loads, without them (its events do nothing and its script functions give 0), and says so.
+                    if (!ScriptsAllowed && Rules.SystemScripts.LeaveOut(definition) is { Count: > 0 } left)
                     {
-                        var stated = $"names scripts ({string.Join(", ", scripts)}), and this server has scripts turned off (Codex:Systems:Scripts).";
-                        failedSystems.Add(new FailedSystem(definition.Id, definition.Name, new[] { stated }, systemFile));
-                        Warn(new LoadProblem(LoadProblemSource.System, definition.Name, $"did not load: it {stated}", definition.Id, systemFile));
-                        continue;
+                        Warn(new LoadProblem(LoadProblemSource.System, definition.Name, ScriptsLeftOutMessage(left), definition.Id, systemFile));
                     }
 
                     if (unknownKeys.Count > 0)

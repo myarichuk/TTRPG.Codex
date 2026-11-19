@@ -240,6 +240,37 @@ public sealed class SystemInstaller
         }
     }
 
+    public const string ScriptsKey = "Codex:Systems:Scripts";
+
+    /// <summary>Whether systems run their scripts now (the loader's setting): off, a system that names scripts loads without them.</summary>
+    public bool ScriptsAllowed => _loader.ScriptsAllowed;
+
+    /// <summary>Whether systems run their scripts: the admin's choice (<see cref="ServerSettingsDocument.SystemScripts"/>) when there is one, else
+    /// <c>Codex:Systems:Scripts</c>, else on.</summary>
+    public static bool ScriptsOn(IConfiguration configuration, ServerSettingsDocument settings) =>
+        settings.SystemScripts ?? configuration.GetValue(ScriptsKey, true);
+
+    /// <summary>Makes the loader follow the stored setting, and reloads the systems when that changes what it does, so the admin's choice takes effect
+    /// with no restart. The admin's alone, like any reload.</summary>
+    public async Task<SystemInstallResult> ApplyScriptsSettingAsync(ServerSettingsDocument settings, ClaimsPrincipal user)
+    {
+        if (!MayReload(user)) return SystemInstallResult.Fail("Only the server's admin changes whether systems run their scripts.");
+        var on = ScriptsOn(_configuration, settings);
+        // Under the gate with installs, removals and reloads, so none of them reads the flag half way through a load, and two saves cannot race.
+        await _gate.WaitAsync();
+        try
+        {
+            if (_loader.ScriptsAllowed == on) return new SystemInstallResult(true, null);
+            _loader.ScriptsAllowed = on;
+            var reload = await _loader.ReloadAsync();
+            return reload.Error == null ? new SystemInstallResult(true, null, reload) : SystemInstallResult.Fail(reload.Error);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     /// <summary>A reload the server starts itself, when files under the content roots changed (<see cref="SystemsWatcher"/>,
     /// <c>Codex:Systems:Watch</c>): no one asked, so no rights apply. It waits its turn with installs and removals, so it never
     /// reads a folder one of them is moving.</summary>

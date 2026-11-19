@@ -79,6 +79,10 @@ public class ServerSettingsDocument
     /// server until the admin sets one, is no limit.</summary>
     public int? StorageLimitMb { get; set; }
 
+    /// <summary>Whether game systems may run their scripts. Null, as on every server until the admin chooses, follows <c>Codex:Systems:Scripts</c>
+    /// (on by default); a value here wins over it.</summary>
+    public bool? SystemScripts { get; set; }
+
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public ServerSettingsDocument Copy() => new()
@@ -91,6 +95,7 @@ public class ServerSettingsDocument
         FetchSites = FetchSites.ToList(),
         ServerAi = ServerAi,
         StorageLimitMb = StorageLimitMb,
+        SystemScripts = SystemScripts,
         UpdatedAt = UpdatedAt
     };
 

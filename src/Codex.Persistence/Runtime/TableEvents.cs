@@ -285,6 +285,16 @@ internal static class TableEvents
         }
 
         var live = SheetConditions.LiveView(system, doc.Sheet, numericPools, statuses, numeric);
+        // The resources (hit points and their maximum) as the table has them, for a handler to read. No intent changes a resource, so nothing here is written back.
+        foreach (var resource in system.Resources)
+        {
+            foreach (var key in new[] { resource.Key, system.MaxKeyOf(resource.Key) })
+            {
+                if (pool.Pools.TryGetValue(key, out var held)) live[key] = (long)held;
+            }
+        }
+
+        var valuedKeys = SheetConditions.Valued(system).ToDictionary(v => v.Key, v => v.Condition, StringComparer.Ordinal);
         var before = SheetRuleEngine.RawList(live, SheetModel.ConditionsKey);
 
         var result = act(live);
@@ -318,6 +328,17 @@ internal static class TableEvents
                 if (own.Count == 0) doc.Sheet.Remove(SheetModel.ConditionsKey);
                 else doc.Sheet[SheetModel.ConditionsKey] = own.Cast<object>().ToList();
                 runtime.SheetKeyWritten(actorId, SheetModel.ConditionsKey);
+                continue;
+            }
+
+            // A valued condition's number: the table keeps it in the pool, and the sheet mirrors it (ActorSheetSync).
+            if (valuedKeys.TryGetValue(key, out var valued))
+            {
+                var level = YamlValues.GetInt(live, key) ?? 0;
+                pool.Set(key, level);
+                doc.Sheet[key] = (long)level;
+                messages.Add(level == 0 ? EventMessage.Of("Condition.None", name, EventTerm.Condition(valued)) : EventMessage.Of("Condition.Level", name, EventTerm.Condition(valued), level));
+                runtime.SheetKeyWritten(actorId, key);
                 continue;
             }
 
@@ -384,7 +405,7 @@ internal static class TableEvents
                 return EventMessage.Of("Campaign.ClockFull", ClockTerm(CampaignObjects.Clocks(runtime.CampaignObjectState).FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase)), name));
             case SheetEvents.LogKind:
                 var args = intent.Fields.GetValueOrDefault("args") is IEnumerable values and not string
-                    ? values.Cast<object?>().Select(a => a?.ToString() ?? "").Select(a => runtime.GetActorDocument(a)?.Name ?? a).ToArray()
+                    ? values.Cast<object?>().Select(a => a?.ToString() ?? "").Select(a => runtime.GetActorDocument(a)?.Name ?? system.DisplayValue(a)).ToArray()
                     : Array.Empty<string>();
                 var key = intent.Fields.GetValueOrDefault("key")?.ToString() ?? "";
                 return EventMessage.Of("Sheet.Log", who, Term(system, key), string.Join(", ", args));
