@@ -1,0 +1,119 @@
+using System.Globalization;
+using Codex.Core.Rules;
+using Codex.Plugin.Abstractions;
+
+namespace Codex.Core.Consistency;
+
+/// <summary>
+/// A character with nothing in its inventory whose class, background or the like brings starting gear. Info: a gold-only start
+/// is legal, and the free text of a starting kit is not parsed, only noticed. Characters of the table only (not bestiary creatures, not
+/// retired ones), and only in a system whose sheet has an inventory.
+/// </summary>
+public sealed class EmptyInventoryCheck : IConsistencyCheck
+{
+    public string Name => CheckNames.EmptyInventory;
+
+    /// <summary>The entry properties that hold a starting kit, as the bundled systems name them.</summary>
+    private static readonly string[] KitProperties = { "startingEquipment", "equipment" };
+
+    public IEnumerable<Issue> Run(WorldSnapshot s)
+    {
+        if (s.System?.SheetRules?.Inventory is not { } inventory) yield break;
+        var references = s.System.ActorFields.Where(f => f.Type == FieldType.EntityReference && !string.IsNullOrEmpty(f.TargetEntityType)).ToList();
+
+        foreach (var a in s.Actors.Where(a => a.Role != ActorRole.Monster && !a.Retired))
+        {
+            if (SheetRuleEngine.RawList(a.Sheet, inventory.Key).Count > 0) continue;
+            var sources = new List<string>();
+            foreach (var field in references)
+            {
+                if (YamlValues.GetString(a.Sheet, field.Key) is not { Length: > 0 } id) continue;
+                if (s.Library.Resolve(field.TargetEntityType!, id) is not { } entry) continue;
+                if (KitProperties.Any(k => entry.Properties.TryGetValue(k, out var kit) && !string.IsNullOrWhiteSpace(Convert.ToString(kit, CultureInfo.InvariantCulture)))) sources.Add(entry.Name);
+            }
+
+            if (sources.Count == 0) continue;
+            sources.Sort(StringComparer.Ordinal);
+            yield return Make.Issue(Name, IssueSeverity.Info, "actor", a.Id, inventory.Key, null, "Consistency.EmptyInventory",
+                new[] { a.Name, string.Join(", ", sources) },
+                $"\"{Make.Quote(a.Name)}\" carries nothing, though {string.Join(" and ", sources.Select(Make.Quote))} bring starting equipment.",
+                "Ask the DM whether the character starts with gold instead, or what they carry. A sheet cannot be changed through a proposal yet, so tell the DM; do not invent gear.",
+                FixVia.ReportOnly);
+        }
+    }
+}
+
+/// <summary>
+/// What the system's own sheet rules say about a saved character, as issues: the rules engine already knows the constraints, limits and
+/// multiclass rules of every system, so this reuses its verdicts instead of restating them. Its violations are errors and its warnings
+/// are warnings. Characters of the table only; a retired one is skipped; nothing is reported where the campaign's enforcement is
+/// <c>off</c>. How ability scores were bought is not checked here (the point-buy keys are left out).
+/// </summary>
+public sealed class SheetRuleCheck : IConsistencyCheck
+{
+    public string Name => CheckNames.SheetRule;
+
+    public IEnumerable<Issue> Run(WorldSnapshot s)
+    {
+        if (s.System?.SheetRules == null || s.Enforcement == "off") yield break;
+        var engine = new SheetRuleEngine(s.System, s.Library);
+
+        foreach (var a in s.Actors.Where(a => a.Role != ActorRole.Monster && !a.Retired))
+        {
+            var (evaluation, failure) = Evaluate(engine, a);
+            if (evaluation == null)
+            {
+                yield return Make.Issue(Name, IssueSeverity.Info, "actor", a.Id, "sheet", "evaluation-failed", "Consistency.SheetEvaluationFailed",
+                    new[] { a.Name, failure! },
+                    $"The sheet rules could not be evaluated for \"{Make.Quote(a.Name)}\" ({failure}).",
+                    "Nothing to propose; tell the DM the sheet could not be read.", FixVia.ReportOnly);
+                continue;
+            }
+
+            foreach (var issue in Issues(a, evaluation.Violations, IssueSeverity.Error).Concat(Issues(a, evaluation.Warnings, IssueSeverity.Warning))) yield return issue;
+        }
+    }
+
+    // One bad sheet must not hide every other character's issues; it becomes an issue of its own. Not in the iterator: it cannot yield from a catch.
+    private static (SheetEvaluation? Evaluation, string? Failure) Evaluate(SheetRuleEngine engine, ActorView actor)
+    {
+        try
+        {
+            // Recompute writes the values it derives onto the sheet it is given: a copy, so the snapshot stays as it was taken.
+            return (engine.Recompute(new Dictionary<string, object>(actor.Sheet)), null);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return (null, e.GetType().Name);
+        }
+    }
+
+    private IEnumerable<Issue> Issues(ActorView actor, IEnumerable<RuleViolation> violations, IssueSeverity severity)
+    {
+        foreach (var v in violations)
+        {
+            if (v.Key != null && v.Key.StartsWith("Actor.Rule.PointBuy", StringComparison.Ordinal)) continue;
+            var args = (v.Args ?? Array.Empty<object?>()).Select(ArgText).ToList();
+            var detail = (v.Key ?? "rule") + (args.Count > 0 ? ":" + Slug(string.Join(' ', args)) : v.Key == null ? ":" + Slug(v.Message) : string.Empty);
+            yield return Make.Issue(Name, severity, "actor", actor.Id, v.FieldKey, detail, v.Key ?? "Consistency.SheetRule", args,
+                v.Message,
+                "A sheet cannot be changed through a proposal yet. Tell the DM which rule the sheet breaks; do not guess a value.",
+                FixVia.ReportOnly);
+        }
+    }
+
+    private static string ArgText(object? arg) => arg switch
+    {
+        null => string.Empty,
+        ContentEntry e => e.Name,
+        IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
+        _ => arg.ToString() ?? string.Empty
+    };
+
+    // A short readable stand-in for a sentence in an id: the slug of its words, cut so an id stays one line.
+    private static string Slug(string text)
+    {
+        var slug = WikiText.Slugify(text);
+        return slug.Length > 60 ? slug[..60].TrimEnd('-') : slug;
+    }
+}

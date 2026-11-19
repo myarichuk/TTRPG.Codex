@@ -194,3 +194,43 @@ scoped to one campaign, GM-only, revocable and off by default.
 - A chat is not shared between co-DMs, and two tabs on one chat save over each other (the last save wins).
 - Changing a homebrew entry's type, or deleting anything, is not a proposal kind.
 - Export by tag covers homebrew; wiki pages carry tags but are not part of a pack.
+
+## 9. The consistency checker
+
+The model never decides whether something is broken. A checker in code (`Codex.Core.Consistency`) reads one snapshot of the campaign
+and returns typed issues; the model is handed them and proposes fixes. No check calls a model, a clock or a random number, and
+the same data gives the same issues in the same order (`ConsistencyChecker.Run`, tests in `tests/Codex.Tests/Consistency`).
+
+**An issue** is `{ id, check, severity (error|warning|info), entity_kind, entity_id, field, code, args, message, fix_hint, bundle, fix_via }`.
+`id` is `check:kind:entityId:field[:detail]`, built from document ids and never from a slug or a title, so it survives a rename;
+two issues that would share one are numbered `~2`, `~3`. `code` and `args` are for the app to show the sentence in the reader's
+language; `message` and `fix_hint` are English, for the model. `bundle` groups a screen or a list by entity. `fix_via` says which
+kind of proposal can fix it (`page`, `place`, `fact`, `actor-biography`), or `report-only`: the review gate cannot change an actor's
+sheet or a page's structural links, so those are for the DM.
+
+**Checks (v1).**
+
+| Check | Finds | Severity |
+|---|---|---|
+| `broken-link` | `[[Title]]` in a page or a fact that reaches no page; the hint names a page that would match if articles and doubled words were ignored (`[[The the Mere of Dead Men]]`) | warning |
+| `unlinked-mention` | a page's text naming another page in plain words (two words or more, a capital or three words), where a link was meant; not when the page already links it, never from a party page to a DM-only one | warning |
+| `visibility-leak` | a party page linking a DM-only page (players see the words without the link, or nothing if it has no label); links inside DM blocks do not count | warning |
+| `dangling-mention` | `[[actor:id]]` / `[[place:id]]` whose target is gone, in any text; a retired character still exists | error |
+| `dangling-reference` | a page's `ActorId`/`PlaceId`, a character's or place's `WikiPageId`, naming a document that is gone | error, report-only |
+| `empty-bio`, `empty-body`, `todo-marker` | nothing written; placeholder words. Never filled in by a model | info |
+| `empty-inventory` | no gear where a class or background entry carries a starting kit (`startingEquipment` / `equipment`); the free text is noticed, not parsed | info, report-only |
+| `secret-unclosed`, `secret-unknown-audience`, `secret-for-missing` | a `:::` block never closed; an opening word the app does not know (it is treated as DM-only); a `:::for` block naming nobody or a character who is gone | warning |
+| `sheet-rule` | what the system's own sheet rules say about a saved character (`SheetRuleEngine.Recompute` on a copy): violations are errors, warnings are warnings. Not for retired characters or bestiary creatures, nothing when the campaign's enforcement is `off`, and the point-buy rules are left out | error / warning, report-only |
+
+A system reaches this today through its own `sheetRules` (constraints, lists, multiclass, `SheetCheckDefinition` formulas), which
+the `sheet-rule` check surfaces. Later, a system may add checks of its own over world data (`issueChecks` in `system.yaml`, the same
+formula engine) and, if that is not enough, a compiled check named like an `ICodexFunction`.
+
+**Dismissals.** A red link that is meant to stay red is dismissed by the DM, and only the DM (`ConsistencyService.DismissAsync`; an id
+that is not an open issue is refused). The document `ConsistencyDismissals/{campaignId}` holds the ids; results are never stored.
+
+**Fixes** are proposals through the review gate that name the issue ids they resolve. Built and tested, not yet wired into the gate:
+`ConsistencyChecker.UnknownIds` finds the claimed ids that are not open issues (the gate will refuse a proposal naming any, whole),
+and `ConsistencyChecker.Compare` reports, from the code's own before and after, which claimed ids are resolved, which are still open,
+which never existed, and what is new; the model's claim of resolution is never trusted. Still to do: the `list_issues(scope?, severity?)`
+tool (results fenced like the other data tools), the `resolves` field on a proposal, and the re-check and note after an apply.
