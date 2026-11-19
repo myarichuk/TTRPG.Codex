@@ -28,4 +28,5 @@
   <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>בחירה</value></data>
   <data name="WorldBuilder.Drafts.Stats.None" xml:space="preserve"><value>אין בספרייה יצורים לקמפיין הזה.</value></data>
   <data name="WorldBuilder.Open.Chat" xml:space="preserve"><value>משהו אחר…</value></data>
+  <data name="WorldBuilder.Error.SheetRefused" xml:space="preserve"><value>השינוי ב„{0}” כבר אינו עומד בכללי הדף או בספרייה, ולכן אי אפשר להחיל אותו. בטלו את הסימון שלו והחילו את השאר.</value></data>
 </root>

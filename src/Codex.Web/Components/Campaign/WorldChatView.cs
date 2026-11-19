@@ -128,7 +128,7 @@ public static class WorldChatView
     public static string Href(string basePath, WorldChatLink link) => link.Kind switch
     {
         "page" or "change-page" => $"{basePath}/wiki/{link.Id}",
-        "actor" or "change-actor" => $"{basePath}/actors/{link.Id}",
+        "actor" or "change-actor" or "change-sheet" => $"{basePath}/actors/{link.Id}",
         "place" or "change-place" => $"{basePath}/world#place-{link.Id}",
         "change-region" => $"{basePath}/world",
         "homebrew" or "change-homebrew" => $"{basePath}/library/{link.Id}",

@@ -24,7 +24,7 @@ public class SheetCheckTests
 
         Assert.Equal("empty-inventory:actor:actors/1-A:inventory", issue.Id);
         Assert.Equal(IssueSeverity.Info, issue.Severity);
-        Assert.Equal(FixVia.ReportOnly, issue.FixVia);
+        Assert.Equal(FixVia.Sheet, issue.FixVia);
         Assert.Equal("Fighter, Sailor", issue.Args[1]);
     }
 
@@ -61,7 +61,7 @@ public class SheetCheckTests
         var issue = Assert.Single(issues, i => i.Code == "Actor.Rule.NotInLibrary");
         Assert.Equal(IssueSeverity.Error, issue.Severity);
         Assert.Equal("sheet-rule:actor:actors/1-A:class:Actor.Rule.NotInLibrary:class-ghost", issue.Id);
-        Assert.Equal(FixVia.ReportOnly, issue.FixVia);
+        Assert.Equal(FixVia.Sheet, issue.FixVia);
         Assert.Equal(new[] { "Class", "ghost" }, issue.Args);
     }
 

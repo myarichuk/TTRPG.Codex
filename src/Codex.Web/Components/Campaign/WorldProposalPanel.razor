@@ -179,6 +179,9 @@
                                 @TextChange(current, wiki: false)
                             }
                             break;
+                        case DraftKinds.Edit when WorldBundle.ParseTarget(current.Target ?? string.Empty, out _) == EditTarget.Sheet:
+                            @SheetChange(current)
+                            break;
                         case DraftKinds.Edit:
                             @if (!current.Remove && current.Body != null)
                             {
@@ -571,6 +574,24 @@
             <p data-testid="world-proposal-hazard"><LucideIcon IconName="alert-triangle" Size="14" /> @L["WorldChat.Proposal.Hazard", hazardName]</p>
             <text>@Concerns(d.Feature.HazardRef != null ? proposal.Find(d.Feature.HazardRef)?.Concerns : null)</text>
         }
+    };
+
+    // What a sheet edit sets or clears, key by key, beside what the sheet holds now.
+    private RenderFragment SheetChange(WorldDraft d) => __builder =>
+    {
+        <table class="table table-sm wb-sheet-change" data-testid="world-proposal-sheet" aria-label="@L["WorldChat.Proposal.SheetChanges"]">
+            <thead><tr><th scope="col">@L["WorldChat.Proposal.SheetChanges"]</th><th scope="col">@L["WorldChat.Proposal.SheetNow"]</th><th scope="col">@L["WorldChat.Proposal.SheetThen"]</th></tr></thead>
+            <tbody>
+                @foreach (var key in d.SheetSet.Keys.Concat(d.SheetClear).OrderBy(k => k, StringComparer.Ordinal))
+                {
+                    <tr>
+                        <th scope="row">@key</th>
+                        <td><del>@SheetProposal.Display(d.BeforeSheet?.GetValueOrDefault(key))</del></td>
+                        <td>@(d.SheetSet.TryGetValue(key, out var after) ? SheetProposal.Display(after) : L["WorldChat.Proposal.SheetCleared"])</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     };
 
     // What the check found worth a look in an entry's numbers: warnings the game master decides on, not refusals.

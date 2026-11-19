@@ -504,7 +504,8 @@ public class WorldBuilderTests
         factRepo.SaveAsync(Arg.Do<FactDocument>(facts.Add), Arg.Any<CampaignAccess>()).Returns(true);
         factRepo.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>(), Arg.Any<IReadOnlySet<string>>()).Returns(_ => facts.ToList().AsEnumerable());
         var actorRepo = Substitute.For<IActorRepository>();
-        actorRepo.TrySaveAsync(Arg.Do<ActorDocument>(actors.Add), Arg.Any<CampaignAccess>()).Returns(true);
+        // An actor saved again (an edit of the one the campaign has) is the same document, not a second one.
+        actorRepo.TrySaveAsync(Arg.Do<ActorDocument>(a => { if (!actors.Contains(a)) actors.Add(a); }), Arg.Any<CampaignAccess>()).Returns(true);
         actorRepo.GetVisibleAsync(Arg.Any<string>(), Arg.Any<CampaignAccess>()).Returns(ci => actors.FirstOrDefault(a => a.Id == ci.ArgAt<string>(0)));
         actorRepo.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => actors.ToList().AsEnumerable());
         var catalog = Substitute.For<ISystemCatalog>();

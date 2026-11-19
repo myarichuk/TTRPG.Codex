@@ -183,4 +183,9 @@
   <data name="WorldChat.Usage.Cost" xml:space="preserve"><value>עלות {0}</value></data>
   <data name="WorldChat.Usage.Total" xml:space="preserve"><value>כל השיחה: {0} אסימונים נכנסו / {1} יצאו</value></data>
   <data name="WorldChat.Usage.CostPartial" xml:space="preserve"><value>עלות {0} (רק ל-{1} מתוך {2} תורות יש מחיר)</value></data>
+  <data name="WorldChat.Edit.Sheet" xml:space="preserve"><value>משנה את דף הדמות</value></data>
+  <data name="WorldChat.Proposal.SheetChanges" xml:space="preserve"><value>שינויים בדף הדמות</value></data>
+  <data name="WorldChat.Proposal.SheetNow" xml:space="preserve"><value>עכשיו</value></data>
+  <data name="WorldChat.Proposal.SheetThen" xml:space="preserve"><value>אחרי</value></data>
+  <data name="WorldChat.Proposal.SheetCleared" xml:space="preserve"><value>נמחק</value></data>
 </root>

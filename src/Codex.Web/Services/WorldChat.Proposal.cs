@@ -92,7 +92,7 @@ public sealed partial class WorldChat
             var what = change.Target switch
             {
                 EditTarget.Place => "description of the place", EditTarget.Actor => "history of the cast member", EditTarget.Homebrew => "homebrew entry",
-                EditTarget.Region => "region", EditTarget.Fact => "secret in Lore", _ => "text of the page"
+                EditTarget.Region => "region", EditTarget.Fact => "secret in Lore", EditTarget.Sheet => "sheet of the cast member", _ => "text of the page"
             };
             if (change.Removed)
             {
@@ -109,7 +109,7 @@ public sealed partial class WorldChat
                 continue;
             }
 
-            note.Append($" Changed: the {what} \"{change.Name}\" " + (change.Text ? "now reads as you wrote it" : "was renamed, moved or retyped as you asked") + "; " +
+            note.Append($" Changed: the {what} \"{change.Name}\" " + (change.Text ? "now reads as you wrote it" : change.Target == EditTarget.Sheet ? "now holds the sheet values you set (the sheet's own rules recomputed what they derive)" : "was renamed, moved or retyped as you asked") + "; " +
                         (change.Shared ? "the players can see it, so they read the change, all but its hidden blocks." : "it is hidden from the players."));
         }
 

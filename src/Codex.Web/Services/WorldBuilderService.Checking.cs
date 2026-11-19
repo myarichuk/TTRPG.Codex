@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Codex.Core;
 using Codex.Core.AI;
+using Codex.Core.Rules;
 using Codex.Core.Systems;
 using Codex.Core.WorldBuilder;
 using Codex.Persistence;
@@ -43,9 +44,13 @@ public sealed partial class WorldBuilderService
             ? (await consistency.CheckAsync(campaign, access)).Open
             : Array.Empty<Codex.Core.Consistency.Issue>();
         var culture = Lang;
+        // The characters whose sheet a proposal may change: those the sheet checks look at (not retired, not a creature, not the vault's).
+        var sheetIds = json.Contains("\"sheet\"", StringComparison.Ordinal)
+            ? (await actorRepository.GetVisibleForCampaignAsync(access)).Where(a => !a.IsVault && !a.Retired && ConsistencySnapshots.RoleOf(a) != Codex.Core.Consistency.ActorRole.Monster).Select(a => a.Id).ToList()
+            : new List<string>();
         var rules = new ProposalRules(spellings, pages, places, key => fields.GetValueOrDefault(key) ?? Array.Empty<FieldSpec>(),
             system == null ? null : (key, value) => system.CanonicalOption(culture, key, value), castIds, brewKeys,
-            regionNames, factNames, HazardTypeOf(system), pageIds);
+            regionNames, factNames, HazardTypeOf(system), pageIds, system, sheetIds);
         var check = WorldBundleParser.ParseProposal(json, rules, open);
 
         await FindStatsAsync(campaign, access, check.Bundle);
@@ -60,6 +65,8 @@ public sealed partial class WorldBuilderService
             }
         }
 
+        var (sheetErrors, sheetWarnings) = await SheetsAsync(campaign, access, system, check.Bundle);
+        editErrors.AddRange(sheetErrors);
         editErrors.AddRange(await VariantsAsync(campaign, access, check.Bundle));
         var (hazardErrors, hazardWarnings) = await HazardsAsync(campaign, access, system, check.Bundle);
         editErrors.AddRange(hazardErrors);
@@ -67,12 +74,57 @@ public sealed partial class WorldBuilderService
         FillTagged(check.Bundle, (await wiki.GetVisibleForCampaignAsync(access)).ToList(), brews);
         var warnings = check.Warnings.ToList();
         warnings.AddRange(hazardWarnings);
+        warnings.AddRange(sheetWarnings);
         foreach (var draft in check.Bundle.Drafts.Where(d => d is { Kind: DraftKinds.Npc, Stats: null } && d.SuggestedStats != null))
         {
             warnings.Add($"{draft.Ref} (npc '{draft.Name}'): stats '{draft.SuggestedStats}' are not in the Library, so the sheet starts blank; use a name search_library finds.");
         }
 
         return check with { Warnings = warnings, Errors = check.Errors.Concat(editErrors).ToList() };
+    }
+
+    /// <summary>
+    /// What a sheet edit does to the character's sheet as it is now: names the entry after the character, keeps the values it replaces for the
+    /// review card (and so apply can tell the sheet changed since), and asks <see cref="SheetProposal.Check"/> about the Library and the
+    /// sheet rules. A sheet that is gone, retired or a creature's is an error: nothing is changed through a stale review.
+    /// </summary>
+    private async Task<(List<string> Errors, List<string> Warnings)> SheetsAsync(CampaignDocument campaign, CampaignAccess access, SystemDefinition? system, WorldBundle bundle)
+    {
+        var errors = new List<string>();
+        var warnings = new List<string>();
+        var drafts = bundle.Drafts.Where(d => d is { Kind: DraftKinds.Edit, Target: { } t } && WorldBundle.ParseTarget(t, out _) == EditTarget.Sheet).ToList();
+        if (drafts.Count == 0) return (errors, warnings);
+        if (system == null)
+        {
+            errors.AddRange(drafts.Select(d => $"{d.Ref} (edit '{d.Name}'): the campaign's game system is not installed, so no sheet can be changed."));
+            return (errors, warnings);
+        }
+
+        var resolver = await CachedEntryResolver.LoadAsync(library, campaign, access, system);
+        var actors = (await actorRepository.GetVisibleForCampaignAsync(access)).ToList();
+        var enforcement = SheetRuleEngine.EffectiveEnforcement(system, campaign.RulesEnforcement);
+        foreach (var draft in drafts)
+        {
+            WorldBundle.ParseTarget(draft.Target!, out var id);
+            var label = $"{draft.Ref} (edit '{draft.Name}')";
+            if (actors.FirstOrDefault(a => a.Id == id) is not { Retired: false } actor)
+            {
+                errors.Add($"{label}: that character is gone or retired.");
+                continue;
+            }
+
+            draft.Name = actor.Name;
+            draft.OutlineName = actor.Name;
+            draft.SharedWithPlayers = actor.Visibility == ActorVisibility.Known || actor.Kind == ActorKind.PlayerCharacter;
+            var sheet = actor.Sheet ?? new Dictionary<string, object>();
+            draft.BeforeSheet = SheetProposal.Current(sheet, draft.SheetSet.Keys.Concat(draft.SheetClear)).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
+            draft.BeforeStamp = Stamp(string.Join("\n", draft.BeforeSheet.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => p.Key + "=" + p.Value)));
+            var (e, w) = SheetProposal.Check(system, resolver, enforcement, sheet, draft.SheetSet, draft.SheetClear, label);
+            errors.AddRange(e);
+            warnings.AddRange(w);
+        }
+
+        return (errors, warnings);
     }
 
     /// <summary>The system's hazard type (HAZARDS_DESIGN.md 5), or null when it has none: then a place's hazard is ignored and its trap stays text.</summary>
@@ -253,6 +305,8 @@ public sealed partial class WorldBuilderService
                     }
 
                     break;
+                case EditTarget.Sheet:
+                    break; // named, stamped and checked by SheetsAsync
                 case EditTarget.Actor:
                     if (actors.FirstOrDefault(a => a.Id == id) is { } actor)
                     {

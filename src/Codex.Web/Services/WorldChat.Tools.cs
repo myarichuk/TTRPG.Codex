@@ -60,11 +60,11 @@ public sealed partial class WorldChat
                 "search_world",
                 "Finds the campaign's wiki pages, places and cast members by name or text. Each line gives the key a proposal uses to link to it or change it."),
             AIFunctionFactory.Create(
-                ([Description("The key of a page (existing:slug) or its title; or existing:place:<id> for a place's description, existing:actor:<id> for a cast member's history, existing:fact:<id> for a secret in Lore, existing:region:<id> for a region.")] string page) =>
+                ([Description("The key of a page (existing:slug) or its title; or existing:place:<id> for a place's description, existing:actor:<id> for a cast member's history, existing:fact:<id> for a secret in Lore, existing:region:<id> for a region, existing:sheet:<id> for a character\'s sheet values.")] string page) =>
                     Step("get_page", new { page }, page, null,
-                        async () => await builder.PageAsync(access, page) ?? $"There is no page \"{page}\". Use search_world to find one."),
+                        async () => await builder.PageAsync(access, page, campaign) ?? $"There is no page \"{page}\". Use search_world to find one."),
                 "get_page",
-                "Reads one wiki page in full, or a place's description or a cast member's history by their key, which is what an edit replaces."),
+                "Reads one wiki page in full, or a place's description or a cast member's history by their key, which is what an edit replaces; or a character's sheet keys with their values, which a sheet edit sets."),
             AIFunctionFactory.Create(
                 () => Step("list_places", new { }, null, null, () => builder.PlacesAsync(access)),
                 "list_places",
@@ -192,6 +192,7 @@ public sealed partial class WorldChat
                     draft.BeforeStamp = old.BeforeStamp;
                     draft.BeforeProperties = old.BeforeProperties;
                     draft.BeforeTags = old.BeforeTags;
+                    draft.BeforeSheet = old.BeforeSheet;
                 }
             }
             else
@@ -209,7 +210,8 @@ public sealed partial class WorldChat
             // The same change to the same thing: a rename, a move, a retype or a delete is not the text edit that came before it.
             DraftKinds.Edit => string.Equals(old.Target, draft.Target, StringComparison.OrdinalIgnoreCase) && old.Body == draft.Body && old.Remove == draft.Remove
                 && old.Rename == draft.Rename && old.MoveTo == draft.MoveTo && old.Parent == draft.Parent && old.PlaceKind == draft.PlaceKind
-                && old.RegionKind == draft.RegionKind && old.SuggestedStats == draft.SuggestedStats,
+                && old.RegionKind == draft.RegionKind && old.SuggestedStats == draft.SuggestedStats
+                && old.SheetSet.OrderBy(p => p.Key, StringComparer.Ordinal).SequenceEqual(draft.SheetSet.OrderBy(p => p.Key, StringComparer.Ordinal)) && old.SheetClear.SequenceEqual(draft.SheetClear),
             DraftKinds.Tags => false, // tagging again changes nothing that is already tagged
             _ => new[] { old.OutlineName, old.Name }.Any(name => string.Equals(name.Trim(), draft.Name.Trim(), StringComparison.OrdinalIgnoreCase))
         };

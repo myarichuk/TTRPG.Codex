@@ -117,7 +117,7 @@ public sealed partial class WorldBuilderService
     }
 
     /// <summary>One page's full text (mentions as names), by its slug or title; null when there is no such page.</summary>
-    public async Task<string?> PageAsync(CampaignAccess access, string slugOrTitle)
+    public async Task<string?> PageAsync(CampaignAccess access, string slugOrTitle, CampaignDocument? campaign = null)
     {
         DmOnly(access);
         var key = slugOrTitle.Trim();
@@ -130,6 +130,7 @@ public sealed partial class WorldBuilderService
                 case EditTarget.Actor: return await ActorTextAsync(targetId, access);
                 case EditTarget.Fact: return await FactTextAsync(targetId, access);
                 case EditTarget.Region: return await RegionTextAsync(targetId, access);
+                case EditTarget.Sheet: return await SheetTextAsync(targetId, campaign, access);
             }
 
             key = key[WorldBundle.ExistingPrefix.Length..];
@@ -168,6 +169,36 @@ public sealed partial class WorldBuilderService
         var names = Names((await actorRepository.GetVisibleForCampaignAsync(access)).ToList(), (await regions.GetVisibleForCampaignAsync(access)).ToList());
         return $"# {fact.Summary}\nkey: existing:{WorldBundle.FactPrefix}{fact.Id}; a secret or rumour in Lore, {(fact.Visibility == FactVisibility.DmOnly ? "known only to the game master" : "already known to players")}; " +
                $"the title above is the fact itself and the text below is its details\n\n{Cap(Editable(fact.Details, names))}";
+    }
+
+    /// <summary>A character's sheet as an edit sees it: the keys a sheet edit may set, each with how it is written and its value now. Only for a
+    /// character a sheet edit may change; derived values are not listed because they cannot be set.</summary>
+    private async Task<string?> SheetTextAsync(string id, CampaignDocument? campaign, CampaignAccess access)
+    {
+        if (campaign == null || await actorRepository.GetVisibleAsync(id, access) is not { Retired: false } actor || actor.IsVault
+            || ConsistencySnapshots.RoleOf(actor) == Codex.Core.Consistency.ActorRole.Monster) return null;
+        var system = catalog.GetDefinition(campaign.SystemId);
+        var keys = SheetProposal.EditableKeys(system);
+        var sheet = actor.Sheet ?? new Dictionary<string, object>();
+        var sb = new StringBuilder();
+        sb.AppendLine($"# {actor.Name}");
+        sb.AppendLine($"key: existing:{WorldBundle.SheetPrefix}{actor.Id}; the character's sheet values, which an edit with \"sheet\": {{\"key\": value}} sets (null clears a key). Only these keys can be set; hit points, armor class and bonuses are computed from them.");
+        foreach (var key in keys)
+        {
+            var how = key.Kind switch
+            {
+                SheetKeyKind.Number => "number" + (key.Min != null || key.Max != null ? $" {key.Min?.ToString(CultureInfo.InvariantCulture)}..{key.Max?.ToString(CultureInfo.InvariantCulture)}" : string.Empty),
+                SheetKeyKind.Boolean => "true or false",
+                SheetKeyKind.Choice => "one of: " + string.Join(", ", key.Options ?? new List<string>()),
+                SheetKeyKind.Reference => $"id of a Library {key.TargetTypes[0]}",
+                SheetKeyKind.Picks => $"list of Library ids ({string.Join("/", key.TargetTypes)}), each \"id\" or \"id|choice:n\"",
+                SheetKeyKind.Tags => "list of words",
+                _ => "text"
+            };
+            sb.AppendLine($"- {key.Key} ({key.Label}; {how}): {SheetProposal.Display(SheetProposal.ToJson(sheet.TryGetValue(key.Key, out var value) ? value : null))}");
+        }
+
+        return Cap(sb.ToString().TrimEnd());
     }
 
     private async Task<string?> RegionTextAsync(string id, CampaignAccess access)

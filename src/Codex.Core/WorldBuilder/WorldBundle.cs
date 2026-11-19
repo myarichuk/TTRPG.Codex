@@ -58,7 +58,9 @@ public enum EditTarget
     /// <summary>A region: its name, what kind it is, or deleting it with every place in it (<c>existing:region:&lt;id&gt;</c>).</summary>
     Region,
     /// <summary>A secret or rumour in Lore: its name (the fact itself) and details (<c>existing:fact:&lt;id&gt;</c>).</summary>
-    Fact
+    Fact,
+    /// <summary>A character's sheet: the sheet keys the system declares, set or cleared (<c>existing:sheet:&lt;actorId&gt;</c>; <see cref="SheetProposal"/>).</summary>
+    Sheet
 }
 
 /// <summary>A proposed feature's notes for the DM (see <c>PlaceFeature</c>): free text in the campaign's own terms, empty for none.</summary>
@@ -213,6 +215,17 @@ public sealed class WorldDraft
     public Dictionary<string, object>? BeforeProperties { get; set; }
     public List<string>? BeforeTags { get; set; }
 
+    /// <summary>For an edit of a sheet: the new values of the keys it sets, each as JSON text (a number, a string, true or false, an array of
+    /// strings), by key. Empty for an edit that changes no sheet. Kept as text so it survives the database exactly.</summary>
+    public Dictionary<string, string> SheetSet { get; set; } = new();
+
+    /// <summary>For an edit of a sheet: the keys it clears (removes from the sheet).</summary>
+    public List<string> SheetClear { get; set; } = new();
+
+    /// <summary>For an edit of a sheet: the current values of the keys it changes, as JSON text (<c>null</c> for a key the sheet lacks), for the
+    /// review card and to see at apply time that the sheet is still as reviewed. Filled in when the proposal is checked.</summary>
+    public Dictionary<string, string>? BeforeSheet { get; set; }
+
     /// <summary>What the check found worth the game master's eye on this entry (a homebrew hazard's numbers far from its level), shown on its card. Warnings, not refusals.</summary>
     public List<string> Concerns { get; set; } = new();
 
@@ -264,6 +277,9 @@ public sealed class WorldBundle
     /// <summary>The prefix of an existing secret in Lore, after <see cref="ExistingPrefix"/>: <c>existing:fact:&lt;id&gt;</c>.</summary>
     public const string FactPrefix = "fact:";
 
+    /// <summary>The prefix of an existing cast member's sheet, after <see cref="ExistingPrefix"/>: <c>existing:sheet:&lt;actorId&gt;</c>.</summary>
+    public const string SheetPrefix = "sheet:";
+
     /// <summary>What an <c>existing:</c> key points at: a place (<c>existing:place:id</c>), a cast member (<c>existing:actor:id</c>)
     /// or, otherwise, a wiki page by slug. <paramref name="id"/> is the key without its prefixes.</summary>
     public static EditTarget ParseTarget(string key, out string id)
@@ -298,6 +314,12 @@ public sealed class WorldBundle
         {
             id = rest[FactPrefix.Length..];
             return EditTarget.Fact;
+        }
+
+        if (rest.StartsWith(SheetPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            id = rest[SheetPrefix.Length..];
+            return EditTarget.Sheet;
         }
 
         id = rest;
@@ -388,7 +410,8 @@ public sealed record MissingMention(string Name, IReadOnlyList<string> By, IRead
 /// folder, English and translated labels) to the type key; <see cref="ExistingPages"/> maps the campaign's page slugs to their
 /// titles; <see cref="HomebrewFields"/> gives a type's fields; <see cref="ExistingHomebrew"/> maps the campaign's homebrew entries,
 /// as <c>type/entryId</c>, to their names. <see cref="ExistingPageIds"/> maps the campaign's page slugs to their document ids, which is how
-/// an edit of a page is matched to the consistency issues about it (an issue names a page by document id, never by slug).</summary>
+/// an edit of a page is matched to the consistency issues about it (an issue names a page by document id, never by slug). <see cref="System"/> and
+/// <see cref="ExistingSheets"/> (the ids of the characters whose sheet a proposal may change: not retired, not a creature) make a sheet edit possible.</summary>
 public sealed record ProposalRules(
     IReadOnlyDictionary<string, string> HomebrewTypes,
     IReadOnlyDictionary<string, string> ExistingPages,
@@ -400,7 +423,9 @@ public sealed record ProposalRules(
     IReadOnlyDictionary<string, string>? ExistingRegions = null,
     IReadOnlyDictionary<string, string>? ExistingFacts = null,
     string? HazardType = null,
-    IReadOnlyDictionary<string, string>? ExistingPageIds = null);
+    IReadOnlyDictionary<string, string>? ExistingPageIds = null,
+    Codex.Plugin.Abstractions.SystemDefinition? System = null,
+    IReadOnlyCollection<string>? ExistingSheets = null);
 
 /// <summary>A checked proposal: the entries as they would be saved, and what is wrong with it (nothing is saved while there are
 /// <see cref="Errors"/>) or worth a second look (<see cref="Warnings"/>), each naming the entry it is about.</summary>
@@ -747,6 +772,11 @@ public static class WorldBundleParser
                 {
                     errors.Add($"{label}: resolves {id}, which no proposal can fix (the review gate cannot change it: {issue.Check}); leave it out and tell the game master it is theirs to fix by hand.");
                 }
+                else if (SheetRoute(draft) != (issue.FixVia == FixVia.Sheet))
+                {
+                    errors.Add($"{label}: resolves {id}, which is fixed {(issue.FixVia == FixVia.Sheet ? "by an edit of the character's sheet (target existing:sheet:<id>)" : $"by a change of its {FixViaWords(issue.FixVia)}")}, " +
+                               $"but this entry is {(SheetRoute(draft) ? "an edit of a sheet" : "not an edit of a sheet")}; resolve an issue only with the kind of edit its fix_via names.");
+                }
                 else if (kind == null || kind != issue.EntityKind || !string.Equals(targetId, issue.EntityId, StringComparison.Ordinal))
                 {
                     errors.Add($"{label}: resolves {id}, an issue about {issue.EntityKind} {issue.EntityId}, but this entry " +
@@ -756,6 +786,17 @@ public static class WorldBundleParser
             }
         }
     }
+
+    private static bool SheetRoute(WorldDraft draft) =>
+        draft is { Kind: DraftKinds.Edit, Target: { } t } && WorldBundle.ParseTarget(t, out _) == EditTarget.Sheet;
+
+    private static string FixViaWords(FixVia fixVia) => fixVia switch
+    {
+        FixVia.ActorBiography => "history",
+        FixVia.Place => "place",
+        FixVia.Fact => "secret",
+        _ => "page"
+    };
 
     /// <summary>What an entry changes, as the consistency checker names things (<c>page</c>, <c>place</c>, <c>actor</c>, <c>fact</c> and the
     /// document id), or null for an entry that is not an edit of one of those.</summary>
@@ -767,6 +808,7 @@ public static class WorldBundleParser
             case EditTarget.Place: return ("place", id);
             case EditTarget.Actor: return ("actor", id);
             case EditTarget.Fact: return ("fact", id);
+            case EditTarget.Sheet: return ("actor", id);
             case EditTarget.Page:
                 var pageId = rules.ExistingPageIds is { } ids ? ids.FirstOrDefault(p => string.Equals(p.Key, id, StringComparison.OrdinalIgnoreCase)).Value : null;
                 return pageId == null ? (null, null) : ("page", pageId);
@@ -795,13 +837,16 @@ public static class WorldBundleParser
             EditTarget.Homebrew => rules.ExistingHomebrew?.Keys.FirstOrDefault(h => string.Equals(h, id, StringComparison.OrdinalIgnoreCase)),
             EditTarget.Region => rules.ExistingRegions?.Keys.FirstOrDefault(r => string.Equals(r, id, StringComparison.OrdinalIgnoreCase)),
             EditTarget.Fact => rules.ExistingFacts?.Keys.FirstOrDefault(f => string.Equals(f, id, StringComparison.OrdinalIgnoreCase)),
+            EditTarget.Sheet => rules.ExistingSheets?.FirstOrDefault(a => string.Equals(a, id, StringComparison.OrdinalIgnoreCase)),
             _ => pages.Keys.FirstOrDefault(slug => string.Equals(slug, id, StringComparison.OrdinalIgnoreCase))
         };
         if (stored == null)
         {
             errors.Add(kind == EditTarget.Homebrew
                 ? $"{label}: target '{key}' is not a homebrew entry of the campaign; a pack entry cannot be changed, so make a homebrew variant of it instead (kind homebrew with \"basedOn\")."
-                : $"{label}: target '{key}' is not something the campaign has; use a key from search_world, get_page or list_places.");
+                : kind == EditTarget.Sheet
+                    ? $"{label}: target '{key}' is not a character whose sheet a proposal can change (it must exist, must not be retired and must not be a bestiary creature); use existing:sheet:<id> with an id from search_world."
+                    : $"{label}: target '{key}' is not something the campaign has; use a key from search_world, get_page or list_places.");
             return false;
         }
 
@@ -813,6 +858,7 @@ public static class WorldBundleParser
             EditTarget.Homebrew => WorldBundle.HomebrewPrefix + id,
             EditTarget.Region => WorldBundle.RegionPrefix + id,
             EditTarget.Fact => WorldBundle.FactPrefix + id,
+            EditTarget.Sheet => WorldBundle.SheetPrefix + id,
             _ => id
         };
         if (bundle.Drafts.Any(d => d.Kind == DraftKinds.Edit && string.Equals(d.Target, canonical, StringComparison.OrdinalIgnoreCase)))
@@ -820,6 +866,8 @@ public static class WorldBundleParser
             errors.Add($"{label}: '{key}' is already changed by another entry; put every change to it in one.");
             return false;
         }
+
+        if (kind == EditTarget.Sheet) return ReadSheetEdit(draft, element, label, canonical, rules, errors);
 
         // Cut would drop the end of a text that replaces another: refuse instead of saving half of it.
         if (textLength > MaxBody)
@@ -931,6 +979,42 @@ public static class WorldBundleParser
             };
         }
 
+        draft.OutlineName = draft.Name;
+        return true;
+    }
+
+    /// <summary>Reads an edit of a character's sheet: the keys to set (with their new values) and to clear. A sheet has no text, no new name
+    /// and cannot be deleted; its values are checked for shape here and against the Library and the sheet rules when the proposal is checked.</summary>
+    private static bool ReadSheetEdit(WorldDraft draft, JsonElement element, string label, string canonical, ProposalRules rules, List<string> errors)
+    {
+        if (element.TryGetProperty("delete", out var delete) && delete.ValueKind == JsonValueKind.True
+            || draft.Body != null
+            || FieldCoercion.String(element, "rename") is { Length: > 0 }
+            || FieldCoercion.String(element, "stats") is { Length: > 0 })
+        {
+            errors.Add($"{label}: an edit of a sheet only sets or clears sheet keys (\"sheet\": {{\"key\": value}}); it has no text, rename, stats or delete. Use an edit of the character for their history or to retire them.");
+            return false;
+        }
+
+        if (!element.TryGetProperty("sheet", out var sheet))
+        {
+            errors.Add($"{label}: an edit of a sheet needs \"sheet\": an object of the keys to set (value) or clear (null).");
+            return false;
+        }
+
+        var before = errors.Count;
+        var (set, clear) = SheetProposal.Read(rules.System, sheet, label, errors);
+        if (errors.Count > before) return false;
+        if (set.Count == 0 && clear.Count == 0)
+        {
+            errors.Add($"{label}: the sheet edit changes nothing; give at least one key.");
+            return false;
+        }
+
+        draft.SheetSet = set.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
+        draft.SheetClear = clear;
+        draft.Target = canonical;
+        draft.Name = draft.Name.Length > 0 ? draft.Name : canonical;
         draft.OutlineName = draft.Name;
         return true;
     }

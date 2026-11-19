@@ -137,7 +137,7 @@ public static class ConsistencySnapshots
             SheetRuleEngine.EffectiveEnforcement(system, campaign.RulesEnforcement));
 
     // A creature taken from the bestiary, and a hazard that takes a turn, have no history to write and no kit to carry.
-    private static ActorRole RoleOf(ActorDocument a) => a.Hazard != null ? ActorRole.Monster : a.Kind switch
+    public static ActorRole RoleOf(ActorDocument a) => a.Hazard != null ? ActorRole.Monster : a.Kind switch
     {
         ActorKind.PlayerCharacter => ActorRole.PlayerCharacter,
         ActorKind.NonPlayerCharacter => ActorRole.NonPlayerCharacter,

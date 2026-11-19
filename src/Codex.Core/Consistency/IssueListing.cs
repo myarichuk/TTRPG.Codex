@@ -51,6 +51,7 @@ public static class IssueListing
         FixVia.Place => "place",
         FixVia.Fact => "fact",
         FixVia.ActorBiography => "actor-biography",
+        FixVia.Sheet => "sheet",
         _ => "report-only"
     };
 

@@ -1,4 +1,5 @@
 using Codex.Core;
+using Codex.Core.Rules;
 using Codex.Core.WorldBuilder;
 using Codex.Localization;
 using Codex.Persistence;
@@ -427,6 +428,26 @@ public sealed partial class WorldBuilderService
 
                     if (!await actorRepository.TrySaveAsync(actor, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
                     return new WorldEdit(target, id, actor.Name, actor.Visibility == ActorVisibility.Known, Text: draft.Body != null);
+                }
+            case EditTarget.Sheet:
+                {
+                    // Only the keys the review card showed, only if the sheet still holds what it showed, and only if the Library and the sheet's rules
+                    // still allow it: the same check the proposal passed, run again against the sheet as it is now.
+                    var actor = await actorRepository.GetVisibleAsync(id, access) ?? throw gone;
+                    var system = catalog.GetDefinition(campaign.SystemId) ?? throw gone;
+                    if (actor.Retired) throw gone;
+                    var current = actor.Sheet ?? new Dictionary<string, object>();
+                    if (draft.BeforeSheet != null && !SheetProposal.Unchanged(current, draft.BeforeSheet)) throw changed;
+                    var resolver = await CachedEntryResolver.LoadAsync(library, campaign, access, system);
+                    var (refused, _) = SheetProposal.Check(system, resolver, SheetRuleEngine.EffectiveEnforcement(system, campaign.RulesEnforcement), current, draft.SheetSet, draft.SheetClear, draft.Name);
+                    if (refused.Count > 0) throw new LocalizedException("WorldBuilder.Error.SheetRefused", draft.Name);
+                    var next = SheetProposal.Apply(current, draft.SheetSet, draft.SheetClear);
+                    // What the sheet page runs after every edit, so what the rules derive (hit points, bonuses) follows the change.
+                    new SheetRuleEngine(system, resolver).Recompute(next);
+                    actor.Sheet = next;
+                    cast.SyncState(actor, system);
+                    if (!await actorRepository.TrySaveAsync(actor, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                    return new WorldEdit(target, id, actor.Name, actor.Visibility == ActorVisibility.Known || actor.Kind == ActorKind.PlayerCharacter, Text: false);
                 }
             case EditTarget.Region:
                 {

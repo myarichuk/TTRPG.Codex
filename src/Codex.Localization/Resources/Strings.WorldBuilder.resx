@@ -28,4 +28,5 @@
   <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>Use</value></data>
   <data name="WorldBuilder.Drafts.Stats.None" xml:space="preserve"><value>The Library has no creatures for this campaign.</value></data>
   <data name="WorldBuilder.Open.Chat" xml:space="preserve"><value>Anything else…</value></data>
+  <data name="WorldBuilder.Error.SheetRefused" xml:space="preserve"><value>The change to “{0}” no longer passes the sheet's rules or the Library, so it can't be applied. Untick it and apply the rest.</value></data>
 </root>

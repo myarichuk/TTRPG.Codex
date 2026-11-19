@@ -1,5 +1,6 @@
 using System.Globalization;
 using Codex.Core.Rules;
+using Codex.Core.WorldBuilder;
 using Codex.Plugin.Abstractions;
 
 namespace Codex.Core.Consistency;
@@ -37,8 +38,9 @@ public sealed class EmptyInventoryCheck : IConsistencyCheck
             yield return Make.Issue(Name, IssueSeverity.Info, "actor", a.Id, inventory.Key, null, "Consistency.EmptyInventory",
                 new[] { a.Name, string.Join(", ", sources) },
                 $"\"{Make.Quote(a.Name)}\" carries nothing, though {string.Join(" and ", sources.Select(Make.Quote))} bring starting equipment.",
-                "Ask the DM whether the character starts with gold instead, or what they carry. A sheet cannot be changed through a proposal yet, so tell the DM; do not invent gear.",
-                FixVia.ReportOnly);
+                "Ask the DM whether the character starts with gold instead, or what they carry. Only if the DM wants the starting kit, propose a sheet edit that sets the inventory " +
+                "to items the class's or background's own starting-equipment text names and the Library has (get_entry reads it); never invent or auto-fill gear, and leave it empty if the DM says so.",
+                FixVia.Sheet);
         }
     }
 }
@@ -70,7 +72,7 @@ public sealed class SheetRuleCheck : IConsistencyCheck
                 continue;
             }
 
-            foreach (var issue in Issues(a, evaluation.Violations, IssueSeverity.Error).Concat(Issues(a, evaluation.Warnings, IssueSeverity.Warning))) yield return issue;
+            foreach (var issue in Issues(s.System, a, evaluation.Violations, IssueSeverity.Error).Concat(Issues(s.System, a, evaluation.Warnings, IssueSeverity.Warning))) yield return issue;
         }
     }
 
@@ -88,17 +90,21 @@ public sealed class SheetRuleCheck : IConsistencyCheck
         }
     }
 
-    private IEnumerable<Issue> Issues(ActorView actor, IEnumerable<RuleViolation> violations, IssueSeverity severity)
+    private IEnumerable<Issue> Issues(SystemDefinition? system, ActorView actor, IEnumerable<RuleViolation> violations, IssueSeverity severity)
     {
         foreach (var v in violations)
         {
             if (v.Key != null && v.Key.StartsWith("Actor.Rule.PointBuy", StringComparison.Ordinal)) continue;
             var args = (v.Args ?? Array.Empty<object?>()).Select(ArgText).ToList();
             var detail = (v.Key ?? "rule") + (args.Count > 0 ? ":" + Slug(string.Join(' ', args)) : v.Key == null ? ":" + Slug(v.Message) : string.Empty);
+            // Fixable through a sheet edit only when the rule is about a key an edit may set; a derived value is the sheet's own to compute.
+            var fixable = SheetProposal.IsEditable(system, v.FieldKey);
             yield return Make.Issue(Name, severity, "actor", actor.Id, v.FieldKey, detail, v.Key ?? "Consistency.SheetRule", args,
                 v.Message,
-                "A sheet cannot be changed through a proposal yet. Tell the DM which rule the sheet breaks; do not guess a value.",
-                FixVia.ReportOnly);
+                fixable
+                    ? "Ask the DM which value they want, then propose a sheet edit of this key (existing:sheet:<actor id>); do not guess a value or invent an entry. Anything that stays broken is reported again."
+                    : "This is a value the sheet works out itself, which no proposal can set. Tell the DM which rule the sheet breaks; do not guess.",
+                fixable ? FixVia.Sheet : FixVia.ReportOnly);
         }
     }
 

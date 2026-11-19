@@ -13,15 +13,17 @@ public enum IssueSeverity
     Info = 2
 }
 
-/// <summary>Which kind of change, through the review gate, can fix an issue. <see cref="ReportOnly"/>: none can today (the gate cannot
-/// change an actor's sheet or a page's structural links), so the model reports it and the DM fixes it by hand.</summary>
+/// <summary>Which kind of change, through the review gate, can fix an issue. <see cref="ReportOnly"/>: none can (the gate cannot
+/// change a page's structural links, or a sheet value no edit may set), so the model reports it and the DM fixes it by hand.</summary>
 public enum FixVia
 {
     ReportOnly,
     Page,
     Place,
     Fact,
-    ActorBiography
+    ActorBiography,
+    /// <summary>An edit of a character's sheet (<c>existing:sheet:&lt;actorId&gt;</c>): setting or clearing a key the system declares.</summary>
+    Sheet
 }
 
 /// <summary>
