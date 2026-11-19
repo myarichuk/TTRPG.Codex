@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Consistency.BrokenLink" xml:space="preserve"><value>Ссылка [[{0}]] не ведёт ни на одну страницу.</value></data>
+  <data name="Consistency.UnlinkedMention" xml:space="preserve"><value>В тексте простыми словами сказано «{0}» — это название страницы «{1}».</value></data>
+  <data name="Consistency.VisibilityLeak" xml:space="preserve"><value>Эта страница, видимая отряду, ссылается на [[{0}]] — страницу «{1}», которую может открыть только ведущий. Игроки видят слова без ссылки или ничего, если у ссылки нет подписи.</value></data>
+  <data name="Consistency.DanglingMention" xml:space="preserve"><value>В тексте упомянут объект «{0}» ({1}), которого больше нет.</value></data>
+  <data name="Consistency.DanglingReference" xml:space="preserve"><value>Поле {1} ({0}) указывает на объект «{2}» ({3}), которого больше нет.</value></data>
+  <data name="Consistency.EmptyBio" xml:space="preserve"><value>У «{0}» не написана история.</value></data>
+  <data name="Consistency.EmptyBody" xml:space="preserve"><value>На странице «{0}» нет текста.</value></data>
+  <data name="Consistency.TodoMarker" xml:space="preserve"><value>В тексте всё ещё стоит заглушка «{0}».</value></data>
+  <data name="Consistency.EmptyInventory" xml:space="preserve"><value>«{0}» ничего не несёт, хотя {1} дают стартовое снаряжение.</value></data>
+  <data name="Consistency.SecretUnclosed" xml:space="preserve"><value>Блок, открытый строкой «{0}» (строка {1}), не закрыт строкой :::, поэтому он тянется до конца текста.</value></data>
+  <data name="Consistency.SecretUnknownAudience" xml:space="preserve"><value>Блок, открытый строкой «{1}» (строка {2}), называет неизвестную приложению аудиторию (":::{0}"), поэтому его читает только ведущий.</value></data>
+  <data name="Consistency.SecretForNobody" xml:space="preserve"><value>Блок, открытый строкой «{0}» (строка {1}), не называет ни одного персонажа, поэтому его не прочтёт ни один игрок.</value></data>
+  <data name="Consistency.SecretForMissing" xml:space="preserve"><value>Блок, открытый строкой «{1}» (строка {2}), предназначен персонажу ({0}), которого больше нет.</value></data>
+  <data name="Consistency.SheetRule" xml:space="preserve"><value>{0}</value></data>
+  <data name="Consistency.SheetEvaluationFailed" xml:space="preserve"><value>Не удалось проверить правила листа для «{0}» ({1}).</value></data>
+  <data name="Consistency.PlaceTreeSelf" xml:space="preserve"><value>Место «{0}» находится внутри самого себя.</value></data>
+  <data name="Consistency.PlaceTreeCrossRegion" xml:space="preserve"><value>Место «{0}» находится внутри «{1}» из другого региона; место может быть только внутри места своего региона.</value></data>
+  <data name="Consistency.PlaceTreeMissing" xml:space="preserve"><value>Место «{0}» находится внутри места ({1}), которого больше нет.</value></data>
+  <data name="Consistency.PlaceTreeCycle" xml:space="preserve"><value>Эти места вложены друг в друга по кругу, без верхнего уровня: {0}.</value></data>
+  <data name="Consistency.DuplicateSlug" xml:space="preserve"><value>Страница «{0}» делит адрес «{1}» ещё с {2} страницами; ссылка ведёт только на одну из них.</value></data>
+  <data name="Consistency.NearDuplicateTitle" xml:space="preserve"><value>У страницы «{0}» почти то же название, что у {1} (отличие только в артикле или повторённом слове).</value></data>
+  <data name="Consistency.FactRelatedGone" xml:space="preserve"><value>Тайна «{0}» отнесена к объекту «{1}» ({2}), которого больше нет, хотя в её тексте он не упомянут.</value></data>
+  <data name="Consistency.FactKnowerGone" xml:space="preserve"><value>Тайну «{0}» знает персонаж ({1}), которого нет среди действующих лиц.</value></data>
+  <data name="Consistency.PlacedCreatureGone" xml:space="preserve"><value>Место «{0}» называет своим существом персонажа ({1}), которого нет среди действующих лиц.</value></data>
+  <data name="Consistency.PlacedHazardGone" xml:space="preserve"><value>Опасность {1}, размещённой на «{0}», больше нет в Библиотеке.</value></data>
+  <data name="Consistency.HazardPlaceGone" xml:space="preserve"><value>Опасность «{0}» на столе стоит на месте ({1}), которого больше нет.</value></data>
+  <data name="Consistency.OwnerNotMember" xml:space="preserve"><value>Персонаж «{0}» принадлежит игроку ({1}), который не участвует в кампании.</value></data>
+  <data name="Consistency.HomebrewDuplicate" xml:space="preserve"><value>Собственная запись «{0}» делит идентификатор {1} с {2, plural, one{# другой записью} few{# другими записями} many{# другими записями} other{# другими записями}}; доступна только одна.</value></data>
+  <data name="Consistency.HomebrewReference" xml:space="preserve"><value>Собственная запись «{0}» называет «{2}» в поле «{1}», но это не {3} из Библиотеки.</value></data>
+  <data name="Consistency.HazardShape" xml:space="preserve"><value>Опасность «{0}»: {1}</value></data>
+  <data name="Consistency.TagCase" xml:space="preserve"><value>Тег «{0}» в другом месте записан как «{1}», поэтому их не находят вместе.</value></data>
+  <data name="Consistency.SystemUnknown" xml:space="preserve"><value>Игровая система кампании «{0}» не установлена, поэтому нельзя прочитать ни лист персонажа, ни запись Библиотеки.</value></data>
+  <data name="Consistency.SystemDrift" xml:space="preserve"><value>Система «{0}» изменилась с тех пор, как кампания в последний раз играла по ней (изменений: {1}: {2}).</value></data>
+  <data name="Consistency.PackDrift" xml:space="preserve"><value>В выборе наборов кампании назван набор «{0}», которого у системы больше нет.</value></data>
+  <data name="Consistency.PackProblem" xml:space="preserve"><value>При загрузке системы или её наборов сообщено: {0}</value></data>
+  <data name="Consistency.BlueprintGone" xml:space="preserve"><value>«{0}» создан из существа {1}, которого больше нет в Библиотеке (его набор выключен или пропал).</value></data>
+  <data name="Consistency.InventoryItemGone" xml:space="preserve"><value>«{0}» несёт «{1}», которого нет в Библиотеке.</value></data>
+  <data name="Consistency.BestiaryGone" xml:space="preserve"><value>В Бестиарии указано «{0}» ({1}), которого нет в Библиотеке.</value></data>
+  <data name="Consistency.CheckFailed" xml:space="preserve"><value>Проверка системы «{0}» не смогла выполниться ({1}), поэтому то, что она ищет, не проверено.</value></data>
+  <data name="Consistency.OrphanPage" xml:space="preserve"><value>Ни одна ссылка не ведёт на страницу «{0}».</value></data>
+  <data name="Consistency.BacklinkMismatch" xml:space="preserve"><value>«{0}» и «{1}» указывают друг на друга только с одной стороны.</value></data>
+  <data name="Consistency.PersonPageNoActor" xml:space="preserve"><value>У страницы персоны «{0}» нет персонажа среди действующих лиц.</value></data>
+  <data name="Consistency.RetiredMention" xml:space="preserve"><value>В тексте упомянут «{0}», выбывший из игры.</value></data>
+</root>

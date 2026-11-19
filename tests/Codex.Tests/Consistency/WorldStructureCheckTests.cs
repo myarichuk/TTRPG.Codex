@@ -305,7 +305,7 @@ public class WorldStructureCheckTests
         new List<ActorView> { Fx.Actor("actors/1-A"), Fx.Actor("actors/dead", retired: true) },
         new List<PlaceView>());
 
-    private static WorldSnapshot Noisy(bool reversed = false)
+    internal static WorldSnapshot Noisy(bool reversed = false)
     {
         var (pages, actors, places) = NoisyWorld();
         if (reversed) { pages.Reverse(); actors.Reverse(); }
@@ -356,7 +356,7 @@ public class WorldStructureCheckTests
 
     // ---- determinism of the whole v2 set ----
 
-    private static WorldSnapshot V2World(bool reversed = false)
+    internal static WorldSnapshot V2World(bool reversed = false)
     {
         var pages = new List<PageView>
         {
@@ -366,11 +366,17 @@ public class WorldStructureCheckTests
         {
             Place("p-a", "regions/1", parent: "p-b"), Place("p-b", "regions/1", parent: "p-a"), Place("p-1", "regions/1", creature: "actors/ghost", hazard: "hazard/pit")
         };
-        var actors = new List<ActorView> { Fx.Actor("actors/1-A", owner: "users/gone", role: ActorRole.NonPlayerCharacter, blueprint: "demo:ghost") };
+        var actors = new List<ActorView>
+        {
+            Fx.Actor("actors/1-A", owner: "users/gone", role: ActorRole.NonPlayerCharacter, blueprint: "demo:ghost"),
+            Fx.Actor("actors/h1", role: ActorRole.Monster, hazard: new HazardLinkView("regions/1", "p-lost", "hazard/known", false))
+        };
         var facts = new List<FactView> { new("facts/1", "S.", null, new[] { "place:p-old" }, new[] { "actors/nope" }) };
-        var brews = new List<HomebrewView> { Fx.Brew("hb/1", "spell", "a", "A", null, ("class", "ghost")), Fx.Brew("hb/2", "spell", "a", "A2") };
+        var rows = new List<Dictionary<string, object>> { new() { ["levels"] = "5-10", ["bogus"] = 3L } };
+        var brews = new List<HomebrewView> { Fx.Brew("hb/1", "spell", "a", "A", null, ("class", "ghost")), Fx.Brew("hb/2", "spell", "a", "A2"), Fx.Brew("hb/3", "hazard", "pit", "Pit", null, ("higherLevels", rows)) };
         if (reversed) { pages.Reverse(); places.Reverse(); brews.Reverse(); }
-        return Fx.Snap(pages, actors, places, facts, Fx.System(), Library, campaign: Fx.Campaign(changes: new[] { "x changed" }, problems: new[] { "bad" }, namedPacks: new[] { "g" }, knownPacks: new[] { "core" }), homebrew: brews);
+        return Fx.Snap(pages, actors, places, facts, Fx.System(), Library, campaign: Fx.Campaign(changes: new[] { "x changed" }, problems: new[] { "bad" }, namedPacks: new[] { "g" }, knownPacks: new[] { "core" },
+            bestiary: new[] { new BestiaryView("monster", "ghost", false, "Ghost") }), homebrew: brews);
     }
 
     [Fact]
@@ -379,7 +385,7 @@ public class WorldStructureCheckTests
         var first = ConsistencyChecker.Run(V2World(), ConsistencyChecker.Default);
         var found = first.Select(i => i.Check).Distinct().ToList();
         // The checks that cannot share a world with another: an uninstalled system hides the campaign's other findings, and a retired owner is skipped.
-        Assert.Empty(CheckNames.V2.Except(found).Except(new[] { CheckNames.CampaignSystem, CheckNames.HazardShape, CheckNames.SystemRule, CheckNames.CheckFailed })); // these have worlds of their own
+        Assert.Empty(CheckNames.V2.Except(found).Except(new[] { CheckNames.CampaignSystem, CheckNames.SystemRule, CheckNames.CheckFailed })); // these have worlds of their own
 
         Assert.Equal(first.Select(Fx.Flat), ConsistencyChecker.Run(V2World(), ConsistencyChecker.Default).Select(Fx.Flat));
         Assert.Equal(first.Select(Fx.Flat), ConsistencyChecker.Run(V2World(reversed: true), ConsistencyChecker.Default).Select(Fx.Flat));

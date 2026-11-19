@@ -26,7 +26,7 @@ public class ConsistencyCheckerTests
         new List<PlaceView> { new("p-1", "regions/1", "Docks", "TBD", "wikipages/gone") },
         new List<FactView> { new("facts/1-A", "Seen near [[Lost Light]].", null) });
 
-    private static WorldSnapshot Snapshot(bool reversed = false)
+    internal static WorldSnapshot Snapshot(bool reversed = false)
     {
         var (pages, actors, places, facts) = World();
         if (reversed) { pages.Reverse(); actors.Reverse(); places.Reverse(); facts.Reverse(); }

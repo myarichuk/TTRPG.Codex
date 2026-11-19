@@ -57,14 +57,14 @@ public sealed class BacklinkMismatchCheck : IConsistencyCheck
             if (p.ActorId != null && actors.TryGetValue(p.ActorId, out var a) && a.WikiPageId != p.Id)
             {
                 yield return Make.Issue(Name, IssueSeverity.Info, "page", p.Id, "actorId", p.ActorId, "Consistency.BacklinkMismatch",
-                    new[] { p.Title, a.Name }, $"The page \"{Make.Quote(p.Title)}\" says it is about \"{Make.Quote(a.Name)}\", whose own page is {(a.WikiPageId == null ? "none" : "another")}.",
+                    new[] { p.Title, a.Name }, $"\"{Make.Quote(p.Title)}\" and \"{Make.Quote(a.Name)}\" point at each other on one side only.",
                     "Tell the DM; which page belongs to the character is theirs to say.", FixVia.ReportOnly);
             }
 
             if (p.PlaceId != null && places.TryGetValue(p.PlaceId, out var place) && place.WikiPageId != p.Id)
             {
                 yield return Make.Issue(Name, IssueSeverity.Info, "page", p.Id, "placeId", p.PlaceId, "Consistency.BacklinkMismatch",
-                    new[] { p.Title, place.Name }, $"The page \"{Make.Quote(p.Title)}\" says it is about the place \"{Make.Quote(place.Name)}\", whose own page is {(place.WikiPageId == null ? "none" : "another")}.",
+                    new[] { p.Title, place.Name }, $"\"{Make.Quote(p.Title)}\" and \"{Make.Quote(place.Name)}\" point at each other on one side only.",
                     "Tell the DM; which page belongs to the place is theirs to say.", FixVia.ReportOnly);
             }
         }
@@ -72,7 +72,7 @@ public sealed class BacklinkMismatchCheck : IConsistencyCheck
         foreach (var a in s.Actors.Where(a => a.WikiPageId != null && pages.TryGetValue(a.WikiPageId, out var page) && page.ActorId != a.Id))
         {
             yield return Make.Issue(Name, IssueSeverity.Info, "actor", a.Id, "wikiPageId", a.WikiPageId, "Consistency.BacklinkMismatch",
-                new[] { a.Name, pages[a.WikiPageId!].Title }, $"\"{Make.Quote(a.Name)}\" has the page \"{Make.Quote(pages[a.WikiPageId!].Title)}\", which does not say it is about them.",
+                new[] { a.Name, pages[a.WikiPageId!].Title }, $"\"{Make.Quote(a.Name)}\" and \"{Make.Quote(pages[a.WikiPageId!].Title)}\" point at each other on one side only.",
                 "Tell the DM; the link is theirs to put right.", FixVia.ReportOnly);
         }
     }

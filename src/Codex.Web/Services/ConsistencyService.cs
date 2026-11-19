@@ -44,6 +44,14 @@ public sealed class ConsistencyService(ISystemCatalog catalog, CampaignLibrary l
         return report.Open.Any(i => i.Id == issueId) && await dismissals.DismissAsync(access, issueId, note);
     }
 
+    /// <summary>What the DM set aside, in the order they did it, including dismissals whose problem is gone (they stay, and apply again if it comes back).
+    /// DM only.</summary>
+    public Task<IReadOnlyList<IssueDismissal>> DismissalsAsync(CampaignAccess access)
+    {
+        DmOnly(access);
+        return dismissals.ListAsync(access);
+    }
+
     public Task<bool> RestoreAsync(CampaignAccess access, string issueId)
     {
         DmOnly(access);

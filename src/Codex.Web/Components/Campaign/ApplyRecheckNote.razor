@@ -1,0 +1,52 @@
+@* What the app's own checks said after the last apply of the world builder (docs/WORLD_BUILDER.md, 9): which issues the change fixed, which are still
+   open, which are new. From the checks, never from what the model claimed. The DM's own screen. *@
+<section class="panel wb-recheck" aria-labelledby="recheck-title" data-testid="issues-recheck">
+    <header class="d-flex justify-content-between align-items-center gap-2">
+        <h3 id="recheck-title" class="h6 mb-0"><LucideIcon IconName="shield-check" Size="16" /> @L["Campaign.Issues.Recheck.Title"]</h3>
+        <div class="d-flex gap-2">
+            @if (!string.IsNullOrEmpty(IssuesHref))
+            {
+                <a class="cx-btn cx-btn-sm" href="@IssuesHref" data-testid="issues-recheck-see">@L["Campaign.Issues.Recheck.See"]</a>
+            }
+            @if (OnHide.HasDelegate)
+            {
+                <button type="button" class="cx-btn cx-btn-sm" @onclick="OnHide" data-testid="issues-recheck-hide">@L["Campaign.Issues.Recheck.Hide"]</button>
+            }
+        </div>
+    </header>
+    @if (Recheck.Failed)
+    {
+        <p class="mb-0 mt-2" data-testid="issues-recheck-failed">@L["Campaign.Issues.Recheck.Failed"]</p>
+    }
+    else
+    {
+        <ul class="list-unstyled mb-0 mt-2">
+            @Row("Resolved", Recheck.Resolved, "success")
+            @Row("StillOpen", Recheck.StillOpen, "danger")
+            @Row("New", Recheck.New, "danger")
+            @Row("Unclaimed", Recheck.ResolvedUnclaimed, "success")
+            @Row("NotFound", Recheck.NotFound, "warning")
+        </ul>
+        @if (Recheck.Resolved.Count + Recheck.StillOpen.Count + Recheck.New.Count + Recheck.ResolvedUnclaimed.Count + Recheck.NotFound.Count == 0)
+        {
+            <p class="mb-0 mt-2">@L["Campaign.Issues.Recheck.Nothing"]</p>
+        }
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public ApplyRecheck Recheck { get; set; } = null!;
+
+    /// <summary>Where the Issues panel is, for the link; none shows no link.</summary>
+    [Parameter] public string? IssuesHref { get; set; }
+
+    [Parameter] public EventCallback OnHide { get; set; }
+
+    private RenderFragment Row(string key, IReadOnlyList<string> ids, string tone) => __builder =>
+    {
+        if (ids.Count == 0) return;
+        <li class="mb-1" data-testid="@("issues-recheck-" + key.ToLowerInvariant())">
+            <span class="pill pill-@tone">@ids.Count</span> @L[$"Campaign.Issues.Recheck.{key}", string.Join(", ", ids)]
+        </li>
+    };
+}

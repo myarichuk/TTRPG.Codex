@@ -34,7 +34,7 @@ public sealed class SecretUnclosedCheck : IConsistencyCheck
         foreach (var (field, block, opening) in SecretScan.Blocks(s).Where(b => b.Block.ClosingLine == null))
         {
             yield return Make.Issue(Name, IssueSeverity.Warning, field.Kind, field.EntityId, field.Field, block.Block.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                "Consistency.SecretUnclosed", new[] { opening.Trim() },
+                "Consistency.SecretUnclosed", new[] { Make.Quote(opening), (block.Line + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) },
                 $"The block opened by \"{Make.Quote(opening)}\" (line {block.Line + 1}) is never closed with a line of :::, so it runs to the end of the text.",
                 "Add a line with only ::: where the block should end. Do not change what the block says or who it is for.",
                 field.Fix);
@@ -55,7 +55,7 @@ public sealed class SecretUnknownAudienceCheck : IConsistencyCheck
             var word = SecretScan.OpeningWord(opening);
             if (word == null || word.Equals("dm", StringComparison.OrdinalIgnoreCase)) continue;
             yield return Make.Issue(Name, IssueSeverity.Warning, field.Kind, field.EntityId, field.Field, block.Block.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                "Consistency.SecretUnknownAudience", new[] { word },
+                "Consistency.SecretUnknownAudience", new[] { Make.Quote(word), Make.Quote(opening), (block.Line + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) },
                 $"The block opened by \"{Make.Quote(opening)}\" (line {block.Line + 1}) names an audience the app does not know (\":::{Make.Quote(word)}\"), so only the DM can read it.",
                 "The audiences are dm, party, players and for. Change the word only if the DM's intent is clear; otherwise ask, since a wrong guess can show a secret.",
                 field.Fix);
@@ -77,7 +77,7 @@ public sealed class SecretForMissingCheck : IConsistencyCheck
             if (block.Knowers.Count == 0)
             {
                 yield return Make.Issue(Name, IssueSeverity.Warning, field.Kind, field.EntityId, field.Field, $"{number}:none", "Consistency.SecretForNobody",
-                    new[] { opening.Trim() },
+                    new[] { Make.Quote(opening), (block.Line + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) },
                     $"The block opened by \"{Make.Quote(opening)}\" (line {block.Line + 1}) names no character, so no player can read it.",
                     "Name the characters it is for as mentions on the opening line, or ask the DM who should read it.",
                     field.Fix);
@@ -87,7 +87,7 @@ public sealed class SecretForMissingCheck : IConsistencyCheck
             foreach (var id in block.Knowers.Where(id => !actors.Contains(id)).OrderBy(id => id, StringComparer.Ordinal))
             {
                 yield return Make.Issue(Name, IssueSeverity.Warning, field.Kind, field.EntityId, field.Field, $"{number}:{id}", "Consistency.SecretForMissing",
-                    new[] { id, opening.Trim() },
+                    new[] { id, Make.Quote(opening), (block.Line + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) },
                     $"The block opened by \"{Make.Quote(opening)}\" (line {block.Line + 1}) is for a character ({id}) that no longer exists.",
                     "Take that character off the opening line, or ask the DM who should read the block instead.",
                     field.Fix);

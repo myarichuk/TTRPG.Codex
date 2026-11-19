@@ -1352,4 +1352,46 @@
   <data name="Campaign.Book.Hazard.NoneOnSave" xml:space="preserve"><value>אין נזק בהצלחה</value></data>
   <data name="Campaign.Book.Hazard.Times" xml:space="preserve"><value>{0}, {1} פעמים</value></data>
   <data name="Campaign.Book.Hazard.Strikes" xml:space="preserve"><value>מפעיל את האפקט</value></data>
+  <data name="Campaign.Issues.Title" xml:space="preserve"><value>בעיות</value></data>
+  <data name="Campaign.Issues.Subtitle" xml:space="preserve"><value>מה שהבדיקות של האפליקציה מצאו שגוי או חסר. הבדיקות הן קוד ולא מודל: אותו קמפיין נותן תמיד אותה רשימה. אפשר לדחות מה שאמור להישאר.</value></data>
+  <data name="Campaign.Issues.DmOnly" xml:space="preserve"><value>בעיות מיועדות למנחה בלבד.</value></data>
+  <data name="Campaign.Issues.None" xml:space="preserve"><value>אין בעיות פתוחות: הבדיקות לא מצאו מה לתקן.</value></data>
+  <data name="Campaign.Issues.NoMatch" xml:space="preserve"><value>שום דבר לא מתאים למסנן הזה.</value></data>
+  <data name="Campaign.Issues.Counts" xml:space="preserve"><value>{0} פתוחות: {1} שגיאות, {2} אזהרות, {3} מידע</value></data>
+  <data name="Campaign.Issues.Severity.Error" xml:space="preserve"><value>שגיאות</value></data>
+  <data name="Campaign.Issues.Severity.Warning" xml:space="preserve"><value>אזהרות</value></data>
+  <data name="Campaign.Issues.Severity.Info" xml:space="preserve"><value>מידע</value></data>
+  <data name="Campaign.Issues.Filter.Severity" xml:space="preserve"><value>חומרה</value></data>
+  <data name="Campaign.Issues.Filter.Kind" xml:space="preserve"><value>בנושא</value></data>
+  <data name="Campaign.Issues.Filter.All" xml:space="preserve"><value>הכול</value></data>
+  <data name="Campaign.Issues.Filter.Noise" xml:space="preserve"><value>הצג גם ממצאים קלים</value></data>
+  <data name="Campaign.Issues.Filter.NoiseHint" xml:space="preserve"><value>דפים שאין אליהם קישורים, קישורים חד־צדדיים, דפי אדם בלי דמות, הזכרות של דמויות שיצאו מהמשחק. כבוי כברירת מחדל.</value></data>
+  <data name="Campaign.Issues.Kind.page" xml:space="preserve"><value>דפים</value></data>
+  <data name="Campaign.Issues.Kind.actor" xml:space="preserve"><value>דמויות</value></data>
+  <data name="Campaign.Issues.Kind.place" xml:space="preserve"><value>מקומות</value></data>
+  <data name="Campaign.Issues.Kind.fact" xml:space="preserve"><value>סודות</value></data>
+  <data name="Campaign.Issues.Kind.homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
+  <data name="Campaign.Issues.Kind.campaign" xml:space="preserve"><value>קמפיין</value></data>
+  <data name="Campaign.Issues.Dismiss" xml:space="preserve"><value>דחייה</value></data>
+  <data name="Campaign.Issues.DismissNote" xml:space="preserve"><value>למה? (לא חובה)</value></data>
+  <data name="Campaign.Issues.DismissConfirm" xml:space="preserve"><value>דחיית הבעיה</value></data>
+  <data name="Campaign.Issues.DismissFailed" xml:space="preserve"><value>הבעיה כבר לא פתוחה, ולכן אי אפשר היה לדחות אותה.</value></data>
+  <data name="Campaign.Issues.Open" xml:space="preserve"><value>פתיחה</value></data>
+  <data name="Campaign.Issues.From" xml:space="preserve"><value>נמצא על ידי {0}</value></data>
+  <data name="Campaign.Issues.DismissedTitle" xml:space="preserve"><value>נדחו ({0})</value></data>
+  <data name="Campaign.Issues.DismissedHint" xml:space="preserve"><value>הוצאו הצידה בכוונה; הן לא נספרות. אפשר לשחזר אחת כדי לראות אותה שוב.</value></data>
+  <data name="Campaign.Issues.Restore" xml:space="preserve"><value>שחזור</value></data>
+  <data name="Campaign.Issues.NoNote" xml:space="preserve"><value>בלי הערה</value></data>
+  <data name="Campaign.Issues.Gone" xml:space="preserve"><value>הבעיה נעלמה. הדחייה נשארת, ותחול שוב אם אותה בעיה תחזור.</value></data>
+  <data name="Campaign.Issues.Error" xml:space="preserve"><value>אי אפשר היה להריץ את הבדיקות.</value></data>
+  <data name="Campaign.Issues.Recheck.Title" xml:space="preserve"><value>אחרי ההחלה האחרונה</value></data>
+  <data name="Campaign.Issues.Recheck.Resolved" xml:space="preserve"><value>תוקנו: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.StillOpen" xml:space="preserve"><value>עדיין פתוחות, השינוי לא תיקן אותן: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.New" xml:space="preserve"><value>חדשות, נוצרו בשל השינוי: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.Unclaimed" xml:space="preserve"><value>תוקנו גם הן, אף שאיש לא טען לכך: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.NotFound" xml:space="preserve"><value>לא היו בעיות לא לפני ולא אחרי: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.Failed" xml:space="preserve"><value>האפליקציה לא הצליחה להריץ שוב את הבדיקות אחרי ההחלה. ההחלה עצמה הצליחה.</value></data>
+  <data name="Campaign.Issues.Recheck.Nothing" xml:space="preserve"><value>שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Issues.Recheck.Hide" xml:space="preserve"><value>הסתרה</value></data>
+  <data name="Campaign.Issues.Recheck.See" xml:space="preserve"><value>מעבר לבעיות</value></data>
 </root>

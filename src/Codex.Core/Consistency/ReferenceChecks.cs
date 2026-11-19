@@ -60,7 +60,7 @@ public sealed class DanglingReferenceCheck : IConsistencyCheck
 
     private Issue Of(string kind, string entityId, string field, string pointsAt, string target) =>
         Make.Issue(Name, IssueSeverity.Error, kind, entityId, field, null, "Consistency.DanglingReference",
-            new[] { field, pointsAt, target },
+            new[] { kind, field, pointsAt, target },
             $"The {kind}'s {field} points at a {pointsAt} ({target}) that no longer exists.",
             "The link has to be cleared or pointed at something that exists, which a proposal cannot do. Tell the DM.",
             FixVia.ReportOnly);

@@ -66,7 +66,7 @@ public sealed class PlaceTreeCheck : IConsistencyCheck
                 var lowest = loop.Min(StringComparer.Ordinal)!;
                 if (!reported.Add(lowest)) continue;
                 var names = loop.OrderBy(id => id, StringComparer.Ordinal).Select(id => Make.Quote(region.Value[id].Name)).ToList();
-                yield return Issue(region.Value[lowest], "cycle", "Cycle", new[] { string.Join(", ", names) },
+                yield return Issue(region.Value[lowest], "cycle", "Cycle", new[] { string.Join(", ", names.Select(n => "\"" + n + "\"")) },
                     $"These places are inside one another in a loop, with no top: {string.Join(", ", names.Select(n => "\"" + n + "\""))}.");
             }
         }
@@ -92,13 +92,12 @@ public sealed class DuplicateTitleCheck : IConsistencyCheck
         var sameSlug = new HashSet<string>(StringComparer.Ordinal);
         foreach (var group in s.Pages.Where(p => p.Slug.Length > 0).GroupBy(p => p.Slug, StringComparer.Ordinal).Where(g => g.Count() > 1).OrderBy(g => g.Key, StringComparer.Ordinal))
         {
-            var titles = group.Select(p => Make.Quote(p.Title)).ToList();
             foreach (var page in group)
             {
                 sameSlug.Add(page.Id);
                 yield return Make.Issue(CheckNames.DuplicateSlug, IssueSeverity.Warning, "page", page.Id, "slug", group.Key, "Consistency.DuplicateSlug",
-                    new[] { page.Title, group.Key, group.Count().ToString(System.Globalization.CultureInfo.InvariantCulture) },
-                    $"The page \"{Make.Quote(page.Title)}\" shares the address \"{group.Key}\" with {group.Count() - 1} other page(s) ({string.Join(", ", titles.Select(t => "\"" + t + "\""))}); a link reaches only one of them.",
+                    new[] { page.Title, group.Key, (group.Count() - 1).ToString(System.Globalization.CultureInfo.InvariantCulture) },
+                    $"The page \"{Make.Quote(page.Title)}\" shares the address \"{group.Key}\" with {group.Count() - 1} other page(s); a link reaches only one of them.",
                     "Ask the DM which page is meant, and whether they should be merged or one renamed. Do not merge or delete pages on your own.",
                     FixVia.ReportOnly);
             }
@@ -205,7 +204,7 @@ public sealed class PlacementCheck : IConsistencyCheck
             if (known) continue;
             yield return Make.Issue(Name, IssueSeverity.Warning, "place", place.Id, "hazard", place.HazardEntry, "Consistency.PlacedHazardGone",
                 new[] { place.Name, place.HazardEntry },
-                $"The hazard {place.HazardEntry} placed on \"{Make.Quote(place.Name)}\" is no longer in the Library{(place.HazardIsHomebrew ? " (it was homebrew)" : string.Empty)}.",
+                $"The hazard {place.HazardEntry} placed on \"{Make.Quote(place.Name)}\" is no longer in the Library.",
                 "Tell the DM; the placement has to be cleared or the entry put back. Do not invent a replacement hazard.", FixVia.ReportOnly);
         }
 
@@ -255,8 +254,8 @@ public sealed class HomebrewChecks : IConsistencyCheck
             foreach (var entry in group.OrderBy(h => h.Id, StringComparer.Ordinal))
             {
                 yield return Make.Issue(CheckNames.HomebrewDuplicate, IssueSeverity.Error, "homebrew", entry.Key, "entryId", WikiText.Slugify(entry.Id), "Consistency.HomebrewDuplicate",
-                    new[] { entry.Name, entry.Key, group.Count().ToString(System.Globalization.CultureInfo.InvariantCulture) },
-                    $"The homebrew entry \"{Make.Quote(entry.Name)}\" shares its id {entry.Key} with {group.Count() - 1} other entr{(group.Count() == 2 ? "y" : "ies")}; only one can be reached.",
+                    new[] { entry.Name, entry.Key, (group.Count() - 1).ToString(System.Globalization.CultureInfo.InvariantCulture) },
+                    $"The homebrew entry \"{Make.Quote(entry.Name)}\" shares its id {entry.Key} with {group.Count() - 1} other {(group.Count() == 2 ? "entry" : "entries")}; only one can be reached.",
                     "Tell the DM; which entry stays, and whether one is renamed, is theirs to decide.", FixVia.ReportOnly);
             }
         }
@@ -270,7 +269,7 @@ public sealed class HomebrewChecks : IConsistencyCheck
                 if (!entry.Properties.TryGetValue(field.Key, out var raw) || Convert.ToString(raw, System.Globalization.CultureInfo.InvariantCulture)?.Trim() is not { Length: > 0 } id) continue;
                 if (s.Library.Resolve(field.TargetEntityType!, id) != null) continue;
                 yield return Make.Issue(CheckNames.HomebrewReference, IssueSeverity.Warning, "homebrew", entry.Key, field.Key, id, "Consistency.HomebrewReference",
-                    new[] { entry.Name, field.Label, id },
+                    new[] { entry.Name, field.Label, id, field.TargetEntityType! },
                     $"The homebrew entry \"{Make.Quote(entry.Name)}\" names \"{Make.Quote(id)}\" as its {field.Label}, which is not a {field.TargetEntityType} in the Library.",
                     "Ask the DM which entry is meant, or clear the field with an edit of the entry's properties. Do not invent an id.", FixVia.Homebrew);
             }
@@ -440,7 +439,7 @@ public sealed class LibraryReferenceCheck : IConsistencyCheck
             if (b.IsHomebrew ? !s.HomebrewLoaded || homebrew.Contains(key) : s.Library.Resolve(b.EntryType, b.EntryId) != null) continue;
             yield return Make.Issue(Name, IssueSeverity.Warning, "campaign", s.Campaign.Id, "bestiary", WikiText.Slugify(key), "Consistency.BestiaryGone",
                 new[] { b.Name, key },
-                $"The Bestiary lists \"{Make.Quote(b.Name)}\" ({key}), which is not in the Library{(b.IsHomebrew ? " (it was homebrew)" : string.Empty)}.",
+                $"The Bestiary lists \"{Make.Quote(b.Name)}\" ({key}), which is not in the Library.",
                 "Tell the DM; taking it off the shortlist is theirs to do.", FixVia.ReportOnly);
         }
     }

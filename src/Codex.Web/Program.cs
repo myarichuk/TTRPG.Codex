@@ -273,6 +273,7 @@ builder.Services.AddSingleton<AiFeatures>();
 builder.Services.AddSingleton<CharacterAssist>();
 builder.Services.AddSingleton<WorldBuilderService>();
 builder.Services.AddSingleton<ConsistencyService>();
+builder.Services.AddSingleton<IssueRecheckLog>();
 builder.Services.AddScoped<HomebrewImportService>();
 builder.Services.AddSingleton<ArtService>();
 builder.Services.AddSingleton<PlaceWikiSync>();

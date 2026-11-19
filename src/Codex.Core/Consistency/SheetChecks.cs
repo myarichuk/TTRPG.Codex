@@ -37,7 +37,7 @@ public sealed class EmptyInventoryCheck : IConsistencyCheck
             sources.Sort(StringComparer.Ordinal);
             yield return Make.Issue(Name, IssueSeverity.Info, "actor", a.Id, inventory.Key, null, "Consistency.EmptyInventory",
                 new[] { a.Name, string.Join(", ", sources) },
-                $"\"{Make.Quote(a.Name)}\" carries nothing, though {string.Join(" and ", sources.Select(Make.Quote))} bring starting equipment.",
+                $"\"{Make.Quote(a.Name)}\" carries nothing, though {Make.Quote(string.Join(", ", sources))} bring starting equipment.",
                 "Ask the DM whether the character starts with gold instead, or what they carry. Only if the DM wants the starting kit, propose a sheet edit that sets the inventory " +
                 "to items the class's or background's own starting-equipment text names and the Library has (get_entry reads it); never invent or auto-fill gear, and leave it empty if the DM says so.",
                 FixVia.Sheet);

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Consistency.BrokenLink" xml:space="preserve"><value>הקישור [[{0}]] לא מוביל לשום דף.</value></data>
+  <data name="Consistency.UnlinkedMention" xml:space="preserve"><value>הטקסט אומר "{0}" במילים רגילות, וזה שם הדף "{1}".</value></data>
+  <data name="Consistency.VisibilityLeak" xml:space="preserve"><value>הדף הגלוי לחבורה מקשר ל-[[{0}]], הדף "{1}", שרק המנחה יכול לפתוח. השחקנים רואים את המילים בלי הקישור, או כלום אם אין לקישור תווית.</value></data>
+  <data name="Consistency.DanglingMention" xml:space="preserve"><value>הטקסט מזכיר {0} ({1}) שכבר לא קיים.</value></data>
+  <data name="Consistency.DanglingReference" xml:space="preserve"><value>השדה {1} של ה-{0} מצביע על {2} ({3}) שכבר לא קיים.</value></data>
+  <data name="Consistency.EmptyBio" xml:space="preserve"><value>ל-"{0}" אין רקע כתוב.</value></data>
+  <data name="Consistency.EmptyBody" xml:space="preserve"><value>לדף "{0}" אין טקסט.</value></data>
+  <data name="Consistency.TodoMarker" xml:space="preserve"><value>בטקסט עדיין יש סימון מקום "{0}".</value></data>
+  <data name="Consistency.EmptyInventory" xml:space="preserve"><value>"{0}" לא נושא כלום, אף ש-{1} מביאים ציוד התחלתי.</value></data>
+  <data name="Consistency.SecretUnclosed" xml:space="preserve"><value>הבלוק שנפתח ב-"{0}" (שורה {1}) לא נסגר בשורת :::, ולכן הוא נמשך עד סוף הטקסט.</value></data>
+  <data name="Consistency.SecretUnknownAudience" xml:space="preserve"><value>הבלוק שנפתח ב-"{1}" (שורה {2}) מציין קהל שהאפליקציה לא מכירה (":::{0}"), ולכן רק המנחה יכול לקרוא אותו.</value></data>
+  <data name="Consistency.SecretForNobody" xml:space="preserve"><value>הבלוק שנפתח ב-"{0}" (שורה {1}) לא מציין אף דמות, ולכן אף שחקן לא יכול לקרוא אותו.</value></data>
+  <data name="Consistency.SecretForMissing" xml:space="preserve"><value>הבלוק שנפתח ב-"{1}" (שורה {2}) מיועד לדמות ({0}) שכבר לא קיימת.</value></data>
+  <data name="Consistency.SheetRule" xml:space="preserve"><value>{0}</value></data>
+  <data name="Consistency.SheetEvaluationFailed" xml:space="preserve"><value>אי אפשר היה להעריך את כללי הדף של "{0}" ({1}).</value></data>
+  <data name="Consistency.PlaceTreeSelf" xml:space="preserve"><value>המקום "{0}" נמצא בתוך עצמו.</value></data>
+  <data name="Consistency.PlaceTreeCrossRegion" xml:space="preserve"><value>המקום "{0}" נמצא בתוך "{1}", שנמצא באזור אחר; מקום יכול להיות רק בתוך מקום מהאזור שלו.</value></data>
+  <data name="Consistency.PlaceTreeMissing" xml:space="preserve"><value>המקום "{0}" נמצא בתוך מקום ({1}) שכבר לא קיים.</value></data>
+  <data name="Consistency.PlaceTreeCycle" xml:space="preserve"><value>המקומות האלה נמצאים זה בתוך זה במעגל, בלי קודקוד עליון: {0}.</value></data>
+  <data name="Consistency.DuplicateSlug" xml:space="preserve"><value>הדף "{0}" חולק את הכתובת "{1}" עם {2} דפים נוספים; קישור מגיע רק לאחד מהם.</value></data>
+  <data name="Consistency.NearDuplicateTitle" xml:space="preserve"><value>לדף "{0}" כמעט אותה כותרת כמו {1} (ההבדל רק בה"א הידיעה או במילה כפולה).</value></data>
+  <data name="Consistency.FactRelatedGone" xml:space="preserve"><value>הסוד "{0}" רשום תחת {1} ({2}) שכבר לא קיים, אף שהטקסט שלו לא מזכיר אותו.</value></data>
+  <data name="Consistency.FactKnowerGone" xml:space="preserve"><value>הסוד "{0}" ידוע לדמות ({1}) שאינה ברשימת הדמויות.</value></data>
+  <data name="Consistency.PlacedCreatureGone" xml:space="preserve"><value>המקום "{0}" אומר שהיצור שלו הוא דמות ({1}) שאינה ברשימת הדמויות.</value></data>
+  <data name="Consistency.PlacedHazardGone" xml:space="preserve"><value>הסכנה {1} שהונחה על "{0}" כבר לא נמצאת בספרייה.</value></data>
+  <data name="Consistency.HazardPlaceGone" xml:space="preserve"><value>הסכנה "{0}" על השולחן עומדת על מקום ({1}) שכבר לא קיים.</value></data>
+  <data name="Consistency.OwnerNotMember" xml:space="preserve"><value>הדמות "{0}" שייכת לשחקן ({1}) שאינו חבר בקמפיין.</value></data>
+  <data name="Consistency.HomebrewDuplicate" xml:space="preserve"><value>הערך הביתי "{0}" חולק את המזהה {1} עם {2, plural, one{ערך אחר אחד} other{# ערכים אחרים}}; אפשר להגיע רק לאחד.</value></data>
+  <data name="Consistency.HomebrewReference" xml:space="preserve"><value>הערך הביתי "{0}" מציין את "{2}" בתור {1}, שאינו {3} בספרייה.</value></data>
+  <data name="Consistency.HazardShape" xml:space="preserve"><value>הסכנה "{0}": {1}</value></data>
+  <data name="Consistency.TagCase" xml:space="preserve"><value>התגית "{0}" נכתבת גם "{1}" במקום אחר, ולכן השתיים לא נמצאות יחד.</value></data>
+  <data name="Consistency.SystemUnknown" xml:space="preserve"><value>מערכת המשחק של הקמפיין "{0}" לא מותקנת, ולכן אי אפשר לקרוא דף דמות או ערך בספרייה.</value></data>
+  <data name="Consistency.SystemDrift" xml:space="preserve"><value>המערכת "{0}" השתנתה מאז שהקמפיין שיחק בה לאחרונה ({1} שינויים: {2}).</value></data>
+  <data name="Consistency.PackDrift" xml:space="preserve"><value>בחירת החבילות של הקמפיין מזכירה חבילה "{0}" שכבר אין במערכת.</value></data>
+  <data name="Consistency.PackProblem" xml:space="preserve"><value>טעינת המערכת או החבילות שלה דיווחה: {0}</value></data>
+  <data name="Consistency.BlueprintGone" xml:space="preserve"><value>"{0}" נוצר מהיצור {1}, שכבר אין בספרייה (החבילה שלו כבויה או נעלמה).</value></data>
+  <data name="Consistency.InventoryItemGone" xml:space="preserve"><value>"{0}" נושא "{1}", שאינו בספרייה.</value></data>
+  <data name="Consistency.BestiaryGone" xml:space="preserve"><value>בספר היצורים מופיע "{0}" ({1}), שאינו בספרייה.</value></data>
+  <data name="Consistency.CheckFailed" xml:space="preserve"><value>בדיקת המערכת "{0}" לא יכלה לרוץ ({1}), ולכן מה שהיא מחפשת לא נבדק.</value></data>
+  <data name="Consistency.OrphanPage" xml:space="preserve"><value>שום דבר לא מקשר לדף "{0}".</value></data>
+  <data name="Consistency.BacklinkMismatch" xml:space="preserve"><value>"{0}" ו-"{1}" מצביעים זה על זה מצד אחד בלבד.</value></data>
+  <data name="Consistency.PersonPageNoActor" xml:space="preserve"><value>לדף האדם "{0}" אין דמות ברשימת הדמויות.</value></data>
+  <data name="Consistency.RetiredMention" xml:space="preserve"><value>הטקסט מזכיר את "{0}", שיצא מהמשחק.</value></data>
+</root>
