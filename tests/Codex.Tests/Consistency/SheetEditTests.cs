@@ -206,6 +206,21 @@ public class SheetEditParserTests
     }
 
     [Fact]
+    public void AKeyTheSystemNoLongerListsAsEditable_IsRefused_NotSkipped_WhetherSetOrCleared()
+    {
+        var sheet = new Dictionary<string, object> { ["class"] = "fighter", ["HP_Max"] = 9L };
+
+        var (setErrors, _) = SheetProposal.Check(Fx.System(), Library, "strict", sheet, new Dictionary<string, string> { ["HP_Max"] = "50" }, Array.Empty<string>(), "s1");
+        Assert.Contains("'HP_Max' is not a sheet key a proposal can change", Assert.Single(setErrors));
+
+        var (clearErrors, _) = SheetProposal.Check(Fx.System(), Library, "strict", sheet, new Dictionary<string, string>(), new[] { "HP_Max" }, "s1");
+        Assert.Contains("'HP_Max' is not a sheet key a proposal can change", Assert.Single(clearErrors));
+
+        // A key that is editable is not blamed, in any case.
+        Assert.Empty(SheetProposal.Check(Fx.System(), Library, "strict", sheet, new Dictionary<string, string> { ["CLASS"] = "\"fighter\"" }, new[] { "background" }, "s1").Errors);
+    }
+
+    [Fact]
     public void NumbersAndChoices_AreCheckedAgainstTheirBoundsAndOptions()
     {
         var system = SystemDefinitionLoader.Parse("""
@@ -377,6 +392,32 @@ public class SheetEditThroughTheGateTests
 
         Assert.Equal("WorldBuilder.Error.EditChanged", failure.Key);
         Assert.Equal("wizard", run.Actor.Sheet["class"]);
+    }
+
+    [Fact]
+    public async Task ACharacterWhoBecameACreatureAfterTheReview_IsNotEdited()
+    {
+        var (run, chat) = await ProposedAsync("""{"class": "fighter"}""", null);
+        run.Actor.Kind = ActorKind.Monster; // as the proposal was checked, a bestiary creature's sheet is out of reach
+
+        var failure = await Assert.ThrowsAsync<LocalizedException>(() => chat.ApplyAsync());
+
+        Assert.Equal("WorldBuilder.Error.EditTargetGone", failure.Key);
+        Assert.Equal("rogue", run.Actor.Sheet["class"]);
+    }
+
+    [Fact]
+    public async Task AKeyThatIsNotEditableAtTheApply_IsRefused_AndNothingIsWritten()
+    {
+        var (run, chat) = await ProposedAsync("""{"class": "fighter"}""", null);
+        // The system was reloaded between the review and the apply, and now lists HP_Max as derived: the entry still carries it.
+        chat.Proposal!.Drafts.Single().SheetSet["HP_Max"] = "50";
+
+        var failure = await Assert.ThrowsAsync<LocalizedException>(() => chat.ApplyAsync());
+
+        Assert.Equal("WorldBuilder.Error.SheetRefused", failure.Key);
+        Assert.Equal("rogue", run.Actor.Sheet["class"]);
+        Assert.False(run.Actor.Sheet.ContainsKey("HP_Max"));
     }
 
     [Fact]

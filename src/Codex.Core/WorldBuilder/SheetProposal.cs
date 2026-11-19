@@ -276,8 +276,18 @@ public static class SheetProposal
     public static (IReadOnlyList<string> Errors, IReadOnlyList<string> Warnings) Check(SystemDefinition system, IEntryResolver library, string enforcement,
         IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, string> set, IEnumerable<string> clear, string label, ILinkedSheets? linked = null)
     {
+        clear = clear.ToList();
         var errors = new List<string>();
         var warnings = new List<string>();
+        // A key the system no longer lists as editable (it was reloaded between the review and the apply, or a derived key was set) is refused, never
+        // skipped: Apply would write it all the same.
+        foreach (var name in set.Keys.Concat(clear).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n, StringComparer.Ordinal))
+        {
+            if (Find(system, name) == null) errors.Add($"{label}: '{name}' is not a sheet key a proposal can change; nothing was changed.");
+        }
+
+        if (errors.Count > 0) return (errors, warnings);
+
         foreach (var (name, json) in set)
         {
             if (Find(system, name) is not { } key) continue;

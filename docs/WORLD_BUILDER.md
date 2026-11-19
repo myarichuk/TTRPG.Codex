@@ -284,6 +284,8 @@ the Library does not have is refused, so nothing is invented) and against the sy
 (a violation that was there stays the DM's; `enforcement: off` skips the rules, never the Library; the point-buy rules are left out). The rules run with the sheets the character's links point to
 (`ILinkedSheets`), as on the sheet page: loaded with the campaign's own access for the propose-time check and the apply, read from the snapshot's actors
 (`SnapshotLinkedSheets`) for `sheet-rule`; without them a value that depends on a link (a track's maximum) is left stale instead of recomputed.
+Applying checks it all again, so a character who has since been retired or turned into a creature, and a key the system no longer lists as editable (it
+was reloaded between the review and the apply), are refused (`SheetProposal.Check` fails on such a key, set or cleared, instead of skipping it).
 A retired character,
 a bestiary creature and a character that is gone are refused; a player's character is allowed, since the DM reviews every change and the sheet checks
 cover them. The review card shows each key now and after; applying checks again that the sheet still holds what the card showed (`BeforeStamp`, otherwise

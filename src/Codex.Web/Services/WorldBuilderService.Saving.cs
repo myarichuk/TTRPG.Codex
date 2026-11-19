@@ -435,7 +435,8 @@ public sealed partial class WorldBuilderService
                     // still allow it: the same check the proposal passed, run again against the sheet as it is now.
                     var actor = await actorRepository.GetVisibleAsync(id, access) ?? throw gone;
                     var system = catalog.GetDefinition(campaign.SystemId) ?? throw gone;
-                    if (actor.Retired) throw gone;
+                    // As the proposal was checked: not a retired character, and not a bestiary creature or a hazard (the actor may have become one since).
+                    if (actor.Retired || ConsistencySnapshots.RoleOf(actor) == Codex.Core.Consistency.ActorRole.Monster) throw gone;
                     var current = actor.Sheet ?? new Dictionary<string, object>();
                     if (draft.BeforeSheet != null && !SheetProposal.Unchanged(current, draft.BeforeSheet)) throw changed;
                     var resolver = await CachedEntryResolver.LoadAsync(library, campaign, access, system);
