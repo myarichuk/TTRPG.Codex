@@ -80,6 +80,10 @@ public static class ScriptTypings
         w.AppendLine("  };");
         w.AppendLine("  /** The conditions that hold, those the tracks' thresholds bring included. */");
         w.AppendLine("  readonly conditions: readonly ConditionName[];");
+        w.AppendLine("  /** Each valued condition's number by name; 0 when it does not hold. */");
+        w.AppendLine($"  readonly conditionValues: {{ readonly [key in {Union(SheetConditions.Valued(system).Select(v => v.Condition), "string")}]?: number }};");
+        w.AppendLine("  /** Each of the system's resources and its maximum, by key, as numbers (0 when the sheet has none). */");
+        w.AppendLine($"  readonly resources: {{ readonly [key in {Union(system.Resources.SelectMany(r => new[] { r.Key, system.MaxKeyOf(r.Key) }), "string")}]?: number }};");
         w.AppendLine("}");
         w.AppendLine();
         w.AppendLine("/** An event's fields, as the table or the GM gave them: numbers, text, flags, and lists and maps of them. What");
@@ -99,7 +103,8 @@ public static class ScriptTypings
         w.AppendLine("  | { set: { track: TrackKey; to: number; actor?: string } }");
         w.AppendLine("  | { mark: { track: TrackKey; by?: number; level?: number; text?: string; actor?: string } }");
         w.AppendLine("  | { clear: { track: TrackKey; by?: number; level?: number; text?: string; actor?: string } }");
-        w.AppendLine("  | { condition: { add: ConditionName; actor?: string } | { remove: ConditionName; actor?: string } }");
+        w.AppendLine("  /** A valued condition: add with value sets it, add with by raises or lowers it, remove sets it to 0 (always within 0 and its maximum). */");
+        w.AppendLine("  | { condition: { add: ConditionName; value?: number; by?: number; actor?: string } | { remove: ConditionName; actor?: string } }");
         var listKeys = Union(keyed.Select(l => l.Key).Concat(picks.Select(l => l.Key)), "never");
         w.AppendLine($"  | {{ set: {{ list: {listKeys}; key: string; field: string; to: Plain; actor?: string }} }}");
         w.AppendLine($"  | {{ adjust: {{ list: {listKeys}; key: string; field: string; by: number; actor?: string }} }}");

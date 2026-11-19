@@ -34,7 +34,8 @@ public sealed class SheetIntentResult
 /// <item><c>mark { track, by?, level?, text? }</c> and <c>clear</c>: a box track up or down by one (or <c>by</c>); for a slot
 /// track, <c>text</c> into a free slot (of <c>level</c>, pushing up a level at a time when the track says <c>whenFull:
 /// pushUp</c>, and bringing <c>beyond</c>'s condition past the last), or out of it.</item>
-/// <item><c>condition { add | remove }</c>: the sheet's own conditions.</item>
+/// <item><c>condition { add | remove }</c>: the sheet's own conditions. A valued condition (<c>add</c> with <c>value</c> to set it or
+/// <c>by</c> to raise or lower it, <c>remove</c> to zero it) is its value, kept within 0 and its maximum.</item>
 /// <item><c>set { list, key, field, to }</c> and <c>adjust { list, key, field, by }</c>: a per-pick field of one entry, by its
 /// key in a keyed list (<c>skills</c>, <c>handgun</c>) or its id in a list of picks; a number field is kept within its
 /// <c>min</c> and <c>max</c>, and only a number field adjusts.</item>
@@ -369,16 +370,46 @@ public static class SheetIntents
         {
             if (fields.GetValueOrDefault("add")?.ToString() is { Length: > 0 } add)
             {
+                // A valued condition given a number (value: sets it, by: raises or lowers it) is its value, within 0 and its maximum;
+                // one given none, or one that has no value, is a name in the list.
+                if (SheetConditions.EffectOf(system, add) is { Effect.Value: { } valued } found
+                    && (YamlValues.ToNumber(fields.GetValueOrDefault("value")) is not null || YamlValues.ToNumber(fields.GetValueOrDefault("by")) is not null))
+                {
+                    var key = SheetConditions.KeyOf(found.Name, valued);
+                    var next = YamlValues.ToNumber(fields.GetValueOrDefault("value")) is { } set
+                        ? set
+                        : (YamlValues.ToNumber(sheet.GetValueOrDefault(key)) ?? 0) + YamlValues.ToNumber(fields.GetValueOrDefault("by"))!.Value;
+                    WriteConditionValue(found.Name, key, next);
+                    return true;
+                }
+
                 AddCondition(add);
                 return true;
             }
 
             if (fields.GetValueOrDefault("remove")?.ToString() is not { Length: > 0 } remove) return false;
+            if (SheetConditions.EffectOf(system, remove) is { Effect.Value: { } removed } ended)
+            {
+                // The value is the condition's only record: a valued condition holds while its number is above 0 (SheetConditions.Listed), listed or not.
+                WriteConditionValue(ended.Name, SheetConditions.KeyOf(ended.Name, removed), 0);
+                return true;
+            }
+
             var conditions = SheetRuleEngine.RawList(sheet, SheetModel.ConditionsKey);
             if (conditions.RemoveAll(c => string.Equals(c, remove, StringComparison.OrdinalIgnoreCase)) == 0) return true;
             sheet[SheetModel.ConditionsKey] = conditions.Cast<object>().ToList();
             result.Touch(SheetModel.ConditionsKey);
             return true;
+        }
+
+        /// <summary>A valued condition's value, kept within 0 and its maximum (a number or a formula, worked out on the sheet as it is now). Marked as
+        /// changed only when the number moved.</summary>
+        private void WriteConditionValue(string condition, string key, double to)
+        {
+            var max = new SheetRuleEngine(system, resolver).ConditionMax(condition, sheet);
+            var next = Math.Floor(Math.Clamp(to, 0, max ?? double.MaxValue));
+            if ((YamlValues.ToNumber(sheet.GetValueOrDefault(key)) ?? 0) == next) return;
+            Write(key, next);
         }
 
         private void AddCondition(string condition)
