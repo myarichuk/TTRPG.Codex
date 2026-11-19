@@ -220,6 +220,59 @@ public class SheetEditParserTests
         Assert.Empty(SheetProposal.Check(Fx.System(), Library, "strict", sheet, new Dictionary<string, string> { ["CLASS"] = "\"fighter\"" }, new[] { "background" }, "s1").Errors);
     }
 
+    private static readonly SystemDefinition Picking = SystemDefinitionLoader.Parse("""
+        id: demo
+        name: Demo
+        attributes:
+          - { key: str, label: Strength, abbreviation: STR, default: 10 }
+          - { key: dex, label: Dexterity, abbreviation: DEX, default: 10 }
+        entityTypes:
+          - { type: feat, label: Feat }
+          - { type: equipment, label: Equipment }
+          - { type: rune, label: Rune }
+        sheetRules:
+          enforcement: off
+          attributes: { increases: { fromList: feats } }
+          inventory: { key: inventory, types: [equipment], runeType: rune }
+          lists:
+            - { key: feats, label: Feats, targetEntityType: feat }
+            - { key: boons, label: Boons, targetEntityType: feat }
+        """);
+
+    private static readonly Fx.Entries PickLibrary = new(
+        Fx.Entry("feat", "alert", "Alert", ("abilityIncrease", 2L)), Fx.Entry("feat", "lucky", "Lucky"),
+        Fx.Entry("equipment", "rope", "Rope"), Fx.Entry("rune", "edge", "Edge"));
+
+    private static IReadOnlyList<string> PickErrors(string key, string pick) =>
+        SheetProposal.Check(Picking, PickLibrary, "off", new Dictionary<string, object>(), new Dictionary<string, string> { [key] = $"[\"{pick}\"]" }, Array.Empty<string>(), "s1").Errors;
+
+    [Theory]
+    [InlineData("inventory", "rope")]
+    [InlineData("inventory", "rope|qty:3")]
+    [InlineData("inventory", "rope|qty:999,equipped:1")]
+    [InlineData("inventory", "rope|equipped:1,rune.edge:1")]
+    [InlineData("feats", "alert")]
+    [InlineData("feats", "alert|str:1,dex:1")]
+    [InlineData("feats", "alert|STR:2")]
+    public void ASuffixTheSystemDeclares_IsAccepted(string key, string pick) => Assert.Empty(PickErrors(key, pick));
+
+    [Theory]
+    [InlineData("inventory", "rope|qty:9999", "must be a whole number from 1 to 999")]
+    [InlineData("inventory", "rope|qty:0", "must be a whole number from 1 to 999")]
+    [InlineData("inventory", "rope|qty:-2", "must be a whole number from 1 to 999")]
+    [InlineData("inventory", "rope|qty:lots", "is not written name:number")]
+    [InlineData("inventory", "rope|equipped:2", "equipped:1")]
+    [InlineData("inventory", "rope|color:1", "'color' is not a choice an item takes here")]
+    [InlineData("inventory", "rope|rune.ghost:1", "'ghost' is not in the Library as a rune")]
+    [InlineData("feats", "alert|str:20", "spends 20 points, but the entry grants 2")]
+    [InlineData("feats", "alert|wis:1", "'wis' is not one of the system's attributes")]
+    [InlineData("feats", "lucky|str:1", "spends 1 points, but the entry grants 0")]
+    [InlineData("boons", "lucky|str:1", "this list takes none")]
+    public void ASuffixTheSystemDoesNotDeclare_IsRefused_InWords_EvenWithEnforcementOff(string key, string pick, string expected)
+    {
+        Assert.Contains(expected, string.Join(" ", PickErrors(key, pick)));
+    }
+
     [Fact]
     public void NumbersAndChoices_AreCheckedAgainstTheirBoundsAndOptions()
     {

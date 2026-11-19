@@ -195,6 +195,85 @@ public static class SheetProposal
 
     private static string Format(double d) => d.ToString("R", CultureInfo.InvariantCulture);
 
+    /// <summary>The most of one item an inventory entry may say it carries (<c>rope|qty:999</c>): the rules put no limit, a proposal does.</summary>
+    public const int MaxQuantity = 999;
+
+    /// <summary>
+    /// What is wrong with the choices written after the <c>|</c> of one pick (<c>"id|qty:2,equipped:1"</c>), against what the system declares for that
+    /// list: an inventory pick takes the inventory's quantity name (1 to <see cref="MaxQuantity"/>), its equipped name (1) and <c>rune.{id}</c> of a rune the Library
+    /// has (where the system has runes); a pick of the list that grants score increases takes the system's attributes, each a whole number, together no more
+    /// than the entry grants; every other list takes none. The engine ignores a choice it has no use for, so without this a typo or an invented amount
+    /// would be saved and look like it did something.
+    /// </summary>
+    private static IEnumerable<string> SuffixProblems(SystemDefinition system, IEntryResolver library, SheetKey key, string raw)
+    {
+        var bar = raw.IndexOf('|');
+        if (bar < 0) yield break;
+        var parts = raw[(bar + 1)..].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 0) yield break;
+
+        var inventory = system.SheetRules?.Inventory is { } i && string.Equals(i.Key, key.Key, StringComparison.OrdinalIgnoreCase) ? i : null;
+        var increases = system.SheetRules?.Attributes?.Increases is { } inc && string.Equals(inc.FromList, key.Key, StringComparison.OrdinalIgnoreCase) ? inc : null;
+        if (inventory == null && increases == null)
+        {
+            yield return $"'{raw}' (for '{key.Key}') has choices after the '|', but this list takes none; write the plain id.";
+            yield break;
+        }
+
+        var points = 0.0;
+        if (increases != null && library.Resolve(key.TargetTypes.FirstOrDefault() ?? string.Empty, raw[..bar]) is { } entry
+            && entry.Properties.TryGetValue(increases.Property, out var granted) && double.TryParse(Convert.ToString(granted, CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
+        {
+            points = number;
+        }
+
+        var spent = 0L;
+        foreach (var part in parts)
+        {
+            var colon = part.LastIndexOf(':');
+            if (colon <= 0 || !long.TryParse(part[(colon + 1)..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var amount))
+            {
+                yield return $"'{raw}' (for '{key.Key}'): the choice '{part}' is not written name:number.";
+                continue;
+            }
+
+            var name = part[..colon];
+            if (inventory != null)
+            {
+                if (string.Equals(name, inventory.QuantityChoice, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (amount < 1 || amount > MaxQuantity) yield return $"'{raw}' (for '{key.Key}'): {name} must be a whole number from 1 to {MaxQuantity}.";
+                }
+                else if (string.Equals(name, inventory.EquippedChoice, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (amount != 1) yield return $"'{raw}' (for '{key.Key}'): {name} is written {name}:1 (leave it off for an item that is not worn or held).";
+                }
+                else if (inventory.RuneType != null && name.StartsWith(SheetRuleEngine.RuneChoicePrefix, StringComparison.OrdinalIgnoreCase) && name.Length > SheetRuleEngine.RuneChoicePrefix.Length)
+                {
+                    var rune = name[SheetRuleEngine.RuneChoicePrefix.Length..];
+                    if (amount != 1) yield return $"'{raw}' (for '{key.Key}'): a rune is written {name}:1.";
+                    else if (library.Resolve(inventory.RuneType, rune) == null) yield return $"'{raw}' (for '{key.Key}'): '{rune}' is not in the Library as a {inventory.RuneType}.";
+                }
+                else
+                {
+                    var allowed = new List<string> { inventory.QuantityChoice, inventory.EquippedChoice };
+                    if (inventory.RuneType != null) allowed.Add(SheetRuleEngine.RuneChoicePrefix + "<rune id>");
+                    yield return $"'{raw}' (for '{key.Key}'): '{name}' is not a choice an item takes here; use {string.Join(", ", allowed)}.";
+                }
+
+                continue;
+            }
+
+            var attribute = system.Attributes.FirstOrDefault(a => name.Equals(a.Key, StringComparison.OrdinalIgnoreCase) || name.Equals(a.Abbreviation, StringComparison.OrdinalIgnoreCase)
+                || name.Equals(a.Label, StringComparison.OrdinalIgnoreCase));
+            if (attribute == null) yield return $"'{raw}' (for '{key.Key}'): '{name}' is not one of the system's attributes ({string.Join(", ", system.Attributes.Select(a => a.Key))}).";
+            else if (amount < 1) yield return $"'{raw}' (for '{key.Key}'): {name} takes a whole number of points, at least 1.";
+            else spent += amount;
+        }
+
+        if (increases != null && spent > points) yield return $"'{raw}' (for '{key.Key}'): spends {spent} points, but the entry grants {points:0.##}.";
+    }
+
     /// <summary>A stored value as the sheet holds it: a long or double for a number, a bool, a string, a list of strings for a list.</summary>
     public static object ToSheetValue(string json)
     {
@@ -304,6 +383,11 @@ public static class SheetProposal
                 {
                     errors.Add($"{label}: '{id}' (for '{key.Key}') is not in the Library as {(key.TargetTypes.Count == 1 ? "a " + key.TargetTypes[0] : "one of " + string.Join(", ", key.TargetTypes))}; use an id search_library lists. Nothing is invented.");
                 }
+            }
+
+            if (key.Kind == SheetKeyKind.Picks)
+            {
+                foreach (var raw in ((List<object>)value).Cast<string>()) errors.AddRange(SuffixProblems(system, library, key, raw).Select(p => $"{label}: {p}"));
             }
         }
 
