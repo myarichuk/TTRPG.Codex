@@ -423,7 +423,14 @@ public sealed partial class WorldBuilderService
                         // The creature's stat block is laid over the sheet: what it prints replaces the same entries, and the rest of the sheet stays.
                         var system = catalog.GetDefinition(campaign.SystemId);
                         var item = await library.GetAsync(campaign, access, creature.Type, creature.Id, creature.Homebrew) ?? throw new LocalizedException("WorldBuilder.Error.StatsGone", draft.Name);
+                        // The sheet as stored before the block is laid over it (Restat sets keys in place and removes none), the baseline a live table
+                        // merges against: what the block prints wins, a key it leaves alone keeps the table's live value, a pool moves by the difference.
+                        var before = new Dictionary<string, object>(actor.Sheet ?? new Dictionary<string, object>());
                         if (!cast.Restat(actor, item, campaign, system)) throw new LocalizedException("WorldBuilder.Error.StatsGone", draft.Name);
+                        // As a sheet edit is saved: a creature at a live table through the table (it holds the creature's sheet and live state, and would write
+                        // its stale copy back), anyone else with an ordinary guarded save.
+                        if (!await cast.SaveSheetAsync(actor, before, access, system)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                        return new WorldEdit(target, id, actor.Name, actor.Visibility == ActorVisibility.Known, Text: draft.Body != null);
                     }
 
                     if (!await actorRepository.TrySaveAsync(actor, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");

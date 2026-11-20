@@ -42,7 +42,8 @@ public class LiveTableSheetEditTests : IClassFixture<RavenDbFixture>, IDisposabl
               - { key: Grit, label: Grit, maxKey: Grit_Max, default: 4 }
             """;
 
-    private async Task<Table> OpenAsync(bool live, string yaml = Street, string systemId = "street", ContentRegistry? registry = null, Func<string, IEnumerable<ActorDocument>>? extraActors = null)
+    private async Task<Table> OpenAsync(bool live, string yaml = Street, string systemId = "street", ContentRegistry? registry = null, Func<string, IEnumerable<ActorDocument>>? extraActors = null,
+        ActorKind kind = ActorKind.PlayerCharacter)
     {
         Directory.CreateDirectory(Path.Combine(root, systemId));
         File.WriteAllText(Path.Combine(root, systemId, "system.yaml"), yaml);
@@ -67,7 +68,7 @@ public class LiveTableSheetEditTests : IClassFixture<RavenDbFixture>, IDisposabl
         pool.Set("Grit_Max", 4);
         var actor = new ActorDocument
         {
-            Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Rook", Kind = ActorKind.PlayerCharacter, Biography = "A runner.",
+            Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Rook", Kind = kind, Biography = "A runner.",
             Sheet = new Dictionary<string, object> { ["str"] = 10, ["Grit"] = 4, ["Grit_Max"] = 4 }
         };
         ActorSheetSync.ApplySheetToState(actor, loader.GetDefinition(systemId), components);
@@ -133,6 +134,72 @@ public class LiveTableSheetEditTests : IClassFixture<RavenDbFixture>, IDisposabl
 
         var stored = (await t.Actors.GetVisibleAsync(t.Actor.Id, t.Dm))!;
         Assert.Equal(12, Convert.ToInt32(stored.Sheet["str"]));
+    }
+
+    // ---- a creature's stat block laid over a cast member (an actor edit with "stats") ----
+
+    private const string StreetWithCreatures = Street + """
+
+            entityTypes:
+              - { type: monster, label: Creature, actorBlueprint: true }
+            """;
+
+    /// <summary>A pack creature of the street system whose block prints Strength 17.</summary>
+    private static ContentRegistry BrutePack()
+    {
+        var registry = new ContentRegistry();
+        var brute = new ContentEntry { Id = "brute", Type = "monster", SystemId = "street", PackId = "street-pack", Name = "Brute", Properties = { ["str"] = 17L } };
+        registry.RegisterEntry(brute, 0);
+        registry.RegisterActor(YamlContentPackLoader.ToActorBlueprint(brute, new ContentTypeDefinition { Type = "monster", ActorBlueprint = true }), 0);
+        return registry;
+    }
+
+    private static async Task RestatAsync(Table t)
+    {
+        var check = await t.Service.CheckAsync(t.Campaign, t.Dm, $$"""{"entries": [{"ref": "r", "kind": "edit", "target": "existing:actor:{{t.Actor.Id}}", "stats": "monster/brute"}]}""");
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.NotNull(check.Bundle.Drafts.Single().Stats);
+        await t.Service.SaveAsync(t.Campaign, t.Dm, check.Bundle);
+    }
+
+    [Fact]
+    public async Task ARestat_OfACreatureAtALiveTable_ShowsThereAtOnce_AndSurvivesTheTablesWrites_AndALaterSheetPageSave()
+    {
+        var t = await OpenAsync(live: true, StreetWithCreatures, registry: BrutePack(), kind: ActorKind.NonPlayerCharacter);
+
+        await RestatAsync(t);
+
+        var live = t.Manager.TryGet(t.Campaign.Id)!;
+        Assert.Equal(17, Convert.ToInt32(live.GetActorDocument(t.Actor.Id)!.Sheet["str"])); // the table plays the new block at once
+        // The table does something to the creature, and marks it dirty.
+        await live.EnqueueAsync(new AdjustResourceCommand(t.Actor.Id, "Grit", -1, "test"));
+        // The sheet page opened at the table loads the table's copy and saves an unrelated change through it, against what it loaded.
+        var page = (await t.Actors.GetVisibleAsync(t.Actor.Id, t.Dm))!;
+        page.Sheet = new Dictionary<string, object>(live.GetActorDocument(t.Actor.Id)!.Sheet);
+        var loaded = new Dictionary<string, object>(page.Sheet);
+        page.Sheet["Grit_Max"] = 6L;
+        Assert.True(await t.Manager.TrySaveActorAsync(page, loaded, t.Dm, null));
+        await t.Manager.EvictAsync(t.Campaign.Id);
+
+        var stored = (await t.Actors.GetVisibleAsync(t.Actor.Id, t.Dm))!;
+        Assert.Equal(17, Convert.ToInt32(stored.Sheet["str"])); // the restat
+        Assert.Equal(3, Convert.ToInt32(stored.Sheet["Grit"])); // the table's own change
+        Assert.Equal(6, Convert.ToInt32(stored.Sheet["Grit_Max"])); // the sheet page's change
+        Assert.Equal("street:brute", stored.BlueprintId);
+    }
+
+    [Fact]
+    public async Task ARestat_OfACreatureNotAtATable_IsStoredAsBefore()
+    {
+        var t = await OpenAsync(live: false, StreetWithCreatures, registry: BrutePack(), kind: ActorKind.NonPlayerCharacter);
+
+        await RestatAsync(t);
+
+        var stored = (await t.Actors.GetVisibleAsync(t.Actor.Id, t.Dm))!;
+        Assert.Equal(17, Convert.ToInt32(stored.Sheet["str"]));
+        Assert.Equal(4, Convert.ToInt32(stored.Sheet["Grit"])); // what the block does not print stays
+        Assert.Equal("A runner.", stored.Biography);
+        Assert.Equal("street:brute", stored.BlueprintId);
     }
 
     // ---- a character whose sheet depends on the sheet its link points to ----

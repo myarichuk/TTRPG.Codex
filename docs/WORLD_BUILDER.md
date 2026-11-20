@@ -307,8 +307,11 @@ cover them. The review card shows each key now and after; applying checks again 
 `EditChanged`), runs the check again, sets the keys, lets the rules recompute what they derive (what the sheet page does after every edit), syncs the state and saves it
 the way the sheet page does (`CastService.SaveSheetAsync` -> `CampaignRuntimeManager.TrySaveActorAsync`): a character at a live table is saved through the table
 (`ReplaceActorCommand`, merged with the table's current state against the sheet as it was before the edit, so the edit shows at the table at once and the table's
-next write cannot put the old value back), anyone else with an ordinary guarded save. (A creature's stat block laid over a character with `stats` on an
-actor edit is still saved straight to the store; that is not a sheet edit.) `resolves` works as for every edit and also requires the issue's `fix_via` to match the kind of edit, so a sheet issue cannot be claimed by
+next write cannot put the old value back), anyone else with an ordinary guarded save. A creature's stat block laid over a character with `stats` on an
+actor edit is saved the same way (`CastService.SaveSheetAsync`, against the sheet as stored before the block was laid over it; the block only sets keys, so the
+table's merge applies: what it prints wins, what it does not print keeps the table's value, a pool such as hit points moves by the difference, so damage taken at
+the table stays taken), and shows at the table at once; it used to go straight to the store, where the table's stale copy and a later sheet-page save could put the
+old numbers back. An actor edit without `stats` (the history, a rename) is an ordinary save as before. `resolves` works as for every edit and also requires the issue's `fix_via` to match the kind of edit, so a sheet issue cannot be claimed by
 an edit of the history or the other way round, and the post-apply re-check sees the result like any other.
 
 **A system's own checks (layers 2 and 3).** `issueChecks` in `system.yaml` (model in `Codex.Plugin.Abstractions/IssueChecks.cs`, loader checks in
