@@ -88,6 +88,11 @@
   <data name="Event.Roll.Secret" xml:space="preserve"><value>{0} делает тайный бросок ({1}).</value></data>
   <data name="Event.Roll.Plain" xml:space="preserve"><value>{0} бросает {1}: {2}.</value></data>
   <data name="Event.Roll.Labeled" xml:space="preserve"><value>{0} бросает {1} ({2}): {3}.</value></data>
+  <data name="Event.Roll.Rerolled" xml:space="preserve"><value>{0} тратит «{1}» на бросок «{2}»: {3}, было {4}.</value></data>
+  <data name="Event.Roll.RerolledHigher" xml:space="preserve"><value>{0} тратит «{1}» на бросок «{2}»: {3}, было {4}. Остаётся больший результат.</value></data>
+  <data name="Event.Roll.Reroll.Secret" xml:space="preserve"><value>{0} перебрасывает тайный бросок.</value></data>
+  <data name="Event.Roll.Reroll.Short" xml:space="preserve"><value>{0} не может оплатить «{1}».</value></data>
+  <data name="Event.Roll.Reroll.Refused" xml:space="preserve"><value>Бросок {0} нельзя перебросить.</value></data>
   <data name="Event.Resource.Used" xml:space="preserve"><value>{0} тратит: {2} ×{1}.</value></data>
   <data name="Event.Resource.Regained" xml:space="preserve"><value>{0} восстанавливает: {2} ×{1}.</value></data>
   <data name="Event.Resource.Refused" xml:space="preserve"><value>{0} не может потратить: {2} ×{1} — не хватает.</value></data>

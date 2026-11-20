@@ -119,13 +119,16 @@ internal static class TableEvents
 
     /// <summary>Makes a roll from the system's definitions on the actor's live sheet and applies what it asks (a cost, a mark).
     /// <paramref name="made"/> receives the roll, for the roll log; null when the actor or the system is not there.</summary>
-    public static Outcome Roll(CampaignRuntime runtime, string actorId, SheetRollRequest request, IDiceSource dice, out SheetRollResult? made, ILinkedSheets? linked = null)
+    public static Outcome Roll(CampaignRuntime runtime, string actorId, SheetRollRequest request, IDiceSource dice, out SheetRollResult? made, ILinkedSheets? linked = null,
+        bool applyIntents = true)
     {
         linked ??= runtime.LinkedFor(runtime.GetActorDocument(actorId)?.Sheet);
         SheetRollResult? rolled = null;
         var outcome = Change(runtime, actorId, request.Definition, (system, live, messages) =>
         {
             rolled = SheetRolls.Roll(system, runtime.Resolver, live, request, dice, linked);
+            // A roll made again (a reroll) pays for nothing a second time: what the first roll cost was paid then.
+            if (!applyIntents) return new SheetIntentResult();
             var all = rolled.AllIntents().ToList();
             var applied = SheetIntents.Apply(system, runtime.Resolver, live, all.Where(i => !CampaignObjects.IsFor(i)), actorId, linked);
             var onCampaign = CampaignObjects.Apply(system, runtime.CampaignObjectState, all.Where(CampaignObjects.IsFor));
@@ -137,6 +140,12 @@ internal static class TableEvents
         made = rolled;
         return outcome;
     }
+
+    /// <summary>Takes <paramref name="by"/> from a numeric track of the actor's live sheet (the table's pool and the sheet, as any intent changes them). The
+    /// caller has checked the track holds that much.</summary>
+    public static Outcome Spend(CampaignRuntime runtime, string actorId, string track, int by, ILinkedSheets? linked = null) =>
+        Change(runtime, actorId, track, (system, live, _) => SheetIntents.Apply(system, runtime.Resolver, live,
+            new[] { new SheetIntent("adjust", null, new Dictionary<string, object?> { ["track"] = track, ["by"] = (double)-by }) }, actorId, linked ?? runtime.LinkedFor(runtime.GetActorDocument(actorId)?.Sheet)), linked);
 
     /// <summary>Runs <paramref name="act"/> on the actor's live sheet, writes back what changed, and does what is left for the
     /// table. A handler or roll that cannot run is said in the log and changes nothing.</summary>

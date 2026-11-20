@@ -88,6 +88,11 @@
   <data name="Event.Roll.Secret" xml:space="preserve"><value>{0}: הטלה סודית ({1}).</value></data>
   <data name="Event.Roll.Plain" xml:space="preserve"><value>{0}: הטלת {1} — {2}.</value></data>
   <data name="Event.Roll.Labeled" xml:space="preserve"><value>{0}: הטלת {1} ({2}) — {3}.</value></data>
+  <data name="Event.Roll.Rerolled" xml:space="preserve"><value>{0}: {1} על {2} — {3} (היה {4}).</value></data>
+  <data name="Event.Roll.RerolledHigher" xml:space="preserve"><value>{0}: {1} על {2} — {3} (היה {4}). התוצאה הגבוהה נשארת.</value></data>
+  <data name="Event.Roll.Reroll.Secret" xml:space="preserve"><value>{0}: הטלה סודית הוטלה מחדש.</value></data>
+  <data name="Event.Roll.Reroll.Short" xml:space="preserve"><value>{0}: אין מספיק כדי לשלם על {1}.</value></data>
+  <data name="Event.Roll.Reroll.Refused" xml:space="preserve"><value>{0}: אי אפשר להטיל את ההטלה מחדש.</value></data>
   <data name="Event.Resource.Used" xml:space="preserve"><value>{0}: שימוש — {2} ×{1}.</value></data>
   <data name="Event.Resource.Regained" xml:space="preserve"><value>{0}: החזרה — {2} ×{1}.</value></data>
   <data name="Event.Resource.Refused" xml:space="preserve"><value>{0}: אין מספיק — {2} ×{1}.</value></data>

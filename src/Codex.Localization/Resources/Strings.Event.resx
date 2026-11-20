@@ -88,6 +88,11 @@
   <data name="Event.Roll.Secret" xml:space="preserve"><value>{0} made a secret roll ({1}).</value></data>
   <data name="Event.Roll.Plain" xml:space="preserve"><value>{0} rolled {1}: {2}.</value></data>
   <data name="Event.Roll.Labeled" xml:space="preserve"><value>{0} rolled {1} {2}: {3}.</value></data>
+  <data name="Event.Roll.Rerolled" xml:space="preserve"><value>{0} used {1} on {2}: {3}, was {4}.</value></data>
+  <data name="Event.Roll.RerolledHigher" xml:space="preserve"><value>{0} used {1} on {2}: {3}, was {4}. The higher roll stands.</value></data>
+  <data name="Event.Roll.Reroll.Secret" xml:space="preserve"><value>{0} rolled a secret roll again.</value></data>
+  <data name="Event.Roll.Reroll.Short" xml:space="preserve"><value>{0} cannot pay for {1}.</value></data>
+  <data name="Event.Roll.Reroll.Refused" xml:space="preserve"><value>{0}'s roll cannot be rolled again.</value></data>
   <data name="Event.Resource.Used" xml:space="preserve"><value>{0} used {1, plural, one{a {2}} other{# {2}s}}.</value></data>
   <data name="Event.Resource.Regained" xml:space="preserve"><value>{0} regained {1, plural, one{a {2}} other{# {2}s}}.</value></data>
   <data name="Event.Resource.Refused" xml:space="preserve"><value>{0} could not use {1, plural, one{a {2}} other{# {2}s}}: not enough left.</value></data>
