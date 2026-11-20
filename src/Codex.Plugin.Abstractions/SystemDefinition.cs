@@ -621,6 +621,37 @@ public sealed class MomentDefinition
     public bool IsActorScoped => string.Equals(Scope, "actor", StringComparison.OrdinalIgnoreCase);
 }
 
+/// <summary>One way to roll again (<c>rerolls:</c>): what it is called, what it costs, and which of the two rolls counts. Names no game: a system says
+/// whether it is a point, a fate token or anything else its sheet tracks.</summary>
+public sealed class SystemRerollDefinition
+{
+    /// <summary>Required, unique: the reroll's name, which a roll log entry keeps as the one that rerolled it.</summary>
+    public string Key { get; set; } = string.Empty;
+
+    /// <summary>The reroll's name as the app shows it ("Hero Point reroll"), through the system's own translations; the key when empty.</summary>
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>What the actor pays. Required.</summary>
+    public RerollSpend? Spend { get; set; }
+
+    /// <summary><c>new</c> (the default): the second roll stands, whatever it comes to. <c>higher</c>: the higher total of the two stands.</summary>
+    public string Keep { get; set; } = "new";
+
+    /// <summary>Whether the higher of the two rolls stands (<see cref="Keep"/> is <c>higher</c>).</summary>
+    [NotInYaml]
+    public bool KeepsHigher => string.Equals(Keep, "higher", StringComparison.OrdinalIgnoreCase);
+}
+
+/// <summary><c>{ track: heroPoints, by: 1 }</c>: a numeric track of a sheet kind, and how much of it a reroll takes. The reroll is refused when the track holds less.</summary>
+public sealed class RerollSpend
+{
+    /// <summary>Required: the key of a numeric track on a sheet kind of the system.</summary>
+    public string Track { get; set; } = string.Empty;
+
+    /// <summary>How much to take: a whole number of at least 1. Default 1.</summary>
+    public int By { get; set; } = 1;
+}
+
 /// <summary>
 /// A whole game system described as data (<c>system.yaml</c>). This is what lets a homebrew system
 /// exist without compiling a plugin: attributes, resources, the actor sheet, the content types its
@@ -725,6 +756,10 @@ public class SystemDefinition
     /// <c>events:</c> handler of the same name runs. Rests (<c>vitals.rests</c>), <c>initiative</c> and <c>dawn</c> are moments
     /// too and need no declaring.</summary>
     public List<MomentDefinition> Moments { get; set; } = new();
+
+    /// <summary>Ways a roll already made can be made again at a cost: <c>{ key, label, spend: { track, by }, keep }</c>. The table offers each on a roll
+    /// an actor made with a check die, to the actor's owner and the GM, while the actor can pay. A roll is rerolled once, and a reroll is never rerolled.</summary>
+    public List<SystemRerollDefinition> Rerolls { get; set; } = new();
 
     /// <summary>Event handlers by event name (<c>damage</c>, <c>turnStart</c>, <c>roll</c>): <c>{ builtin: name, ...options }</c>,
     /// <c>{ script: file#export }</c>, or a list of <c>{ when, intents }</c> lines. <c>damaged</c> and <c>healed</c> are raised after the table's own
