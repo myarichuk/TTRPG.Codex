@@ -429,12 +429,15 @@ moments:
   - { key: dailyPrep,    label: Daily preparations }
   - { key: catchBreath,  label: Short breather }
   - { key: sessionStart, label: Session start }
+  # One creature's own act, not a time of the table: a button on its sheet while it is dying (instant-death, hero-points).
+  - { key: heroicRecovery, label: Heroic recovery, scope: actor, while: Dying, note: Spends all hero points }
 
 # What the table does at zero hit points (rules getting-knocked-out and death-rule). A player character at 0 is knocked out: unconscious, not
 # dead; most other creatures die there, and the GM can revive a significant one. Healing above 0 wakes a creature (the Revive button brings
 # back one that died). This system has no death saves, so the table shows none. The rule's massive damage (twice the maximum in one blow)
-# is another rule from the flag below, so the flag is off. Gaining the dying condition when knocked out, and raising it when a dying
-# creature takes damage, are the GM's to set on the console for now; the recovery check at the start of each turn is rules.js.
+# is another rule from the flag below, which counts the damage past zero, so the flag is off; rules.js does it on the damaged event, from
+# the damage before temporary hit points take any of it (the rule does not say which, and this is the plainer reading). Gaining the dying
+# condition when knocked out, raising it when a dying creature takes damage, and losing it when healed are rules.js too.
 vitals:
   down:
     condition: Unconscious
@@ -443,10 +446,16 @@ vitals:
     nonPlayersDieAtZero: true
 
 # Events the table raises. The recovery check at the start of a turn of a dying creature is a script (dying-rule): it rolls a flat check,
-# moves the dying value by the degree, and kills at the value the creature dies at. A session begins with 1 hero point (starting-hero-points);
+# moves the dying value by the degree, and kills at the value the creature dies at. Damage and healing raise damaged and healed after the
+# table's own rules, which the scripts read (getting-knocked-out, dying-rule, wounded, instant-death). Heroic recovery is a button for the
+# player, not an automatic spend: the rule lets a player spend the points when the dying value would rise, and the table cannot ask in
+# time, so the GM undoes the hit and the player presses the button. A session begins with 1 hero point (starting-hero-points);
 # the points left at the end of a session are lost, and setting the track to 1 does the same.
 events:
   turnStart: { script: rules.js#onTurnStart }
+  damaged: { script: rules.js#onDamaged }
+  healed: { script: rules.js#onHealed }
+  heroicRecovery: { script: rules.js#onHeroicRecovery }
   sessionStart:
     - { intents: [{ set: { track: heroPoints, to: 1 } }] }
 

@@ -181,6 +181,90 @@ public class SystemMomentsTests
         Assert.True(SystemMoments.Matters(system, Sheet("crew"), "scripted"));
     }
 
+    private static SystemDefinition Actors(string moments = "[{ key: downtime }, { key: rally, scope: actor, while: Hurt }]", string extra = "") => SystemDefinitionLoader.Parse($$"""
+        id: actor-moment-test
+        name: Actor moment test
+        conditions: [Hurt, Spent]
+        moments: {{moments}}
+        sheetKinds:
+          - kind: crew
+            tracks: [{ key: rep, max: 12 }]
+        events: { downtime: [{ intents: [{ adjust: { track: rep, by: 1 } }] }], rally: { script: 'rules.js#rally' } }
+        {{extra}}
+        """);
+
+    [Fact]
+    public void AnActorMoment_IsNoRefillOrDecreaseWord_AndNoChangeMoment()
+    {
+        var system = Actors();
+
+        Assert.True(SystemMoments.IsMoment(system, "rally"));
+        Assert.True(SystemMoments.Find(system, "rally")!.ActorOnly);
+        Assert.False(SystemMoments.IsTableMoment(system, "rally"));
+        Assert.True(SystemMoments.IsTableMoment(system, "downtime"));
+        Assert.Equal(new[] { "downtime", "initiative", "dawn", "manual" }, SystemMoments.RefillWords(system));
+        Assert.Equal(new[] { "downtime", "initiative", "dawn" }, SystemMoments.ChangeMoments(system));
+        // Not a rest either: a name that is a moment of any kind is never taken for one.
+        Assert.False(SystemMoments.IsRest(system, "rally"));
+        Assert.False(SheetConditions.IsDropMoment(system, "rally"));
+        Assert.True(SheetConditions.IsDropMoment(system, "downtime"));
+    }
+
+    [Fact]
+    public void AMomentWithWhile_IsOfferedOnlyWhileTheConditionHolds()
+    {
+        var system = Actors();
+
+        Assert.False(SystemMoments.Offered(system, Sheet("crew"), "rally"));
+        Assert.False(SystemMoments.Offered(system, Sheet("crew", ("conditions", new List<object> { "Spent" })), "rally"));
+        Assert.True(SystemMoments.Offered(system, Sheet("crew", ("conditions", new List<object> { "Hurt" })), "rally"));
+        // `while` is the only thing a moment without it lacks: it is offered wherever it matters.
+        Assert.True(SystemMoments.Offered(system, Sheet("crew"), "downtime"));
+    }
+
+    [Fact]
+    public void TheLoader_RefusesABadScope_AWhileThatIsNoCondition_AndAnActorMomentWithOnSet()
+    {
+        var scope = SystemDefinitionLoader.ErrorsOf(Assert.Throws<InvalidDataException>(() => Actors("[{ key: a, scope: table }]")));
+        var unknown = SystemDefinitionLoader.ErrorsOf(Assert.Throws<InvalidDataException>(() => Actors("[{ key: a, while: Nothing }]")));
+        var onSet = SystemDefinitionLoader.ErrorsOf(Assert.Throws<InvalidDataException>(() => Fitd("[{ key: a, scope: actor, onSet: load }]")));
+
+        Assert.Contains(scope, e => e.Contains("scope 'table'"));
+        Assert.Contains(unknown, e => e.Contains("while 'Nothing'"));
+        Assert.Contains(onSet, e => e.Contains("cannot also fire on setting"));
+        Assert.Empty(SystemDefinitionLoader.Validate(Actors()));
+    }
+
+    [Fact]
+    public void ThePartyBar_LeavesOutActorMoments_AndTheLoaderRefusesWhileOnAPartyMoment()
+    {
+        Assert.Equal(new[] { "downtime", "dawn" }, SystemMoments.PartyMoments(Actors()).Select(m => m.Key));
+        var errors = SystemDefinitionLoader.ErrorsOf(Assert.Throws<InvalidDataException>(() => Actors("[{ key: a, while: Hurt }]")));
+        Assert.Contains(errors, e => e.Contains("scope: actor"));
+    }
+
+    [Fact]
+    public void ADecreaseOnAnActorMoment_IsRefused()
+    {
+        var system = Assert.Throws<InvalidDataException>(() => Actors(extra: """
+            conditionEffects:
+              Spent: { value: { decrease: { on: rally, by: 1 } } }
+            """));
+
+        Assert.Contains(SystemDefinitionLoader.ErrorsOf(system), e => e.Contains("decrease.on 'rally'"));
+    }
+
+    [Fact]
+    public void ALocalizedSystem_KeepsAMomentsScopeAndWhile()
+    {
+        var system = Actors();
+        system.Translations["ru"] = new SystemTranslation { Moments = { ["rally"] = "Сбор" } };
+
+        var shown = SystemMoments.Find(system.Localize("ru"), "rally")!;
+
+        Assert.Equal(("Сбор", true, "Hurt"), (shown.Label, shown.ActorOnly, shown.While));
+    }
+
     [Fact]
     public void ACounterThatNamesTheMoment_OrAChoiceChangedAtIt_MakesItMatter()
     {

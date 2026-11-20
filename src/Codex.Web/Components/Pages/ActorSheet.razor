@@ -729,7 +729,7 @@ else
         "actions" => evaluation is { Actions.Count: > 0 },
         "features" => HasFeatureSources && evaluation is { } worked
             && (worked.Counters.Count > 0 || worked.Spenders.Count > 0 || worked.Granted.Count > 0 || worked.Features.Any(f => f.Adds.Count > 0 || (f.OnKind && f.Modifiers.Count > 0))),
-        "moments" => system != null && sheetView != null && SystemMoments.Of(system).Any(m => m.Kind == MomentKind.Declared && SystemMoments.Matters(system, editSheet, m.Key)),
+        "moments" => system != null && sheetView != null && SystemMoments.Of(system).Any(m => m.Kind == MomentKind.Declared && SystemMoments.Offered(system, editSheet, m.Key)),
         "level-up" => CanEdit && HasLevel,
         // A vault character belongs to no campaign: there is no actor to link to, and nobody links to it.
         "link" or "members" => !Vault && sheetView?.Shows(widget) == true,

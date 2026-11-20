@@ -162,8 +162,8 @@ from dice sides. **Inputs** are named parameters supplied when the roll is made.
 session log and secrecy can show it.
 
 ### Events → intents
-The table raises events: `damage`, `heal`, `roll` (with outcome), `turnStart`, `turnEnd`, `rest(name)`,
-`sessionStart`, `sessionEnd`, `advance`. A handler receives a read-only view of the event and returns **intents**. It
+The table raises events: `damage`, `heal`, `damaged`, `healed` (after the built-in damage and healing), `roll` (with outcome),
+`turnStart`, `turnEnd`, `rest(name)`, `sessionStart`, `sessionEnd`, `advance`. A handler receives a read-only view of the event and returns **intents**. It
 never mutates anything.
 
 | Intent | Meaning |
@@ -748,8 +748,21 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
        `{ condition: { remove } }`, within 0 and its maximum. At the table the pools are laid over both, and a changed valued
        condition is written to the pool and logged as `Condition.Level` or `Condition.None`.
      - The first shipped script is four-degrees' `rules.js#onTurnStart`, the recovery check of a dying creature. Gaining dying
-       when knocked out, raising it on damage while dying, massive damage and heroic recovery are not done yet: the GM sets
-       Dying on the console, and they wait for an after-damage event.
+       when knocked out, raising it on damage while dying, massive damage, losing it when healed and heroic recovery came with
+       the `damaged` and `healed` events and an actor moment (below).
+     - **`damaged` and `healed`** are raised after the table's own damage and healing, when the system declares a handler for
+       the name (they do not replace the built-in path the way `damage` and `heal` do, and are not raised when those do, for
+       a direct pool edit, or when nothing was dealt; `healed` is not raised for a dead creature, and `damaged` is, so a handler
+       leaves the dead alone itself). `damaged` has `amount`, `dealt` (after
+       resistance, before temporary hit points), `absorbed`, `critical`, `save` (the outcome key of the creature's own save when
+       the damage came from one), `source`, `damageType`, `pool`, `before`, `after`, `max`, `wentDown` and `died`; `healed` has
+       `amount`, `healed`, `source`, `pool`, `before`, `after`, `max` and `revived`. A hazard applies a target's damage parts with
+       `ApplyDamageCommand.RaiseAfter` off and raises one `damaged` for the blow, with the parts summed, in the same undo point.
+       What the handler says joins the command's log line, and the command's own undo takes it all back.
+     - **An actor moment** is a declared moment with `scope: actor` (one creature's act: a button on its sheet, never on the
+       party bar, no refill or decrease time) and an optional `while: <condition>` (the button shows only while that condition
+       holds on the sheet). four-degrees' `heroicRecovery` is one, `while: Dying`; it spends all hero points and clears Dying.
+       It is a button with Undo, not an automatic spend: the table cannot ask a player in time when the dying value would rise.
 
      **Versions** (rule 8). `SystemFingerprint` is the version and SHA-256 of system.yaml, its translations, its scripts and
      every DLL beside it, with line endings normalized. `ChangesSince` lists the version and each file added, removed or changed.

@@ -605,6 +605,20 @@ public sealed class MomentDefinition
 
     /// <summary>The key of an <c>input</c> value of a sheet kind. Setting that value on the sheet fires the moment.</summary>
     public string? OnSet { get; set; }
+
+    /// <summary><c>party</c> (the default): a time of the table, offered to the whole party on the console and on each sheet. <c>actor</c>: one
+    /// creature's own act (a button on its sheet), never on the party bar, and no time a counter refills or a condition drops at.</summary>
+    public string Scope { get; set; } = "party";
+
+    /// <summary>A condition of the system: the button shows only while it holds on the sheet. Empty: always.</summary>
+    public string? While { get; set; }
+
+    /// <summary>A short line shown beside the moment's button on the sheet, for what it does that the engine cannot read from its handler (a
+    /// script). Shown through the system's own translations (<c>values</c>).</summary>
+    public string? Note { get; set; }
+
+    /// <summary>Whether this moment is one creature's own act (<see cref="Scope"/> is <c>actor</c>).</summary>
+    public bool IsActorScoped => string.Equals(Scope, "actor", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>
@@ -713,7 +727,9 @@ public class SystemDefinition
     public List<MomentDefinition> Moments { get; set; } = new();
 
     /// <summary>Event handlers by event name (<c>damage</c>, <c>turnStart</c>, <c>roll</c>): <c>{ builtin: name, ...options }</c>,
-    /// <c>{ script: file#export }</c>, or a list of <c>{ when, intents }</c> lines. Read as YAML gives it, and parsed by
+    /// <c>{ script: file#export }</c>, or a list of <c>{ when, intents }</c> lines. <c>damaged</c> and <c>healed</c> are raised after the table's own
+    /// damage and healing, with what the vitals rules did (<c>dealt</c>, <c>before</c>, <c>after</c>, <c>max</c>); <c>damage</c> and <c>heal</c> replace
+    /// that built-in path. Read as YAML gives it, and parsed by
     /// Codex.Core.Rules.SheetEvents, since a handler is written in either shape.</summary>
     public Dictionary<string, object> Events { get; set; } = new();
 
@@ -903,7 +919,7 @@ public class SystemDefinition
                 HitPointsProperty = e.HitPointsProperty, PrintedSkills = e.PrintedSkills, PrintedSaves = e.PrintedSaves, AttributeProperties = e.AttributeProperties, PlayerFacing = e.PlayerFacing, Hazard = e.Hazard
             };
         }).ToList();
-        copy.Moments = Moments.Select(m => new MomentDefinition { Key = m.Key, OnSet = m.OnSet, Label = t.Moments.TryGetValue(m.Key, out var shown) ? shown : m.Label }).ToList();
+        copy.Moments = Moments.Select(m => new MomentDefinition { Key = m.Key, OnSet = m.OnSet, Scope = m.Scope, While = m.While, Note = m.Note, Label = t.Moments.TryGetValue(m.Key, out var shown) ? shown : m.Label }).ToList();
         copy.SheetRules = SheetRules == null ? null : ApplyRuleLabels(SheetRules, t.SheetRules, t.Categories);
         copy.Translations = Translations;
         copy.ConditionLabels = new Dictionary<string, string>(t.Conditions);

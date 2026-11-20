@@ -194,6 +194,77 @@ public sealed class FourDegreesRulesScriptTests : IDisposable
         Assert.Contains("condition_wounded", result.Applied.Changed);
     }
 
+    // ---- Damage, healing and heroic recovery (the scripts' intents; the table's own rules are in FourDegreesDyingTableTests) ----
+
+    private static IReadOnlyList<SheetIntent> Damaged(SystemDefinition system, Dictionary<string, object> sheet, double dealt, double after, double max = 20, bool critical = false, string? save = null, bool died = false)
+    {
+        var fields = new List<(string, object?)> { ("dealt", dealt), ("after", after), ("max", max), ("critical", critical), ("died", died), ("pool", "HP") };
+        if (save != null) fields.Add(("save", save));
+        return SheetEvents.Handle(system, NullEntryResolver.Instance, sheet, SheetEvent.Of("damaged", fields.ToArray()));
+    }
+
+    [Theory]
+    [InlineData(0, 0, 0, false, null, "condition add=Dying value=1")] // knocked out
+    [InlineData(0, 0, 0, true, null, "condition add=Dying value=2")] // a critical hit
+    [InlineData(0, 0, 0, false, "criticalFailure", "condition add=Dying value=2")] // its own critical failure
+    [InlineData(1, 0, 0, false, null, "condition add=Dying value=2")] // wounded 1 is added
+    [InlineData(2, 0, 0, true, null, "condition remove=Dying|condition remove=Doomed|kill")] // a critical on wounded 2 is dying 4
+    [InlineData(0, 2, 0, false, null, "condition add=Dying value=3")] // already dying 2: one more
+    [InlineData(0, 2, 0, true, null, "condition remove=Dying|condition remove=Doomed|kill")] // a critical on dying 2 is 4
+    [InlineData(0, 0, 5, false, null, "")] // still on its feet
+    public void Damaged_KnocksOutOrRaisesTheDyingValue(int wounded, int dying, int after, bool critical, string? save, string expected)
+    {
+        var intents = Damaged(System, Sheet(dying: dying, wounded: wounded, hp: after), dealt: 4, after: after, critical: critical, save: save);
+
+        Assert.Equal(expected, string.Join("|", Said(intents)));
+    }
+
+    [Fact]
+    public void Damaged_DoomedLowersWhereItKills_AMassiveBlowKills_AndTheDeadAreLeftAlone()
+    {
+        Assert.Contains("kill", Damaged(System, Sheet(dying: 1, doomed: 2, hp: 0), 2, 0).Select(i => i.Kind)); // 1 + 1 = 2 = 4 - 2
+        Assert.DoesNotContain("kill", Damaged(System, Sheet(hp: 0), 39, 0).Select(i => i.Kind)); // 2 x 20 less 1 is no massive blow
+        var massive = Damaged(System, Sheet(hp: 5), 40, 0);
+        Assert.Equal(new[] { "log", "condition", "condition", "kill" }, massive.Select(i => i.Kind));
+        Assert.Empty(Damaged(System, Sheet(hp: 0, conditions: "Dead"), 40, 0));
+        Assert.Empty(Damaged(System, Sheet(hp: 0), 40, 0, died: true));
+    }
+
+    [Fact]
+    public void Healed_ToOneHitPointWhileDying_LosesTheCondition_AndNothingOtherwise()
+    {
+        var healed = SheetEvents.Handle(System, NullEntryResolver.Instance, Sheet(dying: 2, hp: 3), SheetEvent.Of("healed", ("after", 3d), ("pool", "HP")));
+        var well = SheetEvents.Handle(System, NullEntryResolver.Instance, Sheet(hp: 3), SheetEvent.Of("healed", ("after", 3d), ("pool", "HP")));
+        var other = SheetEvents.Handle(System, NullEntryResolver.Instance, Sheet(dying: 2, hp: 3), SheetEvent.Of("healed", ("after", 3d), ("pool", "Other")));
+        Assert.Empty(other);
+
+        Assert.Equal(new[] { "condition remove=Dying", "condition add=Wounded by=1" }, Said(healed));
+        Assert.Empty(well);
+    }
+
+    [Fact]
+    public void HeroicRecovery_SpendsAllThePoints_AndLosesDyingWithNoWounded_OrSaysThereAreNone()
+    {
+        var sheet = Sheet(dying: 3, wounded: 1);
+        sheet["heroPoints"] = 2L;
+        var spent = SheetEvents.Handle(System, NullEntryResolver.Instance, sheet, SheetEvent.Of("heroicRecovery"));
+        var none = SheetEvents.Handle(System, NullEntryResolver.Instance, Sheet(dying: 3), SheetEvent.Of("heroicRecovery"));
+        var notDying = SheetEvents.Handle(System, NullEntryResolver.Instance, Sheet(), SheetEvent.Of("heroicRecovery"));
+
+        Assert.Equal(new[] { "set track=heroPoints to=0", "condition remove=Dying" }, Said(spent));
+        Assert.Equal(new[] { "log key=No hero points" }, Said(none));
+        Assert.Empty(notDying);
+    }
+
+    [Fact]
+    public void TheTranslationCopies_GiveTheSameIntentsForDamage()
+    {
+        var en = Said(Damaged(System, Sheet(hp: 0), 4, 0));
+
+        Assert.Equal(en, Said(Damaged(System.Localize("ru"), Sheet(hp: 0), 4, 0)));
+        Assert.Equal(en, Said(Damaged(System.Localize("he"), Sheet(hp: 0), 4, 0)));
+    }
+
     // ---- Knocked out and dead ----
 
     private static VitalsView Creature(int hp, bool player) =>

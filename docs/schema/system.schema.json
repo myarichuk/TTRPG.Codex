@@ -198,7 +198,7 @@
     "events": {
       "type": "object",
       "additionalProperties": {},
-      "description": "Event handlers by event name (`damage`, `turnStart`, `roll`): `{ builtin: name, ...options }`, `{ script: file#export }`, or a list of `{ when, intents }` lines. Read as YAML gives it, and parsed by Codex.Core.Rules.SheetEvents, since a handler is written in either shape."
+      "description": "Event handlers by event name (`damage`, `turnStart`, `roll`): `{ builtin: name, ...options }`, `{ script: file#export }`, or a list of `{ when, intents }` lines. `damaged` and `healed` are raised after the table's own damage and healing, with what the vitals rules did (`dealt`, `before`, `after`, `max`); `damage` and `heal` replace that built-in path. Read as YAML gives it, and parsed by Codex.Core.Rules.SheetEvents, since a handler is written in either shape."
     }
   },
   "additionalProperties": false,
@@ -5312,6 +5312,30 @@
             "boolean"
           ],
           "description": "The key of an `input` value of a sheet kind. Setting that value on the sheet fires the moment."
+        },
+        "scope": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "`party` (the default): a time of the table, offered to the whole party on the console and on each sheet. `actor`: one creature's own act (a button on its sheet), never on the party bar, and no time a counter refills or a condition drops at."
+        },
+        "while": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "A condition of the system: the button shows only while it holds on the sheet. Empty: always."
+        },
+        "note": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "A short line shown beside the moment's button on the sheet, for what it does that the engine cannot read from its handler (a script). Shown through the system's own translations (`values`)."
         }
       },
       "additionalProperties": false

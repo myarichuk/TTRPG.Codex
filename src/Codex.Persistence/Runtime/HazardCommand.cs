@@ -572,6 +572,7 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
         {
             var who = Actor(runtime, targetId);
             var saved = false;
+            string? saveOutcome = null;
             if (attack is { } bonus && Attacked != null && Attacked.TryGetValue(targetId, out var already))
             {
                 // The repeat for a creature that hit and waited for a number: only a hit waits for its save, so the armor class and the attack are not read or rolled again.
@@ -608,21 +609,32 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
                 }
 
                 saved = result.Outcome?.Passed == true;
+                saveOutcome = result.Outcome?.Key;
                 if (saved) Say(half ? "SavedHalf" : "SavedNone", who);
             }
 
             // All of a target's damage parts are one undoable change, so its Undo button takes every part back at once.
             var lines = new List<(string? Type, int Shown, DamageReport Report)>();
+            TableEvents.Outcome? followed = null;
             runtime.ApplyUndoably(targetId, "Damage", () =>
             {
+                var before = AfterDamageEvents.Pool(runtime, targetId, key);
+                var sum = 0;
                 foreach (var (part, amount) in parts)
                 {
                     var dealt = saved ? (half ? amount / 2 : 0) : amount;
                     if (dealt <= 0) continue;
-                    var damage = new ApplyDamageCommand(targetId, key, dealt, string.Empty, part.Type?.ToLowerInvariant());
+                    // The parts are one blow: each is applied without its own `damaged`, and one is raised below with their sum.
+                    var damage = new ApplyDamageCommand(targetId, key, dealt, string.Empty, part.Type?.ToLowerInvariant(), RaiseAfter: false);
                     damage.Apply(runtime);
+                    sum += dealt;
                     lines.Add((part.Type, damage.Dealt > 0 || !TableEvents.Handles(runtime, "damage") ? damage.Dealt : dealt, damage.Report));
                 }
+
+                if (lines.Count == 0) return;
+                var types = lines.Select(l => l.Type?.ToLowerInvariant()).Distinct().ToList();
+                followed = AfterDamageEvents.Damaged(runtime, targetId, key, before, sum, lines.Sum(l => l.Report.Dealt), lines.Sum(l => l.Report.Absorbed), false, saveOutcome,
+                    string.Empty, types.Count == 1 ? types[0] : null, lines.Any(l => l.Report.WentDown), lines.Any(l => l.Report.Died));
             });
             if (lines.Count > 0 && !_touched.Contains(targetId)) _touched.Add(targetId);
             // The creature's own undo point, kept so the hazard's undo takes this damage back with its state (and only while it is still that creature's last change).
@@ -642,6 +654,9 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
                 if (report.ConcentrationLost) Say("ConcentrationLost", who);
                 else if (report.ConcentrationDc is { } dc) Say("ConcentrationSave", who, dc);
             }
+
+            // What the system's own rules did after the whole blow (its `damaged` handler), said in its own words.
+            if (followed != null) _parts.AddRange(followed.Messages);
 
             if (!saved && conditions.Count > 0) Say("Conditions", who, string.Join(", ", conditions));
         }

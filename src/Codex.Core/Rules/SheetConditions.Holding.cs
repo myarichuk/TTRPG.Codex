@@ -150,7 +150,7 @@ public static partial class SheetConditions
 
     /// <summary>Whether <paramref name="moment"/> is one a condition's value can drop at on this system: the turn's ends, a rest or a declared moment.</summary>
     public static bool IsDropMoment(SystemDefinition system, string moment) =>
-        moment.Equals("turnEnd", StringComparison.OrdinalIgnoreCase) || moment.Equals("turnStart", StringComparison.OrdinalIgnoreCase) || SystemMoments.IsMoment(system, moment);
+        moment.Equals("turnEnd", StringComparison.OrdinalIgnoreCase) || moment.Equals("turnStart", StringComparison.OrdinalIgnoreCase) || SystemMoments.IsTableMoment(system, moment);
 
     /// <summary>The conditions that stay as conditions of their own when <paramref name="removed"/> ends (an implied item with <c>stays: true</c>: Prone after
     /// Unconscious), as the system writes them. The caller adds each unless it is already there.</summary>

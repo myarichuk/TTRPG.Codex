@@ -19,8 +19,9 @@ public enum MomentKind
 }
 
 /// <summary>A named time at which counters refill and the system's event handler of the same name runs. <see cref="OnSet"/>:
-/// for a declared moment, the input value whose being set fires it.</summary>
-public sealed record SystemMoment(string Key, string Label, MomentKind Kind, string? OnSet = null)
+/// for a declared moment, the input value whose being set fires it. <see cref="ActorOnly"/>: one creature's own act (a sheet button), no time
+/// of the table; <see cref="While"/>: the condition the button waits for.</summary>
+public sealed record SystemMoment(string Key, string Label, MomentKind Kind, string? OnSet = null, bool ActorOnly = false, string? While = null, string? Note = null)
 {
     public bool IsRest => Kind == MomentKind.Rest;
 }
@@ -48,7 +49,9 @@ public static class SystemMoments
         {
             if (!string.IsNullOrWhiteSpace(declared.Key) && !moments.Any(m => Same(m.Key, declared.Key)))
             {
-                moments.Add(new SystemMoment(declared.Key, string.IsNullOrWhiteSpace(declared.Label) ? declared.Key : declared.Label, MomentKind.Declared, string.IsNullOrWhiteSpace(declared.OnSet) ? null : declared.OnSet));
+                moments.Add(new SystemMoment(declared.Key, string.IsNullOrWhiteSpace(declared.Label) ? declared.Key : declared.Label, MomentKind.Declared, string.IsNullOrWhiteSpace(declared.OnSet) ? null : declared.OnSet,
+                    declared.IsActorScoped, string.IsNullOrWhiteSpace(declared.While) ? null : declared.While,
+                    string.IsNullOrWhiteSpace(declared.Note) ? null : declared.Note));
             }
         }
 
@@ -72,10 +75,28 @@ public static class SystemMoments
         !Same(on, Manual) && !NonRests(system).Any(m => Same(m.Key, on));
 
     /// <summary>The words a refill's <c>on</c> may name that are not rests: declared moments, initiative, dawn, then <c>manual</c>.</summary>
-    public static IReadOnlyList<string> RefillWords(SystemDefinition? system) => NonRests(system).Select(m => m.Key).Append(Manual).ToList();
+    public static IReadOnlyList<string> RefillWords(SystemDefinition? system) => NonRests(system).Where(m => !m.ActorOnly).Select(m => m.Key).Append(Manual).ToList();
 
-    /// <summary>The moments a choice's <c>changesOn</c> may name: every moment (not <c>manual</c>, at which nothing happens).</summary>
-    public static IReadOnlyList<string> ChangeMoments(SystemDefinition? system) => Of(system).Select(m => m.Key).ToList();
+    /// <summary>The moments a choice's <c>changesOn</c> may name: every moment of the table (not <c>manual</c>, at which nothing happens, and not a
+    /// creature's own act, which is no time of the table).</summary>
+    public static IReadOnlyList<string> ChangeMoments(SystemDefinition? system) => Of(system).Where(m => !m.ActorOnly).Select(m => m.Key).ToList();
+
+    /// <summary>The moments the console's party bar may offer: declared ones that are times of the table (not one creature's own act) and dawn.
+    /// The console keeps those that matter to some character.</summary>
+    public static IReadOnlyList<SystemMoment> PartyMoments(SystemDefinition? system) =>
+        Of(system).Where(m => !m.ActorOnly && m.Kind is MomentKind.Declared or MomentKind.Dawn).ToList();
+
+    /// <summary>Whether <paramref name="key"/> names a time of the table: a moment that is not one creature's own act.</summary>
+    public static bool IsTableMoment(SystemDefinition? system, string key) => Find(system, key) is { ActorOnly: false };
+
+    /// <summary>Whether the moment's button is offered on this sheet: it does something to it (<see cref="Matters"/>) and, when the moment says
+    /// <c>while</c>, that condition holds on the sheet.</summary>
+    public static bool Offered(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet, string moment)
+    {
+        if (!Matters(system, sheet, moment)) return false;
+        if (system == null || Find(system, moment)?.While is not { } condition) return true;
+        return SheetConditions.Holding(system, sheet).Any(h => Same(h.Name, condition));
+    }
 
     /// <summary>The declared moment fired by setting the input value <paramref name="valueKey"/>, or null.</summary>
     public static SystemMoment? FiredBySetting(SystemDefinition? system, string valueKey) =>

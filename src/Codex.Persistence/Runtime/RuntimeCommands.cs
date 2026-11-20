@@ -10,7 +10,7 @@ namespace Codex.Persistence.Runtime;
 /// type is checked against the creature's immunities, resistances and vulnerabilities, temporary
 /// hit points absorb first, and reaching zero knocks a character down (death saves begin) or kills
 /// a creature outright (<see cref="TableRules.ApplyDamage"/>).</summary>
-public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amount, string SourceId, string? DamageType = null, bool IsCritical = false) : IUndoableCommand
+public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amount, string SourceId, string? DamageType = null, bool IsCritical = false, bool RaiseAfter = true) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
 
@@ -31,6 +31,9 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
     // A system with sheet kinds that handles damage itself: what its handler did, instead of the vitals rules.
     private TableEvents.Outcome? _raised;
 
+    // What the system's `damaged` handler did after the built-in damage (null: none declared, nothing dealt, or `RaiseAfter` is off).
+    private TableEvents.Outcome? _followed;
+
     public void Apply(CampaignRuntime runtime)
     {
         if (TableEvents.Handles(runtime, "damage"))
@@ -43,7 +46,13 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
 
         if (runtime.GetEntity(ActorId) is { } e)
         {
+            var before = AfterDamageEvents.Pool(runtime, ActorId, PoolName);
             _outcome = TableRules.ApplyDamage(runtime, ActorId, e, PoolName, Amount, DamageType, IsCritical);
+            if (RaiseAfter)
+            {
+                _followed = AfterDamageEvents.Damaged(runtime, ActorId, PoolName, before, Amount, _outcome.Dealt, _outcome.Absorbed, IsCritical, null, SourceId, DamageType,
+                    _outcome.WentDown, _outcome.Died);
+            }
         }
     }
 
@@ -82,8 +91,9 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
         if (_outcome.ConcentrationLost) parts.Add(EventMessage.Of("Concentration.Lost", name));
         else if (_outcome.ConcentrationDc is { } dc) parts.Add(EventMessage.Of("Concentration.Save", name, dc));
 
+        if (_followed != null) parts.AddRange(_followed.Messages);
         var player = EventMessage.Of(_outcome.Died ? "Damage.PlayerDied" : _outcome.WentDown ? "Damage.PlayerDown" : "Damage.Player", name);
-        return SessionEvent.From("Damage", parts, new[] { ActorId }, new[] { player });
+        return SessionEvent.From("Damage", parts, _followed is { Touched.Count: > 0 } ? _followed.Touched.Append(ActorId).Distinct().ToArray() : new[] { ActorId }, new[] { player });
     }
 }
 
@@ -96,6 +106,7 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
     private Codex.Core.Rules.HealReport _outcome = Codex.Core.Rules.HealReport.Nothing;
 
     private TableEvents.Outcome? _raised;
+    private TableEvents.Outcome? _followed;
     private List<string> _stayed = new();
 
     private static List<string> StatusNames(DefaultEcs.Entity e) =>
@@ -113,9 +124,11 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
         if (runtime.GetEntity(ActorId) is { } e)
         {
             var before = StatusNames(e);
+            var was = AfterDamageEvents.Pool(runtime, ActorId, PoolName);
             _outcome = TableRules.ApplyHealing(runtime, ActorId, e, PoolName, Amount);
             // Coming up from 0 ends Unconscious and what it leaves behind (Prone) is written: said on its own line.
             _stayed = StatusNames(e).Except(before, StringComparer.OrdinalIgnoreCase).ToList();
+            _followed = AfterDamageEvents.Healed(runtime, ActorId, PoolName, was, Amount, _outcome, SourceId);
         }
     }
 
@@ -137,7 +150,8 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
         }
 
         foreach (var stayed in _stayed) parts.Add(EventMessage.Of("Status.Gained", name, EventTerm.Condition(stayed)));
-        return SessionEvent.From("Healing", parts, new[] { ActorId }, new[] { EventMessage.Of(_outcome.Revived ? "Healing.PlayerRevived" : "Healing.Player", name) });
+        if (_followed != null) parts.AddRange(_followed.Messages);
+        return SessionEvent.From("Healing", parts, _followed is { Touched.Count: > 0 } ? _followed.Touched.Append(ActorId).Distinct().ToArray() : new[] { ActorId }, new[] { EventMessage.Of(_outcome.Revived ? "Healing.PlayerRevived" : "Healing.Player", name) });
     }
 }
 

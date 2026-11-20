@@ -93,6 +93,7 @@ moments:
   dailyPrep: הכנות יומיות
   catchBreath: הפוגה קצרה
   sessionStart: תחילת מפגש
+  heroicRecovery: התאוששות הרואית
 
 entityTypes:
   ancestry:
@@ -350,6 +351,12 @@ values:
   Critical failure: כישלון קריטי
   Dead: מת
   turnStart: תחילת התור
+  damaged: נפגע
+  healed: ריפוי
+  Heroic recovery: התאוששות הרואית
+  Spends all hero points: מוציא את כל נקודות הגבורה
+  Massive damage: נזק מסיבי
+  No hero points: אין נקודות גבורה
 
 sheetRules:
   boostSources:

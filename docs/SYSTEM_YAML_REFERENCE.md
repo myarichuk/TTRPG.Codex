@@ -47,7 +47,7 @@ A whole game system described as data (`system.yaml`). This is what lets a homeb
 | `hazards` | [HazardRules](#hazardrules) | What the system says about hazards beyond the type's own fields: how hard a hazard of each level is. Absent on a system with no hazard type. |
 | `rolls` | list of [RollDefinition](#rolldefinition) | Named rolls with inputs and outcomes (see Rolls.cs). |
 | `moments` | list of [MomentDefinition](#momentdefinition) | The system's own moments (`downtime`, `loadChosen`): named times at which counters refill and an `events:` handler of the same name runs. Rests (`vitals.rests`), `initiative` and `dawn` are moments too and need no declaring. |
-| `events` | map of any | Event handlers by event name (`damage`, `turnStart`, `roll`): `{ builtin: name, ...options }`, `{ script: file#export }`, or a list of `{ when, intents }` lines. Read as YAML gives it, and parsed by Codex.Core.Rules.SheetEvents, since a handler is written in either shape. |
+| `events` | map of any | Event handlers by event name (`damage`, `turnStart`, `roll`): `{ builtin: name, ...options }`, `{ script: file#export }`, or a list of `{ when, intents }` lines. `damaged` and `healed` are raised after the table's own damage and healing, with what the vitals rules did (`dealt`, `before`, `after`, `max`); `damage` and `heal` replace that built-in path. Read as YAML gives it, and parsed by Codex.Core.Rules.SheetEvents, since a handler is written in either shape. |
 
 ## LicenseInfo
 
@@ -1354,3 +1354,6 @@ A moment the system declares: a named time at which feature counters refill (`re
 | `key` | text (a number is text too) | Required: the moment's name. It may not repeat a rest's name, `initiative`, `dawn` or `manual`, nor another moment's. |
 | `label` | text (a number is text too) | The moment's name as the app shows it; `key` when empty. |
 | `onSet` | text (a number is text too) | The key of an `input` value of a sheet kind. Setting that value on the sheet fires the moment. |
+| `scope` | text (a number is text too) | `party` (the default): a time of the table, offered to the whole party on the console and on each sheet. `actor`: one creature's own act (a button on its sheet), never on the party bar, and no time a counter refills or a condition drops at. |
+| `while` | text (a number is text too) | A condition of the system: the button shows only while it holds on the sheet. Empty: always. |
+| `note` | text (a number is text too) | A short line shown beside the moment's button on the sheet, for what it does that the engine cannot read from its handler (a script). Shown through the system's own translations (`values`). |

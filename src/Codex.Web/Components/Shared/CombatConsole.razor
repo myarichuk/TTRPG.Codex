@@ -708,7 +708,7 @@ else
     /// <summary>The moments that are not rests which the GM calls with a button, and that matter here: declared moments, then dawn.
     /// (Initiative is fired by the roll.)</summary>
     private List<SystemMoment> PartyMoments =>
-        SystemMoments.Of(Definition).Where(m => m.Kind is MomentKind.Declared or MomentKind.Dawn && Matters(m.Key)).ToList();
+        SystemMoments.PartyMoments(Definition).Where(m => Matters(m.Key)).ToList();
 
     private async Task MomentAsync(string moment)
     {
