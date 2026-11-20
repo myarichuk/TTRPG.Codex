@@ -424,6 +424,13 @@ entityTypes:
       - { key: abilities,       label: Abilities,      type: Collection, category: Actions }
     attributeProperties: { str: str, dex: dex, con: con, int: int, wis: wis, cha: cha }
 
+# Spending a hero point to roll a check again (hero-points): the second result must be used (keep: new), and the rule counts it as a fortune effect,
+# so a check is rerolled at most once (fortune-and-misfortune), which the table's one reroll per roll already is. The table offers it on a roll made
+# with a check die, to the character's owner and the GM; a hero point can also be spent on a familiar's or companion's behalf, which the sheet cannot
+# express yet, so the GM does that by hand.
+rerolls:
+  - { key: heroPoint, label: Hero Point reroll, spend: { track: heroPoints, by: 1 }, keep: new }
+
 # Times the table names, beside the rests. A feature counter refills on one with `recovers: [{ on: dailyPrep }]`.
 moments:
   - { key: dailyPrep,    label: Daily preparations }
