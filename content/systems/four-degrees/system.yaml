@@ -659,12 +659,12 @@ conditionEffects:
     modifiers:
       - { target: armorClass,          amount: 2, type: circumstance }
       - { target: save.dex,            amount: 2, type: circumstance, optIn: { label: Against an area effect } }
-      - { target: check.skill.stealth, amount: 2, type: circumstance, optIn: { label: To Hide or Sneak } }
+      - { target: check.skill.stealth, amount: 2, type: circumstance, optIn: { label: "To Hide, Sneak or avoid detection" } }
   Greater cover:
     modifiers:
       - { target: armorClass,          amount: 4, type: circumstance }
       - { target: save.dex,            amount: 4, type: circumstance, optIn: { label: Against an area effect } }
-      - { target: check.skill.stealth, amount: 4, type: circumstance, optIn: { label: To Hide or Sneak } }
+      - { target: check.skill.stealth, amount: 4, type: circumstance, optIn: { label: "To Hide, Sneak or avoid detection" } }
 
 # Status, circumstance and item bonuses keep the highest of their type; untyped ones add up. Penalties of a type keep the worst.
 # Untyped penalties add up: `penaltyTypes` overrides `penalties` for one type.
@@ -780,7 +780,7 @@ sheetRules:
       rank: { list: weapons, property: weaponCategory }
       attackBonus: "abilityMod + rankValue"
 
-  # The multiple attack penalty: what the 1st, 2nd and 3rd or later attack of a turn adds. A weapon with the featherlight trait lowers it.
+  # The multiple attack penalty: what the 1st, 2nd and 3rd or later attack of a turn adds. A weapon with the agile trait lowers it.
   multipleAttack:
     penalties: [0, -5, -10]
     variants:
@@ -902,7 +902,7 @@ sheetKinds:
     # The class's own `focusPool` field is printed, not computed; this counts the spells on the sheet.
     tracks:
       - { key: heroPoints,  label: Hero Points,  max: 3, display: boxes }
-      - { key: focusPoints, label: Focus Points, max: "min(3, count(focusSpells, s => true))", display: boxes }
+      - { key: focusPoints, label: Focus Points, max: "min(3, count(focusSpells, s => s.kind == \"focus\"))", display: boxes }
     lists:
       - key: trinkets
         label: Trinkets

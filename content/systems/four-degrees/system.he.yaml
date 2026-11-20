@@ -90,7 +90,7 @@ conditions:
   Heartened: מעודד
   Lesser cover: מחסה קל
   Standard cover: מחסה רגיל
-  Greater cover: מחסה מלא
+  Greater cover: מחסה גדול
 
 moments:
   dailyPrep: הכנות יומיות
@@ -314,6 +314,8 @@ entityTypes:
       abilities: { label: יכולות }
 
 values:
+  Against an area effect: נגד השפעת שטח
+  To Hide, Sneak or avoid detection: להסתתר, להתגנב או להימנע מגילוי
   Perception: תפיסה
   Class DC: דרגת קושי של המקצוע
   Spell attack: התקפת לחש

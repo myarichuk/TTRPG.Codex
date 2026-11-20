@@ -1229,6 +1229,11 @@ public static class SystemDefinitionLoader
                     yield return $"sheetRules.lists '{key}' has the same name as a value of sheetKinds.{kind.Kind}; a formula could not tell which it means, so call one of them something else.";
                 }
 
+                if (kind.Tracks.Any(t => string.Equals(t.Key, key, StringComparison.Ordinal)))
+                {
+                    yield return $"sheetRules.lists '{key}' has the same name as a track of sheetKinds.{kind.Kind}; a formula could not tell which it means, so call one of them something else.";
+                }
+
                 if (kind.Lists.Any(l => string.Equals(l.Key, key, StringComparison.Ordinal)) || kind.KeyedLists.Any(l => string.Equals(l.Key, key, StringComparison.Ordinal)))
                 {
                     yield return $"sheetRules.lists '{key}' has the same name as a list of sheetKinds.{kind.Kind}; a formula could not tell which it means, so call one of them something else.";

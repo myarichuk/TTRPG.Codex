@@ -76,6 +76,19 @@ public class SlotPoolMomentTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public void OffTheTable_TheSheetsMoment_FillsTheSlotsToTheirMaximum_AndLeavesOtherKeysAlone()
+    {
+        var sheet = SpentSheet();
+        sheet["hp"] = 4L;
+
+        var filled = SystemMoments.RefillSlots(System, sheet, "downtime");
+
+        Assert.Equal(new[] { "slots_1", "slots_2" }, filled.OrderBy(k => k));
+        Assert.Equal((3L, 2L, 4L), ((long)sheet["slots_1"], (long)sheet["slots_2"], (long)sheet["hp"]));
+        Assert.Empty(SystemMoments.RefillSlots(System, SpentSheet(), "elsewhere"));
+    }
+
+    [Fact]
     public async Task TheMomentCommand_FillsTheSlotsToTheirMaximum_LogsIt_AndUndoPutsThemBack()
     {
         var campaignId = Guid.NewGuid().ToString();

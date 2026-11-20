@@ -314,6 +314,8 @@ entityTypes:
       abilities: { label: Способности }
 
 values:
+  Against an area effect: Против эффекта области
+  To Hide, Sneak or avoid detection: Чтобы спрятаться, подкрасться или остаться незамеченным
   Perception: Внимательность
   Class DC: СЛ класса
   Spell attack: Атака заклинанием

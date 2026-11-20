@@ -50,6 +50,7 @@ public class SheetRuleListExposureTests
 
         // The sheet rules say it once; the kind's model adds no violation of its own for the same list.
         Assert.Empty(evaluation.Model!.Violations);
+        Assert.Equal(1, evaluation.Violations.Count(v => v.FieldKey == "tricks" && v.Key == "Actor.Rule.NotInLibrary"));
     }
 
     [Fact]
@@ -63,5 +64,9 @@ public class SheetRuleListExposureTests
         var list = Assert.Throws<InvalidDataException>(() => SystemDefinitionLoader.Parse(Yaml().Replace(
             "display: boxes }", "display: boxes }\n    lists:\n      - { key: tricks, label: Tricks, type: spell }")));
         Assert.Contains("list of sheetKinds.hero", list.Message);
+
+        var track = Assert.Throws<InvalidDataException>(() => SystemDefinitionLoader.Parse(Yaml().Replace(
+            "display: boxes }", "display: boxes }\n      - { key: tricks, max: 3 }")));
+        Assert.Contains("track of sheetKinds.hero", track.Message);
     }
 }

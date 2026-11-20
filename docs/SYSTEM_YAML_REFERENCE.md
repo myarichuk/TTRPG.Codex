@@ -377,7 +377,7 @@ The rules a system applies to a character sheet, declared in `system.yaml` so a 
 | `attributes` | [AttributeRules](#attributerules) | How scores are generated (point buy, standard array, typed in), capped and raised. Null: scores are typed in, kept within each attribute's `min` and `max`. |
 | `derived` | list of [DerivedField](#derivedfield) | Read-only fields computed from the sheet (proficiency bonus from level, ...). |
 | `constraints` | list of [FieldConstraint](#fieldconstraint) | Conditions a single-pick reference field's chosen entry must satisfy. |
-| `lists` | list of [ListRule](#listrule) | Multi-pick lists of entries on the sheet (spells, feats, knacks...). A sheet kind's formulas read each one as a list of its picks (`count(focusSpells, s => true)`, entries granted by a feature included), so a list's key may not be a value or a list of a kind. |
+| `lists` | list of [ListRule](#listrule) | Multi-pick lists of entries on the sheet (spells, feats, knacks...). A sheet kind's formulas read each one as a list of its picks (`count(focusSpells, s => s.kind == "focus")`, entries granted by a feature included), so a list's key may not be a value or a list of a kind. |
 | `ranked` | list of [RankedListRule](#rankedlistrule) | General ranked lists (a Perception that is trained or expert, armor and weapon training, a class DC), beside the Skills and the saves. See RankedListRule. |
 | `printed` | list of [PrintedNumberDefinition](#printednumberdefinition) | The numbers a printed creature (a sheet whose `attrMethod` is `printed`) carries as the stat block prints them, and which target the conditions' modifiers reach them by, so a condition lowers a printed armor class, save or Strike. See PrintedNumberDefinition. |
 | `multiclass` | [MulticlassRules](#multiclassrules) | Levels split across more than one class. Null: one class only. |
@@ -655,7 +655,7 @@ One pool of expendable slots. For each of the sheet's classes, the class entry's
 | `includeCasterTypes` | list of text (a number is text too) | Only classes with one of these caster types count (empty: any). |
 | `excludeCasterTypes` | list of text (a number is text too) | Classes with one of these caster types do not count. |
 | `combine` | [SlotCombineRule](#slotcombinerule) | How two or more contributing classes combine into one table. Null: each class's slots are added up level by level. |
-| `recoversOn` | list of text (a number is text too) | Rest names that refill this pool ("Short Rest", "Long Rest"); the table offers one button per name. A name may also be a moment the system declares in `moments` (or `dawn`): the table's moment command and the sheet's moments panel then refill the pool, and no rest button is named after the moment. |
+| `recoversOn` | list of text (a number is text too) | Rest names that refill this pool ("Short Rest", "Long Rest"); the table offers one button per name. A name may also be a moment the system declares in `moments`: the table's moment command and the sheet's moments panel then refill the pool, and no rest button is named after the moment. `dawn` refills it at the table only (the sheet's panel offers declared moments). |
 
 ## SlotCombineRule
 

@@ -339,8 +339,8 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
             return engine.AllOptIns(sheet).Select(o => o.Label).ToList();
         }
 
-        Assert.Equal(new[] { "Against an area effect", "To Hide or Sneak" }, Offered("Standard cover").OrderBy(x => x));
-        Assert.Equal(new[] { "Against an area effect", "To Hide or Sneak" }, Offered("Greater cover").OrderBy(x => x));
+        Assert.Equal(new[] { "Against an area effect", "To Hide, Sneak or avoid detection" }, Offered("Standard cover").OrderBy(x => x));
+        Assert.Equal(new[] { "Against an area effect", "To Hide, Sneak or avoid detection" }, Offered("Greater cover").OrderBy(x => x));
         Assert.Empty(Offered("Lesser cover"));
     }
 

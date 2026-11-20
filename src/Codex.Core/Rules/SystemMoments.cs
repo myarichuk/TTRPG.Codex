@@ -167,6 +167,21 @@ public static class SystemMoments
         return keys.Where(k => !k.EndsWith("_Max", StringComparison.Ordinal) && pools.Any(p => p.Owns(k))).ToList();
     }
 
+    /// <summary>Off the table: fills each slot key <see cref="SlotKeysRecoveredAt"/> names to its maximum on <paramref name="sheet"/> (the sheet's own
+    /// moment button; the table's command does the same on its pool). Returns the keys that were set.</summary>
+    public static IReadOnlyList<string> RefillSlots(SystemDefinition? system, Dictionary<string, object> sheet, string moment)
+    {
+        var filled = new List<string>();
+        foreach (var key in SlotKeysRecoveredAt(system, sheet.Keys.ToList(), moment))
+        {
+            if (YamlValues.GetInt(sheet, SystemDefinition.PoolMaxKey(system, key)) is not { } max) continue;
+            sheet[key] = (long)max;
+            filled.Add(key);
+        }
+
+        return filled;
+    }
+
     /// <summary>What a moment does to a sheet, in the sheet's words: the tracks its handler names (<see cref="HandlerTracks"/>) that the sheet's
     /// kind has, and the feature counters that refill at it. A moment's button says this before it is pressed.</summary>
     public static (IReadOnlyList<string> Tracks, IReadOnlyList<string> Counters) Effects(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet, string moment)
