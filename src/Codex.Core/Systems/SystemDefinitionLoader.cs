@@ -823,6 +823,13 @@ public static class SystemDefinitionLoader
 
             if (!MomentKeyPattern.IsMatch(moment.Key)) yield return $"moment '{moment.Key}' must be letters, digits, '-' or '_', and start with a letter.";
             if (!taken.Add(moment.Key)) yield return $"moment '{moment.Key}' repeats a rest, initiative, dawn, manual or another moment.";
+            if (!moment.Scope.Equals("party", StringComparison.OrdinalIgnoreCase) && !moment.IsActorScoped) yield return $"moment '{moment.Key}': scope '{moment.Scope}' must be party or actor.";
+            if (!string.IsNullOrWhiteSpace(moment.While) && !definition.Conditions.Contains(moment.While, StringComparer.OrdinalIgnoreCase))
+            {
+                yield return $"moment '{moment.Key}': while '{moment.While}' is not a condition of the system.";
+            }
+
+            if (moment.IsActorScoped && !string.IsNullOrWhiteSpace(moment.OnSet)) yield return $"moment '{moment.Key}': an actor moment is a button, so it cannot also fire on setting a value (onSet).";
             if (!string.IsNullOrWhiteSpace(moment.OnSet) && !inputs.Contains(moment.OnSet))
             {
                 yield return $"moment '{moment.Key}': onSet '{moment.OnSet}' is not an input value of any sheet kind.";
@@ -1151,7 +1158,7 @@ public static class SystemDefinitionLoader
             if (value.Decrease is not { } decrease) continue;
             if (!decrease.On.Equals("turnEnd", StringComparison.OrdinalIgnoreCase)
                 && !decrease.On.Equals("turnStart", StringComparison.OrdinalIgnoreCase)
-                && !Codex.Core.Rules.SystemMoments.IsMoment(definition, decrease.On))
+                && !Codex.Core.Rules.SystemMoments.IsTableMoment(definition, decrease.On))
             {
                 yield return $"{where}.decrease.on '{decrease.On}' is not turnEnd, turnStart, a rest or a moment this system declares.";
             }

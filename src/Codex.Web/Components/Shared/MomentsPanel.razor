@@ -41,7 +41,7 @@
 
     /// <summary>The declared moments that matter on this sheet. Rests have their own buttons; initiative is fired by the roll and dawn by the GM.</summary>
     private List<SystemMoment> Shown =>
-        SystemMoments.Of(Definition).Where(m => m.Kind == MomentKind.Declared && SystemMoments.Matters(Definition, Sheet, m.Key)).ToList();
+        SystemMoments.Of(Definition).Where(m => m.Kind == MomentKind.Declared && SystemMoments.Offered(Definition, Sheet, m.Key)).ToList();
 
     private string Describe(string moment)
     {

@@ -5312,6 +5312,22 @@
             "boolean"
           ],
           "description": "The key of an `input` value of a sheet kind. Setting that value on the sheet fires the moment."
+        },
+        "scope": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "`party` (the default): a time of the table, offered to the whole party on the console and on each sheet. `actor`: one creature's own act (a button on its sheet), never on the party bar, and no time a counter refills or a condition drops at."
+        },
+        "while": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "A condition of the system: the button shows only while it holds on the sheet. Empty: always."
         }
       },
       "additionalProperties": false

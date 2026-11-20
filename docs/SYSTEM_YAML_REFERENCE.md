@@ -1354,3 +1354,5 @@ A moment the system declares: a named time at which feature counters refill (`re
 | `key` | text (a number is text too) | Required: the moment's name. It may not repeat a rest's name, `initiative`, `dawn` or `manual`, nor another moment's. |
 | `label` | text (a number is text too) | The moment's name as the app shows it; `key` when empty. |
 | `onSet` | text (a number is text too) | The key of an `input` value of a sheet kind. Setting that value on the sheet fires the moment. |
+| `scope` | text (a number is text too) | `party` (the default): a time of the table, offered to the whole party on the console and on each sheet. `actor`: one creature's own act (a button on its sheet), never on the party bar, and no time a counter refills or a condition drops at. |
+| `while` | text (a number is text too) | A condition of the system: the button shows only while it holds on the sheet. Empty: always. |
