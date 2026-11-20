@@ -443,7 +443,32 @@ the rules change: it is what a GM reads first.
 
 **Distribution.** A release ships the systems listed in `content/systems/bundled.txt` (srd5e) inside the app. Every other
 system under `content/systems/` is released as its own `system-<id>-<version>.zip` (`packaging/pack-systems.sh`), installed
-from About, so withdrawing one means removing one download.
+from *Get more game systems* (or from About with a downloaded file), so withdrawing one means removing one download.
+
+**Get more game systems.** The release also carries `systems.json`, the catalog of those archives (`pack-systems.sh` writes
+it with `Codex.SystemCheck --pack <zip> --catalog-entry <entry.json>` and `--catalog <systems.json> <entry.json>...`; with no
+separate systems it is an empty list). Each entry has `id`, `name`, `version`, `description`, `license`, `compatibility`,
+`scripts`, `file`, `size` and `sha256`. The page `/systems/get` (same rights as the install panel; linked from About and the
+new-campaign dialog) reads it and offers each system as Install, Update (the installed one is older), Installed, or Bundled
+with the app (the server has it from `content/`, so it is not the app's to change).
+
+- **Where from.** `Codex:Systems:CatalogUrl`, by default
+  `https://github.com/myarichuk/TTRPG.Codex/releases/download/v{version}/systems.json`, `{version}` being the app's own
+  version (its `InformationalVersion`, without build metadata). Only a release build counts: `packaging/package.sh` and
+  `package.ps1` pass `-p:CodexRelease=true`, which `Codex.Web.csproj` turns into assembly metadata, and the release workflow
+  refuses a pushed tag that is not `v<version>`. Any other build reads `.../releases/latest/download/systems.json` instead,
+  and the page says so. An empty setting turns the list off: the page then offers only the upload. A mirror for a server with
+  its own file host is set the same way; it must be https, and the file is then served from the same folder as `systems.json`.
+- **Only beside the list.** An archive is fetched only as `<the folder of systems.json>/<file>`, and `file` must be
+  `system-<id>-<version>.zip` (an id may hold `a-z`, digits, `-` and `_`; `Codex.SystemCheck --catalog-entry` fails for a name that breaks the rule); the list cannot point anywhere else. Redirects are followed only to https github.com and
+  `*.githubusercontent.com` (and the host of a configured list). Requests carry a generic `TTRPG.Codex/<version>` user
+  agent and nothing about the server, its users or its campaigns. The list is read after the page first shows, and kept for five minutes (a failure for 30 seconds; "Try again" asks at once).
+- **Checked twice.** The download must be no bigger than the list's `size` (counted as it arrives, never trusting
+  Content-Length alone; at most 64 MB) and have its `sha256`. It then goes through the same check and the same plan as an
+  upload, so every rule above (no compiled code, scripts off, what is replaced) still applies, and nothing is installed
+  until you press *Install*.
+- **When it fails.** Offline, a 404, a list that is not json or has another `format`: the page says so in a plain sentence
+  and the upload stays available.
 
 ## manifest.yaml
 

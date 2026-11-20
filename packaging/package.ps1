@@ -25,7 +25,7 @@ New-Item -ItemType Directory -Force -Path $app | Out-Null
 
 Write-Host "==> Publishing the app for $Rid ($Version)"
 dotnet publish (Join-Path $repo 'src/Codex.Web/Codex.Web.csproj') -c Release -r $Rid --self-contained false `
-    -p:UseAppHost=false -p:PublishReadyToRun=true -p:Version=$Version -o $app
+    -p:UseAppHost=false -p:PublishReadyToRun=true -p:Version=$Version -p:CodexRelease=true -o $app
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed' }
 
 # The tray launcher goes in its own folder so its dependencies never mix with the server's. Its

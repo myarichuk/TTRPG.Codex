@@ -345,7 +345,11 @@ New:
 - **Systems distributed separately.** Releases ship `content/` next to the executable (`ContentRoots.cs`), so every
   bundled system is inside every past release asset. Systems other than srd5e ship as separate archives installed
   through the in-app install, so withdrawing one (an OGL licence change, a takedown) means removing one download. With
-  safe removal, a withdrawn system does not brick campaigns that already use it.
+  safe removal, a withdrawn system does not brick campaigns that already use it. The release carries `systems.json`
+  (id, name, version, description, licence, scripts, file, size, sha256 of each archive; written by `pack-systems.sh` through
+  `Codex.SystemCheck`), and the page "Get more game systems" installs from it with a click: it is read from the app's own
+  release, archives are fetched only beside it under the `system-<id>-<version>.zip` rule, size and sha256 must match, and the
+  bytes then take the same check, plan and confirm as an upload (`CONTENT_PACKS.md`, "Get more game systems").
 - **Licence model for more than CC-BY.** `LicenseInfo` gains `textFile` (the full licence travels with the content:
   OGL §10) and `openContent` / `productIdentity` designations (OGL §8); the About page shows them. The system name
   avoids trademarks (OGL §7: "Third Edition SRD (v3.5)", not "D&D", not "d20 System"). `LEGAL.md`'s "single licence

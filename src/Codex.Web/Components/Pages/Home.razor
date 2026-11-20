@@ -13,6 +13,7 @@
 @inject IJSRuntime JS
 @inject IUserRepository Users
 @inject IServerSettingsStore Settings
+@inject SystemInstaller SystemInstall
 
 <PageTitle>@L["Page.Home.Title"] | TTRPG.Codex</PageTitle>
 
@@ -119,6 +120,10 @@ else
                         <option value="@system.Id">@system.Name</option>
                     }
                 </select>
+                @if (mayInstallSystems)
+                {
+                    <div class="field-hint"><a href="/systems/get" data-testid="new-campaign-get-systems">@L["Page.Systems.GetLink"]</a></div>
+                }
                 @if (SelectedSystem?.Description is { } description)
                 {
                     <div class="field-hint">@description</div>
@@ -174,6 +179,9 @@ else
     /// <summary>Whether this account may create campaigns (ServerAccess.MayCreateCampaigns); checked again on create.</summary>
     private bool mayCreate;
 
+    /// <summary>Whether this account may install game systems, so the new-campaign dialog can point at "Get more game systems".</summary>
+    private bool mayInstallSystems;
+
     /// <summary>The admin made their account but has not finished the setup steps.</summary>
     private bool finishSetup;
 
@@ -183,6 +191,7 @@ else
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        mayInstallSystems = SystemInstall.MayInstall(authState.User);
         newSystemId = Catalog.Systems.FirstOrDefault()?.Id ?? string.Empty;
         var settings = await Settings.GetAsync();
         var me = currentUserId == null ? null : await Users.GetUserByIdAsync(currentUserId);

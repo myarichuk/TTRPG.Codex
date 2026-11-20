@@ -1,0 +1,360 @@
+@page "/systems/get"
+@attribute [Authorize]
+@using System.Security.Claims
+@using Codex.Core
+@using Codex.Core.Systems
+@inject SystemCatalog Releases
+@inject SystemInstaller Installer
+@inject PluginLoader Loader
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@* "Get more game systems": the systems released for this version of the app, installed with a click (docs/CONTENT_PACKS.md). Whoever
+   may install (SystemInstaller.MayInstall) sees it; anyone else is sent home. A download goes through the same check and the same
+   plan as an uploaded file, so every rule of an upload still applies. Nothing here names a system: the list is whatever the release
+   carries. *@
+
+<PageTitle>@L["Page.Systems.Title"] | TTRPG.Codex</PageTitle>
+
+@if (user != null)
+{
+    <div class="page-narrow">
+        <div class="page-header">
+            <div>
+                <h1>@L["Page.Systems.Title"]</h1>
+                <p class="page-subtitle">@L["Page.Systems.Subtitle"]</p>
+            </div>
+        </div>
+
+        <StatusMessage Message="flash" OnDismiss="() => flash = null" />
+
+        @* Said out loud (polite live region) while a download or a check is under way. *@
+        <div class="visually-hidden" role="status" aria-live="polite" data-testid="systems-progress">@progress</div>
+
+        @if (plan != null)
+        {
+            <section class="panel" aria-labelledby="systems-plan-heading" data-testid="systems-plan">
+                <div class="panel-title"><h2 id="systems-plan-heading" tabindex="-1">@L["Page.Systems.Review"]</h2></div>
+                <SystemPlanView Plan="plan" Busy="busy" LinkToScriptsSwitch="mayReload" OnConfirm="InstallAsync" OnCancel="CancelPlan" />
+            </section>
+        }
+
+        <section class="panel" aria-labelledby="systems-list-heading" aria-busy="@(busy || loading ? "true" : "false")" data-testid="systems-list">
+            <div class="panel-title"><h2 id="systems-list-heading" tabindex="-1">@L["Page.Systems.Available"]</h2></div>
+            @if (!Releases.Enabled)
+            {
+                <p class="small-muted" data-testid="systems-off">@L["Page.Systems.Off"]</p>
+            }
+            else if (loading)
+            {
+                <p class="small-muted" data-testid="systems-loading">@L["Page.Systems.Loading"]</p>
+            }
+            else if (listing == null)
+            {
+                <div role="alert" data-testid="systems-failed">
+                    <p class="mb-2">@L["Page.Systems.Failed"]</p>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="RetryAsync" data-testid="systems-retry">@L["Page.Systems.Retry"]</CodexButton>
+                </div>
+            }
+            else
+            {
+                @if (listing.FromLatest)
+                {
+                    <p class="small-muted" data-testid="systems-from-latest">@L["Page.Systems.FromLatest"]</p>
+                }
+                @if (listing.Systems.Count == 0)
+                {
+                    <p class="small-muted" data-testid="systems-empty">@L["Page.Systems.Empty"]</p>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var entry in listing.Systems)
+                        {
+                            var state = StateOf(entry);
+                            <li class="mb-3" data-testid="@($"catalog-{entry.Id}")">
+                                <article>
+                                    <h3 class="h6 mb-1" id="@($"catalog-name-{entry.Id}")">@entry.Name
+                                        <span class="small-muted">v@(entry.Version)</span>
+                                        @if (entry.Scripts)
+                                        {
+                                            <span class="pill ms-1" data-testid="@($"catalog-scripts-{entry.Id}")">@L["Page.Systems.HasScripts"]</span>
+                                        }
+                                    </h3>
+                                    @if (!string.IsNullOrWhiteSpace(entry.Description))
+                                    {
+                                        <p class="mb-1">@Short(entry.Description)</p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(entry.License))
+                                    {
+                                        <div class="small-muted">@L["Page.Systems.Licence", entry.License]</div>
+                                    }
+                                    @if (entry.Scripts && !Installer.ScriptsAllowed)
+                                    {
+                                        <ScriptsOffNote Link="mayReload" Class="small mt-1" TestId="@($"catalog-scripts-off-{entry.Id}")" />
+                                    }
+                                    <div class="row-actions mt-2">
+                                        @switch (state.Kind)
+                                        {
+                                            case CatalogState.Install:
+                                                <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="() => GetAsync(entry)" Busy="busy && busyId == entry.Id" Disabled="busy || plan != null"
+                                                             aria-describedby="@($"catalog-name-{entry.Id}")" data-testid="@($"catalog-install-{entry.Id}")">@L["Page.Systems.Install"]</CodexButton>
+                                                break;
+                                            case CatalogState.Update:
+                                                <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="() => GetAsync(entry)" Busy="busy && busyId == entry.Id" Disabled="busy || plan != null"
+                                                             aria-describedby="@($"catalog-name-{entry.Id}")" data-testid="@($"catalog-update-{entry.Id}")">@L["Page.Systems.Update", entry.Version]</CodexButton>
+                                                <span class="small-muted" data-testid="@($"catalog-state-{entry.Id}")">@L["Page.Systems.InstalledVersion", state.Installed ?? ""]</span>
+                                                break;
+                                            case CatalogState.Installed:
+                                                <span class="pill" data-testid="@($"catalog-state-{entry.Id}")"><LucideIcon IconName="check" Size="12" /> @L["Page.Systems.Installed"]</span>
+                                                break;
+                                            default:
+                                                <span class="pill" data-testid="@($"catalog-state-{entry.Id}")"><LucideIcon IconName="package" Size="12" /> @L["Page.Systems.Bundled"]</span>
+                                                break;
+                                        }
+                                    </div>
+                                </article>
+                            </li>
+                        }
+                    </ul>
+                }
+            }
+        </section>
+
+        <section class="panel" aria-labelledby="systems-file-heading" data-testid="systems-file">
+            <div class="panel-title"><h2 id="systems-file-heading">@L["Page.Systems.FileHeading"]</h2></div>
+            <p class="small-muted">@L["Page.Systems.FileHint", SystemArchive.MaxBytes / (1024 * 1024)]</p>
+            @if (plan == null)
+            {
+                <label class="cx-btn cx-etched mb-0" data-testid="install-system">
+                    <LucideIcon IconName="upload" Size="18" /> @L["Page.About.InstallChoose"]
+                    <InputFile OnChange="CheckFileAsync" accept=".zip" class="visually-hidden" disabled="@busy" />
+                </label>
+            }
+        </section>
+
+        <p><a href="/about">@L["Page.Systems.AboutLink"]</a></p>
+    </div>
+}
+
+@code {
+    private enum CatalogState { Install, Update, Installed, Bundled }
+
+    private ClaimsPrincipal? user;
+    private bool mayReload;
+    private bool loading;
+    private bool busy;
+    private string? busyId;
+    private string progress = string.Empty;
+    private string? focusId;
+    private SystemCatalogListing? listing;
+    private SystemInstallPlan? plan;
+    private Flash? flash;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var principal = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        if (!Installer.MayInstall(principal))
+        {
+            Nav.NavigateTo("/", replace: true);
+            return;
+        }
+
+        user = principal;
+        mayReload = Installer.MayReload(principal);
+        loading = Releases.Enabled; // the list itself is read after the first render, so a slow or offline release never holds the page back
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && user != null && Releases.Enabled)
+        {
+            await LoadAsync(refresh: false);
+        }
+
+        if (focusId != null)
+        {
+            var id = focusId;
+            focusId = null;
+            await JS.InvokeVoidAsync("codex.focus", id);
+        }
+    }
+
+    private async Task LoadAsync(bool refresh)
+    {
+        if (!Releases.Enabled) return;
+        loading = true;
+        StateHasChanged();
+        try
+        {
+            listing = await Releases.ListAsync(refresh: refresh);
+        }
+        finally
+        {
+            loading = false;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task RetryAsync()
+    {
+        await LoadAsync(refresh: true);
+        FocusOn("systems-list-heading");
+    }
+
+    /// <summary>Where keyboard focus goes after the next render: the button that was pressed is off while it works.</summary>
+    private void FocusOn(string id)
+    {
+        focusId = id;
+        StateHasChanged();
+    }
+
+    /// <summary>What the entry is to this server: not there, there and older, there, or not the app's to change.</summary>
+    private (CatalogState Kind, string? Installed) StateOf(SystemCatalogEntry entry)
+    {
+        if (Loader.GetDefinition(entry.Id) is not { } loaded) return (CatalogState.Install, null);
+        if (!Installer.IsInstalled(entry.Id)) return (CatalogState.Bundled, loaded.Version);
+        return IsNewer(entry.Version, loaded.Version) ? (CatalogState.Update, loaded.Version) : (CatalogState.Installed, loaded.Version);
+    }
+
+    /// <summary>Whether <paramref name="offered"/> is a later version than <paramref name="installed"/>. Versions that are not
+    /// numbers are told apart only by being different.</summary>
+    internal static bool IsNewer(string offered, string installed)
+    {
+        static bool Parse(string text, out Version version, out string pre)
+        {
+            var core = text.Split('+')[0];
+            var dash = core.IndexOf('-');
+            pre = dash < 0 ? string.Empty : core[(dash + 1)..];
+            return Version.TryParse(dash < 0 ? core : core[..dash], out version!);
+        }
+
+        if (Parse(offered, out var a, out var preA) && Parse(installed, out var b, out var preB))
+        {
+            if (a != b) return a > b;
+            // The same numbers: a final release is later than its pre-releases, never the other way round.
+            if (preA.Length == 0 || preB.Length == 0) return preA.Length == 0 && preB.Length > 0;
+            return string.CompareOrdinal(preA, preB) > 0;
+        }
+
+        return !string.Equals(offered, installed, StringComparison.Ordinal);
+    }
+
+    /// <summary>The first paragraph or two of a description, as the card shows it.</summary>
+    private static string Short(string description) =>
+        description.Length <= 280 ? description : description[..280].TrimEnd() + "…";
+
+    private async Task GetAsync(SystemCatalogEntry entry)
+    {
+        if (user == null || busy) return;
+        if (!Installer.MayInstall(user))
+        {
+            Nav.NavigateTo("/", replace: true);
+            return;
+        }
+
+        busy = true;
+        busyId = entry.Id;
+        flash = null;
+        Cancel(); // a plan still open is dropped, not left holding its staging folder
+        try
+        {
+            progress = L["Page.Systems.Downloading", entry.Name];
+            StateHasChanged();
+            var download = await Releases.DownloadAsync(entry);
+            if (download.Bytes == null)
+            {
+                progress = string.Empty;
+                flash = Flash.Error(download.Failure == SystemDownloadFailure.Refused
+                    ? L["Page.Systems.DownloadRefused", entry.Name]
+                    : L["Page.Systems.DownloadFailed", entry.Name]);
+                focusId = "systems-list-heading";
+                return;
+            }
+
+            progress = L["Page.Systems.Checking", entry.Name];
+            StateHasChanged();
+            using var buffer = new MemoryStream(download.Bytes);
+            plan = await Installer.CheckAsync(buffer, user);
+            if (plan != null && plan.Check.Id != null && !string.Equals(plan.Check.Id, entry.Id, StringComparison.Ordinal))
+            {
+                // The list named one system and the archive is another: nothing is offered.
+                Installer.Discard(plan.Token);
+                plan = null;
+                flash = Flash.Error(L["Page.Systems.DownloadRefused", entry.Name]);
+                focusId = "systems-list-heading";
+                progress = string.Empty;
+                return;
+            }
+
+            if (plan == null) flash = Flash.Error(L["Page.About.InstallNotAllowed"]);
+            progress = plan == null ? string.Empty : L["Page.Systems.Ready", entry.Name];
+            focusId = plan == null ? "systems-list-heading" : "systems-plan-heading";
+        }
+        finally
+        {
+            busy = false;
+            busyId = null;
+        }
+    }
+
+    private async Task CheckFileAsync(InputFileChangeEventArgs e)
+    {
+        if (user == null) return;
+        busy = true;
+        flash = null;
+        try
+        {
+            await using var upload = e.File.OpenReadStream(SystemArchive.MaxBytes);
+            using var buffer = new MemoryStream();
+            await upload.CopyToAsync(buffer);
+            buffer.Position = 0;
+            Cancel();
+            plan = await Installer.CheckAsync(buffer, user);
+            if (plan == null) flash = Flash.Error(L["Page.About.InstallNotAllowed"]);
+            focusId = plan == null ? "systems-list-heading" : "systems-plan-heading";
+        }
+        catch (IOException ex)
+        {
+            flash = Flash.Error(L["Page.About.InstallTooBig", SystemArchive.MaxBytes / (1024 * 1024), ex.Message]);
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task InstallAsync()
+    {
+        if (plan == null || user == null) return;
+        busy = true;
+        try
+        {
+            var name = plan.Check.Name ?? plan.Check.Id ?? "";
+            var result = await Installer.InstallAsync(plan.Token, user);
+            plan = null;
+            progress = string.Empty;
+            flash = result.Succeeded ? Flash.Success(L["Page.About.Installed", name]) : Flash.Error(result.Error ?? "");
+            focusId = "systems-list-heading";
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        if (plan != null) Installer.Discard(plan.Token);
+        plan = null;
+        progress = string.Empty;
+    }
+
+    private void CancelPlan()
+    {
+        Cancel();
+        FocusOn("systems-list-heading");
+    }
+}
