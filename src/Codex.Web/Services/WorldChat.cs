@@ -180,6 +180,7 @@ public sealed partial class WorldChat
         var heldInput = Document.ProposalInput;
         var heldEpoch = Document.ProposalEpoch;
         var heldDecided = Document.Decided.ToList();
+        var heldApplyBefore = Document.ApplyBeforeIssueIds;
         var heldTitle = Document.Title;
         Document.Lines.Add(new WorldChatLine(WorldChatSpeaker.Dm, message));
         if (!Document.Named && Document.Title.Length == 0) Document.Title = TitleFrom(message);
@@ -268,6 +269,7 @@ public sealed partial class WorldChat
             Document.ProposalInput = heldInput;
             Document.ProposalEpoch = heldEpoch;
             Document.Decided = heldDecided;
+            Document.ApplyBeforeIssueIds = heldApplyBefore;
             // A name the DM gave meanwhile stays; the one the message gave goes with the message.
             if (!Document.Named) Document.Title = heldTitle;
         }

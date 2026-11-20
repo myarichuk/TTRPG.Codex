@@ -284,6 +284,9 @@ public sealed partial class WorldChat
         {
             Document.ProposalEpoch++;
             Document.Decided = new List<string>();
+            // The issues open before an earlier proposal's half-done apply belong to that proposal: this one's claims were checked against the issues open now,
+            // and its apply takes its own "before". Kept, they would read issues fixed meanwhile as fixed by it and hide one it brings back.
+            Document.ApplyBeforeIssueIds = null;
             // A proposal made again after an apply that failed part way: what was made then is not made twice.
             if (Proposal is { } waiting) CarryOver(waiting, check.Bundle, decisions: false);
         }

@@ -362,7 +362,10 @@ because an issue id is built from them.
 - **The re-check after an apply.** `WorldChat.ApplyNowAsync` reads the ids the kept entries resolve before anything is cleared, takes the open issues just
   before `WorldBuilderService.SaveAsync` and again just after (`WorldBuilderService.OpenIssuesAsync`, DM only: one full uncached snapshot each), and sets
   them side by side with `ConsistencyChecker.Compare`. The claim is only what is checked: the model's word that a fix worked decides nothing. An apply that is tried again after part of it was saved compares with the issues open before the first attempt
-  (`WorldChatDocument.ApplyBeforeIssueIds`, kept until the proposal is applied or discarded), so the claim of an entry already saved is `resolved`, not "not an issue".
+  (`WorldChatDocument.ApplyBeforeIssueIds`), so the claim of an entry already saved is `resolved`, not "not an issue". The ids belong to that one proposal: they are kept for
+  `add_entries` and across an apply cut short by a crash (its retry is the case they are for), and dropped when it is applied or discarded and when a fresh
+  `propose_changes` replaces it (its claims were checked against the issues open then, so stale ids would read an issue fixed meanwhile as fixed by it and hide one it
+  brings back); a turn that is undone puts them back with the proposal it restores.
   It runs only
   when some kept entry has `resolves` (no claim, no two snapshots, and the note reads as it always did). Unticked entries' claims are not checked.
   The result is `WorldBuildResult.Recheck` (`ApplyRecheck`: `Failed`, `Resolved`, `StillOpen`, `NotFound`, `ResolvedUnclaimed`, `New` as issue ids, in the

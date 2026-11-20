@@ -191,6 +191,121 @@ public class PostApplyRecheckTests
         Assert.Null(chat.Document.ApplyBeforeIssueIds); // done: nothing is kept for the next proposal
     }
 
+    private const string Alpha = "broken-link:page:wikipages/1-A:body:alpha-keep";
+    private const string Beta = "broken-link:page:wikipages/2-A:body:beta-keep";
+
+    // P1 fixes the Mere on the road and edits the inn; the inn is changed elsewhere before the apply, so the road is saved and the inn refused.
+    private const string P1 = "{\"proposal\": {\"entries\": [" +
+        "{\"ref\": \"e\", \"kind\": \"edit\", \"target\": \"existing:road\", \"text\": \"Past the mere and [[Alpha Keep]].\", \"resolves\": [\"" + Mere + "\"]}," +
+        "{\"ref\": \"f\", \"kind\": \"edit\", \"target\": \"existing:inn\", \"text\": \"New.\"}]}}";
+
+    /// <summary>A chat whose proposal P1 failed part way: the road's fix is saved, the inn's edit refused, and the ids open before the attempt kept.</summary>
+    private static async Task<(WorldChat Chat, List<WikiPageDocument> Pages, WorldBuilderTests.ScriptedModel Model)> HalfAppliedAsync(params Func<IList<ChatMessage>, ChatMessage>[] later)
+    {
+        var pages = new List<WikiPageDocument>
+        {
+            Road("Past [[The Mere of Dead Men]] and [[Alpha Keep]]."),
+            new() { Id = "wikipages/2-A", Slug = "inn", Title = "Inn", Body = "Old [[Beta Keep]].", Visibility = WikiVisibility.Party },
+            new() { Id = "wikipages/3-A", Slug = "keep", Title = "Keep", Body = "Plain.", Visibility = WikiVisibility.Party }
+        };
+        var saving = WorldBuilderTests.ServiceWithPages(pages);
+        var model = new WorldBuilderTests.ScriptedModel(new Func<IList<ChatMessage>, ChatMessage>[]
+        {
+            _ => WorldBuilderTests.Calls("c1", "propose_changes", P1),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready to review.")
+        }.Concat(later).ToArray());
+        var chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(model), WorldBuilderTests.Campaign, WorldBuilderTests.Dm);
+        await chat.SendAsync("Fix it.", _ => { }, CancellationToken.None);
+        pages[1].Body = "Changed [[Beta Keep]] meanwhile.";
+        await Assert.ThrowsAsync<Codex.Localization.LocalizedException>(() => chat.ApplyAsync());
+        Assert.Equal("Past the mere and [[Alpha Keep]].", pages[0].Body);
+        Assert.Equal(new[] { Alpha, Mere, Beta }, chat.Document.ApplyBeforeIssueIds);
+        return (chat, pages, model);
+    }
+
+    [Fact]
+    public async Task AFreshProposalAfterAHalfDoneApply_TakesItsOwnBefore_SoNothingStaleIsReported_AndAReintroducedIssueIsNew()
+    {
+        // P2, fresh: brings the Mere back and claims the Alpha link.
+        var p2 = "{\"proposal\": {\"entries\": [{\"ref\": \"r\", \"kind\": \"edit\", \"target\": \"existing:road\", \"text\": \"Past [[The Mere of Dead Men]] only.\", \"resolves\": [\"" + Alpha + "\"]}]}}";
+        var (chat, pages, _) = await HalfAppliedAsync(
+            _ => WorldBuilderTests.Calls("c2", "propose_changes", p2),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready again."));
+
+        pages[1].Body = "Fixed."; // the Beta link is fixed elsewhere, between the two proposals
+        await chat.SendAsync("Do it another way.", _ => { }, CancellationToken.None);
+
+        Assert.Null(chat.Document.ApplyBeforeIssueIds);
+        var recheck = (await chat.ApplyAsync()).Recheck!;
+        Assert.Equal("Past [[The Mere of Dead Men]] only.", pages[0].Body);
+        Assert.Equal(new[] { Alpha }, recheck.Resolved);
+        Assert.Empty(recheck.ResolvedUnclaimed); // the Beta link was fixed before P2, not by it
+        Assert.Equal(new[] { Mere }, recheck.New); // open before P1, fixed by it, brought back by P2
+    }
+
+    [Fact]
+    public async Task AddingEntriesToAHalfAppliedProposal_KeepsItsBefore_ItIsStillTheSameProposal()
+    {
+        const string gamma = "broken-link:page:wikipages/3-A:body:gamma-keep";
+        var (chat, pages, _) = await HalfAppliedAsync(
+            _ => WorldBuilderTests.Calls("c2", "add_entries", "{\"additions\": {\"entries\": [{\"ref\": \"g\", \"kind\": \"edit\", \"target\": \"existing:keep\", \"text\": \"Plain again.\", \"resolves\": [\"" + gamma + "\"]}]}}"),
+            _ => new ChatMessage(ChatRole.Assistant, "Added."));
+        pages[2].Body = "See [[Gamma Keep]].";
+
+        await chat.SendAsync("Fix the keep too.", _ => { }, CancellationToken.None);
+
+        Assert.Equal(new[] { Alpha, Mere, Beta }, chat.Document.ApplyBeforeIssueIds);
+        pages[1].Body = "Old [[Beta Keep]]."; // as the proposal read it, so the retry goes through
+        var recheck = (await chat.ApplyAsync()).Recheck!;
+        Assert.Equal(new[] { gamma }, recheck.Resolved);
+        // The Mere was fixed by this proposal's first attempt (its claim was dropped by add_entries, being no longer open), so it is gone, not new.
+        Assert.Contains(Mere, recheck.ResolvedUnclaimed);
+        Assert.Empty(recheck.New);
+        Assert.Null(chat.Document.ApplyBeforeIssueIds);
+    }
+
+    [Fact]
+    public async Task ATurnThatIsUndone_PutsTheHalfAppliedProposalsBeforeBack_WithTheProposal()
+    {
+        var p2 = "{\"proposal\": {\"entries\": [{\"ref\": \"r\", \"kind\": \"edit\", \"target\": \"existing:road\", \"text\": \"Other.\", \"resolves\": [\"" + Alpha + "\"]}]}}";
+        var (chat, _, _) = await HalfAppliedAsync(
+            _ => WorldBuilderTests.Calls("c2", "propose_changes", p2),
+            _ => throw new InvalidOperationException("The model failed."));
+        var p1 = chat.Proposal;
+
+        await Assert.ThrowsAnyAsync<Exception>(() => chat.SendAsync("Do it another way.", _ => { }, CancellationToken.None));
+
+        Assert.Same(p1, chat.Proposal);
+        Assert.Equal(new[] { Alpha, Mere, Beta }, chat.Document.ApplyBeforeIssueIds);
+    }
+
+    [Fact]
+    public async Task DiscardingAHalfAppliedProposal_DropsItsBefore()
+    {
+        var (chat, _, _) = await HalfAppliedAsync();
+
+        await chat.DiscardAsync();
+
+        Assert.Null(chat.Proposal);
+        Assert.Null(chat.Document.ApplyBeforeIssueIds);
+    }
+
+    [Fact]
+    public async Task AnApplyCutShortByACrash_IsRetriedWithItsBefore_AfterTheClaimExpires()
+    {
+        // A crash leaves the claim and the ids stored. Once the claim stops counting, the retry is still the same proposal, the case the ids are for:
+        // clearing them would read the claim of the entry already saved as never an issue.
+        var (chat, pages, _) = await HalfAppliedAsync();
+        chat.Document.ApplyingSince = DateTime.UtcNow - TimeSpan.FromHours(1);
+        pages[1].Body = "Old [[Beta Keep]]."; // as the proposal read it, so the retry goes through
+
+        var recheck = (await chat.ApplyAsync()).Recheck!;
+
+        Assert.Equal(new[] { Mere }, recheck.Resolved);
+        Assert.Empty(recheck.NotFound);
+        Assert.Null(chat.Document.ApplyBeforeIssueIds);
+    }
+
     [Fact]
     public async Task AClaimOnAnEntryTheGameMasterUnticked_IsNotChecked()
     {

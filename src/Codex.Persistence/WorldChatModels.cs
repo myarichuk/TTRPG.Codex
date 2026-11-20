@@ -51,7 +51,9 @@ public class WorldChatDocument
 
     /// <summary>The ids of the issues that were open before the first attempt to apply the waiting proposal, while it claimed some; null when no apply
     /// is half done. Kept with the proposal so an apply that is tried again after part of it was saved compares with the world as it was before any of
-    /// it (the claims of the entries already saved are then still seen as issues that were open, and are gone). Cleared when the proposal is applied or discarded.</summary>
+    /// it (the claims of the entries already saved are then still seen as issues that were open, and are gone). Cleared when the proposal is applied or discarded and when a fresh proposal replaces it (its claims were checked against the issues open then);
+    /// kept for <c>add_entries</c> (the same proposal) and across an apply cut short by a crash, whose retry is the case it exists for. A turn that is undone puts it back
+    /// with the proposal it belonged to.</summary>
     public List<string>? ApplyBeforeIssueIds { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
