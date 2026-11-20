@@ -293,7 +293,11 @@ a derived value, a collection row or an image); the model reads them, with how e
 A value is checked for shape (type, bounds, options, at most 30 keys, 100 list entries), then in `WorldBuilderService.SheetsAsync` against the Library (an id it does not have is refused) and, for a list value, the choices written after a pick's `|` (`id|name:number,...`; `SheetProposal.SuffixProblems`, whatever the enforcement): an
 inventory pick takes the inventory's quantity name (1 to 999, a limit of the proposal; the rules have none), its equipped name (`:1`) and `rune.<id>` of a rune the
 Library has; a pick of the list that grants score increases takes the system's attributes, each at least 1, together no more than the entry grants; any other list takes
-no choices; anything else (a malformed part, an undefined name, `qty:9999`) is refused in words. (The engine ignores a choice it has no use for, and reports an
+no choices; anything else (a malformed part, an undefined name, `qty:9999`) is refused in words. Only what the proposal adds or changes is judged, against the Library
+and against the choices: a list is set whole, so a pick the sheet already holds, written the same (an item of 1500 put there on the sheet page, which has no maximum; an
+item or a rune that has since left the Library), is carried along and never refuses another change to that list (matched by raw text as a multiset, so a second copy is
+new); changed (`qty:1500` to `qty:2000`) it is the proposal's and the cap applies. The cap of 999 is kept, for new and changed picks only, as a guard against an
+invented amount; the DM sets any amount on the sheet page. (The engine ignores a choice it has no use for, and reports an
 overspent increase only with enforcement on, so without this a typo or an invented amount was saved and looked as if it did something.) An id the Library does not have is refused, so nothing is invented; then the system's own rules: the changed sheet is run through
 `SheetRuleEngine.Recompute` beside the old one and the proposal is refused when it introduces a rule violation the sheet did not have
 (a violation that was there stays the DM's; `enforcement: off` skips the rules, never the Library; the point-buy rules are left out). The rules run with the sheets the character's links point to

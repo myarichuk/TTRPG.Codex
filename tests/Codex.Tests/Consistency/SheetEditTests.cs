@@ -273,6 +273,27 @@ public class SheetEditParserTests
         Assert.Contains(expected, string.Join(" ", PickErrors(key, pick)));
     }
 
+    private static IReadOnlyList<string> InventoryErrors(Dictionary<string, object> sheet, params string[] picks) =>
+        SheetProposal.Check(Picking, PickLibrary, "off", sheet, new Dictionary<string, string> { ["inventory"] = JsonSerializer.Serialize(picks) }, Array.Empty<string>(), "s1").Errors;
+
+    [Fact]
+    public void APickTheSheetAlreadyHolds_IsCarriedAlong_NotJudged_SoItNeverRefusesAnotherChange()
+    {
+        // Put there on the sheet page (no maximum) or before the Library lost the item or the rune: the list is set whole, so it is in every inventory edit.
+        var sheet = new Dictionary<string, object> { ["inventory"] = new List<object> { "rope|qty:1500", "rope|rune.ghost:1", "lantern" } };
+
+        Assert.Empty(InventoryErrors(sheet, "rope|qty:1500", "rope|rune.ghost:1", "lantern", "rope|qty:2"));
+        Assert.Empty(InventoryErrors(sheet, "lantern", "rope|qty:1500")); // reordered, one dropped
+
+        // Changed, it is the proposal's amount, and judged by the cap.
+        Assert.Contains("must be a whole number from 1 to 999", string.Join(" ", InventoryErrors(sheet, "rope|qty:2000", "rope|rune.ghost:1", "lantern")));
+        // A new bad pick is still refused, beside the ones carried along.
+        Assert.Contains("'ghost' is not in the Library as a rune", string.Join(" ", InventoryErrors(sheet, "rope|qty:1500", "rope|rune.ghost:1", "lantern", "rope|equipped:1,rune.ghost:1")));
+        Assert.Contains("'phantom' (for 'inventory') is not in the Library", string.Join(" ", InventoryErrors(sheet, "rope|qty:1500", "rope|rune.ghost:1", "lantern", "phantom")));
+        // A second copy of a pick the sheet holds once is new.
+        Assert.Contains("must be a whole number from 1 to 999", string.Join(" ", InventoryErrors(sheet, "rope|qty:1500", "rope|qty:1500", "rope|rune.ghost:1", "lantern")));
+    }
+
     [Fact]
     public void NumbersAndChoices_AreCheckedAgainstTheirBoundsAndOptions()
     {

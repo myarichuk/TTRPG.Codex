@@ -195,7 +195,8 @@ public static class SheetProposal
 
     private static string Format(double d) => d.ToString("R", CultureInfo.InvariantCulture);
 
-    /// <summary>The most of one item an inventory entry may say it carries (<c>rope|qty:999</c>): the rules put no limit, a proposal does.</summary>
+    /// <summary>The most of one item a proposal may say an inventory entry carries (<c>rope|qty:999</c>): the rules and the sheet page put no limit, a
+    /// proposal does, against an invented amount. Only for a pick the proposal adds or changes; one the sheet already holds is carried along as it is.</summary>
     public const int MaxQuantity = 999;
 
     /// <summary>
@@ -371,10 +372,32 @@ public static class SheetProposal
         {
             if (Find(system, name) is not { } key) continue;
             var value = ToSheetValue(json);
+            // Only what the change adds or changes is judged against the Library and the declared choices: a list is set whole, so a pick the sheet
+            // already holds, written the same (an item of 1500 put there on the sheet page, an item or a rune that has since left the Library), is
+            // carried along, not proposed, and must not refuse every other change to that list. Matched by raw text as a multiset: a second copy
+            // of a pick the sheet holds once is new. The rules below still see the whole sheet before and after.
+            var held = Raws(sheet, key.Key);
+            bool Proposed(string raw)
+            {
+                if (held.TryGetValue(raw, out var count) && count > 0)
+                {
+                    held[raw] = count - 1;
+                    return false;
+                }
+
+                return true;
+            }
+
+            var proposed = key.Kind switch
+            {
+                SheetKeyKind.Reference => new List<string> { (string)value }.Where(Proposed).ToList(),
+                SheetKeyKind.Picks => ((List<object>)value).Cast<string>().Where(Proposed).ToList(),
+                _ => new List<string>()
+            };
             var ids = key.Kind switch
             {
-                SheetKeyKind.Reference => new List<string> { (string)value },
-                SheetKeyKind.Picks => ((List<object>)value).Select(p => SheetRuleEngine.ParsePick((string)p).Id).ToList(),
+                SheetKeyKind.Reference => proposed,
+                SheetKeyKind.Picks => proposed.Select(p => SheetRuleEngine.ParsePick(p).Id).ToList(),
                 _ => new List<string>()
             };
             foreach (var id in ids.Distinct(StringComparer.Ordinal))
@@ -387,7 +410,7 @@ public static class SheetProposal
 
             if (key.Kind == SheetKeyKind.Picks)
             {
-                foreach (var raw in ((List<object>)value).Cast<string>()) errors.AddRange(SuffixProblems(system, library, key, raw).Select(p => $"{label}: {p}"));
+                foreach (var raw in proposed) errors.AddRange(SuffixProblems(system, library, key, raw).Select(p => $"{label}: {p}"));
             }
         }
 
@@ -414,6 +437,21 @@ public static class SheetProposal
         }
 
         return (errors, warnings);
+    }
+
+    /// <summary>The raw values the sheet holds for <paramref name="key"/> (a list's picks, or a reference's one id), counted.</summary>
+    private static Dictionary<string, int> Raws(IReadOnlyDictionary<string, object> sheet, string key)
+    {
+        var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+        var value = sheet.TryGetValue(key, out var exact) ? exact : sheet.FirstOrDefault(p => string.Equals(p.Key, key, StringComparison.OrdinalIgnoreCase)).Value;
+        IEnumerable<string> raws = value switch
+        {
+            string one => new[] { one },
+            System.Collections.IEnumerable many => many.Cast<object?>().Select(o => Convert.ToString(o, CultureInfo.InvariantCulture)).OfType<string>(),
+            _ => Array.Empty<string>()
+        };
+        foreach (var raw in raws) counts[raw] = counts.GetValueOrDefault(raw) + 1;
+        return counts;
     }
 
     private static bool IsPointBuy(RuleViolation v) => v.Key != null && v.Key.StartsWith("Actor.Rule.PointBuy", StringComparison.Ordinal);
