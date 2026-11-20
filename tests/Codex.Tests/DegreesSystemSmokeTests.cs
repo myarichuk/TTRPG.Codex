@@ -143,7 +143,8 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
     [Fact]
     public void TheSystemDeclaresItsMomentsAndTheFaithShape()
     {
-        Assert.Equal(new[] { "dailyPrep", "catchBreath", "sessionStart" }, _system.Moments.Select(m => m.Key).ToArray());
+        Assert.Equal(new[] { "dailyPrep", "catchBreath", "sessionStart", "heroicRecovery" }, _system.Moments.Select(m => m.Key).ToArray());
+        Assert.Equal(new[] { "heroicRecovery" }, _system.Moments.Where(m => m.IsActorScoped).Select(m => m.Key).ToArray());
         Assert.Contains(_system.ActorFields, f => f.Key == "faith" && f.TargetEntityType == "faith");
         Assert.Contains(_system.ActorFields, f => f.Key == "faithVows");
         Assert.Contains(_system.ActorFields, f => f.Key == "faithTaboos");

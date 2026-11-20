@@ -93,6 +93,7 @@ moments:
   dailyPrep: Ежедневная подготовка
   catchBreath: Короткая передышка
   sessionStart: Начало сессии
+  heroicRecovery: Героическое спасение
 
 entityTypes:
   ancestry:
@@ -350,6 +351,11 @@ values:
   Critical failure: Критический провал
   Dead: Мёртв
   turnStart: Начало хода
+  damaged: Получен урон
+  healed: Лечение
+  Heroic recovery: Героическое спасение
+  Massive damage: Массивный урон
+  No hero points: Нет очков героизма
 
 sheetRules:
   lists:
