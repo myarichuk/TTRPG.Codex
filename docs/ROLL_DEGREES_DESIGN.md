@@ -14,7 +14,7 @@ condition modifiers. Nothing here changes a system that does not name the new ke
       multipleAttack:
         penalties: [0, -5, -10]       # what the 1st, 2nd and 3rd-or-later attack of a turn add; the last row holds for later ones
         variants:                     # a weapon trait that lowers it: the first variant the weapon has wins
-          - { property: traits, has: featherlight, penalties: [0, -4, -8] }
+          - { property: traits, has: agile, penalties: [0, -4, -8] }
 
     rolls:
       - key: strike

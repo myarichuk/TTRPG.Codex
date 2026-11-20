@@ -764,7 +764,7 @@ sheetRules:
   multipleAttack:
     penalties: [0, -5, -10]
     variants:
-      - { property: traits, has: featherlight, penalties: [0, -4, -8] }
+      - { property: traits, has: agile, penalties: [0, -4, -8] }
 
   # Ranks: trained, expert, master, legendary, worth the level plus 2, 4, 6, 8. An untrained skill adds its attribute alone.
   skills:
