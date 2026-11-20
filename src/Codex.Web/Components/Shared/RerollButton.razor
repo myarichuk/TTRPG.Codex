@@ -1,0 +1,27 @@
+@* One reroll offered on one roll: a button named for the reroll, which says in its accessible name which roll it is for, and, when the actor cannot pay,
+   is off with the reason in plain words beside it (and tied to the button for a screen reader). The page decides whether to offer it at all. *@
+<span class="reroll" data-testid="@TestId">
+    <CodexButton Small="true" Disabled="!CanPay" OnClick="@(() => OnReroll.InvokeAsync())" aria-label="@L["Combat.RerollFor", Label, Roll]"
+                 aria-describedby="@(CanPay ? null : reasonId)" data-testid="@(TestId + "-button")">@Label</CodexButton>
+    @if (!CanPay)
+    {
+        <span class="small-muted ms-1" id="@reasonId" data-testid="@(TestId + "-why")">@L["Combat.RerollShort"]</span>
+    }
+</span>
+
+@code {
+    /// <summary>The reroll's name, in the reader's language ("Hero Point reroll").</summary>
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+
+    /// <summary>Which roll it is for, as the reader knows it ("Strike, 24"); part of the button's accessible name.</summary>
+    [Parameter, EditorRequired] public string Roll { get; set; } = string.Empty;
+
+    /// <summary>Whether the actor can pay. When not, the button is off and says why.</summary>
+    [Parameter] public bool CanPay { get; set; } = true;
+
+    [Parameter] public EventCallback OnReroll { get; set; }
+
+    [Parameter] public string TestId { get; set; } = "reroll";
+
+    private readonly string reasonId = "reroll-why-" + Guid.NewGuid().ToString("N")[..8];
+}

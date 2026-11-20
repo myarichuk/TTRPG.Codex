@@ -31,6 +31,24 @@
                 <DiceResult Compact="true" Label="@(RollLabel?.Invoke(entry) ?? entry.Label)" Expression="@Say(entry.Expression)" Kept="entry.Kept" Dropped="entry.Dropped"
                             Modifier="entry.Modifier" CheckDieIndex="entry.CheckDieIndex" Total="entry.Total" Text="@entry.Result" Secret="entry.IsSecret"
                             Outcome="@(entry.Outcome is { } outcome ? Say(outcome) : null)" Mark="@entry.Mark" Dc="entry.Dc" />
+                @if (RerollsOf?.Invoke(entry) is { Count: > 0 } choices)
+                {
+                    var rolled = entry;
+                    foreach (var choice in choices)
+                    {
+                        var key = choice.Key;
+                        <RerollButton Label="@Say(choice.Label)" Roll="@($"{RollerName(rolled)}, {RollLabel?.Invoke(rolled) ?? rolled.Label ?? rolled.Expression}, {rolled.Total}")"
+                                      CanPay="choice.CanPay" OnReroll="() => OnReroll.InvokeAsync((rolled, key))" TestId="@($"reroll-{key}")" />
+                    }
+                }
+                else if (entry.RerolledBy != null)
+                {
+                    <span class="small-muted ms-1" data-testid="roll-rerolled">@L["Combat.RolledAgain"]</span>
+                }
+                else if (entry.RerollOf != null)
+                {
+                    <span class="small-muted ms-1" data-testid="roll-reroll">@L["Combat.RerollOf"]</span>
+                }
             </div>
         }
     </div>
@@ -59,6 +77,12 @@
 
     /// <summary>A roll: the expression, and whether it is secret.</summary>
     [Parameter] public EventCallback<(string Expression, bool Secret)> OnRoll { get; set; }
+
+    /// <summary>The rerolls this viewer may press on a roll (<see cref="TableVisibility.RerollsFor"/>); none when not given.</summary>
+    [Parameter] public Func<RollLogEntry, IReadOnlyList<RerollChoice>>? RerollsOf { get; set; }
+
+    /// <summary>A reroll pressed: the roll, and the system's key of the reroll.</summary>
+    [Parameter] public EventCallback<(RollLogEntry Roll, string Key)> OnReroll { get; set; }
 
     private string expression = "1d20";
     private bool secret;

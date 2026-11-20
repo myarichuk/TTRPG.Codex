@@ -83,6 +83,9 @@ public sealed record RerollCommand(string ActorId, string EntryId, string Reroll
     /// <summary>Once applied: the roll that counts, the new one or (with <c>keep: higher</c>) the first when it was the higher.</summary>
     public RollLogEntry? Standing { get; private set; }
 
+    /// <summary>Once applied, for a named roll: the new roll as the rules worked it out (its bonuses, dice and outcome), for the sheet's roll card.</summary>
+    public SheetRollResult? Rolled { get; private set; }
+
     private RollLogEntry? _old;
     private SystemRerollDefinition? _reroll;
     private TableEvents.Outcome _spent = TableEvents.Outcome.None;
@@ -173,6 +176,7 @@ public sealed record RerollCommand(string ActorId, string EntryId, string Reroll
                 };
                 var outcome = TableEvents.Roll(runtime, ActorId, request, Dice ?? new RandomDiceSource(), out var rolled, applyIntents: false);
                 if (rolled == null || outcome.Failed != null) return null;
+                Rolled = rolled;
                 var made = MakeRollCommand.EntryOf(runtime, ActorId, UserId, rolled, old.IsSecret);
                 runtime.RecordRoll(made);
                 return made;

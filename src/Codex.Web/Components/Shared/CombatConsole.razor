@@ -166,7 +166,7 @@ else
 
         <div class="col-lg-4">
             <TableDicePanel Rolls="VisibleRollLog()" RollerName="ResolveRollerName" RollLabel="RollLabel" Word="RollWord" IsDm="Access.IsDm" OnRoll="RollDiceAsync"
-                            ActorHref="@(actorId => ActorsById.ContainsKey(actorId) ? ActorHref(actorId) : null)" />
+                            RerollsOf="RerollsOf" OnReroll="RerollAsync" ActorHref="@(actorId => ActorsById.ContainsKey(actorId) ? ActorHref(actorId) : null)" />
 
 
             @if (Access.IsDm)
@@ -846,6 +846,15 @@ else
 
     private Task RollDiceAsync((string Expression, bool Secret) roll) =>
         SendAsync(new RollDiceCommand(roll.Expression, null, CurrentUserId, roll.Secret));
+
+    /// <summary>The rerolls this viewer may press on a roll in the log: the GM's, and the owner's of their own actor's roll.</summary>
+    private IReadOnlyList<RerollChoice> RerollsOf(RollLogEntry entry) =>
+        entry.ActorId is { } actorId
+            ? TableVisibility.RerollsFor(Definition, entry, Access.IsDm, CanTrackSlots(actorId), snapshot.Actor(actorId), ActorsById.GetValueOrDefault(actorId))
+            : Array.Empty<RerollChoice>();
+
+    private Task RerollAsync((RollLogEntry Roll, string Key) reroll) =>
+        reroll.Roll.ActorId is { } actorId ? SendAsync(new RerollCommand(actorId, reroll.Roll.Id, reroll.Key, CurrentUserId, Access.IsDm)) : Task.CompletedTask;
 
     /// <summary>How every button here reaches the runtime. The loop rethrows a command's failure into the caller, and an
     /// exception escaping a Blazor handler ends the whole circuit: a typo in the dice box, a database hiccup while saving

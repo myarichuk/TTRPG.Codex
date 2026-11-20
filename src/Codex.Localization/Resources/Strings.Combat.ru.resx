@@ -205,6 +205,10 @@
   <data name="Combat.DiceExpression" xml:space="preserve"><value>Выражение для костей</value></data>
   <data name="Combat.SecretRoll" xml:space="preserve"><value>Тайный бросок (только мастер)</value></data>
   <data name="Combat.RollLog" xml:space="preserve"><value>Журнал бросков</value></data>
+  <data name="Combat.RerollFor" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Combat.RerollShort" xml:space="preserve"><value>Не хватает, чтобы за это заплатить.</value></data>
+  <data name="Combat.RolledAgain" xml:space="preserve"><value>Брошено ещё раз</value></data>
+  <data name="Combat.RerollOf" xml:space="preserve"><value>Повторный бросок</value></data>
   <data name="Combat.You" xml:space="preserve"><value>Вы</value></data>
   <data name="Combat.Dm" xml:space="preserve"><value>Мастер</value></data>
   <data name="Combat.Player" xml:space="preserve"><value>Игрок</value></data>

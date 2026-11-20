@@ -1,7 +1,12 @@
 using Codex.Persistence;
 using Codex.Persistence.Runtime;
+using Codex.Plugin.Abstractions;
 
 namespace Codex.Web.Components.Shared;
+
+/// <summary>One reroll a viewer may press on a roll: the system's key, its name (a word of the system, said in the reader's language by the page), and whether
+/// the actor can pay for it now.</summary>
+public sealed record RerollChoice(string Key, string Label, bool CanPay);
 
 /// <summary>
 /// What the table shows a viewer who is not the DM. Their actor list already leaves out Hidden actors, so anything the
@@ -32,6 +37,16 @@ public static class TableVisibility
     /// between the player's roll and this read; it is not theirs to see.</summary>
     public static RollLogEntry? OwnLast(IEnumerable<RollLogEntry> log, string actorId, string? label, string rollerUserId) =>
         log.LastOrDefault(r => r.ActorId == actorId && r.Label == label && !r.IsSecret && r.RollerUserId == rollerUserId);
+
+    /// <summary>The rerolls this viewer may press on a roll: the system's, when the roll can be rerolled, for the GM and the actor's owner (a secret roll for the GM
+    /// alone), each with whether the actor can pay now. Empty otherwise.</summary>
+    public static IReadOnlyList<RerollChoice> RerollsFor(SystemDefinition? system, RollLogEntry entry, bool isDm, bool isOwner, ActorStateSnapshot? state, ActorDocument? actor)
+    {
+        if (system == null || actor == null || !(isDm || isOwner) || (entry.IsSecret && !isDm)) return Array.Empty<RerollChoice>();
+        return Rerolls.Offered(system, entry)
+            .Select(r => new RerollChoice(r.Key, r.Label.Length > 0 ? r.Label : r.Key, Rerolls.CanPay(system, r, state, actor.Sheet)))
+            .ToList();
+    }
 
     /// <summary>The latest rolls this viewer may see: no secret rolls, and none made for an actor they cannot see, since a
     /// hidden monster's initiative or attack would announce it, dice and all, the moment the DM rolled for it (as the
