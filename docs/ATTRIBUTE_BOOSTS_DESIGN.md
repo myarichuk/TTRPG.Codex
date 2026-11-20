@@ -27,6 +27,11 @@ Rules:
 - A boost adds a step (+1 modifier, 2 score points); at `partialFrom` or above it adds 1 score point, so two make a step. The sheet shows
   the odd one as `+4½`. A flaw takes a step away. Sources apply in listed order, flaws first within a source.
 - Trade (field sources only): the player gives up `fixed` of the source's fixed boosts for `free` free ones.
+- `trade.flaws: keep | drop` (default `keep`): whether the source's own flaws still apply once the trade is made. four-degrees uses `drop`, because its
+  rules entry `alternate-ancestry-boosts` replaces the ancestry's boosts and flaws both with two free boosts. The reference spec's trade is unchanged.
+- `voluntaryFlaws: true` (field sources only): the player may add flaws of their own. Stored at `boost__{source}__{entryId}.flaws`, one attribute each; each
+  lowers its attribute and gives nothing back. Two flaws from one source on one attribute, the entry's own included, is the violation `FlawTwice`
+  (rules entry `voluntary-flaws`: no more than one flaw on any one attribute). The text sets no number and no extra boost. Changing the entry drops them.
 - Scores stay on the normal scale (default 10, `half-minus-five`), so every formula and ranked list reads them unchanged.
 
 ## Where it runs
@@ -47,14 +52,15 @@ The panel's boxes and `SetTrade` use the stored list (`Given`), so a trade can b
 
 Boosts offered (in `methods` or as `default`) need a `boosts` block; every attribute `half-minus-five` with default 10; at least one
 source; unique keys without `__` or `#`; exactly one of `field` and `level`; `field` an EntityReference actor field; `free` from 0 to the
-attribute count and only on a level source; `trade` only on a field source, both numbers at least 1; `partialFrom` at least 1; no `bonuses` or
+attribute count and only on a level source; `trade` only on a field source, both numbers at least 1, `trade.flaws` `keep` or `drop`; `voluntaryFlaws` only on a field source; `partialFrom` at least 1; no `bonuses` or
 `increases` beside boosts (a boost reads the score it lands on).
 
 ## Messages a player sees (en, ru, he)
 
 `BoostOpen` (boosts still to place; a **warning**, so a sheet in progress saves, and a level that opens a milestone offers its boosts as
 a `LevelChoice` `boosts:{source}`), and the violations `BoostSame` (each boost needs a different attribute), `BoostCant` (not one of the
-choices), `BoostTrade` (give up exactly n fixed boosts). Duplicates still count in the score, so the sheet shows what was chosen.
+choices), `BoostTrade` (give up exactly n fixed boosts), `FlawTwice` (an attribute with two flaws from one source). The panel also says the flaw goes with a `drop` trade,
+and a source with voluntary flaws shows an add button per attribute (named for it) and a remove button per flaw taken. Duplicates still count in the score, so the sheet shows what was chosen.
 
 ## Spec expectations (degrees fixture)
 

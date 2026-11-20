@@ -718,7 +718,7 @@ Decided in section 8 (item 4). The rules were read from the extracted text of th
 - No migration: Four Degrees has not shipped, so a local dev database with old scores (10, 14) shows them as modifiers (+10, +14) until the sheet is re-entered.
 - The score-mode panel, the SRD stat cards (`RefCard`, `MonsterCard`) and the other systems are untouched and behave as before; the monster cards still print a score and its modifier, so the monster book will need its own stat block shape.
 - The system's boost sources are the ancestry, the class and the four level milestones. The book's background boosts and the four free boosts that finish the 1st-level build are not sources yet, so a boost build does not follow the book's order at 1st level; the sheet's attributes are still typed in or picked by hand there.
-- The 1st-level range of -1 to +4 is not checked, and the voluntary flaws the book allows are not modelled (the boost trade covers the book's two-free-boosts choice only).
+- The 1st-level range of -1 to +4 is not checked, and the ancestry trade now drops the ancestry's flaw with its boosts (`trade.flaws: drop`, rules entry `alternate-ancestry-boosts`), and voluntary flaws are modelled (`voluntaryFlaws`, entry `voluntary-flaws`: any number, one per attribute). Not modelled: whether the group agrees to them, which the entry leaves to the table; the text gives no extra boost for them.
 
 Section 19's "not done" is partly done below: the four free boosts of the 1st-level build are a source now (section 20).
 
