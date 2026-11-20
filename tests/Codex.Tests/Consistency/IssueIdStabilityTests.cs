@@ -1,3 +1,4 @@
+using Codex.Core;
 using Codex.Core.Consistency;
 using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
@@ -28,10 +29,111 @@ public class IssueIdStabilityTests
     }
 
     [Fact]
-    public void TwoBlocksThatOpenWithTheSameLine_AreToldApartByOrder_AndOnlyThen()
+    public void TwoBlocksWithTheSameWordAndFirstLine_AreToldApartByOrder_AndOnlyThen()
     {
-        var ids = Secrets(":::oops\na\n:::\n:::oops\nb\n:::").Select(i => i.Id).ToList();
-        Assert.Equal(new[] { "secret-unknown-audience:page:wikipages/1-A:body:oops", "secret-unknown-audience:page:wikipages/1-A:body:oops.2" }, ids);
+        var ids = Secrets(":::oops\na\n:::\n:::oops note\na\n:::").Select(i => i.Id).ToList();
+        Assert.Equal(new[] { "secret-unknown-audience:page:wikipages/1-A:body:oops:a", "secret-unknown-audience:page:wikipages/1-A:body:oops:a.2" }, ids);
+
+        // Another first line is another key, without any number.
+        ids = Secrets(":::oops\na\n:::\n:::oops\nb\n:::").Select(i => i.Id).ToList();
+        Assert.Equal(new[] { "secret-unknown-audience:page:wikipages/1-A:body:oops:a", "secret-unknown-audience:page:wikipages/1-A:body:oops:b" }, ids);
+    }
+
+    private static List<string> AllSecretIds(string body, params ActorView[] actors)
+    {
+        var snapshot = Fx.Snap(pages: new[] { Fx.Page("wikipages/1-A", "Road", body) }, actors: actors);
+        return ConsistencyChecker.Run(snapshot, new IConsistencyCheck[] { new SecretUnclosedCheck(), new SecretUnknownAudienceCheck(), new SecretForMissingCheck() })
+            .Select(i => i.Id).ToList();
+    }
+
+    [Fact]
+    public void FixingTheFirstOfTwoBlocksWithTheSameUnknownWord_LeavesTheSecondsIdAlone()
+    {
+        // A: two ":::gm" blocks. Fixing the first (":::gm" -> ":::dm") resolves its id and does not rename the second to it.
+        var before = AllSecretIds(":::gm\nThe duke is a vampire.\n:::\n:::gm\nThe vault is empty.\n:::");
+        Assert.Equal(new[] { "secret-unknown-audience:page:wikipages/1-A:body:gm:the-duke-is-a-vampire", "secret-unknown-audience:page:wikipages/1-A:body:gm:the-vault-is-empty" }, before);
+
+        var after = AllSecretIds(":::dm\nThe duke is a vampire.\n:::\n:::gm\nThe vault is empty.\n:::");
+        Assert.Equal(new[] { before[1] }, after);
+
+        var recheck = ConsistencyChecker.Compare(before, after.Select(id => new Issue(id, "x", IssueSeverity.Warning, "page", "wikipages/1-A", "body", "c", Array.Empty<string>(), "", "", "", FixVia.Page)), new[] { before[0] });
+        Assert.Equal(new[] { before[0] }, recheck.Resolved);
+        Assert.Empty(recheck.StillOpen);
+        Assert.Empty(recheck.ResolvedUnclaimed);
+        Assert.Empty(recheck.New);
+    }
+
+    [Fact]
+    public void TakingOneMissingCharacterOffTheOpeningLine_LeavesTheOtherMissingCharactersIdAlone()
+    {
+        // B: two characters named on a :::for line are gone. Taking actor 9 off the line (what the hint asks) resolves its issue; 8's id stays.
+        var before = AllSecretIds(":::for [[actor:actors/9]] [[actor:actors/8]]\nThe map is false.\n:::");
+        Assert.Equal(new[] { "secret-for-missing:page:wikipages/1-A:body:for:the-map-is-false:actors/8", "secret-for-missing:page:wikipages/1-A:body:for:the-map-is-false:actors/9" }, before);
+
+        var after = AllSecretIds(":::for [[actor:actors/8]]\nThe map is false.\n:::");
+        Assert.Equal(new[] { before[0] }, after);
+    }
+
+    [Fact]
+    public void AddingAnEarlierClosedBlockOfTheSameWord_LeavesAnUnclosedBlocksIdAlone()
+    {
+        // C: an unclosed ":::dm" keeps its id when a closed ":::dm" is added before it (even one with the very same first line: it has no unclosed issue).
+        var before = Assert.Single(AllSecretIds(":::dm\nfirst\n:::\nWords.\n:::dm\nThe keeper lies."));
+        Assert.Equal("secret-unclosed:page:wikipages/1-A:body:dm:the-keeper-lies", before);
+
+        Assert.Equal(new[] { before }, AllSecretIds(":::dm\nnew\n:::\n:::dm\nfirst\n:::\nWords.\n:::dm\nThe keeper lies."));
+        Assert.Equal(new[] { before }, AllSecretIds(":::dm\nThe keeper lies.\n:::\n:::dm\nfirst\n:::\nWords.\n:::dm\nThe keeper lies."));
+    }
+
+    /// <summary>One generated block: its opener word, the characters a <c>:::for</c> names, its first line, and whether it is closed.</summary>
+    private sealed record GenBlock(string Word, List<string> Knowers, string Content, bool Closed)
+    {
+        public string Text => $":::{Word}{string.Concat(Knowers.Select(k => $" [[actor:{k}]]"))}\n{Content}\n" + (Closed ? ":::\n" : "");
+    }
+
+    private static string Render(IEnumerable<GenBlock> blocks) => string.Join("Plain words.\n", blocks.Select(b => b.Text));
+
+    [Fact]
+    public void FixingAnyOneBlock_NeverChangesTheIdsOfTheOtherBlocksIssues_OnGeneratedPages()
+    {
+        var aria = Fx.Actor("actors/1");
+        var words = new[] { "gm", "oops", "dm", "party", "for", "for", "players" };
+        var lines = new[] { "the duke lies", "a vault", "secret door", "the map", "x" };
+        for (var seed = 0; seed < 400; seed++)
+        {
+            var random = new Random(seed);
+            var count = random.Next(2, 6);
+            var blocks = new List<GenBlock>();
+            var used = new HashSet<string>();
+            for (var b = 0; b < count; b++)
+            {
+                var word = words[random.Next(words.Length)];
+                var knowers = word == "for" ? new[] { "actors/1", "actors/8", "actors/9" }.Where(_ => random.Next(2) == 0).ToList() : new List<string>();
+                // A first line no other block has (two blocks with the same word and first line are the documented limit; see the test above).
+                string content;
+                do content = lines[random.Next(lines.Length)] + " " + random.Next(4); while (!used.Add(content));
+                // At most the last block is left open, so every closer closes its own block.
+                blocks.Add(new GenBlock(word, knowers, content, b < count - 1 || random.Next(3) > 0));
+            }
+
+            var before = AllSecretIds(Render(blocks), aria);
+            for (var fix = 0; fix < blocks.Count; fix++)
+            {
+                var block = blocks[fix];
+                // The fix of this block's own issue: close it, give its word a known audience, or take the missing characters off its line.
+                var fixedBlock = !block.Closed ? block with { Closed = true }
+                    : block.Word is "gm" or "oops" ? block with { Word = "dm" }
+                    : block.Word == "for" ? block with { Knowers = block.Knowers.Where(k => k == "actors/1").DefaultIfEmpty("actors/1").ToList() }
+                    : block;
+                var changed = blocks.Select((b, i) => i == fix ? fixedBlock : b).ToList();
+                var after = AllSecretIds(Render(changed), aria);
+
+                // The other blocks' issues are those whose key holds their own first line.
+                var others = before.Where(id => !id.Contains(":" + WikiText.Slugify(block.Content), StringComparison.Ordinal)).ToList();
+                foreach (var id in others) Assert.True(after.Contains(id), $"seed {seed}, fixing block {fix}: {id} changed. Before: {string.Join(", ", before)}; after: {string.Join(", ", after)}");
+                Assert.True(after.Count <= before.Count, $"seed {seed}, fixing block {fix} made new issues: {string.Join(", ", after.Except(before))}");
+            }
+        }
     }
 
     [Fact]

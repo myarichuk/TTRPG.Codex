@@ -3,15 +3,19 @@ namespace Codex.Core.Consistency;
 /// <summary>What the secret-block checks share: the blocks of every text field, each with the text of its opening line and a key that names it.</summary>
 internal static class SecretScan
 {
-    /// <summary>The longest slug of an opening line a key holds.</summary>
+    /// <summary>The longest slug of a block's first line a key holds.</summary>
     private const int KeyLength = 40;
 
     /// <summary>
-    /// A block's key in an issue id: the slug of its opening line (bounded), then <c>.2</c>, <c>.3</c> for a later block of the same field whose opening
-    /// line reads the same. Never the block's position, so a block added or removed earlier in the text leaves every other block's id as it was;
-    /// only two blocks that open with the very same line are told apart by their order (the one limit of the scheme).
+    /// The blocks of every text field that <paramref name="reported"/> keeps, each with a key for its issue id: the word it was opened with and the slug of its
+    /// first line of content (bounded; <c>empty</c> for a block with none), <c>dm:the-keeper-is-a-smuggler</c>. The key is made only from what a fix of the
+    /// block's own issue does not touch: the rest of the opening line (the characters a <c>:::for</c> block names, the reveal stamp) is left out, so taking a
+    /// character off the line or closing the block leaves the key alone, and changing an unknown word changes the key because it fixes the issue. Never the
+    /// block's position, and never another block's: a block added, fixed or removed elsewhere in the text moves no other key. <c>.2</c>, <c>.3</c> tell
+    /// apart only blocks that <paramref name="reported"/> keeps and that open with the same word and the same first line (the one limit of the scheme: two such
+    /// blocks cannot be told apart, so fixing the first gives its key to the second).
     /// </summary>
-    public static IEnumerable<(TextField Field, SecretBlock Block, string Opening, string Key)> Blocks(WorldSnapshot s)
+    public static IEnumerable<(TextField Field, SecretBlock Block, string Opening, string Key)> Blocks(WorldSnapshot s, Func<SecretBlock, bool> reported)
     {
         foreach (var field in TextFields.Of(s))
         {
@@ -19,16 +23,25 @@ internal static class SecretScan
             // The same line splitting the parser uses, so SecretBlock.Line is the same line here.
             var lines = field.Text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
             var seen = new Dictionary<string, int>(StringComparer.Ordinal);
-            foreach (var block in SecretText.Blocks(field.Text))
+            foreach (var block in SecretText.Blocks(field.Text).Where(reported))
             {
                 var opening = block.Line < lines.Length ? lines[block.Line] : string.Empty;
-                var slug = WikiText.Slugify(opening);
-                if (slug.Length > KeyLength) slug = slug[..KeyLength].TrimEnd('-');
-                if (slug.Length == 0) slug = "block";
-                seen[slug] = seen.GetValueOrDefault(slug) + 1;
-                yield return (field, block, opening, seen[slug] == 1 ? slug : $"{slug}.{seen[slug]}");
+                var identity = $"{Slug(block.OpenerWord, "block")}:{Slug(FirstContentLine(block), "empty")}";
+                seen[identity] = seen.GetValueOrDefault(identity) + 1;
+                yield return (field, block, opening, seen[identity] == 1 ? identity : $"{identity}.{seen[identity]}");
             }
         }
+    }
+
+    /// <summary>The block's first line that has something in it and is not itself a marker line (a nested block's opener or closer).</summary>
+    private static string FirstContentLine(SecretBlock block) =>
+        block.Inner.Split('\n').FirstOrDefault(l => !string.IsNullOrWhiteSpace(l) && !SecretText.IsMarkerLine(l)) ?? string.Empty;
+
+    private static string Slug(string text, string none)
+    {
+        if (!text.Any(char.IsLetterOrDigit)) return none;
+        var slug = WikiText.Slugify(text);
+        return slug.Length > KeyLength ? slug[..KeyLength].TrimEnd('-') : slug;
     }
 }
 
@@ -39,7 +52,7 @@ public sealed class SecretUnclosedCheck : IConsistencyCheck
 
     public IEnumerable<Issue> Run(WorldSnapshot s)
     {
-        foreach (var (field, block, opening, key) in SecretScan.Blocks(s).Where(b => b.Block.ClosingLine == null))
+        foreach (var (field, block, opening, key) in SecretScan.Blocks(s, b => b.ClosingLine == null))
         {
             yield return Make.Issue(Name, IssueSeverity.Warning, field.Kind, field.EntityId, field.Field, key,
                 "Consistency.SecretUnclosed", new[] { Make.Quote(opening), (block.Line + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) },
@@ -58,11 +71,9 @@ public sealed class SecretUnknownAudienceCheck : IConsistencyCheck
 
     public IEnumerable<Issue> Run(WorldSnapshot s)
     {
-        foreach (var (field, block, opening, key) in SecretScan.Blocks(s).Where(b => b.Block.Marked == SecretAudience.Dm))
+        foreach (var (field, block, opening, key) in SecretScan.Blocks(s, IsUnknownAudience))
         {
-            // The word the block was opened with, as the parser read it: any word that is not "dm" yet came out as DM-only is one the app does not know.
             var word = block.OpenerWord;
-            if (word.Length == 0 || word.Equals("dm", StringComparison.OrdinalIgnoreCase)) continue;
             yield return Make.Issue(Name, IssueSeverity.Warning, field.Kind, field.EntityId, field.Field, key,
                 "Consistency.SecretUnknownAudience", new[] { Make.Quote(word), Make.Quote(opening), (block.Line + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) },
                 $"The block opened by \"{Make.Quote(opening)}\" (line {block.Line + 1}) names an audience the app does not know (\":::{Make.Quote(word)}\"), so only the DM can read it.",
@@ -70,6 +81,11 @@ public sealed class SecretUnknownAudienceCheck : IConsistencyCheck
                 field.Fix);
         }
     }
+
+    /// <summary>The word the block was opened with, as the parser read it: any word that is not "dm" yet came out as DM-only is one the app does not know.
+    /// (Filtered before the keys are made, so a block of a known audience never takes a <c>.2</c> from another.)</summary>
+    private static bool IsUnknownAudience(SecretBlock block) =>
+        block.Marked == SecretAudience.Dm && block.OpenerWord.Length > 0 && !block.OpenerWord.Equals("dm", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>A <c>:::for</c> block that names no character, or one that no longer exists. A block for nobody is read by nobody.</summary>
@@ -80,7 +96,7 @@ public sealed class SecretForMissingCheck : IConsistencyCheck
     public IEnumerable<Issue> Run(WorldSnapshot s)
     {
         var actors = s.Actors.Select(a => a.Id).ToHashSet(StringComparer.Ordinal);
-        foreach (var (field, block, opening, key) in SecretScan.Blocks(s).Where(b => b.Block.Marked == SecretAudience.Some))
+        foreach (var (field, block, opening, key) in SecretScan.Blocks(s, b => b.Marked == SecretAudience.Some))
         {
             if (block.Knowers.Count == 0)
             {

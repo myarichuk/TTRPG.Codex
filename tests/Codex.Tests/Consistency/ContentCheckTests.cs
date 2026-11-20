@@ -119,7 +119,7 @@ public class ContentCheckTests
     public void ABlockThatIsNeverClosed_IsReported_WithItsLine()
     {
         var issue = Assert.Single(Secrets("Intro.\n:::dm\nThe keeper is a smuggler."));
-        Assert.Equal("secret-unclosed:page:wikipages/1-A:body:dm", issue.Id);
+        Assert.Equal("secret-unclosed:page:wikipages/1-A:body:dm:the-keeper-is-a-smuggler", issue.Id);
         Assert.Contains("line 2", issue.Message);
     }
 
@@ -127,7 +127,7 @@ public class ContentCheckTests
     public void ABlockWithAnAudienceWordTheAppDoesNotKnow_IsReported_ButTheKnownOnesAreNot()
     {
         var issue = Assert.Single(Secrets(":::partyy\nx\n:::\n\n:::dm\ny\n:::\n:::DM\nz\n:::\n:::party\nq\n:::\n:::players\nw\n:::\n:::revealed\nr\n:::"));
-        Assert.Equal("secret-unknown-audience:page:wikipages/1-A:body:partyy", issue.Id);
+        Assert.Equal("secret-unknown-audience:page:wikipages/1-A:body:partyy:x", issue.Id);
         Assert.Equal("partyy", issue.Args[0]);
     }
 
@@ -136,10 +136,10 @@ public class ContentCheckTests
     {
         var aria = Fx.Actor("actors/1-A");
         var nobody = Assert.Single(Secrets(":::for\nx\n:::", aria));
-        Assert.Equal("secret-for-missing:page:wikipages/1-A:body:for:none", nobody.Id);
+        Assert.Equal("secret-for-missing:page:wikipages/1-A:body:for:x:none", nobody.Id);
 
         var gone = Assert.Single(Secrets(":::for [[actor:actors/1-A]] [[actor:actors/9-A]]\nx\n:::", aria));
-        Assert.Equal("secret-for-missing:page:wikipages/1-A:body:for-actor-actors-1-a-actor-actors-9-a:actors/9-A", gone.Id);
+        Assert.Equal("secret-for-missing:page:wikipages/1-A:body:for:x:actors/9-A", gone.Id);
 
         Assert.Empty(Secrets(":::for [[actor:actors/1-A]]\nx\n:::", aria));
     }
@@ -152,6 +152,6 @@ public class ContentCheckTests
         var snapshot = Fx.Snap(pages: new[] { Fx.Page("wikipages/1-A", "Plain", "No markers at all.") }, actors: new[] { actor }, facts: new[] { fact });
 
         var ids = new IConsistencyCheck[] { new SecretUnclosedCheck(), new SecretUnknownAudienceCheck() }.SelectMany(c => c.Run(snapshot)).Select(i => i.Id).OrderBy(i => i, StringComparer.Ordinal);
-        Assert.Equal(new[] { "secret-unclosed:actor:actors/1-A:dmNotes:dm", "secret-unknown-audience:fact:facts/1-A:details:oops" }, ids);
+        Assert.Equal(new[] { "secret-unclosed:actor:actors/1-A:dmNotes:dm:never-closed", "secret-unknown-audience:fact:facts/1-A:details:oops:x" }, ids);
     }
 }
