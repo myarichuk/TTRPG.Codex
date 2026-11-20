@@ -512,8 +512,9 @@ conditions:
   - Unnoticed
   - Wounded
 
-# An effect beside the conditions. Its bonus is a status bonus, so two copies of it never add.
-effects: [Heartened]
+# Effects beside the conditions. Heartened's bonus is a status bonus, so two copies of it never add. The three covers (rules entry `cover`) are
+# circumstance bonuses, so two of them never add either: the best holds. The GM puts one on for the attack it applies to, since cover is relative.
+effects: [Heartened, Lesser cover, Standard cover, Greater cover]
 
 # What the engine can compute of each condition, read from its pack entry. Each target belongs to one side (docs/SHEET_CONDITIONS_DESIGN.md):
 # attack, save, check, armorClass, classDc and perception are the rules' own; senseDc and speed are the sheet kind's. `check.<attribute>`
@@ -645,6 +646,22 @@ conditionEffects:
       - { target: strike,  amount: 1, type: status }
       - { target: classDc, amount: 1, type: status }
       - { target: senseDc, amount: 1, type: status }
+  # Cover (rules entry `cover`): lesser gives +1 to armor class and nothing else; standard +2 and greater +4 give the same to armor class, and to
+  # Reflex saves against area effects and Stealth checks to Hide, Sneak or avoid detection. The saves and Stealth are tick boxes, since the
+  # sheet cannot tell an area effect or a hiding attempt from any other roll. Their bonuses are circumstance bonuses, so covers do not add.
+  Lesser cover:
+    modifiers:
+      - { target: armorClass, amount: 1, type: circumstance }
+  Standard cover:
+    modifiers:
+      - { target: armorClass,          amount: 2, type: circumstance }
+      - { target: save.dex,            amount: 2, type: circumstance, optIn: { label: Against an area effect } }
+      - { target: check.skill.stealth, amount: 2, type: circumstance, optIn: { label: To Hide or Sneak } }
+  Greater cover:
+    modifiers:
+      - { target: armorClass,          amount: 4, type: circumstance }
+      - { target: save.dex,            amount: 4, type: circumstance, optIn: { label: Against an area effect } }
+      - { target: check.skill.stealth, amount: 4, type: circumstance, optIn: { label: To Hide or Sneak } }
 
 # Status, circumstance and item bonuses keep the highest of their type; untyped ones add up. Penalties of a type keep the worst.
 # Untyped penalties add up: `penaltyTypes` overrides `penalties` for one type.

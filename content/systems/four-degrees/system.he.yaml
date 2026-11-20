@@ -88,6 +88,9 @@ conditions:
   Unnoticed: לא מורגש
   Wounded: פצוע
   Heartened: מעודד
+  Lesser cover: מחסה קל
+  Standard cover: מחסה רגיל
+  Greater cover: מחסה מלא
 
 moments:
   dailyPrep: הכנות יומיות

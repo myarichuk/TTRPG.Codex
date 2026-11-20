@@ -88,6 +88,9 @@ conditions:
   Unnoticed: Не замечен
   Wounded: Ранен
   Heartened: Воодушевлённый
+  Lesser cover: Лёгкое укрытие
+  Standard cover: Обычное укрытие
+  Greater cover: Надёжное укрытие
 
 moments:
   dailyPrep: Ежедневная подготовка
