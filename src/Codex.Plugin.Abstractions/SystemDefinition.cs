@@ -723,7 +723,9 @@ public class SystemDefinition
     public List<MomentDefinition> Moments { get; set; } = new();
 
     /// <summary>Event handlers by event name (<c>damage</c>, <c>turnStart</c>, <c>roll</c>): <c>{ builtin: name, ...options }</c>,
-    /// <c>{ script: file#export }</c>, or a list of <c>{ when, intents }</c> lines. Read as YAML gives it, and parsed by
+    /// <c>{ script: file#export }</c>, or a list of <c>{ when, intents }</c> lines. <c>damaged</c> and <c>healed</c> are raised after the table's own
+    /// damage and healing, with what the vitals rules did (<c>dealt</c>, <c>before</c>, <c>after</c>, <c>max</c>); <c>damage</c> and <c>heal</c> replace
+    /// that built-in path. Read as YAML gives it, and parsed by
     /// Codex.Core.Rules.SheetEvents, since a handler is written in either shape.</summary>
     public Dictionary<string, object> Events { get; set; } = new();
 

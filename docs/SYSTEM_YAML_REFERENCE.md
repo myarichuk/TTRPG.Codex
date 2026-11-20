@@ -47,7 +47,7 @@ A whole game system described as data (`system.yaml`). This is what lets a homeb
 | `hazards` | [HazardRules](#hazardrules) | What the system says about hazards beyond the type's own fields: how hard a hazard of each level is. Absent on a system with no hazard type. |
 | `rolls` | list of [RollDefinition](#rolldefinition) | Named rolls with inputs and outcomes (see Rolls.cs). |
 | `moments` | list of [MomentDefinition](#momentdefinition) | The system's own moments (`downtime`, `loadChosen`): named times at which counters refill and an `events:` handler of the same name runs. Rests (`vitals.rests`), `initiative` and `dawn` are moments too and need no declaring. |
-| `events` | map of any | Event handlers by event name (`damage`, `turnStart`, `roll`): `{ builtin: name, ...options }`, `{ script: file#export }`, or a list of `{ when, intents }` lines. Read as YAML gives it, and parsed by Codex.Core.Rules.SheetEvents, since a handler is written in either shape. |
+| `events` | map of any | Event handlers by event name (`damage`, `turnStart`, `roll`): `{ builtin: name, ...options }`, `{ script: file#export }`, or a list of `{ when, intents }` lines. `damaged` and `healed` are raised after the table's own damage and healing, with what the vitals rules did (`dealt`, `before`, `after`, `max`); `damage` and `heal` replace that built-in path. Read as YAML gives it, and parsed by Codex.Core.Rules.SheetEvents, since a handler is written in either shape. |
 
 ## LicenseInfo
 
