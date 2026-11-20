@@ -1651,6 +1651,12 @@ else
         flash = null;
         var before = new Dictionary<string, object>(editSheet);
         RefillFeatureCounters(moment);
+        // The slot pools that recover at this moment fill up, as the table's moment command does.
+        foreach (var key in SystemMoments.SlotKeysRecoveredAt(system, editSheet.Keys, moment))
+        {
+            if (YamlValues.GetInt(editSheet, SystemDefinition.PoolMaxKey(system, key)) is { } max) editSheet[key] = (long)max;
+        }
+
         if (resolver != null && SheetEvents.Handles(system, moment))
         {
             try

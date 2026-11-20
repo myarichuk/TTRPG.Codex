@@ -1577,7 +1577,7 @@
           "items": {
             "$ref": "#/$defs/ListRule"
           },
-          "description": "Multi-pick lists of entries on the sheet (spells, feats, knacks...)."
+          "description": "Multi-pick lists of entries on the sheet (spells, feats, knacks...). A sheet kind's formulas read each one as a list of its picks (`count(focusSpells, s => true)`, entries granted by a feature included), so a list's key may not be a value or a list of a kind."
         },
         "ranked": {
           "type": "array",
@@ -2653,7 +2653,7 @@
               "boolean"
             ]
           },
-          "description": "Rest names that refill this pool (\"Short Rest\", \"Long Rest\"); the table offers one button per name."
+          "description": "Rest names that refill this pool (\"Short Rest\", \"Long Rest\"); the table offers one button per name. A name may also be a moment the system declares in `moments` (or `dawn`): the table's moment command and the sheet's moments panel then refill the pool, and no rest button is named after the moment."
         }
       },
       "additionalProperties": false

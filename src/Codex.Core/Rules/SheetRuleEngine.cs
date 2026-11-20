@@ -989,9 +989,9 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         }
     }
 
-    /// <summary>Rest names any slot pool recovers on, in declaration order.</summary>
+    /// <summary>Rest names any slot pool recovers on, in declaration order (a declared moment a pool names is a moment, not a rest).</summary>
     public IReadOnlyList<string> RestNames() =>
-        Rules?.SlotPools.SelectMany(p => p.RecoversOn).Distinct(StringComparer.OrdinalIgnoreCase).ToList() ?? new List<string>();
+        Rules?.SlotPools.SelectMany(p => p.RecoversOn).Where(rest => SystemMoments.IsRest(system, rest)).Distinct(StringComparer.OrdinalIgnoreCase).ToList() ?? new List<string>();
 
     // ---- The primitives (sheet kinds) ----
 

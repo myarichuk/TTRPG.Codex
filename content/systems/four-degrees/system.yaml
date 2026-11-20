@@ -465,6 +465,9 @@ events:
   heroicRecovery: { script: rules.js#onHeroicRecovery }
   sessionStart:
     - { intents: [{ set: { track: heroPoints, to: 1 } }] }
+  # The daily preparations replenish all the focus points (focus-spells).
+  dailyPrep:
+    - { intents: [{ set: { track: focusPoints, to: focusPoints_Max } }] }
 
 # The book's conditions, by the names of the pack's `conditions/` entries (rules-core), which hold each one's text. The effects below are the part
 # the engine can express; a condition with no effect there has a rule the engine cannot compute, and its entry is the whole of it.
@@ -874,6 +877,8 @@ sheetRules:
       byField: level
       table: spellcasting
       column: slots
+      # The daily preparations (a moment, not a rest) refill them: the table's moment button and the sheet's moments panel do it.
+      recoversOn: [dailyPrep]
 
   features:
     - { field: ancestry }
@@ -892,9 +897,12 @@ sheetKinds:
     values:
       - { key: senseDc, label: Sense DC, formula: "10 + level + 2 + mod(wis)", modifiers: senseDc }
       - { key: speed,   label: Speed,    formula: "ancestrySpeed > 0 ? ancestrySpeed : 25", modifiers: speed }
-    # Hero points (hero-points): at most 3 at a time.
+    # Hero points (hero-points): at most 3 at a time. Focus points (focus-spells): a pool as big as the focus spells the character knows, to 3 at
+    # most; none until a first focus spell. The daily preparations fill it (events.dailyPrep), and the player ticks a box to Refocus.
+    # The class's own `focusPool` field is printed, not computed; this counts the spells on the sheet.
     tracks:
-      - { key: heroPoints, label: Hero Points, max: 3, display: boxes }
+      - { key: heroPoints,  label: Hero Points,  max: 3, display: boxes }
+      - { key: focusPoints, label: Focus Points, max: "min(3, count(focusSpells, s => true))", display: boxes }
     lists:
       - key: trinkets
         label: Trinkets

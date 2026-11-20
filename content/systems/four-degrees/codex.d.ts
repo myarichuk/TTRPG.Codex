@@ -3,12 +3,12 @@
 // changing it changes nothing. A script keeps no state between calls, and rolls only through ctx.d.
 
 export type AttributeKey = "str" | "dex" | "con" | "int" | "wis" | "cha";
-export type TrackKey = "heroPoints" | (string & {});
+export type TrackKey = "heroPoints" | "focusPoints" | (string & {});
 export type ValueKey = "senseDc" | "speed";
 export type ConditionName = "Blinded" | "Broken" | "Clumsy" | "Concealed" | "Confused" | "Controlled" | "Dazzled" | "Deafened" | "Doomed" | "Drained" | "Dying" | "Encumbered" | "Enfeebled" | "Fascinated" | "Fatigued" | "Fleeing" | "Friendly" | "Frightened" | "Grabbed" | "Helpful" | "Hidden" | "Hostile" | "Immobilized" | "Indifferent" | "Invisible" | "Observed" | "Off-guard" | "Paralyzed" | "Persistent Damage" | "Petrified" | "Prone" | "Quickened" | "Restrained" | "Sickened" | "Slowed" | "Stunned" | "Stupefied" | "Unconscious" | "Undetected" | "Unfriendly" | "Unnoticed" | "Wounded";
 export type FunctionName = "degree";
 export type RollKey = "degreeCheck" | "strike";
-export type EventType = "turnStart" | "damaged" | "healed" | "heroicRecovery" | "sessionStart";
+export type EventType = "turnStart" | "damaged" | "healed" | "heroicRecovery" | "sessionStart" | "dailyPrep";
 export type Plain = number | string | boolean | null;
 
 /** One pick of the list "trinkets" (Trinkets): the entry's id and its per-pick fields. */
@@ -26,6 +26,7 @@ export interface Sheet {
   /** Each track's current number; a slot track's is what its slots hold. */
   readonly tracks: {
     readonly heroPoints: number;
+    readonly focusPoints: number;
     readonly [key: string]: number | undefined;
   };
   readonly lists: {

@@ -25,7 +25,8 @@ public class SheetRules
     /// <summary>Conditions a single-pick reference field's chosen entry must satisfy.</summary>
     public List<FieldConstraint> Constraints { get; set; } = new();
 
-    /// <summary>Multi-pick lists of entries on the sheet (spells, feats, knacks...).</summary>
+    /// <summary>Multi-pick lists of entries on the sheet (spells, feats, knacks...). A sheet kind's formulas read each one as a list of its picks
+    /// (<c>count(focusSpells, s => true)</c>, entries granted by a feature included), so a list's key may not be a value or a list of a kind.</summary>
     public List<ListRule> Lists { get; set; } = new();
 
     /// <summary>General ranked lists (a Perception that is trained or expert, armor and weapon training, a class DC), beside the
@@ -919,7 +920,9 @@ public class SlotPoolRule
     /// level.</summary>
     public SlotCombineRule? Combine { get; set; }
 
-    /// <summary>Rest names that refill this pool ("Short Rest", "Long Rest"); the table offers one button per name.</summary>
+    /// <summary>Rest names that refill this pool ("Short Rest", "Long Rest"); the table offers one button per name. A name may also be a moment
+    /// the system declares in <c>moments</c> (or <c>dawn</c>): the table's moment command and the sheet's moments panel then refill the pool, and no
+    /// rest button is named after the moment.</summary>
     public List<string> RecoversOn { get; set; } = new();
 
     public string KeyFor(int slotLevel) => $"{Key}_{slotLevel}";

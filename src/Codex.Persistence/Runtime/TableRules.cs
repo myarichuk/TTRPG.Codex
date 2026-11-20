@@ -217,6 +217,25 @@ internal static class TableRules
         }).ToList();
     }
 
+    /// <summary>The slot pools named by <paramref name="keys"/> back to their maximum, and nothing else of a rest or a moment. One
+    /// <c>Rest.Slots</c> message when any of them gained.</summary>
+    public static List<EventMessage> RefillSlots(CampaignRuntime runtime, Entity entity, IEnumerable<string> keys)
+    {
+        var happened = new List<EventMessage>();
+        if (!entity.Has<ResourcePoolComponent>()) return happened;
+        var pool = entity.Get<ResourcePoolComponent>();
+        var refilled = false;
+        foreach (var key in keys.ToList())
+        {
+            if (!pool.Pools.TryGetValue(key, out var now) || !pool.Pools.TryGetValue(MaxKeyOf(runtime, key), out var max) || now >= max) continue;
+            runtime.World.AdjustResource(entity, key, max - now, k => MaxKeyOf(runtime, k));
+            refilled = true;
+        }
+
+        if (refilled) happened.Add(EventMessage.Of("Rest.Slots"));
+        return happened;
+    }
+
     /// <summary>
     /// Refills the creature's feature counters whose refill rules name <paramref name="moment"/> (a rest's name, or
     /// <see cref="FeatureRecovery.Initiative"/> / <see cref="FeatureRecovery.Dawn"/>): all of it, a part, or dice rolled with the

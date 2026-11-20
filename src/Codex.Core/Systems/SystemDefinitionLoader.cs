@@ -275,6 +275,11 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        foreach (var error in ValidateSheetRuleListNames(definition))
+        {
+            yield return error;
+        }
+
         foreach (var error in ValidateMoments(definition))
         {
             yield return error;
@@ -1206,6 +1211,29 @@ public static class SystemDefinitionLoader
             }
 
             if (decrease.By < 1) yield return $"{where}.decrease.by must be 1 or more.";
+        }
+    }
+
+    /// <summary>A <c>sheetRules.lists</c> list is also a list in a sheet kind's formulas (<c>count(focusSpells, s => true)</c>), so its key may not be a value, a list
+    /// or a keyed list of a kind: a formula could not tell which one it meant.</summary>
+    private static IEnumerable<string> ValidateSheetRuleListNames(SystemDefinition definition)
+    {
+        var listKeys = (definition.SheetRules?.Lists ?? new List<ListRule>()).Select(l => l.Key).ToList();
+        if (listKeys.Count == 0) yield break;
+        foreach (var kind in definition.SheetKinds)
+        {
+            foreach (var key in listKeys)
+            {
+                if (kind.Values.Any(v => string.Equals(v.Key, key, StringComparison.Ordinal)))
+                {
+                    yield return $"sheetRules.lists '{key}' has the same name as a value of sheetKinds.{kind.Kind}; a formula could not tell which it means, so call one of them something else.";
+                }
+
+                if (kind.Lists.Any(l => string.Equals(l.Key, key, StringComparison.Ordinal)) || kind.KeyedLists.Any(l => string.Equals(l.Key, key, StringComparison.Ordinal)))
+                {
+                    yield return $"sheetRules.lists '{key}' has the same name as a list of sheetKinds.{kind.Kind}; a formula could not tell which it means, so call one of them something else.";
+                }
+            }
         }
     }
 

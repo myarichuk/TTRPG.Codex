@@ -1316,22 +1316,7 @@ public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<
     }
 
     /// <summary>The named slot pools back to their maximum, and nothing else of a rest.</summary>
-    private List<EventMessage> RefillPools(CampaignRuntime runtime, DefaultEcs.Entity e)
-    {
-        var happened = new List<EventMessage>();
-        if (!e.Has<Codex.Core.Components.ResourcePoolComponent>()) return happened;
-        var pool = e.Get<Codex.Core.Components.ResourcePoolComponent>();
-        var refilled = false;
-        foreach (var key in PoolNames)
-        {
-            if (!pool.Pools.TryGetValue(key, out var now) || !pool.Pools.TryGetValue(TableRules.MaxKeyOf(runtime, key), out var max) || now >= max) continue;
-            runtime.World.AdjustResource(e, key, max - now, k => TableRules.MaxKeyOf(runtime, k));
-            refilled = true;
-        }
-
-        if (refilled) happened.Add(EventMessage.Of("Rest.Slots"));
-        return happened;
-    }
+    private List<EventMessage> RefillPools(CampaignRuntime runtime, DefaultEcs.Entity e) => TableRules.RefillSlots(runtime, e, PoolNames);
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Rest",
         new[] { EventMessage.Of(_happened.Count > 0 ? "Rest.TookWith" : "Rest.Took", runtime.ActorTerm(ActorId), EventTerm.Rest(RestName)).With(_happened) },
         new[] { ActorId });
@@ -1355,6 +1340,13 @@ public sealed record MomentCommand(string ActorId, string Moment) : IUndoableCom
         _happened = TableRules.RefillCounters(runtime, ActorId, e, Moment);
         // Valued conditions that fall at this moment (value.decrease).
         _happened.AddRange(TableRules.DecreaseConditions(runtime, ActorId, e, Moment, nested: true));
+        // The slot pools that recover at it (slotPools[].recoversOn names a declared moment) fill to their maximum, as a rest fills them.
+        if (e.Has<Codex.Core.Components.ResourcePoolComponent>())
+        {
+            var slotKeys = Codex.Core.Rules.SystemMoments.SlotKeysRecoveredAt(runtime.System, e.Get<Codex.Core.Components.ResourcePoolComponent>().Pools.Keys, Moment);
+            if (slotKeys.Count > 0) _happened.AddRange(TableRules.RefillSlots(runtime, e, slotKeys));
+        }
+
         // Then the system's own handler for it, when it has one (a sheet kind's system: armor boxes reset at "loadChosen").
         if (TableEvents.Handles(runtime, Moment))
         {

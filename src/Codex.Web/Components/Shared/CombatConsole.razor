@@ -263,6 +263,7 @@ else
     /// <summary>Rest names the table offers: the system's rests plus whatever slot pools recover on.</summary>
     private List<string> Rests => (Vitals?.Rests.Select(r => r.Name) ?? Enumerable.Empty<string>())
         .Concat(SlotPoolRules.SelectMany(p => p.RecoversOn))
+        .Where(rest => SystemMoments.IsRest(Definition, rest)) // a pool that recovers at a declared moment has the moment's button, not a rest button
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToList();
 

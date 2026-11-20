@@ -73,6 +73,7 @@ public sealed class FeatureGrantVocabulary
         Lists = lists;
         Rests = (system.Vitals?.Rests.Select(r => r.Name) ?? Enumerable.Empty<string>())
             .Concat(rules.SlotPools.SelectMany(p => p.RecoversOn))
+            .Where(rest => SystemMoments.IsRest(system, rest))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
         Moments = SystemMoments.RefillWords(system);
