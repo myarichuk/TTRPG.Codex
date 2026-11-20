@@ -332,6 +332,24 @@ public class AttributeBoostTests
     }
 
     [Fact]
+    public void AFlawKeptWhileTheTradeIsUndone_BecomesAViolation_WhenTheEntrysFlawComesBack()
+    {
+        var sheet = Traded("str");
+        Assert.DoesNotContain(SheetRuleEngine.FlawTwiceKey, Keys(FlawEngine().Recompute(sheet).Violations));
+        sheet.Remove("boost__ancestry__hill.trade");
+        Assert.Contains(SheetRuleEngine.FlawTwiceKey, Keys(FlawEngine().Recompute(sheet).Violations));
+    }
+
+    [Fact]
+    public void AStoredFlawThatIsNoAttribute_IsSaidOnce_AndLowersNothing()
+    {
+        var sheet = Sheet("vale", 1, ("boost__ancestry__vale.flaws", new[] { "luck" }));
+        var evaluation = FlawEngine().Recompute(sheet);
+        Assert.Single(evaluation.Violations, v => v.Key == SheetRuleEngine.BoostCantKey);
+        Assert.Equal(10L, sheet["dex"]);
+    }
+
+    [Fact]
     public void ChangingTheAncestry_DropsTheVoluntaryFlawsToo()
     {
         var engine = FlawEngine();

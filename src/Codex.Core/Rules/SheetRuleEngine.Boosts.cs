@@ -140,7 +140,12 @@ public sealed partial class SheetRuleEngine
             if (source.VoluntaryFlaws && entryId != null)
             {
                 flawsKey = BoostChoiceKey(source, entryId, "flaws");
-                volunteered = RawList(sheet, flawsKey).Select(MatchAttribute).OfType<AttributeDefinition>().Select(a => a.Key).ToList();
+                foreach (var raw in RawList(sheet, flawsKey))
+                {
+                    if (MatchAttribute(raw) is { } match) volunteered.Add(match.Key);
+                    else if (!string.IsNullOrWhiteSpace(raw)) violations?.Add(new RuleViolation(flawsKey, $"{source.Label}: {raw} is not an attribute.", BoostCantKey, new object?[] { source.Label, raw }));
+                }
+
                 foreach (var twice in flaws.Concat(volunteered).GroupBy(f => f).Where(g => g.Count() > 1).Select(g => g.Key))
                 {
                     violations?.Add(new RuleViolation(flawsKey, $"{source.Label}: {Label(twice)} can take only one flaw.", FlawTwiceKey, new object?[] { source.Label, Label(twice) }));

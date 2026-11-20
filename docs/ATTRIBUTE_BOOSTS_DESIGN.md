@@ -32,6 +32,7 @@ Rules:
 - `voluntaryFlaws: true` (field sources only): the player may add flaws of their own. Stored at `boost__{source}__{entryId}.flaws`, one attribute each; each
   lowers its attribute and gives nothing back. Two flaws from one source on one attribute, the entry's own included, is the violation `FlawTwice`
   (rules entry `voluntary-flaws`: no more than one flaw on any one attribute). The text sets no number and no extra boost. Changing the entry drops them.
+- Known gap: the homebrew-core ancestry rows list three fixed boosts and a flaw in another shape (`dex, wis, str|con, free, -cha`), so after a `drop` trade they keep more than two free boosts. Left as is, since homebrew is being retired.
 - Scores stay on the normal scale (default 10, `half-minus-five`), so every formula and ranked list reads them unchanged.
 
 ## Where it runs
@@ -60,7 +61,7 @@ attribute count and only on a level source; `trade` only on a field source, both
 `BoostOpen` (boosts still to place; a **warning**, so a sheet in progress saves, and a level that opens a milestone offers its boosts as
 a `LevelChoice` `boosts:{source}`), and the violations `BoostSame` (each boost needs a different attribute), `BoostCant` (not one of the
 choices), `BoostTrade` (give up exactly n fixed boosts), `FlawTwice` (an attribute with two flaws from one source). The panel also says the flaw goes with a `drop` trade,
-and a source with voluntary flaws shows an add button per attribute (named for it) and a remove button per flaw taken. Duplicates still count in the score, so the sheet shows what was chosen.
+and a source with voluntary flaws shows one toggle button per attribute ("Flaw: Dexterity", `aria-pressed`), so focus stays where it was. Duplicates still count in the score, so the sheet shows what was chosen.
 
 ## Spec expectations (degrees fixture)
 

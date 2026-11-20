@@ -40,33 +40,51 @@ public class AttributesPanelFlawsTests : ComponentTestBase
     {
         var cut = Draw(AttributeBoostTests.Sheet("hill"));
         var note = cut.Find("#boost-trade-note-ancestry");
-        Assert.Contains("flaw goes too", note.TextContent);
+        Assert.Contains("flaw it has goes too", note.TextContent);
         Assert.Equal(note.Id, cut.Find("[data-testid=boost-trade-ancestry]").GetAttribute("aria-describedby"));
     }
 
     [Fact]
-    public void AddingAndRemovingAFlaw_WritesTheStoredList_AndTheButtonsNameTheAttribute()
+    public void TheTradeNote_IsAbsent_WhenTheTradeKeepsFlaws()
+    {
+        var plain = AttributeBoostTests.Engine();
+        var sheet = AttributeBoostTests.Sheet("hill");
+        var evaluation = plain.Recompute(sheet);
+        var cut = Render<AttributesPanel>(p => p
+            .Add(x => x.Definition, SystemDefinitionLoader.Parse(AttributeBoostTests.System))
+            .Add(x => x.Evaluation, evaluation)
+            .Add(x => x.Sheet, sheet)
+            .Add(x => x.CanEdit, true)
+            .Add(x => x.Describe, (RuleViolation v) => v.Message));
+        Assert.Empty(cut.FindAll("#boost-trade-note-ancestry"));
+        Assert.False(cut.Find("[data-testid=boost-trade-ancestry]").HasAttribute("aria-describedby"));
+        Assert.Empty(cut.FindAll("[data-testid=boost-flaws-ancestry]"));
+    }
+
+    [Fact]
+    public void AFlawIsOneToggleButtonPerAttribute_NamedByItsText_AndKeepsItsPlace()
     {
         var sheet = AttributeBoostTests.Sheet("vale");
         var cut = Draw(sheet);
-        var add = cut.Find("[data-testid=boost-flaw-add-ancestry-dex]");
-        Assert.Equal("Add a flaw to Dexterity", add.GetAttribute("aria-label"));
-        add.Click();
+        var button = cut.Find("[data-testid=boost-flaw-ancestry-dex]");
+        Assert.Equal("Flaw: Dexterity", button.TextContent.Trim());
+        Assert.False(button.HasAttribute("aria-label"));
+        Assert.Equal("false", button.GetAttribute("aria-pressed"));
+        button.Click();
         Assert.Equal(new[] { "dex" }, ((IEnumerable<object>)sheet["boost__ancestry__vale.flaws"]).Select(o => o.ToString()).ToArray());
         Assert.Equal(8L, sheet["dex"]);
-        Assert.Empty(cut.FindAll("[data-testid=boost-flaw-add-ancestry-dex]"));
-        var remove = cut.Find("[data-testid=boost-flaw-remove-ancestry-dex]");
-        Assert.Equal("Remove the flaw from Dexterity", remove.GetAttribute("aria-label"));
-        remove.Click();
+        Assert.Equal("true", cut.Find("[data-testid=boost-flaw-ancestry-dex]").GetAttribute("aria-pressed"));
+        cut.Find("[data-testid=boost-flaw-ancestry-dex]").Click();
         Assert.False(sheet.ContainsKey("boost__ancestry__vale.flaws"));
         Assert.Equal(10L, sheet["dex"]);
+        Assert.Equal("boost-flaws-label-ancestry", cut.Find("[data-testid=boost-flaws-ancestry]").GetAttribute("aria-labelledby"));
     }
 
     [Fact]
     public void AnAttributeThatAlreadyHasTheEntrysFlaw_OffersNoSecondOne()
     {
         var cut = Draw(AttributeBoostTests.Sheet("hill"));
-        Assert.Empty(cut.FindAll("[data-testid=boost-flaw-add-ancestry-str]"));
-        Assert.NotNull(cut.Find("[data-testid=boost-flaw-add-ancestry-dex]"));
+        Assert.Empty(cut.FindAll("[data-testid=boost-flaw-ancestry-str]"));
+        Assert.NotNull(cut.Find("[data-testid=boost-flaw-ancestry-dex]"));
     }
 }

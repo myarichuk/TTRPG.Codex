@@ -179,22 +179,15 @@
                     }
                     @if (source.FlawsKey != null)
                     {
-                        <div class="mb-2" role="group" aria-label="@L["Actor.Sheet.BoostVoluntary", source.Label]" data-testid="@("boost-flaws-" + source.Key)">
-                            <div class="small">@L["Actor.Sheet.BoostVoluntary", source.Label]</div>
-                            <div class="d-flex flex-wrap gap-2 mb-1">
-                                @foreach (var flawKey in source.VolunteeredFlaws)
-                                {
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="@($"boost-flaw-remove-{source.Key}-{flawKey}")"
-                                            aria-label="@L["Actor.Sheet.BoostRemoveFlaw", AttributeLabel(flawKey)]"
-                                            @onclick="() => SetFlaw(source, flawKey, false)">@L["Actor.Sheet.BoostFlaw", AttributeLabel(flawKey)] &times;</button>
-                                }
-                            </div>
+                        <div class="mb-2" role="group" aria-labelledby="@("boost-flaws-label-" + source.Key)" data-testid="@("boost-flaws-" + source.Key)">
+                            <div class="small" id="@("boost-flaws-label-" + source.Key)">@L["Actor.Sheet.BoostVoluntary", source.Label]</div>
                             <div class="d-flex flex-wrap gap-2">
-                                @foreach (var flawable in Definition.Attributes.Where(a => !source.VolunteeredFlaws.Contains(a.Key) && !source.Flaws.Contains(a.Key)))
+                                @foreach (var flawable in Definition.Attributes.Where(a => !source.Flaws.Contains(a.Key) || source.VolunteeredFlaws.Contains(a.Key)))
                                 {
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="@($"boost-flaw-add-{source.Key}-{flawable.Key}")"
-                                            aria-label="@L["Actor.Sheet.BoostAddFlaw", flawable.Label]"
-                                            @onclick="() => SetFlaw(source, flawable.Key, true)">+ @flawable.Label</button>
+                                    var taken = source.VolunteeredFlaws.Contains(flawable.Key);
+                                    <button type="button" class="btn btn-sm @(taken ? "btn-secondary" : "btn-outline-secondary")" aria-pressed="@(taken ? "true" : "false")"
+                                            data-testid="@($"boost-flaw-{source.Key}-{flawable.Key}")"
+                                            @onclick="() => SetFlaw(source, flawable.Key, !taken)">@L["Actor.Sheet.BoostFlaw", flawable.Label]</button>
                                 }
                             </div>
                         </div>

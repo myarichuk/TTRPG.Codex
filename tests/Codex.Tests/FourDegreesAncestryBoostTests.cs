@@ -59,6 +59,16 @@ public class FourDegreesAncestryBoostTests
     }
 
     [Fact]
+    public void AVoluntaryFlaw_AndALaterMilestoneBoostOnTheSameAttribute_MeetAtZero()
+    {
+        var (engine, _) = Load();
+        var sheet = Sheet(("boost__ancestry__dwarf-ancestry.flaws", new[] { "int" }), ("boost__lvl5__m1", new[] { "int" }));
+        sheet["level"] = 5L;
+        engine.Recompute(sheet);
+        Assert.Equal(0L, sheet["int"]);
+    }
+
+    [Fact]
     public void AVoluntaryFlaw_LowersAnAttribute_ButNotOneThatAlreadyHasTheAncestrysFlaw()
     {
         var (engine, _) = Load();
