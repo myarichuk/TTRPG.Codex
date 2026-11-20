@@ -752,7 +752,8 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
        the `damaged` and `healed` events and an actor moment (below).
      - **`damaged` and `healed`** are raised after the table's own damage and healing, when the system declares a handler for
        the name (they do not replace the built-in path the way `damage` and `heal` do, and are not raised when those do, for
-       a direct pool edit, or when nothing was dealt, or for a creature that was dead). `damaged` has `amount`, `dealt` (after
+       a direct pool edit, or when nothing was dealt; `healed` is not raised for a dead creature, and `damaged` is, so a handler
+       leaves the dead alone itself). `damaged` has `amount`, `dealt` (after
        resistance, before temporary hit points), `absorbed`, `critical`, `save` (the outcome key of the creature's own save when
        the damage came from one), `source`, `damageType`, `pool`, `before`, `after`, `max`, `wentDown` and `died`; `healed` has
        `amount`, `healed`, `source`, `pool`, `before`, `after`, `max` and `revived`. A hazard applies a target's damage parts with

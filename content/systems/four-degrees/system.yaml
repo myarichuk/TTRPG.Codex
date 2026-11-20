@@ -430,7 +430,7 @@ moments:
   - { key: catchBreath,  label: Short breather }
   - { key: sessionStart, label: Session start }
   # One creature's own act, not a time of the table: a button on its sheet while it is dying (instant-death, hero-points).
-  - { key: heroicRecovery, label: Heroic recovery, scope: actor, while: Dying }
+  - { key: heroicRecovery, label: Heroic recovery, scope: actor, while: Dying, note: Spends all hero points }
 
 # What the table does at zero hit points (rules getting-knocked-out and death-rule). A player character at 0 is knocked out: unconscious, not
 # dead; most other creatures die there, and the GM can revive a significant one. Healing above 0 wakes a creature (the Revive button brings

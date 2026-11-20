@@ -50,9 +50,12 @@ export function onTurnStart(ev, sheet, ctx) {
 // instant-death). A creature that died, or is dead, is left alone. Damage of twice the maximum or more in the one blow kills (counted
 // before temporary hit points take any of it: the rule does not say, and this is the plainer reading). A creature that is dying has its
 // value raised by 1, or by 2 for a critical hit or its own critical failure on a save; a creature that is not dying and has been brought
-// to 0 hit points (or was hit while there) becomes dying 1, or 2 for a critical, and its wounded value is added on top.
+// to 0 hit points (or was hit while there) becomes dying 1, or 2 for a critical, and its wounded value is added on top. A blow that
+// temporary hit points take in full still counts as taking damage, so it raises the value of a dying creature (the rule says "take damage"
+// and does not say otherwise). Only the hit point pool is read here.
 /** @param {Event} ev @param {Sheet} sheet @returns {Intent[]} */
 export function onDamaged(ev, sheet) {
+  if (ev.pool !== "HP") return [];
   if (ev.died || sheet.conditions.includes("Dead")) return [];
   const values = sheet.conditionValues;
   if (ev.max > 0 && ev.dealt >= 2 * ev.max) return [{ log: { key: "Massive damage" } }, ...die()];
@@ -68,6 +71,7 @@ export function onDamaged(ev, sheet) {
 // itself, and is wounded for it (dying-rule). The table's own healing has already woken it.
 /** @param {Event} ev @param {Sheet} sheet @returns {Intent[]} */
 export function onHealed(ev, sheet) {
+  if (ev.pool !== "HP") return [];
   if ((sheet.conditionValues.Dying ?? 0) > 0 && ev.after >= 1) return recover();
   return [];
 }
@@ -78,7 +82,7 @@ export function onHealed(ev, sheet) {
 export function onHeroicRecovery(ev, sheet) {
   if ((sheet.conditionValues.Dying ?? 0) <= 0 || sheet.conditions.includes("Dead")) return [];
   if ((sheet.tracks.heroPoints ?? 0) < 1) return [{ log: { key: "No hero points" } }];
-  return [{ set: { track: "heroPoints", to: 0 } }, { condition: { remove: "Dying" } }, { log: { key: "Heroic recovery" } }];
+  return [{ set: { track: "heroPoints", to: 0 } }, { condition: { remove: "Dying" } }];
 }
 
 // The dying value a creature dies at: 4, less its doomed value (the doomed condition).

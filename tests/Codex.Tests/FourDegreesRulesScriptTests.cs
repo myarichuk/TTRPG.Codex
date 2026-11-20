@@ -198,7 +198,7 @@ public sealed class FourDegreesRulesScriptTests : IDisposable
 
     private static IReadOnlyList<SheetIntent> Damaged(SystemDefinition system, Dictionary<string, object> sheet, double dealt, double after, double max = 20, bool critical = false, string? save = null, bool died = false)
     {
-        var fields = new List<(string, object?)> { ("dealt", dealt), ("after", after), ("max", max), ("critical", critical), ("died", died) };
+        var fields = new List<(string, object?)> { ("dealt", dealt), ("after", after), ("max", max), ("critical", critical), ("died", died), ("pool", "HP") };
         if (save != null) fields.Add(("save", save));
         return SheetEvents.Handle(system, NullEntryResolver.Instance, sheet, SheetEvent.Of("damaged", fields.ToArray()));
     }
@@ -233,8 +233,10 @@ public sealed class FourDegreesRulesScriptTests : IDisposable
     [Fact]
     public void Healed_ToOneHitPointWhileDying_LosesTheCondition_AndNothingOtherwise()
     {
-        var healed = SheetEvents.Handle(System, NullEntryResolver.Instance, Sheet(dying: 2, hp: 3), SheetEvent.Of("healed", ("after", 3d)));
-        var well = SheetEvents.Handle(System, NullEntryResolver.Instance, Sheet(hp: 3), SheetEvent.Of("healed", ("after", 3d)));
+        var healed = SheetEvents.Handle(System, NullEntryResolver.Instance, Sheet(dying: 2, hp: 3), SheetEvent.Of("healed", ("after", 3d), ("pool", "HP")));
+        var well = SheetEvents.Handle(System, NullEntryResolver.Instance, Sheet(hp: 3), SheetEvent.Of("healed", ("after", 3d), ("pool", "HP")));
+        var other = SheetEvents.Handle(System, NullEntryResolver.Instance, Sheet(dying: 2, hp: 3), SheetEvent.Of("healed", ("after", 3d), ("pool", "Other")));
+        Assert.Empty(other);
 
         Assert.Equal(new[] { "condition remove=Dying", "condition add=Wounded by=1" }, Said(healed));
         Assert.Empty(well);
@@ -249,7 +251,7 @@ public sealed class FourDegreesRulesScriptTests : IDisposable
         var none = SheetEvents.Handle(System, NullEntryResolver.Instance, Sheet(dying: 3), SheetEvent.Of("heroicRecovery"));
         var notDying = SheetEvents.Handle(System, NullEntryResolver.Instance, Sheet(), SheetEvent.Of("heroicRecovery"));
 
-        Assert.Equal(new[] { "set track=heroPoints to=0", "condition remove=Dying", "log key=Heroic recovery" }, Said(spent));
+        Assert.Equal(new[] { "set track=heroPoints to=0", "condition remove=Dying" }, Said(spent));
         Assert.Equal(new[] { "log key=No hero points" }, Said(none));
         Assert.Empty(notDying);
     }

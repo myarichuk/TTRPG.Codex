@@ -179,6 +179,19 @@ public class AfterDamageEventsTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task AGamemastersDirectPoolEdit_IsACorrection_AndRaisesNothing()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await ActorAsync(Follows, campaignId, "Vex");
+        var (runtime, _) = await TableAsync(Follows, campaignId, hero);
+        await using var _ = runtime;
+
+        await runtime.EnqueueAsync(new AdjustResourceCommand(hero.Id, "HP", -4, "Hit points"));
+
+        Assert.Equal((6, 0), (Pool(runtime, hero.Id, "HP"), Pool(runtime, hero.Id, "hits")));
+    }
+
+    [Fact]
     public async Task OneUndo_TakesBackTheHitPoints_AndWhatTheFollowUpDid()
     {
         var campaignId = Guid.NewGuid().ToString();

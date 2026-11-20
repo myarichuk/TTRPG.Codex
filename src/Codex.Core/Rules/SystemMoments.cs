@@ -21,7 +21,7 @@ public enum MomentKind
 /// <summary>A named time at which counters refill and the system's event handler of the same name runs. <see cref="OnSet"/>:
 /// for a declared moment, the input value whose being set fires it. <see cref="ActorOnly"/>: one creature's own act (a sheet button), no time
 /// of the table; <see cref="While"/>: the condition the button waits for.</summary>
-public sealed record SystemMoment(string Key, string Label, MomentKind Kind, string? OnSet = null, bool ActorOnly = false, string? While = null)
+public sealed record SystemMoment(string Key, string Label, MomentKind Kind, string? OnSet = null, bool ActorOnly = false, string? While = null, string? Note = null)
 {
     public bool IsRest => Kind == MomentKind.Rest;
 }
@@ -50,7 +50,8 @@ public static class SystemMoments
             if (!string.IsNullOrWhiteSpace(declared.Key) && !moments.Any(m => Same(m.Key, declared.Key)))
             {
                 moments.Add(new SystemMoment(declared.Key, string.IsNullOrWhiteSpace(declared.Label) ? declared.Key : declared.Label, MomentKind.Declared, string.IsNullOrWhiteSpace(declared.OnSet) ? null : declared.OnSet,
-                    declared.IsActorScoped, string.IsNullOrWhiteSpace(declared.While) ? null : declared.While));
+                    declared.IsActorScoped, string.IsNullOrWhiteSpace(declared.While) ? null : declared.While,
+                    string.IsNullOrWhiteSpace(declared.Note) ? null : declared.Note));
             }
         }
 
@@ -79,6 +80,11 @@ public static class SystemMoments
     /// <summary>The moments a choice's <c>changesOn</c> may name: every moment of the table (not <c>manual</c>, at which nothing happens, and not a
     /// creature's own act, which is no time of the table).</summary>
     public static IReadOnlyList<string> ChangeMoments(SystemDefinition? system) => Of(system).Where(m => !m.ActorOnly).Select(m => m.Key).ToList();
+
+    /// <summary>The moments the console's party bar may offer: declared ones that are times of the table (not one creature's own act) and dawn.
+    /// The console keeps those that matter to some character.</summary>
+    public static IReadOnlyList<SystemMoment> PartyMoments(SystemDefinition? system) =>
+        Of(system).Where(m => !m.ActorOnly && m.Kind is MomentKind.Declared or MomentKind.Dawn).ToList();
 
     /// <summary>Whether <paramref name="key"/> names a time of the table: a moment that is not one creature's own act.</summary>
     public static bool IsTableMoment(SystemDefinition? system, string key) => Find(system, key) is { ActorOnly: false };

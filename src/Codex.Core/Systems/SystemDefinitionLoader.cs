@@ -829,6 +829,7 @@ public static class SystemDefinitionLoader
                 yield return $"moment '{moment.Key}': while '{moment.While}' is not a condition of the system.";
             }
 
+            if (!moment.IsActorScoped && !string.IsNullOrWhiteSpace(moment.While)) yield return $"moment '{moment.Key}': while only applies to a moment with scope: actor.";
             if (moment.IsActorScoped && !string.IsNullOrWhiteSpace(moment.OnSet)) yield return $"moment '{moment.Key}': an actor moment is a button, so it cannot also fire on setting a value (onSet).";
             if (!string.IsNullOrWhiteSpace(moment.OnSet) && !inputs.Contains(moment.OnSet))
             {

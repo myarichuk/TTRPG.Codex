@@ -17,7 +17,7 @@
                 var key = moment.Key;
                 var line = Describe(key);
                 <li class="d-flex flex-wrap align-items-baseline gap-2 mb-1" data-testid="@($"moment-{key}")">
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="ReadOnly" aria-describedby="@($"{id}-{key}-what")" data-testid="@($"moment-fire-{key}")"
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="ReadOnly" aria-describedby="@(line.Length > 0 ? $"{id}-{key}-what" : null)" data-testid="@($"moment-fire-{key}")"
                                  OnClick="() => OnFire.InvokeAsync(key)">@moment.Label</CodexButton>
                     @if (line.Length > 0)
                     {
@@ -49,6 +49,7 @@
         var parts = new List<string>();
         if (tracks.Count > 0) parts.Add(L["Actor.Moments.Restores", string.Join(", ", tracks)]);
         if (counters.Count > 0) parts.Add(L["Actor.Moments.Refills", string.Join(", ", counters)]);
+        if (SystemMoments.Find(Definition, moment)?.Note is { } note && Definition != null) parts.Add(Definition.DisplayValue(note));
         return string.Join("; ", parts);
     }
 }

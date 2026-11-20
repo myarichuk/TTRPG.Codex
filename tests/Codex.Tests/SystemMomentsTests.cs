@@ -236,6 +236,14 @@ public class SystemMomentsTests
     }
 
     [Fact]
+    public void ThePartyBar_LeavesOutActorMoments_AndTheLoaderRefusesWhileOnAPartyMoment()
+    {
+        Assert.Equal(new[] { "downtime", "dawn" }, SystemMoments.PartyMoments(Actors()).Select(m => m.Key));
+        var errors = SystemDefinitionLoader.ErrorsOf(Assert.Throws<InvalidDataException>(() => Actors("[{ key: a, while: Hurt }]")));
+        Assert.Contains(errors, e => e.Contains("scope: actor"));
+    }
+
+    [Fact]
     public void ADecreaseOnAnActorMoment_IsRefused()
     {
         var system = Assert.Throws<InvalidDataException>(() => Actors(extra: """

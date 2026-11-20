@@ -1356,3 +1356,4 @@ A moment the system declares: a named time at which feature counters refill (`re
 | `onSet` | text (a number is text too) | The key of an `input` value of a sheet kind. Setting that value on the sheet fires the moment. |
 | `scope` | text (a number is text too) | `party` (the default): a time of the table, offered to the whole party on the console and on each sheet. `actor`: one creature's own act (a button on its sheet), never on the party bar, and no time a counter refills or a condition drops at. |
 | `while` | text (a number is text too) | A condition of the system: the button shows only while it holds on the sheet. Empty: always. |
+| `note` | text (a number is text too) | A short line shown beside the moment's button on the sheet, for what it does that the engine cannot read from its handler (a script). Shown through the system's own translations (`values`). |

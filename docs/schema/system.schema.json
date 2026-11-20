@@ -5328,6 +5328,14 @@
             "boolean"
           ],
           "description": "A condition of the system: the button shows only while it holds on the sheet. Empty: always."
+        },
+        "note": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "A short line shown beside the moment's button on the sheet, for what it does that the engine cannot read from its handler (a script). Shown through the system's own translations (`values`)."
         }
       },
       "additionalProperties": false

@@ -278,6 +278,8 @@ public class FourDegreesDyingTableTests : IClassFixture<RavenDbFixture>, IAsyncL
         await TriggerAsync(table, brin);
 
         Assert.Equal((0, 2), (Hp(table, brin), Dying(table, brin)));
+        // The hazard's own log line carries what the system's rule did (the dying value), said once.
+        Assert.Single((await LogAsync(table)).Where(l => l.Contains("Dying", StringComparison.Ordinal) && l.Contains('2')));
         await table.Runtime.EnqueueAsync(new UndoLastChangeCommand(brin.Id));
         Assert.Equal((8, 0), (Hp(table, brin), Dying(table, brin)));
     }
@@ -300,15 +302,19 @@ public class FourDegreesDyingTableTests : IClassFixture<RavenDbFixture>, IAsyncL
     [Fact]
     public async Task HeroicRecovery_ClearsDying_KeepsWounded_AndSpendsAllTheHeroPoints()
     {
-        var (table, brin) = await OneAsync(0, 10, dying: 3, wounded: 1, heroPoints: 2);
+        var (table, brin) = await OneAsync(10, 10, wounded: 1, heroPoints: 2);
         await using var _ = table.Runtime;
+        // Knocked out first: dying 1 plus wounded 1, and unconscious.
+        await table.Runtime.EnqueueAsync(new ApplyDamageCommand(brin.Id, "HP", 10, "dm"));
+        Assert.Equal(2, Dying(table, brin));
 
         await table.Runtime.EnqueueAsync(new MomentCommand(brin.Id, "heroicRecovery"));
 
         Assert.Equal((0, 1, 0), (Dying(table, brin), Condition(table, brin, "condition_wounded"), Condition(table, brin, "heroPoints")));
         Assert.Equal(0, Hp(table, brin));
+        Assert.True(CodexWorld.HasStatus(table.Runtime.GetEntity(brin.Id)!.Value, "Unconscious"));
         await table.Runtime.EnqueueAsync(new UndoLastChangeCommand(brin.Id));
-        Assert.Equal((3, 2), (Dying(table, brin), Condition(table, brin, "heroPoints")));
+        Assert.Equal((2, 2), (Dying(table, brin), Condition(table, brin, "heroPoints")));
     }
 
     [Fact]
@@ -336,5 +342,7 @@ public class FourDegreesDyingTableTests : IClassFixture<RavenDbFixture>, IAsyncL
         Assert.True(SystemMoments.Offered(System, dying, "heroicRecovery"));
         Assert.DoesNotContain("heroicRecovery", SystemMoments.RefillWords(System));
         Assert.DoesNotContain("heroicRecovery", SystemMoments.ChangeMoments(System));
+        Assert.DoesNotContain("heroicRecovery", SystemMoments.PartyMoments(System).Select(m => m.Key));
+        Assert.Contains("dailyPrep", SystemMoments.PartyMoments(System).Select(m => m.Key));
     }
 }
