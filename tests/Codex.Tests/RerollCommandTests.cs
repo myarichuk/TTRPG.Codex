@@ -29,9 +29,13 @@ public class RerollCommandTests : IClassFixture<RavenDbFixture>, IDisposable
           - { key: lucky, label: Lucky reroll, spend: { track: luck, by: 1 }, keep: {{keep}} }
         sheetKinds:
           - kind: hero
+            modifiers:
+              - { target: '@lucky', amount: 1, optIn: { label: Lucky charm, spends: { key: charm, amount: 1 } } }
             tracks:
               - { key: luck, max: 3 }
+          - kind: npc
         rolls:
+          - { key: charmed, dice: 1d20, add: ["modifiers('@lucky')"] }
           - key: degreeCheck
             dice: 1d20
             add: ["bonus"]
@@ -76,12 +80,16 @@ public class RerollCommandTests : IClassFixture<RavenDbFixture>, IDisposable
         }
     }
 
+    private (string Key, object Value)[] _extra = Array.Empty<(string, object)>();
+    private string _kind = "hero";
+
     private async Task<(CampaignRuntime Runtime, SessionDocument Session, ActorDocument Hero)> TableAsync(SystemDefinition system, long luck, params int[] faces)
     {
         var campaignId = Guid.NewGuid().ToString();
         var hero = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Vex", Kind = ActorKind.PlayerCharacter, OwnerUserId = "player-1" };
-        hero.Sheet["kind"] = "hero";
+        hero.Sheet["kind"] = _kind;
         hero.Sheet["luck"] = luck;
+        foreach (var (key, value) in _extra) hero.Sheet[key] = value;
         ActorSheetSync.ApplySheetToState(hero, system, _registry);
         await _actors.SaveAsync(hero);
         var session = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Status = SessionStatus.Live };
@@ -92,6 +100,9 @@ public class RerollCommandTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     private static int Luck(CampaignRuntime runtime, string actorId) => runtime.GetEntity(actorId)!.Value.Get<ResourcePoolComponent>().Get("luck");
+
+    private async Task<ActorDocument> StoredAsync(ActorDocument hero) =>
+        (await _actors.GetVisibleAsync(hero.Id, new CampaignAccess(hero.CampaignId, "dm", CampaignRole.DM)))!;
 
     private async Task<List<string>> LogAsync(SessionDocument session) => (await _sessions.GetAsync(session.Id))!.Events.Select(e => e.Description).ToList();
 
@@ -121,6 +132,11 @@ public class RerollCommandTests : IClassFixture<RavenDbFixture>, IDisposable
         var stored = (await _sessions.GetAsync(session.Id))!.RollLog;
         Assert.Equal(again.Id, stored.Single(r => r.Id == first.Id).RerolledBy);
         Assert.Equal(2, stored.Count);
+        var storedAgain = stored.Single(r => r.Id == again.Id);
+        Assert.Equal((first.Id, "lucky"), (storedAgain.RerollOf, storedAgain.RerollKey));
+        // The point is gone from the table's sheet and from the stored actor.
+        Assert.Equal(1L, runtime.GetActorDocument(hero.Id)!.Sheet["luck"]);
+        Assert.Equal(1, Codex.Core.YamlValues.GetInt((await StoredAsync(hero)).Sheet, "luck"));
     }
 
     [Fact]
@@ -285,18 +301,118 @@ public class RerollCommandTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
-    public async Task Undo_GivesThePointBack_AndTheLogKeepsBothRolls()
+    public async Task Undo_GivesThePointBack_ClearsTheMark_AndTheLogKeepsBothRolls()
     {
-        var (runtime, _, hero) = await TableAsync(Invented(), 2, 4, 19);
+        var (runtime, session, hero) = await TableAsync(Invented(), 2, 4, 19, 7);
         await using var _ = runtime;
         await runtime.EnqueueAsync(new RollDiceCommand("1d20+5", hero.Id, "player-1", false, "Strike", Dc: 15));
-        await runtime.EnqueueAsync(new RerollCommand(hero.Id, runtime.Snapshot.RollLog[0].Id, "lucky", "player-1"));
+        var first = runtime.Snapshot.RollLog[0];
+        await runtime.EnqueueAsync(new RerollCommand(hero.Id, first.Id, "lucky", "player-1"));
         Assert.Equal(1, Luck(runtime, hero.Id));
 
         await runtime.EnqueueAsync(new UndoLastChangeCommand(hero.Id));
 
         Assert.Equal(2, Luck(runtime, hero.Id));
+        Assert.Equal(2L, runtime.GetActorDocument(hero.Id)!.Sheet["luck"]);
+        Assert.Equal(2, Codex.Core.YamlValues.GetInt((await StoredAsync(hero)).Sheet, "luck"));
         Assert.Equal(2, runtime.Snapshot.RollLog.Count);
+        // The first roll can be rerolled again, and the stored log says so too.
+        Assert.Null(first.RerolledBy);
+        Assert.Null((await _sessions.GetAsync(session.Id))!.RollLog.Single(r => r.Id == first.Id).RerolledBy);
+        var again = new RerollCommand(hero.Id, first.Id, "lucky", "player-1");
+        await runtime.EnqueueAsync(again);
+        Assert.Equal(RerollFailure.None, again.Failed);
+        Assert.Equal(3, runtime.Snapshot.RollLog.Count);
+    }
+
+    [Fact]
+    public async Task ARollThatKeptTheBetterOfSeveralDice_IsNotOffered()
+    {
+        var (runtime, _, hero) = await TableAsync(Invented(), 2);
+        await using var _ = runtime;
+        var kept = new RollLogEntry { ActorId = hero.Id, Expression = "2d20kh1+5", CheckDieIndex = 0, Kept = { 15 }, Dropped = { 3 }, Replay = new RollReplay { Kind = RollReplay.OfExpression } };
+        runtime.RecordRoll(kept);
+
+        Assert.Empty(Rerolls.Offered(runtime.System, kept, runtime.GetActorDocument(hero.Id)!.Sheet));
+        var command = new RerollCommand(hero.Id, kept.Id, "lucky", "player-1");
+        await runtime.EnqueueAsync(command);
+        Assert.Equal(RerollFailure.NotOffered, command.Failed);
+    }
+
+    [Fact]
+    public async Task AnActorWhoseKindHasNoSuchTrack_IsOfferedNothing()
+    {
+        _kind = "npc";
+        var (runtime, _, hero) = await TableAsync(Invented(), 0, 4);
+        await using var _ = runtime;
+        await runtime.EnqueueAsync(new RollDiceCommand("1d20+5", hero.Id, "dm", false, "Strike", Dc: 15));
+        var entry = runtime.Snapshot.RollLog[0];
+
+        Assert.Empty(Rerolls.Offered(runtime.System, entry, runtime.GetActorDocument(hero.Id)!.Sheet));
+        Assert.Single(Rerolls.Offered(runtime.System, entry, new Dictionary<string, object> { ["kind"] = "hero" }));
+        var command = new RerollCommand(hero.Id, entry.Id, "lucky", "dm", AsGm: true);
+        await runtime.EnqueueAsync(command);
+        Assert.Equal(RerollFailure.NotOffered, command.Failed);
+    }
+
+    [Fact]
+    public async Task ARollWhoseTickedBonusSpentTheLastPoint_IsStillRolledAgain_AndTheBonusStillCounts()
+    {
+        _extra = new (string, object)[] { ("uses_charm", 1L), ("uses_charm_Max", 1L) };
+        var (runtime, _, hero) = await TableAsync(Invented(), 2);
+        await using var _ = runtime;
+        await runtime.EnqueueAsync(new MakeRollCommand(hero.Id, "player-1", new SheetRollRequest { Definition = "charmed", OptIns = new[] { "kind:hero#0" } }, Dice: new SequenceDiceSource(new[] { 4 })));
+        var first = runtime.Snapshot.RollLog[0];
+        Assert.Equal(5, first.Total);
+        Assert.Equal(0, runtime.GetEntity(hero.Id)!.Value.Get<ResourcePoolComponent>().Get("uses_charm"));
+
+        var command = new RerollCommand(hero.Id, first.Id, "lucky", "player-1", Dice: new SequenceDiceSource(new[] { 10 }));
+        await runtime.EnqueueAsync(command);
+
+        Assert.Equal(RerollFailure.None, command.Failed);
+        Assert.Equal(11, command.Made!.Total);
+        Assert.Equal(0, runtime.GetEntity(hero.Id)!.Value.Get<ResourcePoolComponent>().Get("uses_charm"));
+        Assert.Equal(1, Luck(runtime, hero.Id));
+    }
+
+    [Fact]
+    public async Task ARollThatCannotBeMadeAgain_RefusesAndTheCostGoesBack()
+    {
+        var (runtime, session, hero) = await TableAsync(Invented(), 2);
+        await using var _ = runtime;
+        // A named roll whose required input nobody supplies: it cannot be worked out a second time.
+        var broken = new RollLogEntry { ActorId = hero.Id, Expression = "degreeCheck", Replay = new RollReplay { Kind = RollReplay.OfDefinition, RollKey = "degreeCheck" } };
+        runtime.RecordRoll(broken);
+
+        var command = new RerollCommand(hero.Id, broken.Id, "lucky", "player-1", Dice: new SequenceDiceSource(new[] { 10 }));
+        await runtime.EnqueueAsync(command);
+
+        Assert.Equal(RerollFailure.CouldNotRoll, command.Failed);
+        Assert.Null(command.Made);
+        Assert.Null(broken.RerolledBy);
+        Assert.Single(runtime.Snapshot.RollLog);
+        Assert.Equal(2, Luck(runtime, hero.Id));
+        Assert.Equal(2L, runtime.GetActorDocument(hero.Id)!.Sheet["luck"]);
+        Assert.Equal(2, Codex.Core.YamlValues.GetInt((await StoredAsync(hero)).Sheet, "luck"));
+        Assert.Contains(await LogAsync(session), l => l.Contains("cannot be rolled again"));
+    }
+
+    [Fact]
+    public void WithKeepHigher_OnlyTheRollThatCountsIsMarked()
+    {
+        var higher = Invented("higher");
+        var first = new RollLogEntry { Id = "a", Total = 21, RerolledBy = "b" };
+        var second = new RollLogEntry { Id = "b", Total = 8, RerollOf = "a", RerollKey = "lucky" };
+        RollLogEntry? Find(string id) => id == "a" ? first : id == "b" ? second : null;
+
+        Assert.True(Rerolls.Counts(higher, first, Find));
+        Assert.False(Rerolls.Counts(higher, second, Find));
+        Assert.False(Rerolls.Counts(Invented(), first, Find));
+        Assert.True(Rerolls.Counts(Invented(), second, Find));
+        // Taken back: the first roll is no longer marked, so it counts again and the second does not.
+        first.RerolledBy = null;
+        Assert.True(Rerolls.Counts(Invented(), first, Find));
+        Assert.False(Rerolls.Counts(Invented(), second, Find));
     }
 }
 

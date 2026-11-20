@@ -206,7 +206,9 @@
   <data name="Combat.SecretRoll" xml:space="preserve"><value>Secret roll (GM only)</value></data>
   <data name="Combat.RollLog" xml:space="preserve"><value>Roll log</value></data>
   <data name="Combat.RerollFor" xml:space="preserve"><value>{0} for {1}</value></data>
-  <data name="Combat.RerollShort" xml:space="preserve"><value>Not enough left to pay for it.</value></data>
+  <data name="Combat.RerollShort" xml:space="preserve"><value>Not enough {0} left.</value></data>
+  <data name="Combat.RerollCost" xml:space="preserve"><value>{0} ({2}: {1})</value></data>
+  <data name="Combat.RollCounts" xml:space="preserve"><value>this one counts</value></data>
   <data name="Combat.RolledAgain" xml:space="preserve"><value>Rolled again</value></data>
   <data name="Combat.RerollOf" xml:space="preserve"><value>Second roll</value></data>
   <data name="Combat.You" xml:space="preserve"><value>You</value></data>

@@ -28,8 +28,9 @@ public sealed class RerollButtonTests : ComponentTestBase
 
     private static ActorDocument Hero(long luck) => new() { Id = "vex", Name = "Vex", OwnerUserId = "player-1", Sheet = new Dictionary<string, object> { ["kind"] = "hero", ["luck"] = luck } };
 
-    private IRenderedComponent<TableDicePanel> Panel(RollLogEntry entry, Func<RollLogEntry, IReadOnlyList<RerollChoice>> choices, Action<(RollLogEntry, string)>? pressed = null) =>
+    private IRenderedComponent<TableDicePanel> Panel(RollLogEntry entry, Func<RollLogEntry, IReadOnlyList<RerollChoice>> choices, Action<(RollLogEntry, string)>? pressed = null, Func<RollLogEntry, bool>? counts = null) =>
         Render<TableDicePanel>(p => p
+            .Add(c => c.Counts, counts)
             .Add(c => c.Rolls, new[] { entry })
             .Add(c => c.RollerName, _ => "Vex")
             .Add(c => c.ActorHref, _ => null)
@@ -44,9 +45,9 @@ public sealed class RerollButtonTests : ComponentTestBase
         var cut = Panel(entry, e => TableVisibility.RerollsFor(System, e, isDm: false, isOwner: true, null, Hero(2)), r => sent = r);
 
         var button = cut.Find(Id("reroll-lucky-button"));
-        Assert.Equal("Lucky reroll", button.TextContent.Trim());
-        Assert.Equal("Lucky reroll for Vex, Strike, 24", button.GetAttribute("aria-label"));
-        Assert.False(button.HasAttribute("disabled"));
+        Assert.Equal("Lucky reroll (luck: 1)", button.TextContent.Trim());
+        Assert.Equal("Lucky reroll (luck: 1) for Vex, Strike, 24", button.GetAttribute("aria-label"));
+        Assert.Null(button.GetAttribute("aria-disabled"));
         Assert.Empty(cut.FindAll(Id("reroll-lucky-why")));
 
         button.Click();
@@ -55,15 +56,29 @@ public sealed class RerollButtonTests : ComponentTestBase
     }
 
     [Fact]
-    public void ShortOfPoints_TheButtonIsOff_AndSaysWhyInPlainWords()
+    public void ShortOfPoints_TheButtonIsOff_StaysFocusable_DoesNothing_AndSaysWhatIsShort()
     {
-        var cut = Panel(Roll(), e => TableVisibility.RerollsFor(System, e, isDm: false, isOwner: true, null, Hero(0)));
+        (RollLogEntry, string)? sent = null;
+        var cut = Panel(Roll(), e => TableVisibility.RerollsFor(System, e, isDm: false, isOwner: true, null, Hero(0)), r => sent = r);
 
         var button = cut.Find(Id("reroll-lucky-button"));
         var why = cut.Find(Id("reroll-lucky-why"));
-        Assert.True(button.HasAttribute("disabled"));
-        Assert.Equal("Not enough left to pay for it.", why.TextContent.Trim());
+        Assert.Equal("true", button.GetAttribute("aria-disabled"));
+        Assert.False(button.HasAttribute("disabled"));
+        Assert.Equal("Not enough luck left.", why.TextContent.Trim());
         Assert.Equal(why.Id, button.GetAttribute("aria-describedby"));
+
+        button.Click();
+
+        Assert.Null(sent);
+    }
+
+    [Fact]
+    public void WithKeepHigher_TheRollThatCountsSaysSo()
+    {
+        var cut = Panel(Roll(rerolledBy: "next"), _ => Array.Empty<RerollChoice>(), counts: _ => true);
+
+        Assert.Equal("this one counts", cut.Find(Id("roll-counts")).TextContent.Trim());
     }
 
     [Fact]
@@ -95,6 +110,22 @@ public sealed class RerollButtonTests : ComponentTestBase
         Assert.Single(TableVisibility.RerollsFor(System, Roll(), isDm: false, isOwner: true, null, hero));
         Assert.Empty(TableVisibility.RerollsFor(System, Roll(secret: true), isDm: false, isOwner: true, null, hero));
         Assert.Single(TableVisibility.RerollsFor(System, Roll(secret: true), isDm: true, isOwner: true, null, hero));
+    }
+
+    [Fact]
+    public void TheSheetsRollCard_IsOfferedOnlyWhatTheTablesLogStillHolds_ToSomeoneWhoCanEdit()
+    {
+        // The sheet page is a large page of many services, so what it asks (RerollChoicesOf) is this helper, tested here with the shared button above.
+        var hero = Hero(2);
+        var mine = Roll();
+        var snapshot = new RuntimeSnapshot(null, new[] { mine }, Array.Empty<SessionNote>(), new Dictionary<string, ActorStateSnapshot>());
+
+        Assert.Single(TableVisibility.RerollsOnSheet(System, snapshot, mine, hero, isDm: false, canEdit: true));
+        Assert.Empty(TableVisibility.RerollsOnSheet(System, snapshot, mine, hero, isDm: false, canEdit: false));
+        // A roll that is not in the shared log (made privately on the page) is not offered, and neither is one the table has since rerolled.
+        Assert.Empty(TableVisibility.RerollsOnSheet(System, snapshot, Roll(), hero, isDm: false, canEdit: true));
+        mine.RerolledBy = "next";
+        Assert.Empty(TableVisibility.RerollsOnSheet(System, snapshot, mine, hero, isDm: false, canEdit: true));
     }
 
     [Fact]

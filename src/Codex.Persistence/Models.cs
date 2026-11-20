@@ -565,8 +565,8 @@ public class RollLogEntry
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
 
-/// <summary>How a roll is made again: which kind of roll it was, and what it was made from. Every number in it is as the first roll had it, so the
-/// second is the same roll with new dice.</summary>
+/// <summary>How a roll is made again: which kind of roll it was, and what it was made from (the request, not its numbers). A dice expression keeps the number
+/// it was rolled with; a named roll or a check is worked out again on the actor's sheet as the table has it now, so a condition put on since counts.</summary>
 public class RollReplay
 {
     public const string OfExpression = "expression";

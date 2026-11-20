@@ -37,7 +37,7 @@
                     foreach (var choice in choices)
                     {
                         var key = choice.Key;
-                        <RerollButton Label="@Say(choice.Label)" Roll="@($"{RollerName(rolled)}, {RollLabel?.Invoke(rolled) ?? rolled.Label ?? rolled.Expression}, {rolled.Total}")"
+                        <RerollButton Label="@Say(choice.Label)" Cost="choice.Cost" Track="@Say(choice.Track)" Roll="@($"{RollerName(rolled)}, {RollLabel?.Invoke(rolled) ?? rolled.Label ?? rolled.Expression}, {rolled.Total}")"
                                       CanPay="choice.CanPay" OnReroll="() => OnReroll.InvokeAsync((rolled, key))" TestId="@($"reroll-{key}")" />
                     }
                 }
@@ -48,6 +48,10 @@
                 else if (entry.RerollOf != null)
                 {
                     <span class="small-muted ms-1" data-testid="roll-reroll">@L["Combat.RerollOf"]</span>
+                }
+                @if ((entry.RerolledBy != null || entry.RerollOf != null) && Counts?.Invoke(entry) == true)
+                {
+                    <span class="small-muted ms-1" data-testid="roll-counts">@L["Combat.RollCounts"]</span>
                 }
             </div>
         }
@@ -80,6 +84,9 @@
 
     /// <summary>The rerolls this viewer may press on a roll (<see cref="TableVisibility.RerollsFor"/>); none when not given.</summary>
     [Parameter] public Func<RollLogEntry, IReadOnlyList<RerollChoice>>? RerollsOf { get; set; }
+
+    /// <summary>Whether a rolled-again roll is the one that counts (<see cref="Rerolls.Counts"/>); none when not given.</summary>
+    [Parameter] public Func<RollLogEntry, bool>? Counts { get; set; }
 
     /// <summary>A reroll pressed: the roll, and the system's key of the reroll.</summary>
     [Parameter] public EventCallback<(RollLogEntry Roll, string Key)> OnReroll { get; set; }

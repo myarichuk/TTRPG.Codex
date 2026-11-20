@@ -206,7 +206,9 @@
   <data name="Combat.SecretRoll" xml:space="preserve"><value>הטלה סודית (שליט המבוך בלבד)</value></data>
   <data name="Combat.RollLog" xml:space="preserve"><value>יומן הטלות</value></data>
   <data name="Combat.RerollFor" xml:space="preserve"><value>{0}: {1}</value></data>
-  <data name="Combat.RerollShort" xml:space="preserve"><value>אין מספיק כדי לשלם על כך.</value></data>
+  <data name="Combat.RerollShort" xml:space="preserve"><value>אין מספיק {0}.</value></data>
+  <data name="Combat.RerollCost" xml:space="preserve"><value>{0} ({2}: {1})</value></data>
+  <data name="Combat.RollCounts" xml:space="preserve"><value>זו הנספרת</value></data>
   <data name="Combat.RolledAgain" xml:space="preserve"><value>הוטל שוב</value></data>
   <data name="Combat.RerollOf" xml:space="preserve"><value>הטלה שנייה</value></data>
   <data name="Combat.You" xml:space="preserve"><value>אתם</value></data>

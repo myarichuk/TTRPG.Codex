@@ -166,7 +166,7 @@ else
 
         <div class="col-lg-4">
             <TableDicePanel Rolls="VisibleRollLog()" RollerName="ResolveRollerName" RollLabel="RollLabel" Word="RollWord" IsDm="Access.IsDm" OnRoll="RollDiceAsync"
-                            RerollsOf="RerollsOf" OnReroll="RerollAsync" ActorHref="@(actorId => ActorsById.ContainsKey(actorId) ? ActorHref(actorId) : null)" />
+                            RerollsOf="RerollsOf" OnReroll="RerollAsync" Counts="RerollCounts" ActorHref="@(actorId => ActorsById.ContainsKey(actorId) ? ActorHref(actorId) : null)" />
 
 
             @if (Access.IsDm)
@@ -852,6 +852,8 @@ else
         entry.ActorId is { } actorId
             ? TableVisibility.RerollsFor(Definition, entry, Access.IsDm, CanTrackSlots(actorId), snapshot.Actor(actorId), ActorsById.GetValueOrDefault(actorId))
             : Array.Empty<RerollChoice>();
+
+    private bool RerollCounts(RollLogEntry entry) => Rerolls.Counts(Definition, entry, id => snapshot.RollLog.FirstOrDefault(r => r.Id == id));
 
     private Task RerollAsync((RollLogEntry Roll, string Key) reroll) =>
         reroll.Roll.ActorId is { } actorId ? SendAsync(new RerollCommand(actorId, reroll.Roll.Id, reroll.Key, CurrentUserId, Access.IsDm)) : Task.CompletedTask;

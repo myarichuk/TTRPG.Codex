@@ -279,7 +279,7 @@ else
                             {
                                 var key = choice.Key;
                                 var rolled = lastRoll;
-                                <RerollButton Label="@(system?.DisplayValue(choice.Label) ?? choice.Label)" Roll="@RerollRollText(rolled)" CanPay="choice.CanPay"
+                                <RerollButton Label="@(system?.DisplayValue(choice.Label) ?? choice.Label)" Cost="choice.Cost" Track="@(system?.DisplayValue(choice.Track) ?? choice.Track)" Roll="@RerollRollText(rolled)" CanPay="choice.CanPay"
                                               OnReroll="() => RerollAsync(rolled, key)" TestId="@($"sheet-reroll-{key}")" />
                             }
                         }
@@ -381,7 +381,7 @@ else
                     {
                         var key = choice.Key;
                         var rolled = sheetRollEntry;
-                        <RerollButton Label="@(system?.DisplayValue(choice.Label) ?? choice.Label)" Roll="@RerollRollText(rolled)" CanPay="choice.CanPay"
+                        <RerollButton Label="@(system?.DisplayValue(choice.Label) ?? choice.Label)" Cost="choice.Cost" Track="@(system?.DisplayValue(choice.Track) ?? choice.Track)" Roll="@RerollRollText(rolled)" CanPay="choice.CanPay"
                                       OnReroll="() => RerollAsync(rolled, key)" TestId="@($"sheet-roll-reroll-{key}")" />
                     }
                     @if (sheetRollNote != null)
@@ -654,10 +654,7 @@ else
         if (roll == null || actor == null || access == null || !CanEdit) return Array.Empty<RerollChoice>();
         var live = RuntimeManager.TryGet(CampaignId);
         if (live?.ActiveSession == null || !live.HasActor(actor.Id)) return Array.Empty<RerollChoice>();
-        var snapshot = live.Snapshot;
-        return snapshot.RollLog.FirstOrDefault(r => r.Id == roll.Id) is { } current
-            ? TableVisibility.RerollsFor(system, current, access.IsDm, true, snapshot.Actor(actor.Id), actor)
-            : Array.Empty<RerollChoice>();
+        return TableVisibility.RerollsOnSheet(system, live.Snapshot, roll, actor, access.IsDm, CanEdit);
     }
 
     private string RerollRollText(RollLogEntry? roll) => roll == null ? string.Empty : $"{roll.Label ?? roll.Expression}, {roll.Total}";

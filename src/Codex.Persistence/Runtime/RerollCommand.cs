@@ -10,8 +10,6 @@ namespace Codex.Persistence.Runtime;
 /// command agree.</summary>
 public static class Rerolls
 {
-    private static readonly Regex OneD20 = new(@"^\s*1d20\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-
     /// <summary>Whether a named roll can be made again by itself: it only rolls, with no follow-up roll or intents (<c>then</c>) and no group of participants, since
     /// what the first roll applied would otherwise stand beside the second.</summary>
     public static bool CanReplay(SystemDefinition? system, string definition) =>
@@ -19,18 +17,43 @@ public static class Rerolls
 
     /// <summary>The system's rerolls that apply to this roll: none unless it was made for an actor with a check die, carries what it takes to make it again
     /// (<see cref="RollLogEntry.Replay"/>), has not been rerolled and is not itself a reroll.</summary>
-    public static IReadOnlyList<SystemRerollDefinition> Offered(SystemDefinition? system, RollLogEntry entry)
+    public static IReadOnlyList<SystemRerollDefinition> Offered(SystemDefinition? system, RollLogEntry entry, IReadOnlyDictionary<string, object>? actorSheet = null)
     {
         if (system == null || system.Rerolls.Count == 0 || entry.ActorId == null || entry.Replay is not { } replay) return Array.Empty<SystemRerollDefinition>();
         if (entry.RerolledBy != null || entry.RerollOf != null) return Array.Empty<SystemRerollDefinition>();
+        // A roll already made twice and kept (advantage-style: some dice were dropped) is a fortune effect itself, and cannot take another.
+        if (entry.Dropped.Count > 0) return Array.Empty<SystemRerollDefinition>();
         var hasCheckDie = replay.Kind switch
         {
             RollReplay.OfDefinition => CanReplay(system, replay.RollKey ?? string.Empty)
-                && system.Rolls.First(r => r.Key == replay.RollKey) is { Pool: null, Dice: { } dice } && OneD20.IsMatch(dice),
+                && system.Rolls.First(r => r.Key == replay.RollKey) is { Pool: null, Dice: { } dice } && string.Equals(dice.Trim(), system.Dice.Check.Trim(), StringComparison.OrdinalIgnoreCase),
             RollReplay.OfExpression or RollReplay.OfCheck => entry.CheckDieIndex != null,
             _ => false
         };
-        return hasCheckDie ? system.Rerolls.Where(r => r.Spend != null).ToList() : Array.Empty<SystemRerollDefinition>();
+        if (!hasCheckDie) return Array.Empty<SystemRerollDefinition>();
+        // Only what the actor's kind of sheet has to pay with: a monster has no hero points.
+        var tracks = actorSheet == null ? null : SheetLayout.KindOf(system, actorSheet)?.Tracks.Select(t => t.Key).ToHashSet(StringComparer.Ordinal);
+        return system.Rerolls.Where(r => r.Spend != null && (tracks == null || tracks.Contains(r.Spend.Track))).ToList();
+    }
+
+    /// <summary>Whether this roll is the one that counts: a roll that was not rerolled does; of a roll and its reroll, the second does unless the reroll
+    /// keeps the higher and the first was higher; a reroll that was taken back (the first roll is no longer marked) does not.</summary>
+    public static bool Counts(SystemDefinition? system, RollLogEntry entry, Func<string, RollLogEntry?> find)
+    {
+        bool KeepsHigher(string? key) => system?.Rerolls.FirstOrDefault(r => r.Key == key)?.KeepsHigher == true;
+        if (entry.RerollOf is { } firstId)
+        {
+            var first = find(firstId);
+            return first != null && first.RerolledBy == entry.Id && !(KeepsHigher(entry.RerollKey) && first.Total > entry.Total);
+        }
+
+        if (entry.RerolledBy is { } nextId)
+        {
+            var next = find(nextId);
+            return next != null && KeepsHigher(next.RerollKey) && entry.Total > next.Total;
+        }
+
+        return true;
     }
 
     /// <summary>What the sheet holds of a numeric track, laid out as the table has it (<see cref="ActorStateSnapshot.LiveView"/>); 0 when it holds none.</summary>
@@ -96,7 +119,7 @@ public sealed record RerollCommand(string ActorId, string EntryId, string Reroll
         _old = runtime.FindRoll(EntryId);
         _reroll = system?.Rerolls.FirstOrDefault(r => r.Key == RerollKey);
         var doc = runtime.GetActorDocument(ActorId);
-        if (system == null || _old == null || _reroll?.Spend is not { } spend || doc == null || _old.ActorId != ActorId || !Rerolls.Offered(system, _old).Contains(_reroll))
+        if (system == null || _old == null || _reroll?.Spend is not { } spend || doc == null || _old.ActorId != ActorId || !Rerolls.Offered(system, _old, doc.Sheet).Contains(_reroll))
         {
             Failed = RerollFailure.NotOffered;
             return;
@@ -128,6 +151,7 @@ public sealed record RerollCommand(string ActorId, string EntryId, string Reroll
         made.RerollOf = _old.Id;
         made.RerollKey = _reroll.Key;
         runtime.MarkRerolled(_old, made);
+        runtime.NoteReroll(ActorId, _old);
         Made = made;
         Standing = _reroll.KeepsHigher && _old.Total > made.Total ? _old : made;
     }
@@ -172,7 +196,8 @@ public sealed record RerollCommand(string ActorId, string EntryId, string Reroll
                     Definition = replay.RollKey ?? string.Empty,
                     Inputs = replay.Inputs,
                     SuppliedBy = replay.SuppliedBy,
-                    OptIns = replay.OptIns
+                    OptIns = replay.OptIns,
+                    OptInsPaid = true
                 };
                 var outcome = TableEvents.Roll(runtime, ActorId, request, Dice ?? new RandomDiceSource(), out var rolled, applyIntents: false);
                 if (rolled == null || outcome.Failed != null) return null;

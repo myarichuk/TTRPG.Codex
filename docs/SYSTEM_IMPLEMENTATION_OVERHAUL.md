@@ -172,7 +172,7 @@ rerolls:
     keep: new                     # new (default): the second roll stands. higher: the higher total of the two stands
 ```
 
-- The loader refuses a reroll with no key, a repeated key, no `spend`, a `track` that no sheet kind declares (or a slot track), an `by` under 1, and a
+- The loader refuses a reroll with no key, a repeated key, no `spend`, a `track` that no sheet kind declares (or a slot track), a `by` under 1, and a
   `keep` that is neither `new` nor `higher`.
 - The table offers each reroll on a roll made for an actor with a check die: a dice expression or a check, and a named roll that rolls one `1d20` and has no
   `then` (a roll with a follow-up roll or intents cannot be replayed without doing what the first roll did a second time). The roll log entry carries what it
@@ -180,7 +180,10 @@ rerolls:
 - A roll is rerolled once, by any reroll: the first entry is marked `RerolledBy`, the new one `RerollOf`, and a reroll is never offered again. Both stay in the log.
 - It is offered to the GM and the actor's owner, on the table's roll log and on the sheet's roll card; the button is off, with the reason beside it, when the
   actor cannot pay. A secret roll is offered to the GM only and its reroll is secret too.
-- `RerollCommand` is undoable: undo gives the cost back. A named roll rolled again costs nothing a second time (what its ticked bonuses spent was paid with the
+- Nothing is offered on a roll that kept the better of several dice (it dropped some), since that is a reroll-like effect already; the reroll is offered only
+  on an actor whose sheet kind has the `spend.track`; and a named roll must roll the system's own check die (`dice.check`).
+- `RerollCommand` is undoable: undo gives the cost back and clears the first roll's `RerolledBy` mark, so it can be rerolled again; both rolls stay in the log.
+  With `keep: higher` the log marks the roll that counts. A named roll rolled again costs nothing a second time (what its ticked bonuses spent was paid with the
   first roll). With scripts off nothing changes: the reroll runs no script.
 
 ### Events → intents
