@@ -46,14 +46,53 @@ public class UnlinkedMentionScaleTests
         Assert.Equal("unlinked-mention:page:wikipages/1-A:body:wikipages/0-A", issue.Id);
     }
 
+    /// <summary>The vocabulary and letters whose compatibility form is several words (U+FDFA and U+FDFB normalise to four and two words) or is
+    /// another word (a ligature, full-width letters), where the scan and a joined-string comparison could part.</summary>
+    private static readonly string[] Wide = Vocabulary.Concat(new[] { "\uFDFA", "\uFDFB", "\uFB01re", "fire", "\uFF26\uFF35\uFF2C\uFF2C", "full", "عليه", "الله", "صلى", "وسلم", "جل" }).ToArray();
+
     [Theory]
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
     [InlineData(4)]
     [InlineData(5)]
-    public void OnGeneratedWorlds_TheScanFindsWhatTheFirstVersionFound(int seed)
+    public void OnGeneratedWorlds_TheScanFindsWhatTheFirstVersionFound(int seed) => Generated(seed, Vocabulary);
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    public void OnGeneratedWorlds_WithLettersWhoseNormalFormIsSeveralWords_TheScanFindsWhatTheFirstVersionFound(int seed) => Generated(seed, Wide);
+
+    [Fact]
+    public void ALetterWhoseNormalFormIsSeveralWords_IsWalkedWordByWord_AsTheFirstVersionComparedIt()
     {
+        // U+FDFA normalises to four words; the title's name is then nine words, and the same letters in another page's text are that name.
+        var title = "\uFB01re \uFDFA \uFF26\uFF35\uFF2C\uFF2C عليه \uFDFA";
+        var snapshot = Fx.Snap(pages: new[]
+        {
+            Fx.Page("wikipages/1-A", title, "x"),
+            Fx.Page("wikipages/2-A", "Notes", "They spoke of " + title + " at dawn.")
+        });
+
+        var issue = Assert.Single(new UnlinkedMentionCheck().Run(snapshot));
+        Assert.Equal("unlinked-mention:page:wikipages/2-A:body:wikipages/1-A", issue.Id);
+        Assert.Equal(Oracle(snapshot), new[] { issue.Id + "|" + string.Join("|", issue.Args) });
+
+        // One such letter alone is one word of the text, never a name of two words by itself, as before.
+        var alone = Fx.Snap(pages: new[] { Fx.Page("wikipages/1-A", "\uFDFA", "x"), Fx.Page("wikipages/2-A", "Notes", "\uFDFA and \uFDFA.") });
+        Assert.Empty(new UnlinkedMentionCheck().Run(alone));
+        Assert.Empty(Oracle(alone));
+    }
+
+    private static void Generated(int seed, string[] vocabulary)
+    {
+        var Vocabulary = vocabulary;
         var rng = new Random(seed);
         string Words(int n) => string.Join(rng.Next(6) == 0 ? ", " : " ", Enumerable.Range(0, n).Select(_ => Vocabulary[rng.Next(Vocabulary.Length)]));
         var pages = new List<PageView>();

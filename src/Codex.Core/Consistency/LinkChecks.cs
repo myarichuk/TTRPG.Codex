@@ -135,11 +135,11 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
                     if ((i & 255) == 255) cancel.ThrowIfCancellationRequested();
                     PageView? target = null;
                     var length = 0;
-                    var at = root;
-                    for (var k = i; k < run.Count && at.Next != null && at.Next.TryGetValue(run[k].Norm, out var step); k++)
+                    NameNode? at = root;
+                    for (var k = i; k < run.Count && (at = Step(at, run[k].Norm)) != null; k++)
                     {
-                        at = step;
-                        if (at.Page == null) continue;
+                        // A name is two words of the text or more, ending where a word ends (as the names are compared: the words joined by spaces).
+                        if (at.Page == null || k == i) continue;
                         target = at.Page; // the longest name wins: keep walking while a longer one is still possible
                         length = k - i + 1;
                     }
@@ -168,6 +168,21 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
                 }
             }
         }
+    }
+
+    /// <summary>The trie node after one word of the text. A word's compared form can hold spaces (Unicode-compatibility normalising a ligature such as
+    /// U+FDFA gives four words), and a name is compared as the words of the text joined by spaces, so such a word walks as many steps as it has parts:
+    /// splitting the joined text on spaces is splitting each word and putting the parts one after the other.</summary>
+    private static NameNode? Step(NameNode node, string norm)
+    {
+        if (norm.IndexOf(' ') < 0) return node.Next != null && node.Next.TryGetValue(norm, out var next) ? next : null;
+        NameNode? at = node;
+        foreach (var part in norm.Split(' '))
+        {
+            if (at.Next == null || !at.Next.TryGetValue(part, out at)) return null;
+        }
+
+        return at;
     }
 }
 

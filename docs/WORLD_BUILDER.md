@@ -269,7 +269,8 @@ with the switch on), which changes nothing about what the default list, the note
 **Cost and the time budget.** The plain-text mention scan walks a trie of the pages' names word by word (`UnlinkedMentionCheck`), so a position in a text costs
 as many steps as the name it could be, not the length of the longest title (500 pages of 1000 words with a 40-word title: 10.7 s before, 0.24 s after; 1000 pages of
 2000 words with a 60-word title: 80 s before, 0.56 s after, snapshot included). Which mentions are reported is unchanged; a test keeps the first, simple
-version as an oracle on generated worlds. `ConsistencyChecker.Run` takes a `CancellationToken` and looks at it between checks, between the issues a check yields, and
+version as an oracle on generated worlds, also with letters whose compatibility form is several words (U+FDFA, U+FDFB: a word of the text then walks the trie
+one part at a time, as the first version compared the words joined by spaces; a name still needs two words of the text and ends where one ends). `ConsistencyChecker.Run` takes a `CancellationToken` and looks at it between checks, between the issues a check yields, and
 inside the loops of the long checks (`IConsistencyCheck.Run(snapshot, cancel)`, a default method that runs the check as it is: the mention scan looks at every page and
 every 256 positions, the sheet rules at every character); the token is the only thing a check reads besides the snapshot, so whatever is not cancelled gives the same
 issues, and a cancelled run throws and returns nothing, never a part of the list. The systems' own compiled checks (`ICodexIssueCheck`) are unchanged and are not
