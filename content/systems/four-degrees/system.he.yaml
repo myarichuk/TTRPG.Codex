@@ -88,6 +88,9 @@ conditions:
   Unnoticed: לא מורגש
   Wounded: פצוע
   Heartened: מעודד
+  Lesser cover: מחסה קל
+  Standard cover: מחסה רגיל
+  Greater cover: מחסה גדול
 
 moments:
   dailyPrep: הכנות יומיות
@@ -311,6 +314,8 @@ entityTypes:
       abilities: { label: יכולות }
 
 values:
+  Against an area effect: נגד השפעת שטח
+  To Hide, Sneak or avoid detection: להסתתר, להתגנב או להימנע מגילוי
   Perception: תפיסה
   Class DC: דרגת קושי של המקצוע
   Spell attack: התקפת לחש
@@ -341,6 +346,7 @@ values:
   Trinkets: קמעות
   Gear: ציוד
   Hero Points: נקודות גבורה
+  Focus Points: נקודות מיקוד
   Hero Point reroll: הטלה חוזרת תמורת נקודת גבורה
   Recovery check: בדיקת התאוששות
   DC 11: דרגת קושי 11

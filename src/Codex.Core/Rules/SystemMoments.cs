@@ -148,8 +148,38 @@ public static class SystemMoments
     public static bool Matters(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet, string moment)
     {
         if (sheet.Keys.Any(k => SheetRuleEngine.IsUsesKey(k) && FeatureRecovery.For(sheet, k, moment).Count > 0)) return true;
+        if (SlotKeysRecoveredAt(system, sheet.Keys, moment).Count > 0) return true;
         if (SheetRuleEngine.ChoicesToChangeAfter(sheet, moment).Count > 0) return true;
         return system is { SheetKinds.Count: > 0 } && HandlerTouches(system, SheetLayout.KindOf(system, sheet), moment);
+    }
+
+    /// <summary>The slot pools whose <c>recoversOn</c> names <paramref name="moment"/>: a declared moment or dawn refills them as a rest does, with no rest
+    /// button of its own.</summary>
+    public static IReadOnlyList<SlotPoolRule> SlotPoolsRecoveringAt(SystemDefinition? system, string moment) =>
+        system?.SheetRules?.SlotPools.Where(p => p.RecoversOn.Any(r => Same(r, moment))).ToList() ?? new List<SlotPoolRule>();
+
+    /// <summary>The slot keys among <paramref name="keys"/> (a sheet's or a table pool's) that <see cref="SlotPoolsRecoveringAt"/> refills at the
+    /// moment: each slot level's own key, never its maximum.</summary>
+    public static IReadOnlyList<string> SlotKeysRecoveredAt(SystemDefinition? system, IEnumerable<string> keys, string moment)
+    {
+        var pools = SlotPoolsRecoveringAt(system, moment);
+        if (pools.Count == 0) return Array.Empty<string>();
+        return keys.Where(k => !k.EndsWith("_Max", StringComparison.Ordinal) && pools.Any(p => p.Owns(k))).ToList();
+    }
+
+    /// <summary>Off the table: fills each slot key <see cref="SlotKeysRecoveredAt"/> names to its maximum on <paramref name="sheet"/> (the sheet's own
+    /// moment button; the table's command does the same on its pool). Returns the keys that were set.</summary>
+    public static IReadOnlyList<string> RefillSlots(SystemDefinition? system, Dictionary<string, object> sheet, string moment)
+    {
+        var filled = new List<string>();
+        foreach (var key in SlotKeysRecoveredAt(system, sheet.Keys.ToList(), moment))
+        {
+            if (YamlValues.GetInt(sheet, SystemDefinition.PoolMaxKey(system, key)) is not { } max) continue;
+            sheet[key] = (long)max;
+            filled.Add(key);
+        }
+
+        return filled;
     }
 
     /// <summary>What a moment does to a sheet, in the sheet's words: the tracks its handler names (<see cref="HandlerTracks"/>) that the sheet's
@@ -161,6 +191,7 @@ public static class SystemMoments
             .Select(t => kind?.Tracks.FirstOrDefault(k => Same(k.Key, t)))
             .OfType<TrackDefinition>()
             .Select(t => string.IsNullOrWhiteSpace(t.Label) ? t.Key : t.Label!)
+            .Concat(SlotPoolsRecoveringAt(system, moment).Where(p => sheet.Keys.Any(p.Owns)).Select(p => p.Label))
             .Distinct(StringComparer.Ordinal)
             .ToList();
         var counters = sheet.Keys.Where(k => SheetRuleEngine.IsUsesKey(k) && FeatureRecovery.For(sheet, k, moment).Count > 0)
@@ -184,6 +215,11 @@ public static class SystemMoments
         foreach (var key in after.Keys.Where(SheetRuleEngine.IsUsesKey))
         {
             if (Moved(before, after, key)) names.Add(SheetRuleEngine.UsesLabel(after, key));
+        }
+
+        foreach (var pool in system?.SheetRules?.SlotPools ?? new List<SlotPoolRule>())
+        {
+            if (after.Keys.Any(k => pool.Owns(k) && !k.EndsWith("_Max", StringComparison.Ordinal) && Moved(before, after, k)) && !names.Contains(pool.Label)) names.Add(pool.Label);
         }
 
         return names;

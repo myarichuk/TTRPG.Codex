@@ -57,6 +57,37 @@ public sealed class MomentsPanelTests : ComponentTestBase
         Assert.Null(bare.Find(Id("moment-fire-quiet")).GetAttribute("aria-describedby"));
     }
 
+    private static readonly SystemDefinition WithSlots = SystemDefinitionLoader.Parse("""
+        id: slots-moment-panel
+        name: Slots moment panel
+        entityTypes:
+          - { type: class, label: Class }
+        actorFields:
+          - { key: class, label: Class, type: EntityReference, targetEntityType: class }
+          - { key: level, label: Level, type: Number }
+        moments: [{ key: downtime, label: Downtime }]
+        sheetRules:
+          enforcement: warn
+          slotPools:
+            - { key: slots, label: Spell slots, field: class, byField: level, table: spellcasting, column: slots, recoversOn: [downtime] }
+        """);
+
+    [Fact]
+    public void ASlotPoolThatRecoversAtAMoment_GivesTheMomentsButton_AndTheSlotTrackerNoRestButton()
+    {
+        var sheet = new Dictionary<string, object> { ["slots_1"] = 0L, ["slots_1_Max"] = 2L };
+        var panel = Render<MomentsPanel>(p => p.Add(c => c.Definition, WithSlots).Add(c => c.Sheet, sheet));
+        Assert.Single(panel.FindAll(Id("moment-fire-downtime")));
+
+        var tracker = Render<SlotTracker>(p => p
+            .Add(c => c.Definition, WithSlots)
+            .Add(c => c.Pools, WithSlots.SheetRules!.SlotPools)
+            .Add(c => c.Keys, sheet.Keys.ToList())
+            .Add(c => c.Value, key => sheet.TryGetValue(key, out var v) ? (int?)Convert.ToInt32(v) : null));
+        Assert.NotEmpty(tracker.FindAll(Id("slot-use-slots_1")));
+        Assert.Empty(tracker.FindAll(Id("rest-downtime")));
+    }
+
     private static readonly SystemDefinition Bare = SystemDefinitionLoader.Parse("""
         id: bare-moments
         name: Bare moments

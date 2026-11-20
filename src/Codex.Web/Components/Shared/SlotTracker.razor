@@ -1,3 +1,4 @@
+@using Codex.Core.Rules
 @using Codex.Plugin.Abstractions
 
 @* Expendable slot pools (spell slots, pact slots...) declared by the system's sheetRules.slotPools:
@@ -51,7 +52,8 @@
 
         @if (!ReadOnly)
         {
-            var rests = pools.SelectMany(p => p.Rule.RecoversOn).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            // A pool that recovers at a declared moment has the moment's own button (the sheet's moments panel, the table's moment button), not a rest button.
+            var rests = pools.SelectMany(p => p.Rule.RecoversOn).Where(rest => SystemMoments.IsRest(Definition, rest)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             @if (rests.Count > 0)
             {
                 <div class="d-flex flex-wrap gap-2 mt-2">

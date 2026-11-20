@@ -145,6 +145,11 @@ Library entries picked onto the sheet, with the existing `where` / `maxCount` ru
 - Street implants: Composure max = `grit * 6 + wits * 2 - sum(implants, strain)`.
 - A property may be a **map** (spell `levels: { Cleric: 1, Ranger: 2 }`), with `levelFor(item, class)` available to
   `where` rules.
+- A `sheetRules.lists` list is also a list in a sheet kind's formulas (`min(3, count(focusSpells, s => s.kind == "focus"))` for a
+  focus pool), entries granted by a feature included. The loader refuses a list named like a value, track, list or keyed
+  list of a kind. A slot pool's `recoversOn` may name a declared moment as well as a rest: the moment command at the
+  table and the sheet's moments panel refill it, and no rest button is named after the moment (`dawn` refills at the
+  table only, since the sheet's panel offers declared moments).
 
 ### Rolls
 A named roll definition:

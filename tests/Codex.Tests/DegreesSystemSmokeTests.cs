@@ -307,6 +307,43 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
         Assert.Equal("highest", _system.ModifierTypes!.Types["status"]);
     }
 
+    [Theory]
+    [InlineData("Lesser cover", 1)]
+    [InlineData("Standard cover", 2)]
+    [InlineData("Greater cover", 4)]
+    public void Cover_RaisesArmorClassByItsType_AndTwoCoversDoNotAdd(string cover, int bonus)
+    {
+        var engine = new SheetRuleEngine(_system, new PackResolver(_registry));
+        int ArmorClass(params string[] names)
+        {
+            var sheet = Character("marshkin", "ferry-hand", "warden", 3);
+            sheet[SheetModel.ConditionsKey] = names.Cast<object>().ToList();
+            return engine.Recompute(sheet).ArmorClass!.Total;
+        }
+        var plain = ArmorClass();
+
+        // The circumstance numbers of the rules entry `cover`: +1, +2 and +4 to armor class.
+        Assert.Equal(plain + bonus, ArmorClass(cover));
+        Assert.Equal(plain + bonus, ArmorClass(cover, "Lesser cover"));
+        Assert.Equal(plain + 4, ArmorClass("Standard cover", "Greater cover"));
+    }
+
+    [Fact]
+    public void StandardCover_OffersTheReflexSaveAndStealthBonusesAsTickBoxes_ButLesserCoverOffersNone()
+    {
+        var engine = new SheetRuleEngine(_system, new PackResolver(_registry));
+        List<string> Offered(string cover)
+        {
+            var sheet = Character("marshkin", "ferry-hand", "warden", 3);
+            sheet[SheetModel.ConditionsKey] = new List<object> { cover };
+            return engine.AllOptIns(sheet).Select(o => o.Label).ToList();
+        }
+
+        Assert.Equal(new[] { "Against an area effect", "To Hide, Sneak or avoid detection" }, Offered("Standard cover").OrderBy(x => x));
+        Assert.Equal(new[] { "Against an area effect", "To Hide, Sneak or avoid detection" }, Offered("Greater cover").OrderBy(x => x));
+        Assert.Empty(Offered("Lesser cover"));
+    }
+
     [Fact]
     public void APrintedCreature_ReadsItsNumbers_AndAConditionLowersThem()
     {

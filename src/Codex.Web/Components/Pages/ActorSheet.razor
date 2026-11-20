@@ -1651,6 +1651,9 @@ else
         flash = null;
         var before = new Dictionary<string, object>(editSheet);
         RefillFeatureCounters(moment);
+        // The slot pools that recover at this moment fill up, as the table's moment command does.
+        SystemMoments.RefillSlots(system, editSheet, moment);
+
         if (resolver != null && SheetEvents.Handles(system, moment))
         {
             try

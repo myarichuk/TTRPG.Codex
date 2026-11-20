@@ -173,6 +173,15 @@ public sealed class SheetModel
         foreach (var value in Kind.Values) _valueDefinitions.TryAdd(value.Key, value);
         foreach (var list in Kind.Lists) _lists[list.Key] = PickList(list);
         foreach (var list in Kind.KeyedLists) _lists[list.Key] = KeyedList(list);
+
+        // A list of the sheet rules (the focus spells a feature grants) is a pick list in a kind's formulas too, so a track's maximum can count it.
+        // Its entries missing from the Library are the sheet rules' own violation (SheetRuleEngine), not this model's. The loader refuses a name
+        // the kind already uses, so nothing here is shadowed.
+        foreach (var rule in system.SheetRules?.Lists ?? new List<ListRule>())
+        {
+            if (_lists.ContainsKey(rule.Key)) continue;
+            _lists[rule.Key] = PickList(new PickListDefinition { Key = rule.Key, Label = rule.Label, Type = rule.TargetEntityType }, reportMissing: false);
+        }
     }
 
     /// <summary>Works out every value, keyed-list entry and rule of the sheet kind.</summary>
@@ -495,7 +504,7 @@ public sealed class SheetModel
 
     // ---- Lists ----
 
-    private FormulaList PickList(PickListDefinition list)
+    private FormulaList PickList(PickListDefinition list, bool reportMissing = true)
     {
         var items = new List<FormulaItem>();
         var rawIndex = _rawIndex[list.Key] = new List<int>();
@@ -514,7 +523,7 @@ public sealed class SheetModel
                 if (fields == null) continue;
                 var id = fields.TryGetValue("id", out var rawId) ? rawId?.ToString() : null;
                 var entry = list.Type != null && id != null ? _resolver.Resolve(list.Type, id) : null;
-                if (list.Type != null && id != null && entry == null)
+                if (reportMissing && list.Type != null && id != null && entry == null)
                 {
                     _result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: \"{id}\" is not in the Library.", "Actor.Rule.NotInLibrary", new object?[] { list.Label, id }));
                 }

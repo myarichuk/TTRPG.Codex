@@ -1,6 +1,7 @@
 using Codex.Core;
 using Codex.Core.Rules;
 using Codex.Plugin.Abstractions;
+using Codex.Plugin.Abstractions.Dice;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Codex.Tests;
@@ -214,6 +215,25 @@ public class FourDegreesEquipmentTests : IAsyncLifetime
             Assert.Empty(Problems(evaluation));
             Assert.Equal(expected, evaluation.ArmorClass!.Total);
         }
+    }
+
+    [Fact]
+    public void AnAgileWeapon_LowersTheMultipleAttackPenalty_AndALongswordDoesNot()
+    {
+        // The multiple attack rule (sheetRules.multipleAttack): the plain table is 0, -5, -10, and the agile trait's row is 0, -4, -8.
+        Assert.Contains("agile", ((IEnumerable<object>)Item("weapon", "blowgun").Properties["traits"]).Select(t => t.ToString()));
+        var sheet = Warden(2, "blowgun|equipped:1", "longsword|equipped:1");
+        double Total(string weapon, int attack) => SheetRolls.Roll(_system, new PackResolver(_registry), sheet, new SheetRollRequest
+        {
+            Definition = "strike",
+            Inputs = new Dictionary<string, object?> { ["bonus"] = 9d, ["target"] = 18d, ["attackNumber"] = (double)attack, ["weapon"] = weapon }
+        }, new SequenceDiceSource(new[] { 10 })).Total;
+
+        Assert.Equal(10 + 9, Total("blowgun", 1));
+        Assert.Equal(10 + 9 - 4, Total("blowgun", 2));
+        Assert.Equal(10 + 9 - 8, Total("blowgun", 3));
+        Assert.Equal(10 + 9 - 5, Total("longsword", 2));
+        Assert.Equal(10 + 9 - 10, Total("longsword", 3));
     }
 
     [Fact]
