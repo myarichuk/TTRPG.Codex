@@ -1,0 +1,35 @@
+@* One reroll offered on one roll: a button named for the reroll and what it costs, which says in its accessible name which roll it is for. When the actor
+   cannot pay it stays focusable but is marked aria-disabled (pressing it does nothing), with the reason in plain words beside it, tied to the button. The
+   page decides whether to offer it at all. *@
+<span class="reroll" data-testid="@TestId">
+    <CodexButton Small="true" OnClick="@(() => CanPay ? OnReroll.InvokeAsync() : Task.CompletedTask)" aria-label="@L["Combat.RerollFor", Named, Roll]"
+                 aria-disabled="@(CanPay ? null : "true")" aria-describedby="@(CanPay ? null : reasonId)" data-testid="@(TestId + "-button")">@Named</CodexButton>
+    @if (!CanPay)
+    {
+        <span class="small-muted ms-1" id="@reasonId" data-testid="@(TestId + "-why")">@L["Combat.RerollShort", Track]</span>
+    }
+</span>
+
+@code {
+    /// <summary>The reroll's name, in the reader's language ("Hero Point reroll").</summary>
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+
+    /// <summary>What it takes, and from which track (the track's name in the reader's language); shown on the button.</summary>
+    [Parameter] public int Cost { get; set; } = 1;
+
+    [Parameter] public string Track { get; set; } = string.Empty;
+
+    /// <summary>Which roll it is for, as the reader knows it ("Strike, 24"); part of the button's accessible name.</summary>
+    [Parameter, EditorRequired] public string Roll { get; set; } = string.Empty;
+
+    /// <summary>Whether the actor can pay. When not, the button does nothing and says why.</summary>
+    [Parameter] public bool CanPay { get; set; } = true;
+
+    [Parameter] public EventCallback OnReroll { get; set; }
+
+    [Parameter] public string TestId { get; set; } = "reroll";
+
+    private string Named => Track.Length == 0 ? Label : L["Combat.RerollCost", Label, Cost, Track];
+
+    private readonly string reasonId = "reroll-why-" + Guid.NewGuid().ToString("N")[..8];
+}

@@ -549,7 +549,48 @@ public class RollLogEntry
     /// <summary>The bonuses the roller ticked, which <see cref="Label"/> says after <see cref="Name"/>. Empty when none, and for older entries.</summary>
     public List<RollLogBonus> Bonuses { get; set; } = new();
 
+    /// <summary>What it takes to make this roll again (<see cref="RollReplay"/>). Null for a roll that cannot be rerolled: one made before this existed, a
+    /// hazard's step check, a roll whose definition does more than roll.</summary>
+    public RollReplay? Replay { get; set; }
+
+    /// <summary>The id of the entry this roll is the reroll of; null for a roll that is not a reroll. A reroll is never rerolled.</summary>
+    public string? RerollOf { get; set; }
+
+    /// <summary>The id of the entry that rerolled this one, once one has. A roll is rerolled once, by any reroll.</summary>
+    public string? RerolledBy { get; set; }
+
+    /// <summary>The system's reroll (<see cref="SystemRerollDefinition.Key"/>) this roll is the result of; null for a roll that is not a reroll.</summary>
+    public string? RerollKey { get; set; }
+
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>How a roll is made again: which kind of roll it was, and what it was made from (the request, not its numbers). A dice expression keeps the number
+/// it was rolled with; a named roll or a check is worked out again on the actor's sheet as the table has it now, so a condition put on since counts.</summary>
+public class RollReplay
+{
+    public const string OfExpression = "expression";
+    public const string OfDefinition = "definition";
+    public const string OfCheck = "check";
+
+    /// <summary><see cref="OfExpression"/> (a dice expression, graded against <see cref="Dc"/>), <see cref="OfDefinition"/> (a named roll of the system) or <see cref="OfCheck"/> (a check made through the check service).</summary>
+    public string Kind { get; set; } = OfExpression;
+
+    /// <summary>The number the roll was graded against, if the roller asked for a degree.</summary>
+    public int? Dc { get; set; }
+
+    /// <summary>For a definition: its key, the inputs supplied and who supplied each, and the opt-in bonuses ticked.</summary>
+    public string? RollKey { get; set; }
+
+    public Dictionary<string, object?> Inputs { get; set; } = new();
+    public Dictionary<string, string> SuppliedBy { get; set; } = new();
+    public List<string> OptIns { get; set; } = new();
+
+    /// <summary>For a check: what was checked (as the request named it), how it was read, the GM's number, and any dice in place of the system's.</summary>
+    public string? Check { get; set; }
+    public string? CheckKind { get; set; }
+    public int? Bonus { get; set; }
+    public string? Dice { get; set; }
 }
 
 /// <summary>A bonus a roll counted, as its log line says it: the English words as the rules wrote them, which a reader's language may replace.</summary>

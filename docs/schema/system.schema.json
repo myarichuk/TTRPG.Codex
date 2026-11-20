@@ -195,6 +195,13 @@
       },
       "description": "The system's own moments (`downtime`, `loadChosen`): named times at which counters refill and an `events:` handler of the same name runs. Rests (`vitals.rests`), `initiative` and `dawn` are moments too and need no declaring."
     },
+    "rerolls": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SystemRerollDefinition"
+      },
+      "description": "Ways a roll already made can be made again at a cost: `{ key, label, spend: { track, by }, keep }`. The table offers each on a roll an actor made with a check die, to the actor's owner and the GM, while the actor can pay. A roll is rerolled once, and a reroll is never rerolled."
+    },
     "events": {
       "type": "object",
       "additionalProperties": {},
@@ -5336,6 +5343,60 @@
             "boolean"
           ],
           "description": "A short line shown beside the moment's button on the sheet, for what it does that the engine cannot read from its handler (a script). Shown through the system's own translations (`values`)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SystemRerollDefinition": {
+      "description": "One way to roll again (`rerolls:`): what it is called, what it costs, and which of the two rolls counts. Names no game: a system says whether it is a point, a fate token or anything else its sheet tracks.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Required, unique: the reroll's name, which a roll log entry keeps as the one that rerolled it."
+        },
+        "label": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The reroll's name as the app shows it (\"Hero Point reroll\"), through the system's own translations; the key when empty."
+        },
+        "spend": {
+          "$ref": "#/$defs/RerollSpend",
+          "description": "What the actor pays. Required."
+        },
+        "keep": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "`new` (the default): the second roll stands, whatever it comes to. `higher`: the higher total of the two stands."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RerollSpend": {
+      "description": "`{ track: heroPoints, by: 1 }`: a numeric track of a sheet kind, and how much of it a reroll takes. The reroll is refused when the track holds less.",
+      "type": "object",
+      "properties": {
+        "track": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Required: the key of a numeric track on a sheet kind of the system."
+        },
+        "by": {
+          "type": "integer",
+          "description": "How much to take: a whole number of at least 1. Default 1."
         }
       },
       "additionalProperties": false

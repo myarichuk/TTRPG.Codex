@@ -275,6 +275,13 @@ else
                         {
                             <DiceResult Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" CheckDieIndex="lastRoll.CheckDieIndex" Total="lastRoll.Total" Text="@lastRoll.Result" Outcome="@LastRollOutcome" Mark="@lastRoll.Mark" Dc="lastRoll.Dc" />
                             <p class="field-hint mb-0" data-testid="roll-where">@(lastRollShared ? L["Actor.Sheet.RollShared"] : L["Actor.Sheet.RollPrivate"])</p>
+                            @foreach (var choice in RerollChoicesOf(lastRoll))
+                            {
+                                var key = choice.Key;
+                                var rolled = lastRoll;
+                                <RerollButton Label="@(system?.DisplayValue(choice.Label) ?? choice.Label)" Cost="choice.Cost" Track="@(system?.DisplayValue(choice.Track) ?? choice.Track)" Roll="@RerollRollText(rolled)" CanPay="choice.CanPay"
+                                              OnReroll="() => RerollAsync(rolled, key)" TestId="@($"sheet-reroll-{key}")" />
+                            }
                         }
                         else
                         {
@@ -370,6 +377,13 @@ else
                     <p class="mb-1"><strong data-testid="sheet-roll-outcome">@(sheetRoll.Outcome is { } outcome ? system!.DisplayValue(outcome) : SheetView.Format(sheetRoll.Totals().FirstOrDefault()))</strong>
                         <span class="small-muted ms-2" data-testid="sheet-roll-dice"><bdi>@L["Actor.Sheet.RollDice", string.Join(" ", sheetRoll.Kept), SheetView.Format(sheetRoll.Totals().FirstOrDefault())]</bdi></span></p>
                     <RollBonusList Bonuses="sheetRoll.Bonuses" Caption="@L["Actor.Bonus.Counted"]" Pool="@(system?.Rolls.FirstOrDefault(r => r.Key == sheetRoll.Definition)?.Pool != null)" TestId="sheet-roll-bonuses" Names="BonusNames" />
+                    @foreach (var choice in RerollChoicesOf(sheetRollEntry))
+                    {
+                        var key = choice.Key;
+                        var rolled = sheetRollEntry;
+                        <RerollButton Label="@(system?.DisplayValue(choice.Label) ?? choice.Label)" Cost="choice.Cost" Track="@(system?.DisplayValue(choice.Track) ?? choice.Track)" Roll="@RerollRollText(rolled)" CanPay="choice.CanPay"
+                                      OnReroll="() => RerollAsync(rolled, key)" TestId="@($"sheet-roll-reroll-{key}")" />
+                    }
                     @if (sheetRollNote != null)
                     {
                         <p class="small-muted mb-0">@sheetRollNote</p>
@@ -630,6 +644,61 @@ else
 
     /// <summary>The last roll's degree in words (against a DC, by the system's check roll); null when it has none.</summary>
     private string? LastRollOutcome => lastRoll?.Outcome is { } outcome ? DegreeWords.Of(L, system, outcome) ?? outcome : null;
+
+    // ---- Rerolls: what the system offers on the last roll, when it is the table's (in the shared roll log). ----
+
+    private RollLogEntry? sheetRollEntry;
+
+    private IReadOnlyList<RerollChoice> RerollChoicesOf(RollLogEntry? roll)
+    {
+        if (roll == null || actor == null || access == null || !CanEdit) return Array.Empty<RerollChoice>();
+        var live = RuntimeManager.TryGet(CampaignId);
+        if (live?.ActiveSession == null || !live.HasActor(actor.Id)) return Array.Empty<RerollChoice>();
+        return TableVisibility.RerollsOnSheet(system, live.Snapshot, roll, actor, access.IsDm, CanEdit);
+    }
+
+    private string RerollRollText(RollLogEntry? roll) => roll == null ? string.Empty : $"{roll.Label ?? roll.Expression}, {roll.Total}";
+
+    private async Task RerollAsync(RollLogEntry? roll, string key)
+    {
+        if (roll == null || actor == null || access == null || currentUserId == null) return;
+        var live = RuntimeManager.TryGet(CampaignId);
+        if (live?.ActiveSession == null) return;
+        var command = new RerollCommand(actor.Id, roll.Id, key, currentUserId, access.IsDm);
+        try
+        {
+            await live.EnqueueAsync(command);
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException or InvalidOperationException)
+        {
+            flash = Flash.Error(L["Actor.Sheet.RerollFailed"]);
+            return;
+        }
+
+        if (command.Failed != RerollFailure.None || command.Standing is not { } standing)
+        {
+            flash = Flash.Error(command.Failed == RerollFailure.Short ? L["Combat.RerollShort"] : L["Actor.Sheet.RerollFailed"]);
+            return;
+        }
+
+        var newStands = ReferenceEquals(standing, command.Made);
+        if (ReferenceEquals(roll, lastRoll))
+        {
+            lastRoll = standing;
+            lastRollShared = true;
+        }
+
+        if (ReferenceEquals(roll, sheetRollEntry))
+        {
+            if (newStands && command.Rolled != null) sheetRoll = command.Rolled;
+            sheetRollEntry = standing;
+            sheetRollNote = newStands ? L["Actor.Sheet.RerollAtTable"] : L["Actor.Sheet.RerollKept", standing.Total];
+        }
+        else if (!newStands)
+        {
+            flash = Flash.Info(L["Actor.Sheet.RerollKept", standing.Total]);
+        }
+    }
 
     /// <summary>An action's roll: an attack is a check like any other (the sheet's roll mode counts); damage is its own dice.</summary>
     private Task RollActionAsync(ActionRoll roll) =>
@@ -1428,6 +1497,7 @@ else
     {
         if (system == null || resolver == null || actor == null || currentUserId == null) return;
         sheetRollNote = null;
+        sheetRollEntry = null;
 
         // With the table live, the roll is the table's: made on the live sheet, in the shared roll log, its costs applied there.
         var live = RuntimeManager.TryGet(CampaignId);
@@ -1436,6 +1506,7 @@ else
             var command = new MakeRollCommand(actor.Id, currentUserId, request);
             await live.EnqueueAsync(command);
             sheetRoll = command.Rolled;
+            sheetRollEntry = command.Entry;
             if (command.Failed != null) flash = Flash.Error(L["Actor.Sheet.RollFailed", command.Failed]);
             else sheetRollNote = L["Actor.Sheet.RollAtTable"];
             return;

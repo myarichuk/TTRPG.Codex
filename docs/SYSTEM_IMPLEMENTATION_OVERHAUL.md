@@ -161,6 +161,31 @@ from dice sides. **Inputs** are named parameters supplied when the roll is made.
 (position, effect, a DC) or other participants (teamwork). A roll request records who supplied each input, so the
 session log and secrecy can show it.
 
+#### Rerolls (system level)
+A system may declare ways to make a roll again at a cost. The contract names no game: it says what is spent and which result stands.
+
+```yaml
+rerolls:
+  - key: lucky                    # required, unique
+    label: Lucky reroll           # the button's name; through the system's own translations (`values`)
+    spend: { track: luck, by: 1 } # a numeric track of a sheet kind; refused when the actor holds less. `by` is a whole number, default 1
+    keep: new                     # new (default): the second roll stands. higher: the higher total of the two stands
+```
+
+- The loader refuses a reroll with no key, a repeated key, no `spend`, a `track` that no sheet kind declares (or a slot track), a `by` under 1, and a
+  `keep` that is neither `new` nor `higher`.
+- The table offers each reroll on a roll made for an actor with a check die: a dice expression or a check, and a named roll that rolls one `1d20` and has no
+  `then` (a roll with a follow-up roll or intents cannot be replayed without doing what the first roll did a second time). The roll log entry carries what it
+  takes to make the roll again (`RollLogEntry.Replay`); older entries, hazard step checks and initiative or death save rolls have none and are not offered.
+- A roll is rerolled once, by any reroll: the first entry is marked `RerolledBy`, the new one `RerollOf`, and a reroll is never offered again. Both stay in the log.
+- It is offered to the GM and the actor's owner, on the table's roll log and on the sheet's roll card; the button is off, with the reason beside it, when the
+  actor cannot pay. A secret roll is offered to the GM only and its reroll is secret too.
+- Nothing is offered on a roll that kept the better of several dice (it dropped some), since that is a reroll-like effect already; the reroll is offered only
+  on an actor whose sheet kind has the `spend.track`; and a named roll must roll the system's own check die (`dice.check`).
+- `RerollCommand` is undoable: undo gives the cost back and clears the first roll's `RerolledBy` mark, so it can be rerolled again; both rolls stay in the log.
+  With `keep: higher` the log marks the roll that counts. A named roll rolled again costs nothing a second time (what its ticked bonuses spent was paid with the
+  first roll). With scripts off nothing changes: the reroll runs no script.
+
 ### Events → intents
 The table raises events: `damage`, `heal`, `damaged`, `healed` (after the built-in damage and healing), `roll` (with outcome),
 `turnStart`, `turnEnd`, `rest(name)`, `sessionStart`, `sessionEnd`, `advance`. A handler receives a read-only view of the event and returns **intents**. It

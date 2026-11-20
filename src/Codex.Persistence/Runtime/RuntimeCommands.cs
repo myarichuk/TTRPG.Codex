@@ -910,6 +910,7 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
         // Against a DC, the roll says its degree (the system's checkRoll); a system without one leaves the entry as it was.
         // On the sheet as the table has it, so a condition the table holds counts in the grade as it does in the bonus.
         CheckGrading.Apply(entry, runtime.System, runtime.Resolver, ActorId != null && runtime.GetActorDocument(ActorId) is { } actor ? runtime.LiveSheetOf(actor) : null, Dc);
+        entry.Replay = new RollReplay { Kind = RollReplay.OfExpression, Dc = Dc };
         _entry = entry;
         runtime.RecordRoll(entry);
     }
@@ -954,15 +955,40 @@ public sealed record MakeRollCommand(string ActorId, string RollerUserId, Codex.
     {
         _outcome = TableEvents.Roll(runtime, ActorId, Request, Dice ?? new RandomDiceSource(), out _rolled);
         if (_rolled is not { } roll) return;
-        var pool = runtime.System?.Rolls.FirstOrDefault(r => r.Key == roll.Definition)?.Pool != null;
-        runtime.RecordRoll(new RollLogEntry
+        var entry = EntryOf(runtime, ActorId, RollerUserId, roll, IsSecret);
+        // What it takes to make the same roll again: left out when the roll did more than roll (a follow-up roll, or intents of its own), since a second
+        // roll would stand beside what the first had already done.
+        if (Rerolls.CanReplay(runtime.System, roll.Definition))
         {
-            ActorId = ActorId,
-            RollerUserId = RollerUserId,
+            entry.Replay = new RollReplay
+            {
+                Kind = RollReplay.OfDefinition,
+                RollKey = Request.Definition,
+                Inputs = Request.Inputs.ToDictionary(i => i.Key, i => i.Value, StringComparer.Ordinal),
+                SuppliedBy = Request.SuppliedBy.ToDictionary(i => i.Key, i => i.Value, StringComparer.Ordinal),
+                OptIns = Request.OptIns.ToList()
+            };
+        }
+
+        Entry = entry;
+        runtime.RecordRoll(entry);
+    }
+
+    /// <summary>Once applied: the roll as logged, null when it could not be made.</summary>
+    public RollLogEntry? Entry { get; private set; }
+
+    /// <summary>The log entry for a roll made from a definition: the same for a roll and for one made again.</summary>
+    internal static RollLogEntry EntryOf(CampaignRuntime runtime, string actorId, string rollerUserId, Codex.Core.Rules.SheetRollResult roll, bool isSecret)
+    {
+        var pool = runtime.System?.Rolls.FirstOrDefault(r => r.Key == roll.Definition)?.Pool != null;
+        return new RollLogEntry
+        {
+            ActorId = actorId,
+            RollerUserId = rollerUserId,
             Expression = roll.Definition,
             Result = string.Join(" ", roll.Kept) + " = " + roll.Total.ToString(System.Globalization.CultureInfo.InvariantCulture),
             Total = (int)Math.Round(roll.Total),
-            IsSecret = IsSecret,
+            IsSecret = isSecret,
             // The bonuses the roller ticked are said in the label, so the table's log shows what counted.
             Label = Codex.Core.Rules.RollBonusLabel.Of(roll.Label ?? roll.Definition, roll.Bonuses, pool),
             // The same words as parts, so each reader's log line can say them in their language; Label stays the English fallback.
@@ -974,7 +1000,7 @@ public sealed record MakeRollCommand(string ActorId, string RollerUserId, Codex.
             Modifier = (int)Math.Round(roll.Modifier),
             Outcome = roll.Outcome,
             Mark = roll.Mark
-        });
+        };
     }
 
     public SessionEvent Describe(CampaignRuntime runtime)
@@ -1012,7 +1038,19 @@ public sealed record MakeCheckCommand(CheckRequest Request, string RollerUserId)
     /// <summary>Once applied: what the check came to.</summary>
     public CheckResult? Result => _result;
 
-    public void Apply(CampaignRuntime runtime) => _result = runtime.Checks.Make(Request, RollerUserId);
+    public void Apply(CampaignRuntime runtime)
+    {
+        _result = runtime.Checks.Make(Request, RollerUserId);
+        // The GM's check can be made again (a hazard's own step checks write no replay: the hazard's ledger holds what they decided).
+        if (_result.Logged is { } logged)
+        {
+            logged.Replay = new RollReplay
+            {
+                Kind = RollReplay.OfCheck, Check = Request.Check, CheckKind = Request.Kind?.ToString(), Dc = Request.Dc, Bonus = Request.Bonus, Dice = Request.Dice,
+                OptIns = Request.OptIns.ToList()
+            };
+        }
+    }
 
     public SessionEvent Describe(CampaignRuntime runtime) =>
         SessionEvent.From("DiceRoll", new[] { CheckMessages.Of(runtime, Request, _result) }, new[] { Request.ActorId });

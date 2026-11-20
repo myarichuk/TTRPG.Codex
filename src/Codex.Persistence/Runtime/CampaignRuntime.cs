@@ -469,6 +469,13 @@ public sealed class CampaignRuntime : IAsyncDisposable
             }
         }
 
+        // Taking a reroll back gives the roll its chance again: the first roll is no longer marked as rerolled. Both rolls stay in the log.
+        if (_rerollPoints.Remove(actorId, out var rerolled) && ReferenceEquals(rerolled.Point, point))
+        {
+            rerolled.Old.RerolledBy = null;
+            _pendingRerollMarks.Add((rerolled.Old.Id, null));
+        }
+
         _undo.Remove(actorId);
         _dirtyActorIds.Add(actorId);
         return kind;
@@ -490,13 +497,19 @@ public sealed class CampaignRuntime : IAsyncDisposable
     {
         var target = GetEntity(actorId);
         var before = target is { } t ? ActorState.Of(t, GetActorDocument(actorId)) : null;
+        _rerollInFlight = null;
         changes();
+        var rerolled = _rerollInFlight;
+        _rerollInFlight = null;
         if (target is { IsAlive: true } changed && before != null)
         {
             var after = ActorState.Of(changed, GetActorDocument(actorId));
             if (!after.SameAs(before) || after.SheetKeysChangedFrom(before).Count > 0)
             {
-                _undo[actorId] = new UndoPoint(kind, before, after);
+                var point = new UndoPoint(kind, before, after);
+                _undo[actorId] = point;
+                if (rerolled is { } r && r.ActorId == actorId) _rerollPoints[actorId] = (point, r.Old);
+                else _rerollPoints.Remove(actorId);
             }
         }
 
@@ -824,6 +837,25 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _pendingRolls.Add(entry);
     }
 
+    /// <summary>A roll of the live session's log by its id; null when there is none (or no session).</summary>
+    internal RollLogEntry? FindRoll(string id) => _activeSession?.RollLog.FirstOrDefault(r => r.Id == id);
+
+    // Rolls already stored that a reroll has since marked (old id, the id of the roll that rerolled it), written onto the stored log with the next rows.
+    private readonly List<(string Id, string? RerolledBy)> _pendingRerollMarks = new();
+
+    // The reroll an undoable command is making (set from inside it), and, per actor, the roll whose mark the actor's last change set: undoing that change clears it.
+    private (string ActorId, RollLogEntry Old)? _rerollInFlight;
+    private readonly Dictionary<string, (object Point, RollLogEntry Old)> _rerollPoints = new();
+
+    internal void NoteReroll(string actorId, RollLogEntry old) => _rerollInFlight = (actorId, old);
+
+    /// <summary>Marks <paramref name="rolled"/> as rerolled by <paramref name="by"/>, in the live log and in the stored one.</summary>
+    internal void MarkRerolled(RollLogEntry rolled, RollLogEntry by)
+    {
+        rolled.RerolledBy = by.Id;
+        _pendingRerollMarks.Add((rolled.Id, by.Id));
+    }
+
     /// <summary>Appends a quick note to the live session (3.7); a no-op when no session is
     /// attached, matching <see cref="AppendSessionEventAsync"/>'s guard.</summary>
     internal void AddSessionNote(SessionNote note)
@@ -1123,6 +1155,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
         if (_sessionRepository == null || _activeSession == null)
         {
             _pendingRolls.Clear();
+            _pendingRerollMarks.Clear();
             _pendingNotes.Clear();
             _pendingNoteChanges.Clear();
             _pendingEncounterIds.Clear();
@@ -1137,6 +1170,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
         // recap or title the DM saved from the session page in the meantime survives (F3).
         var events = _pendingEvents.ToArray();
         var rolls = _pendingRolls.ToArray();
+        var rerollMarks = _pendingRerollMarks.ToArray();
         var notes = _pendingNotes.ToArray();
         var noteChanges = _pendingNoteChanges.ToArray();
         var encounterIds = _pendingEncounterIds.ToArray();
@@ -1144,6 +1178,11 @@ public sealed class CampaignRuntime : IAsyncDisposable
         {
             stored.Events.AddRange(events);
             stored.RollLog.AddRange(rolls);
+            foreach (var (id, by) in rerollMarks)
+            {
+                if (stored.RollLog.FirstOrDefault(r => r.Id == id) is { } marked) marked.RerolledBy = by;
+            }
+
             stored.Notes.AddRange(notes);
             foreach (var (id, changed) in noteChanges)
             {
@@ -1158,6 +1197,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
         _pendingEvents.Clear();
         _pendingRolls.Clear();
+        _pendingRerollMarks.Clear();
         _pendingNotes.Clear();
         _pendingNoteChanges.Clear();
         _pendingEncounterIds.Clear();

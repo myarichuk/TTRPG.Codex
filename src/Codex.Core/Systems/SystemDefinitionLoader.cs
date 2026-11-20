@@ -280,6 +280,11 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        foreach (var error in ValidateRerolls(definition))
+        {
+            yield return error;
+        }
+
         foreach (var error in ValidateHazards(definition))
         {
             yield return error;
@@ -835,6 +840,42 @@ public static class SystemDefinitionLoader
             {
                 yield return $"moment '{moment.Key}': onSet '{moment.OnSet}' is not an input value of any sheet kind.";
             }
+        }
+    }
+
+    /// <summary>The problems with the system's <c>rerolls</c>: a key that is unique, a <c>spend</c> naming a numeric track of a sheet kind (a slot track cannot be
+    /// spent from) and a whole amount of at least 1, and a <c>keep</c> of <c>new</c> or <c>higher</c>.</summary>
+    private static IEnumerable<string> ValidateRerolls(SystemDefinition definition)
+    {
+        var numeric = definition.SheetKinds.SelectMany(k => k.Tracks)
+            .Where(t => !string.Equals(t.Display, "slots", StringComparison.OrdinalIgnoreCase) && t.Holds == null).Select(t => t.Key).ToHashSet(StringComparer.Ordinal);
+        var all = definition.SheetKinds.SelectMany(k => k.Tracks).Select(t => t.Key).ToHashSet(StringComparer.Ordinal);
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var reroll in definition.Rerolls)
+        {
+            if (string.IsNullOrWhiteSpace(reroll.Key))
+            {
+                yield return "every reroll needs a key.";
+                continue;
+            }
+
+            var where = $"rerolls ({reroll.Key})";
+            if (!keys.Add(reroll.Key)) yield return $"{where}: the key is used twice.";
+            if (reroll.Spend == null || string.IsNullOrWhiteSpace(reroll.Spend.Track))
+            {
+                yield return $"{where}: a reroll needs a spend with the track it takes from.";
+            }
+            else if (!all.Contains(reroll.Spend.Track))
+            {
+                yield return $"{where}: spend.track '{reroll.Spend.Track}' is not a track of any sheet kind of the system.";
+            }
+            else if (!numeric.Contains(reroll.Spend.Track))
+            {
+                yield return $"{where}: spend.track '{reroll.Spend.Track}' is a slot track; a reroll spends from a numeric track.";
+            }
+
+            if (reroll.Spend is { By: < 1 }) yield return $"{where}: spend.by must be a whole number of at least 1.";
+            if (!string.Equals(reroll.Keep, "new", StringComparison.OrdinalIgnoreCase) && !reroll.KeepsHigher) yield return $"{where}: keep '{reroll.Keep}' must be new or higher.";
         }
     }
 

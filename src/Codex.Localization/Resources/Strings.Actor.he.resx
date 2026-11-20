@@ -496,6 +496,9 @@
   <data name="Actor.Widget.RemoveOne" xml:space="preserve"><value>הסרת {0}</value></data>
   <data name="Actor.Widget.SlotsUsed" xml:space="preserve"><value>בשימוש {0} מתוך {1}</value></data>
   <data name="Actor.Sheet.RollAtTable" xml:space="preserve"><value>ההטלה נעשתה ליד השולחן: היא ביומן ההטלות המשותף, ומה שהיא עולה הוחל שם.</value></data>
+  <data name="Actor.Sheet.RerollFailed" xml:space="preserve"><value>לא ניתן היה להטיל שוב.</value></data>
+  <data name="Actor.Sheet.RerollKept" xml:space="preserve"><value>ההטלה הקודמת גבוהה יותר, ולכן היא נשארת: {0}.</value></data>
+  <data name="Actor.Sheet.RerollAtTable" xml:space="preserve"><value>ההטלה חזרה ליד השולחן: שתי ההטלות ביומן המשותף, והמחיר נגבה שם.</value></data>
   <data name="Actor.Rule.ClockSegments" xml:space="preserve"><value>{0}: לשעון יש {2} מקטעים, לא {1}.</value></data>
   <data name="Actor.Rule.ClockFilled" xml:space="preserve"><value>{0}: {1} מלאים מתוך {2}.</value></data>
   <data name="Actor.Rule.ClockVisibility" xml:space="preserve"><value>{0}: "{1}" אינו אפשרות; שעון שמור למנחה או מוצג לשחקנים.</value></data>

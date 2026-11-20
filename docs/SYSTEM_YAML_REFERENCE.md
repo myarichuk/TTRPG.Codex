@@ -47,6 +47,7 @@ A whole game system described as data (`system.yaml`). This is what lets a homeb
 | `hazards` | [HazardRules](#hazardrules) | What the system says about hazards beyond the type's own fields: how hard a hazard of each level is. Absent on a system with no hazard type. |
 | `rolls` | list of [RollDefinition](#rolldefinition) | Named rolls with inputs and outcomes (see Rolls.cs). |
 | `moments` | list of [MomentDefinition](#momentdefinition) | The system's own moments (`downtime`, `loadChosen`): named times at which counters refill and an `events:` handler of the same name runs. Rests (`vitals.rests`), `initiative` and `dawn` are moments too and need no declaring. |
+| `rerolls` | list of [SystemRerollDefinition](#systemrerolldefinition) | Ways a roll already made can be made again at a cost: `{ key, label, spend: { track, by }, keep }`. The table offers each on a roll an actor made with a check die, to the actor's owner and the GM, while the actor can pay. A roll is rerolled once, and a reroll is never rerolled. |
 | `events` | map of any | Event handlers by event name (`damage`, `turnStart`, `roll`): `{ builtin: name, ...options }`, `{ script: file#export }`, or a list of `{ when, intents }` lines. `damaged` and `healed` are raised after the table's own damage and healing, with what the vitals rules did (`dealt`, `before`, `after`, `max`); `damage` and `heal` replace that built-in path. Read as YAML gives it, and parsed by Codex.Core.Rules.SheetEvents, since a handler is written in either shape. |
 
 ## LicenseInfo
@@ -1357,3 +1358,23 @@ A moment the system declares: a named time at which feature counters refill (`re
 | `scope` | text (a number is text too) | `party` (the default): a time of the table, offered to the whole party on the console and on each sheet. `actor`: one creature's own act (a button on its sheet), never on the party bar, and no time a counter refills or a condition drops at. |
 | `while` | text (a number is text too) | A condition of the system: the button shows only while it holds on the sheet. Empty: always. |
 | `note` | text (a number is text too) | A short line shown beside the moment's button on the sheet, for what it does that the engine cannot read from its handler (a script). Shown through the system's own translations (`values`). |
+
+## SystemRerollDefinition
+
+One way to roll again (`rerolls:`): what it is called, what it costs, and which of the two rolls counts. Names no game: a system says whether it is a point, a fate token or anything else its sheet tracks.
+
+| Key | Type | What it is |
+|---|---|---|
+| `key` | text (a number is text too) | Required, unique: the reroll's name, which a roll log entry keeps as the one that rerolled it. |
+| `label` | text (a number is text too) | The reroll's name as the app shows it ("Hero Point reroll"), through the system's own translations; the key when empty. |
+| `spend` | [RerollSpend](#rerollspend) | What the actor pays. Required. |
+| `keep` | text (a number is text too) | `new` (the default): the second roll stands, whatever it comes to. `higher`: the higher total of the two stands. |
+
+## RerollSpend
+
+`{ track: heroPoints, by: 1 }`: a numeric track of a sheet kind, and how much of it a reroll takes. The reroll is refused when the track holds less.
+
+| Key | Type | What it is |
+|---|---|---|
+| `track` | text (a number is text too) | Required: the key of a numeric track on a sheet kind of the system. |
+| `by` | whole number | How much to take: a whole number of at least 1. Default 1. |

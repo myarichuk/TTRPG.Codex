@@ -27,6 +27,9 @@ public sealed class SheetRollRequest
     /// <summary>The ids of the opt-in bonuses the roller ticked for this roll (<see cref="SheetRolls.OptIns"/> lists what is offered). An id the
     /// roll does not offer is ignored. Only the roll named here counts them: not its follow-ups, and not a group's participants.</summary>
     public IReadOnlyCollection<string> OptIns { get; init; } = Array.Empty<string>();
+
+    /// <summary>The ticked opt-ins were paid for when an earlier roll was made (a roll made again): they count in the roll, but what they cost is neither checked nor asked.</summary>
+    public bool OptInsPaid { get; init; }
 }
 
 /// <summary>Something a roll asks the table to do (overhaul section 3, "Events → intents"): <c>adjust</c> a track and so on.
@@ -113,7 +116,7 @@ public static partial class SheetRolls
         ILinkedSheets? linked = null)
     {
         var supplied = request.Inputs.ToDictionary(i => i.Key, i => new RollInput(i.Value, request.SuppliedBy.GetValueOrDefault(i.Key) ?? ""), StringComparer.Ordinal);
-        return new Roller(system, resolver, request.Participants, request.OptIns.ToHashSet(StringComparer.Ordinal), linked).Make(Definition(system, request.Definition), sheet, supplied, parent: null, dice, depth: 0);
+        return new Roller(system, resolver, request.Participants, request.OptIns.ToHashSet(StringComparer.Ordinal), linked, request.OptInsPaid).Make(Definition(system, request.Definition), sheet, supplied, parent: null, dice, depth: 0);
     }
 
     /// <summary>How a check against a DC came out, graded by the roll <c>dice.checkRoll</c> names: the first of its outcomes whose <c>when</c> holds for
@@ -260,7 +263,7 @@ public static partial class SheetRolls
     [GeneratedRegex(@"^\s*d(\d+)\s*$", RegexOptions.IgnoreCase)]
     private static partial Regex DieSides();
 
-    private sealed class Roller(SystemDefinition system, IEntryResolver resolver, IReadOnlyList<RollParticipant> participants, IReadOnlySet<string> ticked, ILinkedSheets? linked)
+    private sealed class Roller(SystemDefinition system, IEntryResolver resolver, IReadOnlyList<RollParticipant> participants, IReadOnlySet<string> ticked, ILinkedSheets? linked, bool optInsPaid = false)
     {
         public SheetRollResult Make(RollDefinition definition, IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, RollInput> supplied,
             IReadOnlyDictionary<string, RollInput>? parent, IDiceSource dice, int depth)
@@ -320,7 +323,7 @@ public static partial class SheetRolls
             };
 
             FollowUps(definition, sheet, model, inputs, names, result, dice, depth);
-            if (depth == 0) result.Intents.InsertRange(0, TickedIntents(definition, sheet, model, targets));
+            if (depth == 0 && !optInsPaid) result.Intents.InsertRange(0, TickedIntents(definition, sheet, model, targets));
             return result;
         }
 
