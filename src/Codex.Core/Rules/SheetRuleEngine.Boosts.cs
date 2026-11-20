@@ -7,10 +7,15 @@ namespace Codex.Core.Rules;
 /// while a choice is open; <see cref="Key"/> the sheet key a choice is stored under (null for a fixed boost).</summary>
 public sealed record BoostSlot(string Id, string Kind, IReadOnlyList<string> Options, string? Picked, string? Key);
 
-/// <summary>One source of boosts as the sheet shows it: its slots, its flaws (attribute keys), and the trade, when the source offers one
+/// <summary>One source of boosts as the sheet shows it: its slots, its flaws (attribute keys; the entry's own that apply, not the voluntary ones, which are <see cref="Volunteered"/> and stored at <see cref="FlawsKey"/>), and the trade, when the source offers one
 /// (<see cref="TradeKey"/> is where the fixed boosts given up are stored; <see cref="Given"/> is what is stored there and <see cref="Traded"/> what was applied: they differ while the player has ticked too few).</summary>
 public sealed record BoostSourceSummary(string Key, string Label, IReadOnlyList<BoostSlot> Slots, IReadOnlyList<string> Flaws,
-    BoostTrade? Trade, string? TradeKey, IReadOnlyList<string> TradeOptions, IReadOnlyList<string> Traded, IReadOnlyList<string> Given);
+    BoostTrade? Trade, string? TradeKey, IReadOnlyList<string> TradeOptions, IReadOnlyList<string> Traded, IReadOnlyList<string> Given,
+    string? FlawsKey = null, IReadOnlyList<string>? Volunteered = null)
+{
+    /// <summary>The flaws the player added (a source with voluntary flaws); <c>Flaws</c> holds the entry's own that still apply.</summary>
+    public IReadOnlyList<string> VolunteeredFlaws => Volunteered ?? Array.Empty<string>();
+}
 
 /// <summary>The boosts of a sheet: its sources, and the attributes sitting on half a step (<see cref="Halves"/>).</summary>
 public sealed record BoostSummary(IReadOnlyList<BoostSourceSummary> Sources, IReadOnlySet<string> Halves);
@@ -43,6 +48,7 @@ public sealed partial class SheetRuleEngine
     public const string BoostSameKey = "Actor.Rule.BoostSame";
     public const string BoostCantKey = "Actor.Rule.BoostCant";
     public const string BoostTradeKey = "Actor.Rule.BoostTrade";
+    public const string FlawTwiceKey = "Actor.Rule.FlawTwice";
 
     private static string BoostChoiceKey(BoostSource source, string? entryId, string slot) =>
         BoostKeyPrefix + source.Key + "__" + (entryId == null ? "" : entryId + ".") + slot;
@@ -122,7 +128,22 @@ public sealed partial class SheetRuleEngine
                         traded = given;
                         foreach (var g in given) fixedBoosts.Remove(g);
                         for (var i = 1; i <= trade.Free; i++) slots.Add(("t" + i, BoostKinds.Free, AllAttributeKeys()));
+                        // A trade that drops flaws replaces the entry's boosts and flaws both; voluntary flaws are the player's own and stay.
+                        if (string.Equals(trade.Flaws, BoostTrade.DropFlaws, StringComparison.OrdinalIgnoreCase)) flaws.Clear();
                     }
+                }
+            }
+
+            // Voluntary flaws: the player's own, on top of the entry's. No attribute takes two from this source (its own included).
+            string? flawsKey = null;
+            var volunteered = new List<string>();
+            if (source.VoluntaryFlaws && entryId != null)
+            {
+                flawsKey = BoostChoiceKey(source, entryId, "flaws");
+                volunteered = RawList(sheet, flawsKey).Select(MatchAttribute).OfType<AttributeDefinition>().Select(a => a.Key).ToList();
+                foreach (var twice in flaws.Concat(volunteered).GroupBy(f => f).Where(g => g.Count() > 1).Select(g => g.Key))
+                {
+                    violations?.Add(new RuleViolation(flawsKey, $"{source.Label}: {Label(twice)} can take only one flaw.", FlawTwiceKey, new object?[] { source.Label, Label(twice) }));
                 }
             }
 
@@ -158,7 +179,7 @@ public sealed partial class SheetRuleEngine
                 // The values are modifiers: a boost adds 1, a flaw takes 1, and a boost at PartialFrom or above is a mark that the
                 // next such boost turns into +1 (the pending partial boost, kept in pendingHalves, shown as a half step).
                 // A flaw only lowers the modifier (the book's flaw rule says nothing of a mark), so a pending partial boost stays, as in score mode.
-                foreach (var flaw in flaws) score[flaw] -= 1;
+                foreach (var flaw in flaws.Concat(volunteered)) score[flaw] -= 1;
                 foreach (var attribute in used)
                 {
                     if (score[attribute] < rules.PartialFrom) score[attribute] += 1;
@@ -166,13 +187,13 @@ public sealed partial class SheetRuleEngine
                     else score[attribute] += 1;
                 }
 
-                summaries.Add(new BoostSourceSummary(source.Key, source.Label, shown, flaws, source.Trade, tradeKey, tradeOptions, traded, given));
+                summaries.Add(new BoostSourceSummary(source.Key, source.Label, shown, flaws, source.Trade, tradeKey, tradeOptions, traded, given, flawsKey, volunteered));
                 continue;
             }
 
-            foreach (var flaw in flaws) score[flaw] -= BoostStep;
+            foreach (var flaw in flaws.Concat(volunteered)) score[flaw] -= BoostStep;
             foreach (var attribute in used) score[attribute] += AttributeDefinition.HalfMinusFive(score[attribute]) >= rules.PartialFrom ? 1 : BoostStep;
-            summaries.Add(new BoostSourceSummary(source.Key, source.Label, shown, flaws, source.Trade, tradeKey, tradeOptions, traded, given));
+            summaries.Add(new BoostSourceSummary(source.Key, source.Label, shown, flaws, source.Trade, tradeKey, tradeOptions, traded, given, flawsKey, volunteered));
         }
 
         var halves = onModifierScale ? pendingHalves : system.Attributes.Where(a => (score[a.Key] - a.Default) % 2 != 0).Select(a => a.Key).ToHashSet();

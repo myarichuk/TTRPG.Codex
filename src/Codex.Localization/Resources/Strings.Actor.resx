@@ -280,6 +280,10 @@
   <data name="Actor.Sheet.BoostPartialNote" xml:space="preserve"><value>A boost to a modifier of +{0} or above is a partial boost: it is marked and the modifier stays. A second partial boost adds 1 and clears the mark.</value></data>
   <data name="Actor.Sheet.BoostHalfNote" xml:space="preserve"><value>A boost at +{0} or above counts as half a step. Two halves make one step, and a half is shown as ½.</value></data>
   <data name="Actor.Sheet.BoostTradeGive" xml:space="preserve"><value>Give up: {0}</value></data>
+  <data name="Actor.Sheet.BoostTradeDropsFlaws" xml:space="preserve"><value>Its flaw goes too.</value></data>
+  <data name="Actor.Sheet.BoostVoluntary" xml:space="preserve"><value>{0}: extra flaws, one per attribute</value></data>
+  <data name="Actor.Sheet.BoostAddFlaw" xml:space="preserve"><value>Add a flaw to {0}</value></data>
+  <data name="Actor.Sheet.BoostRemoveFlaw" xml:space="preserve"><value>Remove the flaw from {0}</value></data>
   <data name="Actor.Sheet.PrintedNote" xml:space="preserve"><value>As printed: these are the stat block's scores. Background bonuses and score increases from picks are not added; pick another method to add them.</value></data>
   <data name="Actor.Sheet.PointBuyLead" xml:space="preserve"><value>Point buy: </value></data>
   <data name="Actor.Sheet.PointBuyTail" xml:space="preserve"><value> of {0, plural, one{# point} other{# points}} spent. Scores run from {1} to {2} before bonuses.</value></data>
@@ -446,6 +450,7 @@
   <data name="Actor.Rule.BoostSame" xml:space="preserve"><value>{0}: each boost needs a different attribute, and {1} has more than one.</value></data>
   <data name="Actor.Rule.BoostCant" xml:space="preserve"><value>{0}: {1} is not one of the choices for this boost.</value></data>
   <data name="Actor.Rule.BoostTrade" xml:space="preserve"><value>{0}: to trade, give up exactly {1} of its fixed boosts.</value></data>
+  <data name="Actor.Rule.FlawTwice" xml:space="preserve"><value>{0}: {1} can take only one flaw.</value></data>
   <data name="Actor.Rule.ArmorUntrained" xml:space="preserve"><value>{0}: {1} isn't trained with {2}. Without training you have disadvantage on checks, attacks and saves that use Strength or Dexterity, and can't cast spells.</value></data>
   <data name="Actor.Rule.ArmorStrength" xml:space="preserve"><value>{0}: needs Strength {1}, or your Speed drops by 10 feet.</value></data>
   <data name="Actor.Rule.ArmorStealth" xml:space="preserve"><value>{0}: gives disadvantage on Stealth checks.</value></data>

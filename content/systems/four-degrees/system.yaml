@@ -714,7 +714,10 @@ sheetRules:
     boosts:
       label: Boosts
       sources:
-        - { key: ancestry, label: Ancestry, field: ancestry, trade: { fixed: 2, free: 1 } }
+        # The trade is the rules entry `alternate-ancestry-boosts`: two free boosts instead of the ancestry's boosts AND flaws, so the flaw drops.
+        # Voluntary flaws are the entry `voluntary-flaws`: any number of extra flaws, never two on one attribute. The book gives nothing back for them
+        # (no extra boost), so none is modelled; whether to take them is the table's call.
+        - { key: ancestry, label: Ancestry, field: ancestry, trade: { fixed: 2, free: 1, flaws: drop }, voluntaryFlaws: true }
         # The background gives two boosts: one of two attributes it names and one free (the entry's `boosts`, as an ancestry's are).
         - { key: background, label: Background, field: background }
         - { key: class,    label: Class,    field: class }

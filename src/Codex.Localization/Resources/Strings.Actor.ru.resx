@@ -280,6 +280,10 @@
   <data name="Actor.Sheet.BoostPartialNote" xml:space="preserve"><value>Повышение модификатора +{0} и выше — частичное: оно отмечается, а модификатор не меняется. Второе частичное повышение добавляет 1 и снимает отметку.</value></data>
   <data name="Actor.Sheet.BoostHalfNote" xml:space="preserve"><value>Повышение при модификаторе +{0} и выше считается за полшага. Два полшага дают один шаг, половина показана как ½.</value></data>
   <data name="Actor.Sheet.BoostTradeGive" xml:space="preserve"><value>Отдать: {0}</value></data>
+  <data name="Actor.Sheet.BoostTradeDropsFlaws" xml:space="preserve"><value>Слабость при этом тоже уходит.</value></data>
+  <data name="Actor.Sheet.BoostVoluntary" xml:space="preserve"><value>{0}: дополнительные слабости, не больше одной на характеристику</value></data>
+  <data name="Actor.Sheet.BoostAddFlaw" xml:space="preserve"><value>Добавить слабость: {0}</value></data>
+  <data name="Actor.Sheet.BoostRemoveFlaw" xml:space="preserve"><value>Убрать слабость: {0}</value></data>
   <data name="Actor.Sheet.PrintedNote" xml:space="preserve"><value>Как в описании: это значения из описания существа. Бонусы предыстории и увеличения характеристик от выборов не добавляются; выберите другой способ, чтобы их учесть.</value></data>
   <data name="Actor.Sheet.PointBuyLead" xml:space="preserve"><value>Покупка очков: </value></data>
   <data name="Actor.Sheet.PointBuyTail" xml:space="preserve"><value> из {0, plural, one{# очка} few{# очков} many{# очков} other{# очка}} потрачено. Значения идут от {1} до {2} до учёта бонусов.</value></data>
@@ -446,6 +450,7 @@
   <data name="Actor.Rule.BoostSame" xml:space="preserve"><value>{0}: каждое повышение идёт в другую характеристику, а в «{1}» их больше одного.</value></data>
   <data name="Actor.Rule.BoostCant" xml:space="preserve"><value>{0}: «{1}» не подходит для этого повышения.</value></data>
   <data name="Actor.Rule.BoostTrade" xml:space="preserve"><value>{0}: для обмена отдайте ровно столько постоянных повышений: {1}.</value></data>
+  <data name="Actor.Rule.FlawTwice" xml:space="preserve"><value>{0}: у «{1}» может быть только одна слабость.</value></data>
   <data name="Actor.Rule.ArmorUntrained" xml:space="preserve"><value>{0}: класс «{1}» не обучен: {2}. Без обучения у вас помеха при проверках, атаках и спасбросках с Силой или Ловкостью, и вы не можете накладывать заклинания.</value></data>
   <data name="Actor.Rule.ArmorStrength" xml:space="preserve"><value>{0}: требуется Сила {1}, иначе Скорость падает на 10 футов.</value></data>
   <data name="Actor.Rule.ArmorStealth" xml:space="preserve"><value>{0}: даёт помеху при проверках Скрытности.</value></data>

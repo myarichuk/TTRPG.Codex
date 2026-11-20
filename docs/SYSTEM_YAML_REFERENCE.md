@@ -465,6 +465,7 @@ One source of boosts: the entry a sheet field refers to, or a level milestone wi
 | `level` | whole number | A level milestone: from this level the source gives Free free boosts. |
 | `free` | whole number | How many free boosts a milestone gives. Default 0. |
 | `trade` | [BoostTrade](#boosttrade) | Optional: the player may give up some of the source's fixed boosts for free ones. |
+| `voluntaryFlaws` | true or false | Optional, field sources only: the player may add flaws of their own on top of the entry's. They are stored beside the source's other choices (`boost__{key}__{entryId}.flaws`, one attribute each), lower that attribute, and give nothing back. No attribute takes two flaws from the source, the entry's own included. Default false. |
 
 ## BoostTrade
 
@@ -474,6 +475,7 @@ The trade a source allows: give up Fixed of its fixed boosts, get Free free ones
 |---|---|---|
 | `fixed` | whole number | How many fixed boosts are given up. Default 2. |
 | `free` | whole number | How many free boosts come back. Default 1. |
+| `flaws` | text (a number is text too) | What happens to the source's flaws once the trade is made: `keep` (they still apply) or `drop` (the trade replaces the boosts and the flaws both). Default `keep`. |
 
 ## DerivedField
 
