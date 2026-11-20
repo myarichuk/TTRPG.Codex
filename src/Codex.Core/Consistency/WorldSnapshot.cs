@@ -128,4 +128,12 @@ public interface IConsistencyCheck
     string Name { get; }
 
     IEnumerable<Issue> Run(WorldSnapshot snapshot);
+
+    /// <summary>
+    /// <see cref="Run(WorldSnapshot)"/> for a caller with a time budget. A check that loops over large inputs (the plain-text mention scan, the sheet
+    /// rules) looks at <paramref name="cancel"/> inside its loop and throws <see cref="OperationCanceledException"/>; the token is the only thing it
+    /// reads besides the snapshot, so the issues it returns are the same whenever it is not cancelled. The default runs the check as it is (the checker
+    /// still looks at the token between the issues it yields). Not part of the systems' plugin surface (<c>ICodexIssueCheck</c> is unchanged).
+    /// </summary>
+    IEnumerable<Issue> Run(WorldSnapshot snapshot, CancellationToken cancel) => Run(snapshot);
 }

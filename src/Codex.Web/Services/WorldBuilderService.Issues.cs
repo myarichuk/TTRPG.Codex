@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Codex.Core.Consistency;
 using Codex.Persistence;
 
@@ -47,21 +48,50 @@ public sealed partial class WorldBuilderService
     /// for any real campaign; this only means a pathological one can never hold up a chat message.</summary>
     public TimeSpan IssueSummaryBudget { get; set; } = TimeSpan.FromSeconds(5);
 
+    /// <summary>How long a campaign whose count note went over <see cref="IssueSummaryBudget"/> goes without one: its next messages skip the
+    /// check at once instead of paying the budget again each time. Then the note is tried again.</summary>
+    public TimeSpan IssueSummaryBackoff { get; set; } = TimeSpan.FromMinutes(10);
+
+    // The campaigns whose note went over the budget, and until when it is skipped. Per service (a singleton in the app, one per test), never static.
+    private readonly ConcurrentDictionary<string, DateTimeOffset> summarySkippedUntil = new(StringComparer.Ordinal);
+
+    /// <summary>The clock the budget and <see cref="IssueSummaryBackoff"/> are read on (the system's, unless a test sets its own).</summary>
+    public TimeProvider Clock { get; set; } = clock ?? TimeProvider.System;
+
     /// <summary>The one line the chat adds to the DM's message, counts only (never the list): null when nothing is open, when no checker
-    /// is available, when the check fails, or when it takes longer than <see cref="IssueSummaryBudget"/> (a message is never held up by it). Deterministic: the same issues give the same words.</summary>
+    /// is available, when the check fails, or when it takes longer than <see cref="IssueSummaryBudget"/> (a message is never held up by it). A campaign
+    /// that went over the budget is skipped, silently and at once, for <see cref="IssueSummaryBackoff"/>, so a pathological one costs the budget once
+    /// in that while, not on every message. Only the note is skipped: <c>list_issues</c>, the Issues panel and the apply's re-check run in full, with no
+    /// budget. Deterministic: the same issues give the same words.</summary>
     public async Task<string?> IssueSummaryAsync(CampaignDocument campaign, CampaignAccess access)
     {
-        using var budget = new CancellationTokenSource(IssueSummaryBudget);
+        if (summarySkippedUntil.TryGetValue(campaign.Id, out var until))
+        {
+            if (Clock.GetUtcNow() < until) return null;
+            summarySkippedUntil.TryRemove(campaign.Id, out _);
+        }
+
+        using var budget = new CancellationTokenSource(IssueSummaryBudget, Clock);
         try
         {
             return IssueSummaryOf(await OpenIssuesAsync(campaign, access, budget.Token));
         }
-        catch (Exception ex) when (ex is not OperationCanceledException || budget.IsCancellationRequested)
+        catch (OperationCanceledException) when (budget.IsCancellationRequested)
         {
-            // Over the budget or failed: no note (silently), the message goes on.
+            // Over the budget: no note (silently), the message goes on, and the next ones do not wait for it either.
+            if (summarySkippedUntil.Count >= MaxSkipped) summarySkippedUntil.Clear();
+            summarySkippedUntil[campaign.Id] = Clock.GetUtcNow() + IssueSummaryBackoff;
+            return null;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Failed: no note, the message goes on.
             return null;
         }
     }
+
+    // A bound on the campaigns remembered as over the budget; past it the list starts again (each then pays the budget once more).
+    private const int MaxSkipped = 1000;
 
     internal static string? IssueSummaryOf(IReadOnlyList<Issue>? open)
     {

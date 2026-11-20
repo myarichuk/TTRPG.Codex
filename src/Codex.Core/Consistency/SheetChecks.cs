@@ -55,7 +55,10 @@ public sealed class SheetRuleCheck : IConsistencyCheck
 {
     public string Name => CheckNames.SheetRule;
 
-    public IEnumerable<Issue> Run(WorldSnapshot s)
+    public IEnumerable<Issue> Run(WorldSnapshot s) => Run(s, CancellationToken.None);
+
+    /// <inheritdoc/>
+    public IEnumerable<Issue> Run(WorldSnapshot s, CancellationToken cancel)
     {
         if (s.System?.SheetRules == null || s.Enforcement == "off") yield break;
         var engine = new SheetRuleEngine(s.System, s.Library);
@@ -64,6 +67,7 @@ public sealed class SheetRuleCheck : IConsistencyCheck
 
         foreach (var a in s.Actors.Where(a => a.Role != ActorRole.Monster && !a.Retired))
         {
+            cancel.ThrowIfCancellationRequested();
             var (evaluation, failure) = Evaluate(engine, a, linked);
             if (evaluation == null)
             {

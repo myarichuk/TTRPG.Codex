@@ -52,15 +52,22 @@ public static class ConsistencyChecker
 
     /// <summary>Every issue the checks find, in <see cref="Issue.Order"/>, each id once. Two issues that would share an id (the same rule
     /// broken twice with the same words) get <c>~2</c>, <c>~3</c> in that order, so an id always names one issue (the order of two such issues is by what they say, `Issue.Order`; a check that can say which item an issue is about puts that in the id itself, so this stays the exception). The checks stay pure and know
-    /// nothing of time; <paramref name="cancel"/> is looked at between them, so a caller with a time budget can give up on a run (an
-    /// <see cref="OperationCanceledException"/>) without a check being interrupted halfway.</summary>
+    /// nothing of time; <paramref name="cancel"/> is looked at between them, between the issues each yields, and inside the long ones'
+    /// loops (<see cref="IConsistencyCheck.Run(WorldSnapshot, CancellationToken)"/>), so a caller with a time budget can give up on a run (an
+    /// <see cref="OperationCanceledException"/>, never a partial list).</summary>
     public static IReadOnlyList<Issue> Run(WorldSnapshot snapshot, IEnumerable<IConsistencyCheck>? checks = null, CancellationToken cancel = default)
     {
         var found = new List<Issue>();
         foreach (var check in checks ?? Default)
         {
             cancel.ThrowIfCancellationRequested();
-            found.AddRange(check.Run(snapshot));
+            // Looked at again with every issue a check yields, and handed to the check for the loops of the long ones: a run over its budget stops
+            // inside the check that is running, and throws; a cancelled run returns nothing, never a part of the list.
+            foreach (var issue in check.Run(snapshot, cancel))
+            {
+                cancel.ThrowIfCancellationRequested();
+                found.Add(issue);
+            }
         }
 
         var all = found.OrderBy(i => i, Issue.Order).ToList();

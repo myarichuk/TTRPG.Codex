@@ -269,9 +269,17 @@ with the switch on), which changes nothing about what the default list, the note
 **Cost and the time budget.** The plain-text mention scan walks a trie of the pages' names word by word (`UnlinkedMentionCheck`), so a position in a text costs
 as many steps as the name it could be, not the length of the longest title (500 pages of 1000 words with a 40-word title: 10.7 s before, 0.24 s after; 1000 pages of
 2000 words with a 60-word title: 80 s before, 0.56 s after, snapshot included). Which mentions are reported is unchanged; a test keeps the first, simple
-version as an oracle on generated worlds. `ConsistencyChecker.Run` takes a `CancellationToken` and looks at it between checks (a check is never interrupted, so
-every check stays pure); the per-message count note (`WorldBuilderService.IssueSummaryAsync`) runs under a budget (`IssueSummaryBudget`, 5 s) and is left out, silently,
-when the check goes over it, so a pathological campaign cannot stall a chat message.
+version as an oracle on generated worlds. `ConsistencyChecker.Run` takes a `CancellationToken` and looks at it between checks, between the issues a check yields, and
+inside the loops of the long checks (`IConsistencyCheck.Run(snapshot, cancel)`, a default method that runs the check as it is: the mention scan looks at every page and
+every 256 positions, the sheet rules at every character); the token is the only thing a check reads besides the snapshot, so whatever is not cancelled gives the same
+issues, and a cancelled run throws and returns nothing, never a part of the list. The systems' own compiled checks (`ICodexIssueCheck`) are unchanged and are not
+interrupted. The loads under the checks (`ConsistencyService`) are awaited under the token (`WaitAsync`; the repositories take no token, so a read under way finishes
+on its own, unread). The per-message count note (`WorldBuilderService.IssueSummaryAsync`) runs under a budget (`IssueSummaryBudget`, 5 s) and is left out, silently,
+when the check goes over it; that campaign's note is then skipped at once, with no snapshot, for `IssueSummaryBackoff` (10 minutes, on the service's `Clock`, per
+campaign and per service, never static), so a pathological campaign costs the budget once in that while instead of on every message. A check that fails for another
+reason is not remembered. `list_issues`, the Issues panel and the apply's re-check have no budget and are never skipped. (The reviewer's case, a 401-word title of
+alternating "Bo Ka" and 500 pages of 2000 such words: the scan alone takes 2 to 4 s; with a 300 ms budget the note gave up after the whole scan, about 3 s, and now
+after about 0.3 s, and the next message pays nothing.)
 
 **Loading cost.** The count note runs a snapshot per DM message, so the v2 checks add no heavy reading: members, packs, the system's changes and
 what the loader reported are in memory, and the only new read is the campaign's homebrew list, one query beside the several the Library's resolver

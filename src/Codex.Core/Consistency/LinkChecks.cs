@@ -91,7 +91,11 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
 {
     public string Name => CheckNames.UnlinkedMention;
 
-    public IEnumerable<Issue> Run(WorldSnapshot s)
+    public IEnumerable<Issue> Run(WorldSnapshot s) => Run(s, CancellationToken.None);
+
+    /// <summary>The scan, looking at <paramref name="cancel"/> at every page and every few hundred positions of a text, so a time budget is kept even
+    /// for one huge page; cancelled, it throws and reports nothing more (the checker then returns nothing at all).</summary>
+    public IEnumerable<Issue> Run(WorldSnapshot s, CancellationToken cancel)
     {
         var lookup = new PageLookup(s.Pages);
         // The names a page may be mentioned by, as a trie of their words: a position in a text walks it word by word and stops at the first word
@@ -118,6 +122,7 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
 
         foreach (var page in s.Pages)
         {
+            cancel.ThrowIfCancellationRequested();
             if (string.IsNullOrWhiteSpace(page.Body)) continue;
             var linked = WikiText.ExtractLinks(page.Body).Select(WikiText.Slugify).ToHashSet(StringComparer.Ordinal);
             var text = TextFields.WithoutLinksAndMarkers(page.Body);
@@ -127,6 +132,7 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
             {
                 for (var i = 0; i < run.Count; i++)
                 {
+                    if ((i & 255) == 255) cancel.ThrowIfCancellationRequested();
                     PageView? target = null;
                     var length = 0;
                     var at = root;

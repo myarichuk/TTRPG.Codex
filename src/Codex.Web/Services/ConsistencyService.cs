@@ -26,7 +26,7 @@ public sealed class ConsistencyService(ISystemCatalog catalog, CampaignLibrary l
     {
         DmOnly(access);
         var all = await RunAsync(campaign, access, noise, cancel);
-        var dismissed = (await dismissals.ListAsync(access)).Select(d => d.IssueId).ToHashSet(StringComparer.Ordinal);
+        var dismissed = (await dismissals.ListAsync(access).WaitAsync(cancel)).Select(d => d.IssueId).ToHashSet(StringComparer.Ordinal);
         var (open, set) = IssueDismissals.Split(all, dismissed);
         return new ConsistencyReport(open, set);
     }
@@ -64,23 +64,26 @@ public sealed class ConsistencyService(ISystemCatalog catalog, CampaignLibrary l
     {
         cancel.ThrowIfCancellationRequested();
         var system = catalog.GetDefinition(campaign.SystemId);
-        var brews = homebrew != null ? (await homebrew.GetVisibleForCampaignAsync(access)).ToList() : null;
+        // The repositories take no token: each load is awaited under it (WaitAsync), so a run over its budget stops waiting at once and the read
+        // that is still under way finishes on its own, unread. Nothing is written here, so an abandoned read changes nothing.
+        var brews = homebrew != null ? (await homebrew.GetVisibleForCampaignAsync(access).WaitAsync(cancel)).ToList() : null;
         // A system that is not installed has no Library to read: the checks that need one are left out, the rest still run.
         // The sheet's own types are loaded as the sheet needs them; the other entries a check names (a hazard, a creature) are looked up one by one.
         IEntryResolver resolver = system == null
             ? NullEntryResolver.Instance
-            : new LookupResolver(await CachedEntryResolver.LoadAsync(library, campaign, access, system), campaign.SystemId, library, brews);
+            : new LookupResolver(await CachedEntryResolver.LoadAsync(library, campaign, access, system).WaitAsync(cancel), campaign.SystemId, library, brews);
         var context = new SnapshotContext(system != null,
             system != null && campaign.SystemStamp != null ? SnapshotContext.Describe(campaign.SystemStamp.ChangesTo(campaign.SystemId, catalog.GetFingerprint(campaign.SystemId))) : Array.Empty<string>(),
             (catalog as PluginLoader)?.LoadProblems.Where(p => string.Equals(p.SystemId, campaign.SystemId, StringComparison.OrdinalIgnoreCase)).Select(p => p.Text).ToList() ?? new List<string>(),
             system == null ? Array.Empty<string>() : library.PackIds(campaign));
 
         var snapshot = ConsistencySnapshots.From(
-            await wiki.GetVisibleForCampaignAsync(access),
-            await actors.GetVisibleForCampaignAsync(access),
-            await regions.GetVisibleForCampaignAsync(access),
-            await facts.GetVisibleForCampaignAsync(access, new HashSet<string>()),
+            await wiki.GetVisibleForCampaignAsync(access).WaitAsync(cancel),
+            await actors.GetVisibleForCampaignAsync(access).WaitAsync(cancel),
+            await regions.GetVisibleForCampaignAsync(access).WaitAsync(cancel),
+            await facts.GetVisibleForCampaignAsync(access, new HashSet<string>()).WaitAsync(cancel),
             campaign, system, resolver, brews, context);
+        cancel.ThrowIfCancellationRequested();
         return ConsistencyChecker.Run(snapshot, noise ? ConsistencyChecker.Default.Concat(ConsistencyChecker.Noisy).ToList() : null, cancel);
     }
 
