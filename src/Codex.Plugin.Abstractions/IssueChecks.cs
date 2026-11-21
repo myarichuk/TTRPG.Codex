@@ -14,7 +14,7 @@ namespace Codex.Plugin.Abstractions;
 //
 // Neither layer asks a model anything: the checks are code, and the same sheet gives the same issues. A system's checks run beside the app's
 // own, are listed by list_issues, dismissed and resolved like theirs, and one that cannot run is an `info` issue of its own ("check-failed"),
-// never a failure of the run.
+// never a failure of the run; a compiled one that runs over its time limit is a `warning` ("check-failed", "timed out").
 
 /// <summary>
 /// One check a game system adds to the consistency checker. Either a <see cref="Rule"/> (data, layer 2) over a sheet key, or a compiled
@@ -95,13 +95,23 @@ public sealed class IssueCondition
 /// <summary>
 /// A compiled check (layer 3): a class beside system.yaml, named by an <c>issueChecks</c> entry's <c>type</c>. It reads plain data and says what is wrong
 /// as plain data; the host makes the issues' ids, sorts them and shows them. It must give the same answer for the same world (no clock, no random, no
-/// network), keep no state (one instance serves every run, from any thread) and not take long: nothing stops it, as nothing stops any compiled code, which
-/// runs with the server's rights and is installed only by copying it onto the server. One that throws becomes a single <c>info</c> issue.
+/// network), keep no state (one instance serves every run, from any thread, and a run may start while an earlier one it gave up on is still going) and not
+/// take long. The host calls <see cref="Check(CodexIssueWorld, CancellationToken)"/> on a thread of its own with a time limit (5 s by default): one that does
+/// not return in time becomes a single <c>warning</c> issue, "timed out", and its token is cancelled. The host cannot stop a thread, so a check that ignores the
+/// token runs on until it returns and its result is dropped; nothing limits its memory. One that throws becomes a single <c>info</c> issue.
+/// <para>A check written before the token existed implements only <see cref="Check(CodexIssueWorld)"/> and works as it did (the token overload calls it). A new
+/// one that loops over a large world overrides the token overload, looks at the token in its loops, and has the other call it:
+/// <c>Check(world) =&gt; Check(world, CancellationToken.None)</c>.</para>
 /// </summary>
 public interface ICodexIssueCheck
 {
     /// <summary>The issues found in <paramref name="world"/>; none when all is well. At most 200 are read.</summary>
     IReadOnlyList<CodexIssue> Check(CodexIssueWorld world);
+
+    /// <summary><see cref="Check(CodexIssueWorld)"/> with a token the host cancels when the check runs over its time limit or the run is stopped: a check
+    /// that looks at it (and throws <see cref="OperationCanceledException"/>, or returns) frees its thread at once. What it returns after the token was
+    /// cancelled is not read. The default ignores the token and calls <see cref="Check(CodexIssueWorld)"/>, so existing checks need no change.</summary>
+    IReadOnlyList<CodexIssue> Check(CodexIssueWorld world, CancellationToken cancel) => Check(world);
 }
 
 /// <summary>One thing a compiled check found. <see cref="Kind"/> and <see cref="EntityId"/> name what it is about (the ids of <see cref="CodexIssueWorld"/>);

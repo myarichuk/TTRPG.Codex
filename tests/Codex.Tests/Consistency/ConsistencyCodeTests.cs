@@ -10,8 +10,9 @@ public class ConsistencyCodeTests
 {
     private static readonly string[] Languages = { "en", "he", "ru" };
 
-    // Codes the fixtures cannot reach cheaply; each is still rendered by the rule below when it is made.
-    private static readonly string[] NotInTheFixtures = { "Consistency.SheetRule", "Consistency.SheetEvaluationFailed", "Consistency.InventoryItemGone", "Consistency.CheckFailed" };
+    // Codes the fixtures cannot reach cheaply; each is still rendered by the rule below when it is made. A compiled check that times out needs a check that
+    // outlasts its limit: its text is checked against its message in every language in CompiledCheckBoundsTests.
+    private static readonly string[] NotInTheFixtures = { "Consistency.SheetRule", "Consistency.SheetEvaluationFailed", "Consistency.InventoryItemGone", "Consistency.CheckFailed", "Consistency.CheckTimedOut" };
 
     private static IEnumerable<Issue> Everything()
     {

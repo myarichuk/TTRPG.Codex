@@ -29,8 +29,9 @@ public sealed class CompiledException(string message) : FormulaException(message
 /// is cached by its arguments, as a script's is. A failure is a <see cref="CompiledException"/> naming system, function and
 /// type, which the sheet and the table turn into a warning; it never throws through a table command.</item>
 /// </list>
-/// Nothing limits what compiled code does: it runs in the server's process with its rights, with no time or memory limit. That
-/// is why it is installed only by copying it onto the server, and why the Library says a system "contains compiled code".
+/// Nothing limits what compiled code does: it runs in the server's process with its rights, with no memory limit and, but for an issue
+/// check (which the consistency checker runs with a time limit and a token, and abandons when it runs over: <c>SystemRuleCheck</c>), no time
+/// limit. That is why it is installed only by copying it onto the server, and why the Library says a system "contains compiled code".
 /// </summary>
 public static class CompiledSuppliers
 {

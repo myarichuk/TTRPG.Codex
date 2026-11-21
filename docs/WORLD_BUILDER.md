@@ -273,7 +273,7 @@ reported, the Bestiary) and the homebrew entries (`HomebrewView`); `ConsistencyS
 | `tag-case` | one tag written in two cases across pages and homebrew; the less used spelling is reported | info, `homebrew` for an entry, report-only for a page |
 | `system-unknown`, `system-drift`, `pack-drift`, `pack-problem` | the campaign's system is not installed; the system changed since the campaign last played under it (`SystemStamp.ChangesTo`); the pack choice names a pack the system lacks; what loading the system's packs reported | error / warning / info / warning, report-only |
 | `library-reference` | a creature's source (`BlueprintId`) the Library no longer has; gear on a sheet the Library lacks (only where the sheet rules do not already say so); a Bestiary entry that is gone | info / warning, report-only |
-| `system-rule`, `check-failed` | the checks of the campaign's game system (below); one that could not run | as the system says / info |
+| `system-rule`, `check-failed` | the checks of the campaign's game system (below); one that could not run (info), a compiled one that ran over its time limit (warning) | as the system says / info / warning |
 
 **Noisy checks.** `orphan-page` (nothing links to a page), `backlink-mismatch` (a page and a character or place point at each other on one side only),
 `person-page-no-actor` and `retired-mention` are true but rarely worth a DM's time, so they are in `ConsistencyChecker.Noisy`, never in `Default`.
@@ -293,8 +293,8 @@ a word of the text then is several parts of the automaton, as the first version 
 ends where one ends). `ConsistencyChecker.Run` takes a `CancellationToken` and looks at it between checks, between the issues a check yields, and
 inside the loops of the long checks (`IConsistencyCheck.Run(snapshot, cancel)`, a default method that runs the check as it is: the mention scan looks at every page and
 every 256 positions, the sheet rules at every character); the token is the only thing a check reads besides the snapshot, so whatever is not cancelled gives the same
-issues, and a cancelled run throws and returns nothing, never a part of the list. The systems' own compiled checks (`ICodexIssueCheck`) are unchanged and are not
-interrupted. The loads under the checks (`ConsistencyService`) are awaited under the token (`WaitAsync`; the repositories take no token, so a read under way finishes
+issues, and a cancelled run throws and returns nothing, never a part of the list. The systems' own compiled checks (`ICodexIssueCheck`) are handed the token too,
+with a time limit of their own (below, layer 3). The loads under the checks (`ConsistencyService`) are awaited under the token (`WaitAsync`; the repositories take no token, so a read under way finishes
 on its own, unread, and what it throws then is observed: `Abandoned.WaitObservedAsync`, so a load given up on never ends as an unobserved task exception). The per-message count note (`WorldBuilderService.IssueSummaryAsync`) runs under a budget (`IssueSummaryBudget`, 5 s) and is left out, silently,
 when the check goes over it; that campaign's note is then skipped at once, with no snapshot, for `IssueSummaryBackoff` (10 minutes, on the service's `Clock`, per
 campaign and per service, never static), so a pathological campaign costs the budget once in that while instead of on every message. A check that fails for another
@@ -390,9 +390,24 @@ one, and nothing is reported where the campaign's enforcement is `off`; it is fi
 entry with `type: "Namespace.Type, Assembly"` names a class in a DLL beside `system.yaml` that implements `ICodexIssueCheck` (plain data in and out, like
 the other compiled suppliers; it references only `Codex.Plugin.Abstractions`), resolved by `CompiledSuppliers` like a function. It is given plain copies of
 the cast, pages and places and returns `CodexIssue`s; the host builds ids (`system-rule:<kind>:<entity>:<field>:<check id>[.<detail>]`), sorts and shows
-them. One that is missing, throws, or returns what cannot be read becomes one `info` issue, `check-failed`, and the other checks and the run go on. Nothing
-limits what compiled code does or how long it takes (as for every compiled supplier: it runs with the server's rights and is installed by copying it onto
-the server), so it must be deterministic and quick. A sample is `LongNameCheck` in `tests/Codex.ContractFixture`, tested in `SystemIssueCheckTests`.
+them. One that is missing, throws, or returns what cannot be read becomes one `info` issue, `check-failed`, and the other checks and the run go on.
+**Bounds.** Each compiled check runs on a thread of its own (not a pool thread) with a time limit, `SystemRuleCheck.CompiledTimeout` (5 s,
+`SystemRuleCheck.DefaultCompiledTimeout`; a host sets another with `new SystemRuleCheck(limit)`, `Timeout.InfiniteTimeSpan` for none), and a token:
+`ICodexIssueCheck.Check(world, CancellationToken)`, a default interface method that calls `Check(world)`, so a plugin built before it needs no change and keeps
+working (binary compatible); a new one overrides it and looks at the token in its loops. The token is cancelled at the limit and when the run is cancelled. A
+check that has not returned by then is one `warning` issue, `check-failed:campaign:<id>:issueChecks:<check id>:timed-out` (code `Consistency.CheckTimedOut`,
+"did not finish within N s"), and the run goes on with the next check; a cancellation of the run itself still throws, with nothing returned. The rows a check
+returns are read on its thread (at most 200), so a list that is slow to read is inside the limit too. A check that throws is the `info` issue it always was.
+**What cannot be bounded.** .NET cannot stop a thread, so a check that ignores its token is abandoned, not killed: it runs on with the server's rights until it
+returns, and its result is dropped; what it ends with is observed (never an unobserved task exception). While it still runs, that check (the instance, which serves
+every run of its system) is not started again: each later run reports the same timed-out issue at once, so a check that never returns holds one thread, not one per
+run, and the next run after it ends starts it afresh. Its memory cannot be limited in the process at all (nothing in .NET bounds what one piece of code in a process
+allocates); only running it in another process would, which is the supplier contract's to change for every supplier at once. **Determinism.** The checks run one
+after the other, as before; a check that finished gives exactly what it gave without the limit, and the timed-out issue's id and words depend only on the check's id
+and the limit, never on how long it ran. Whether a check that takes about as long as its limit finishes is a matter of timing: such a check is a fault of the
+system, and the limit is set far above what a sound check over plain copies of a campaign takes. A sample is `LongNameCheck` in `tests/Codex.ContractFixture`,
+tested in `SystemIssueCheckTests`; the bounds in `CompiledCheckBoundsTests` (a check that times out, one that throws, one that honours its token, one that ignores it,
+the order and the bytes of the rest, a plugin of the old shape).
 
 **Dismissals.** A red link that is meant to stay red is dismissed by the DM, and only the DM (`ConsistencyService.DismissAsync`; an id
 that is not an open issue is refused). The document `ConsistencyDismissals/{campaignId}` holds the ids and the DM's optional note; results are never stored.
@@ -482,5 +497,9 @@ says what a `sheet` issue is. The tool order is unchanged (`list_issues` stays a
 - Point-buy and similar derived budgets are out of scope for the sheet checks (the bridge leaves `Actor.Rule.PointBuy*` out, and a sheet edit never
   judges them): the budget is a derived total that no single key fixes, and the rules engine already shows it on the sheet.
 - Deferred, with reasons: a proposal cannot claim a `tags` entry or a homebrew `delete` in `resolves` (only `edit` entries carry `resolves`), so `tag-case` on pages is
-  report-only; the compiled-check sandbox is the supplier contract's (no time or memory limit), which a bounded worker would change for every supplier at once;
-  a system's own `issueChecks` sentence is English-only in the app unless the app has text for its `code`.
+  report-only; a system's own `issueChecks` sentence is English-only in the app unless the app has text for its `code`.
+- Limits that stay, with reasons: a compiled issue check is bounded in time but not in memory, and one that ignores its token keeps a thread until it returns
+  (layer 3, above; the other compiled suppliers, functions, event handlers and widgets, are still unbounded: a worker process would be the change for all of
+  them); a `sheet-rule` item that the engine names by a display name string (`Prerequisite`, `FeatureError`, `SlotHolds`) still follows that name; two issues
+  told apart only by their sentence still take `~n` in the order of what they say; a dismissal stored under an id from before an earlier scheme change than the
+  entry-id one (`Issue.FormerId`) still reads as "the problem is gone".

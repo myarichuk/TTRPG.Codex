@@ -43,6 +43,7 @@
   <data name="Consistency.InventoryItemGone" xml:space="preserve"><value>"{0}" carries "{1}", which is not in the Library.</value></data>
   <data name="Consistency.BestiaryGone" xml:space="preserve"><value>The Bestiary lists "{0}" ({1}), which is not in the Library.</value></data>
   <data name="Consistency.CheckFailed" xml:space="preserve"><value>The system's check "{0}" could not run ({1}), so what it looks for was not checked.</value></data>
+  <data name="Consistency.CheckTimedOut" xml:space="preserve"><value>The system's check "{0}" did not finish within {1} s, so what it looks for was not checked.</value></data>
   <data name="Consistency.OrphanPage" xml:space="preserve"><value>Nothing links to the page "{0}".</value></data>
   <data name="Consistency.BacklinkMismatch" xml:space="preserve"><value>"{0}" and "{1}" point at each other on one side only.</value></data>
   <data name="Consistency.PersonPageNoActor" xml:space="preserve"><value>The person page "{0}" has no character on the cast.</value></data>

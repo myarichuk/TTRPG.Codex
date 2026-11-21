@@ -19,7 +19,7 @@ public static class ConsistencyCodes
         "Consistency.PlacedCreatureGone", "Consistency.PlacedHazardGone", "Consistency.HazardPlaceGone", "Consistency.OwnerNotMember",
         "Consistency.HomebrewDuplicate", "Consistency.HomebrewReference", "Consistency.HazardShape", "Consistency.TagCase",
         "Consistency.SystemUnknown", "Consistency.SystemDrift", "Consistency.PackDrift", "Consistency.PackProblem",
-        "Consistency.BlueprintGone", "Consistency.InventoryItemGone", "Consistency.BestiaryGone", "Consistency.CheckFailed",
+        "Consistency.BlueprintGone", "Consistency.InventoryItemGone", "Consistency.BestiaryGone", "Consistency.CheckFailed", "Consistency.CheckTimedOut",
         "Consistency.OrphanPage", "Consistency.BacklinkMismatch", "Consistency.PersonPageNoActor", "Consistency.RetiredMention"
     };
 }
