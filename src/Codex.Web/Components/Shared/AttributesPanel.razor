@@ -157,8 +157,13 @@
                     }
                     @if (source.TradeKey != null && source.Trade != null)
                     {
-                        <div class="mb-2" role="group" aria-label="@L["Actor.Sheet.BoostTrade", source.Trade.Fixed, source.Trade.Free]" data-testid="@("boost-trade-" + source.Key)">
+                        var dropsFlaws = string.Equals(source.Trade.Flaws, BoostTrade.DropFlaws, StringComparison.OrdinalIgnoreCase);
+                        <div class="mb-2" role="group" aria-label="@L["Actor.Sheet.BoostTrade", source.Trade.Fixed, source.Trade.Free]" aria-describedby="@(dropsFlaws ? "boost-trade-note-" + source.Key : null)" data-testid="@("boost-trade-" + source.Key)">
                             <div class="small">@L["Actor.Sheet.BoostTrade", source.Trade.Fixed, source.Trade.Free]</div>
+                            @if (dropsFlaws)
+                            {
+                                <div class="small-muted" id="@("boost-trade-note-" + source.Key)">@L["Actor.Sheet.BoostTradeDropsFlaws"]</div>
+                            }
                             <div class="d-flex flex-wrap gap-3">
                                 @foreach (var option in source.TradeOptions)
                                 {
@@ -168,6 +173,21 @@
                                                @onchange="e => SetTrade(source, option, e.Value is true)" />
                                         <label for="@tradeId" class="form-check-label">@L["Actor.Sheet.BoostTradeGive", AttributeLabel(option)]</label>
                                     </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (source.FlawsKey != null)
+                    {
+                        <div class="mb-2" role="group" aria-labelledby="@("boost-flaws-label-" + source.Key)" data-testid="@("boost-flaws-" + source.Key)">
+                            <div class="small" id="@("boost-flaws-label-" + source.Key)">@L["Actor.Sheet.BoostVoluntary", source.Label]</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var flawable in Definition.Attributes.Where(a => !source.Flaws.Contains(a.Key) || source.VolunteeredFlaws.Contains(a.Key)))
+                                {
+                                    var taken = source.VolunteeredFlaws.Contains(flawable.Key);
+                                    <button type="button" class="btn btn-sm @(taken ? "btn-secondary" : "btn-outline-secondary")" aria-pressed="@(taken ? "true" : "false")"
+                                            data-testid="@($"boost-flaw-{source.Key}-{flawable.Key}")"
+                                            @onclick="() => SetFlaw(source, flawable.Key, !taken)">@L["Actor.Sheet.BoostFlaw", flawable.Label]</button>
                                 }
                             </div>
                         </div>
@@ -332,6 +352,17 @@
     {
         if (slot.Key == null || (!string.IsNullOrEmpty(attributeKey) && !slot.Options.Contains(attributeKey))) return Task.CompletedTask;
         SheetRuleEngine.SetChoice(Sheet, slot.Key, string.IsNullOrEmpty(attributeKey) ? Array.Empty<string>() : new[] { attributeKey });
+        return Changed.InvokeAsync();
+    }
+
+    private Task SetFlaw(BoostSourceSummary source, string attributeKey, bool on)
+    {
+        if (source.FlawsKey == null || Definition.Attributes.All(a => a.Key != attributeKey)) return Task.CompletedTask;
+        var flaws = source.VolunteeredFlaws.ToList();
+        if (on && !flaws.Contains(attributeKey) && !source.Flaws.Contains(attributeKey)) flaws.Add(attributeKey);
+        else if (!on) flaws.Remove(attributeKey);
+        else return Task.CompletedTask;
+        SheetRuleEngine.SetChoice(Sheet, source.FlawsKey, flaws);
         return Changed.InvokeAsync();
     }
 

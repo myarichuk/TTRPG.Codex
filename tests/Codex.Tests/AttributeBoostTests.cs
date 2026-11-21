@@ -274,4 +274,101 @@ public class AttributeBoostTests
         Rejects(Yaml("sources: [{ key: a, label: A, field: ancestry }]").Replace("default: boosts", "default: boosts\n    increases: { fromList: feats }"), "do not mix");
         Rejects(Yaml("sources: [{ key: a, label: A, field: ancestry }]").Replace("default: 10, modifier: half-minus-five }\n  - { key: dex", "default: 12, modifier: half-minus-five }\n  - { key: dex"), "default 10");
     }
+
+    // ---- The trade that drops flaws, and voluntary flaws (rules-core entries alternate-ancestry-boosts and voluntary-flaws) ----
+
+    internal static readonly string FlawSystem = System.Replace("trade: { fixed: 2, free: 1 }", "trade: { fixed: 2, free: 1, flaws: drop }, voluntaryFlaws: true");
+
+    internal static SheetRuleEngine FlawEngine() => new(SystemDefinitionLoader.Parse(FlawSystem), new Resolver());
+
+    private static Dictionary<string, object> Traded(string flaws = "")
+    {
+        var sheet = Sheet("hill", 1, ("boost__ancestry__hill.trade", new[] { "con", "dex" }), ("boost__ancestry__hill.b1", new[] { "str" }), ("boost__ancestry__hill.b2", new[] { "dex" }), ("boost__ancestry__hill.t1", new[] { "con" }));
+        if (flaws.Length > 0) sheet["boost__ancestry__hill.flaws"] = flaws.Split(',').Cast<object>().ToList();
+        return sheet;
+    }
+
+    [Fact]
+    public void ATradeThatDropsFlaws_TakesTheEntrysFlawAway_AndOneThatKeepsThemDoesNot()
+    {
+        // hill: con, dex, str|con, free, -str. Trading con and dex leaves b1 (str) and b2 (dex) and a free t1 (con).
+        var keeps = Traded();
+        Engine().Recompute(keeps);
+        Assert.Equal(10L, keeps["str"]); // boost and the flaw cancel
+        var drops = Traded();
+        var evaluation = FlawEngine().Recompute(drops);
+        Assert.Equal(12L, drops["str"]); // the trade replaced the flaw as well
+        Assert.Empty(evaluation.Attributes!.Boosts!.Sources.Single(s => s.Key == "ancestry").Flaws);
+        // Not traded: the flaw stays under either setting.
+        var untraded = Sheet("hill", 1, ("boost__ancestry__hill.b1", new[] { "str" }));
+        FlawEngine().Recompute(untraded);
+        Assert.Equal(10L, untraded["str"]);
+    }
+
+    [Fact]
+    public void AVoluntaryFlaw_LowersTheAttribute_AndGivesNothingBack()
+    {
+        var sheet = Sheet("vale", 1, ("boost__ancestry__vale.flaws", new[] { "dex" }));
+        var evaluation = FlawEngine().Recompute(sheet);
+        Assert.Equal(8L, sheet["dex"]);
+        Assert.Equal(12L, sheet["con"]);
+        var ancestry = evaluation.Attributes!.Boosts!.Sources.Single(s => s.Key == "ancestry");
+        Assert.Equal(new[] { "dex" }, ancestry.VolunteeredFlaws);
+        Assert.Equal("boost__ancestry__vale.flaws", ancestry.FlawsKey);
+        Assert.DoesNotContain(SheetRuleEngine.FlawTwiceKey, Keys(evaluation.Violations));
+        // Without the setting the stored flaws are not read.
+        var plain = Sheet("vale", 1, ("boost__ancestry__vale.flaws", new[] { "dex" }));
+        Engine().Recompute(plain);
+        Assert.Equal(10L, plain["dex"]);
+    }
+
+    [Fact]
+    public void TwoFlawsOnOneAttribute_AreAViolation_TheEntrysOwnIncluded_UntilTheTradeDropsIt()
+    {
+        Assert.Contains(SheetRuleEngine.FlawTwiceKey, Keys(FlawEngine().Recompute(Sheet("vale", 1, ("boost__ancestry__vale.flaws", new[] { "dex", "dex" }))).Violations));
+        Assert.Contains(SheetRuleEngine.FlawTwiceKey, Keys(FlawEngine().Recompute(Sheet("hill", 1, ("boost__ancestry__hill.flaws", new[] { "str" }))).Violations));
+        Assert.DoesNotContain(SheetRuleEngine.FlawTwiceKey, Keys(FlawEngine().Recompute(Traded("str")).Violations));
+        Assert.DoesNotContain(SheetRuleEngine.FlawTwiceKey, Keys(FlawEngine().Recompute(Sheet("hill", 1, ("boost__ancestry__hill.flaws", new[] { "dex" }))).Violations));
+    }
+
+    [Fact]
+    public void AFlawKeptWhileTheTradeIsUndone_BecomesAViolation_WhenTheEntrysFlawComesBack()
+    {
+        var sheet = Traded("str");
+        Assert.DoesNotContain(SheetRuleEngine.FlawTwiceKey, Keys(FlawEngine().Recompute(sheet).Violations));
+        sheet.Remove("boost__ancestry__hill.trade");
+        Assert.Contains(SheetRuleEngine.FlawTwiceKey, Keys(FlawEngine().Recompute(sheet).Violations));
+    }
+
+    [Fact]
+    public void AStoredFlawThatIsNoAttribute_IsSaidOnce_AndLowersNothing()
+    {
+        var sheet = Sheet("vale", 1, ("boost__ancestry__vale.flaws", new[] { "luck" }));
+        var evaluation = FlawEngine().Recompute(sheet);
+        Assert.Single(evaluation.Violations, v => v.Key == SheetRuleEngine.BoostCantKey);
+        Assert.Equal(10L, sheet["dex"]);
+    }
+
+    [Fact]
+    public void ChangingTheAncestry_DropsTheVoluntaryFlawsToo()
+    {
+        var engine = FlawEngine();
+        var sheet = Sheet("hill", 1, ("boost__ancestry__hill.flaws", new[] { "dex" }));
+        engine.Recompute(sheet);
+        Assert.True(sheet.ContainsKey("boost__ancestry__hill.flaws"));
+        sheet["ancestry"] = "vale";
+        engine.Recompute(sheet);
+        Assert.DoesNotContain(sheet.Keys, k => k.Contains(".flaws"));
+        Assert.Equal(10L, sheet["dex"]);
+    }
+
+    [Fact]
+    public void TheLoaderChecksTheTradeFlawsWordAndVoluntaryFlawsNeedAFieldSource()
+    {
+        Rejects(Yaml("sources: [{ key: a, label: A, field: ancestry, trade: { fixed: 2, free: 1, flaws: maybe } }]"), "keep");
+        Rejects(Yaml("sources: [{ key: a, label: A, level: 5, free: 1, voluntaryFlaws: true }]"), "voluntaryFlaws needs a field source");
+        var ok = SystemDefinitionLoader.Parse(Yaml("sources: [{ key: a, label: A, field: ancestry, trade: { fixed: 2, free: 1, flaws: drop }, voluntaryFlaws: true }]"));
+        Assert.Equal("drop", ok.SheetRules!.Attributes!.Boosts!.Sources[0].Trade!.Flaws);
+        Assert.Equal("keep", SystemDefinitionLoader.Parse(Yaml("sources: [{ key: a, label: A, field: ancestry, trade: { fixed: 2, free: 1 } }]")).SheetRules!.Attributes!.Boosts!.Sources[0].Trade!.Flaws);
+    }
 }

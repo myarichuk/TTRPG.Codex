@@ -473,6 +473,18 @@ public static class SystemDefinitionLoader
                     {
                         yield return $"sheetRules.attributes.boosts.sources['{source.Key}'].trade: needs a field source and fixed and free of at least 1.";
                     }
+
+                    if (source.Trade is { } flawTrade
+                        && !string.Equals(flawTrade.Flaws, BoostTrade.KeepFlaws, StringComparison.OrdinalIgnoreCase)
+                        && !string.Equals(flawTrade.Flaws, BoostTrade.DropFlaws, StringComparison.OrdinalIgnoreCase))
+                    {
+                        yield return $"sheetRules.attributes.boosts.sources['{source.Key}'].trade.flaws must be '{BoostTrade.KeepFlaws}' or '{BoostTrade.DropFlaws}'.";
+                    }
+
+                    if (source.VoluntaryFlaws && source.Field == null)
+                    {
+                        yield return $"sheetRules.attributes.boosts.sources['{source.Key}'].voluntaryFlaws needs a field source: the flaws are stored for the entry the field refers to.";
+                    }
                 }
 
                 if (attributes.Increases != null) yield return "sheetRules.attributes: increases and boosts do not mix; a boost reads the score it lands on.";

@@ -1031,6 +1031,11 @@ public class BoostSource
 
     /// <summary>Optional: the player may give up some of the source's fixed boosts for free ones.</summary>
     public BoostTrade? Trade { get; set; }
+
+    /// <summary>Optional, field sources only: the player may add flaws of their own on top of the entry's. They are stored beside the
+    /// source's other choices (<c>boost__{key}__{entryId}.flaws</c>, one attribute each), lower that attribute, and give nothing back.
+    /// No attribute takes two flaws from the source, the entry's own included. Default false.</summary>
+    public bool VoluntaryFlaws { get; set; }
 }
 
 /// <summary>The trade a source allows: give up <see cref="Fixed"/> of its fixed boosts, get <see cref="Free"/> free ones.</summary>
@@ -1041,6 +1046,13 @@ public class BoostTrade
 
     /// <summary>How many free boosts come back. Default 1.</summary>
     public int Free { get; set; } = 1;
+
+    /// <summary>What happens to the source's flaws once the trade is made: <c>keep</c> (they still apply) or <c>drop</c> (the trade
+    /// replaces the boosts and the flaws both). Default <c>keep</c>.</summary>
+    public string Flaws { get; set; } = KeepFlaws;
+
+    public const string KeepFlaws = "keep";
+    public const string DropFlaws = "drop";
 }
 
 /// <summary>A read-only number worked out from the sheet (<c>sheetRules.derived</c>): proficiency bonus, initiative.</summary>
