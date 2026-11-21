@@ -72,6 +72,7 @@ public static class ConsistencyChecker
 
         var all = found.OrderBy(i => i, Issue.Order).ToList();
         var seen = new Dictionary<string, int>(StringComparer.Ordinal);
+        var suffixed = false;
         for (var i = 0; i < all.Count; i++)
         {
             var id = all[i].Id;
@@ -83,10 +84,12 @@ public static class ConsistencyChecker
 
             seen[id] = ++count;
             all[i] = all[i] with { Id = $"{id}~{count}" };
+            suffixed = true;
         }
 
-        // A suffix can move an issue within its group; sort once more so the order is the documented one.
-        return all.OrderBy(i => i, Issue.Order).ToList();
+        // A suffix can move an issue within its group; sort once more so the order is the documented one. With no suffix nothing moved: the list
+        // is in that order already (the sort is stable, so sorting it again would give the same list).
+        return suffixed ? all.OrderBy(i => i, Issue.Order).ToList() : all;
     }
 
     /// <summary>The issues <paramref name="filter"/> asks for.</summary>
