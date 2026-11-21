@@ -117,13 +117,14 @@ public class V2ThroughTheServiceTests
         var saving = WorldBuilderTests.ServiceWithPages(pages);
         var clock = new HandClock();
         saving.Service.Clock = clock;
-        saving.Service.IssueSummaryBudget = TimeSpan.FromMilliseconds(300);
+        // 20 ms: the scan is linear now (about 60 ms for this campaign in Release), so the budget must be well under it for the note to give up.
+        saving.Service.IssueSummaryBudget = TimeSpan.FromMilliseconds(20);
 
         var watch = System.Diagnostics.Stopwatch.StartNew();
         Assert.Null(await saving.Service.IssueSummaryAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm));
         watch.Stop();
-        // The budget plus generous slack (the snapshot of 500 pages is built before the checks start); the scan alone takes seconds.
-        Assert.True(watch.Elapsed < TimeSpan.FromMilliseconds(300) + TimeSpan.FromSeconds(1.5), $"took {watch.ElapsedMilliseconds} ms");
+        // The budget plus generous slack (the snapshot of 500 pages is built before the checks start).
+        Assert.True(watch.Elapsed < TimeSpan.FromMilliseconds(20) + TimeSpan.FromSeconds(1.5), $"took {watch.ElapsedMilliseconds} ms");
 
         // The campaign is now small and quick, and has an issue: the note is still skipped, at once, for the backoff, without a snapshot.
         pages.Clear();
@@ -217,8 +218,9 @@ public class V2ThroughTheServiceTests
     {
         var title = string.Join(' ', Enumerable.Range(0, 400).Select(i => i % 2 == 0 ? "Bo" : "Ka")) + " End";
         var body = string.Join(' ', Enumerable.Range(0, 2000).Select(i => i % 2 == 0 ? "Bo" : "Ka"));
-        var snapshot = Fx.Snap(pages: new[] { Fx.Page("wikipages/0-A", title, "x") }.Concat(Enumerable.Range(1, 500).Select(p => Fx.Page($"wikipages/{p}-A", "Page " + p, body))));
-        using var budget = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        // 2000 pages: the scan is now linear (about 60 ms for 500 such pages in Release), so the text has to be long enough to outlast the budget.
+        var snapshot = Fx.Snap(pages: new[] { Fx.Page("wikipages/0-A", title, "x") }.Concat(Enumerable.Range(1, 2000).Select(p => Fx.Page($"wikipages/{p}-A", "Page " + p, body))));
+        using var budget = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
         var watch = System.Diagnostics.Stopwatch.StartNew();
         // The check alone, as one enumeration that yields nothing: only a look at the token inside its loop can stop it early.
         Assert.ThrowsAny<OperationCanceledException>(() => new UnlinkedMentionCheck().Run(snapshot, budget.Token).ToList());
