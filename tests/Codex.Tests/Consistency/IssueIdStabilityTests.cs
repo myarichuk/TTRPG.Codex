@@ -79,10 +79,22 @@ public class IssueIdStabilityTests
     {
         // C: an unclosed ":::dm" keeps its id when a closed ":::dm" is added before it (even one with the very same first line: it has no unclosed issue).
         var before = Assert.Single(AllSecretIds(":::dm\nfirst\n:::\nWords.\n:::dm\nThe keeper lies."));
-        Assert.Equal("secret-unclosed:page:wikipages/1-A:body:dm:the-keeper-lies", before);
+        Assert.Equal("secret-unclosed:page:wikipages/1-A:body:the-keeper-lies", before);
 
         Assert.Equal(new[] { before }, AllSecretIds(":::dm\nnew\n:::\n:::dm\nfirst\n:::\nWords.\n:::dm\nThe keeper lies."));
         Assert.Equal(new[] { before }, AllSecretIds(":::dm\nThe keeper lies.\n:::\n:::dm\nfirst\n:::\nWords.\n:::dm\nThe keeper lies."));
+    }
+
+    [Fact]
+    public void FixingTheUnknownWordOfAnUnclosedBlock_LeavesItsUnclosedIssueAsItWas()
+    {
+        // One block, two issues: an unknown word and no closing line. Changing the word (what the unknown-audience hint asks) fixes that issue only;
+        // the block is still never closed, so its unclosed issue keeps its id (a re-check reads it as still open, not as fixed and a new one).
+        var before = AllSecretIds("Intro.\n:::gm\nThe duke lies.");
+        Assert.Equal(new[] { "secret-unclosed:page:wikipages/1-A:body:the-duke-lies", "secret-unknown-audience:page:wikipages/1-A:body:gm:the-duke-lies" }, before);
+
+        Assert.Equal(new[] { before[0] }, AllSecretIds("Intro.\n:::dm\nThe duke lies."));
+        Assert.Equal(new[] { before[0] }, AllSecretIds("Intro.\n:::party\nThe duke lies."));
     }
 
     /// <summary>One generated block: its opener word, the characters a <c>:::for</c> names, its first line, and whether it is closed.</summary>

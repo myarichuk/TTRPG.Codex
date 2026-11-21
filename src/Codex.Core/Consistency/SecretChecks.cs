@@ -8,14 +8,17 @@ internal static class SecretScan
 
     /// <summary>
     /// The blocks of every text field that <paramref name="reported"/> keeps, each with a key for its issue id: the word it was opened with and the slug of its
-    /// first line of content (bounded; <c>empty</c> for a block with none), <c>dm:the-keeper-is-a-smuggler</c>. The key is made only from what a fix of the
-    /// block's own issue does not touch: the rest of the opening line (the characters a <c>:::for</c> block names, the reveal stamp) is left out, so taking a
+    /// first line of content (bounded; <c>empty</c> for a block with none), <c>dm:the-keeper-is-a-smuggler</c>; for an unclosed block the first line alone,
+    /// as the word is what another issue of the same block (an unknown audience) fixes. The key is made only from what a fix of the
+    /// block's own issue, or of another issue of the same block, does not touch: the rest of the opening line (the characters a <c>:::for</c> block names, the reveal stamp) is left out, so taking a
     /// character off the line or closing the block leaves the key alone, and changing an unknown word changes the key because it fixes the issue. Never the
     /// block's position, and never another block's: a block added, fixed or removed elsewhere in the text moves no other key. <c>.2</c>, <c>.3</c> tell
     /// apart only blocks that <paramref name="reported"/> keeps and that open with the same word and the same first line (the one limit of the scheme: two such
     /// blocks cannot be told apart, so fixing the first gives its key to the second).
     /// </summary>
-    public static IEnumerable<(TextField Field, SecretBlock Block, string Opening, string Key)> Blocks(WorldSnapshot s, Func<SecretBlock, bool> reported)
+    /// <param name="withWord">False for a check whose issue a change of the opener word does not fix (an unclosed block): its key is the first line alone,
+    /// so fixing the block's unknown word (another issue) leaves it as it was.</param>
+    public static IEnumerable<(TextField Field, SecretBlock Block, string Opening, string Key)> Blocks(WorldSnapshot s, Func<SecretBlock, bool> reported, bool withWord = true)
     {
         foreach (var field in TextFields.Of(s))
         {
@@ -26,7 +29,8 @@ internal static class SecretScan
             foreach (var block in SecretText.Blocks(field.Text).Where(reported))
             {
                 var opening = block.Line < lines.Length ? lines[block.Line] : string.Empty;
-                var identity = $"{Slug(block.OpenerWord, "block")}:{Slug(FirstContentLine(block), "empty")}";
+                var content = Slug(FirstContentLine(block), "empty");
+                var identity = withWord ? $"{Slug(block.OpenerWord, "block")}:{content}" : content;
                 seen[identity] = seen.GetValueOrDefault(identity) + 1;
                 yield return (field, block, opening, seen[identity] == 1 ? identity : $"{identity}.{seen[identity]}");
             }
@@ -52,7 +56,7 @@ public sealed class SecretUnclosedCheck : IConsistencyCheck
 
     public IEnumerable<Issue> Run(WorldSnapshot s)
     {
-        foreach (var (field, block, opening, key) in SecretScan.Blocks(s, b => b.ClosingLine == null))
+        foreach (var (field, block, opening, key) in SecretScan.Blocks(s, b => b.ClosingLine == null, withWord: false))
         {
             yield return Make.Issue(Name, IssueSeverity.Warning, field.Kind, field.EntityId, field.Field, key,
                 "Consistency.SecretUnclosed", new[] { Make.Quote(opening), (block.Line + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) },

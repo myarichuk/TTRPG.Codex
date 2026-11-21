@@ -207,7 +207,8 @@ the same data gives the same issues in the same order (`ConsistencyChecker.Run`,
 two issues that would share one are numbered `~2`, `~3`. **Stability:** an id names the problem, not its position or its numbers, so a dismissal or a
 `resolves` claim stays on the same problem when something else changes. A secret-block issue's detail is the word the block was opened with and the slug of its
 first line of content (each cut at 40 characters; `dm:the-keeper-lies`, `gm:the-duke-is-a-vampire`, `for:the-map-is-false:actors/8` for a `:::for` block naming a
-character who is gone), never the block's number and never the rest of the opening line: a key is made only from what a fix of another issue does not touch, so
+character who is gone; an unclosed block's key is the first line alone, `secret-unclosed:…:the-keeper-lies`, as the word is what the fix of the same block's
+unknown audience changes), never the block's number and never the rest of the opening line: a key is made only from what a fix of another issue does not touch, so
 closing a block, changing an unknown word to a known one, taking a missing character off a `:::for` line or adding a block elsewhere moves no other block's id
 (`SecretScan.Blocks`; a property test fixes each block of generated pages in turn). `.2`, `.3` tell apart only blocks that have the same issue and open with the same
 word and the same first line (the limit of the scheme for secret blocks: two such blocks are byte for byte alike where the key looks, and fixing the first gives its

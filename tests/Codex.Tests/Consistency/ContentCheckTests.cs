@@ -119,7 +119,7 @@ public class ContentCheckTests
     public void ABlockThatIsNeverClosed_IsReported_WithItsLine()
     {
         var issue = Assert.Single(Secrets("Intro.\n:::dm\nThe keeper is a smuggler."));
-        Assert.Equal("secret-unclosed:page:wikipages/1-A:body:dm:the-keeper-is-a-smuggler", issue.Id);
+        Assert.Equal("secret-unclosed:page:wikipages/1-A:body:the-keeper-is-a-smuggler", issue.Id);
         Assert.Contains("line 2", issue.Message);
     }
 
@@ -152,6 +152,6 @@ public class ContentCheckTests
         var snapshot = Fx.Snap(pages: new[] { Fx.Page("wikipages/1-A", "Plain", "No markers at all.") }, actors: new[] { actor }, facts: new[] { fact });
 
         var ids = new IConsistencyCheck[] { new SecretUnclosedCheck(), new SecretUnknownAudienceCheck() }.SelectMany(c => c.Run(snapshot)).Select(i => i.Id).OrderBy(i => i, StringComparer.Ordinal);
-        Assert.Equal(new[] { "secret-unclosed:actor:actors/1-A:dmNotes:dm:never-closed", "secret-unknown-audience:fact:facts/1-A:details:oops:x" }, ids);
+        Assert.Equal(new[] { "secret-unclosed:actor:actors/1-A:dmNotes:never-closed", "secret-unknown-audience:fact:facts/1-A:details:oops:x" }, ids);
     }
 }
