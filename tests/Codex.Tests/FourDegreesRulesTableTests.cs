@@ -152,4 +152,72 @@ public class FourDegreesRulesTableTests : IClassFixture<RavenDbFixture>, IDispos
 
         Assert.DoesNotContain(await LogAsync(session), d => d.Contains("rolled"));
     }
+
+    // ---- Persistent damage: the end-of-turn flat check (conditions persistent-damage) ----
+
+    private async Task<(CampaignRuntime Runtime, SessionDocument Session, ActorDocument Body)> BurningAsync(ActorKind kind, bool burning = true)
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var body = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Ember", Kind = kind };
+        body.Sheet["HP"] = 12L;
+        body.Sheet["HP_Max"] = 20L;
+        ActorSheetSync.ApplySheetToState(body, System, _registry);
+        await _actors.SaveAsync(body);
+        var session = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Status = SessionStatus.Live };
+        await _sessions.SaveAsync(session);
+        var runtime = new CampaignRuntime(campaignId, _actors, _registry, NullLogger.Instance, _sessions, session, system: System);
+        runtime.Hydrate(new[] { body });
+        if (burning)
+            await runtime.EnqueueAsync(new AddStatusEffectCommand(body.Id, "Persistent Damage", body.Id, ActiveEffect.Indefinite, EffectExpiry.EndOfTurn, body.Id));
+        return (runtime, session, body);
+    }
+
+    private static bool Burning(CampaignRuntime runtime, ActorDocument body) => runtime.Snapshot.Actor(body.Id)!.Effects.Any(e => e.EffectId == "Persistent Damage");
+
+    [Theory]
+    [InlineData(ActorKind.PlayerCharacter, 15, false)]
+    [InlineData(ActorKind.Monster, 15, false)]
+    [InlineData(ActorKind.PlayerCharacter, 14, true)]
+    [InlineData(ActorKind.Monster, 14, true)]
+    public async Task PersistentDamage_EndsOnASuccessfulFlatCheck_AndStaysOnAFailure(ActorKind kind, int face, bool stays)
+    {
+        var (runtime, session, body) = await BurningAsync(kind);
+        await using var _ = runtime;
+
+        await runtime.EnqueueAsync(new RaiseEventCommand(body.Id, "turnEnd", new Dictionary<string, object?>(), new SequenceDiceSource(new[] { face })));
+
+        Assert.Equal(stays, Burning(runtime, body));
+        var log = await LogAsync(session);
+        Assert.Contains(log, d => d.Contains($"rolled d20: {face}"));
+        Assert.Contains(log, d => d.Contains("Persistent damage check DC 15"));
+    }
+
+    [Fact]
+    public async Task NoPersistentDamage_MeansNoRollAndNoLine_AtTheEndOfATurn()
+    {
+        var (runtime, session, body) = await BurningAsync(ActorKind.Monster, burning: false);
+        await using var _ = runtime;
+
+        await runtime.EnqueueAsync(new RaiseEventCommand(body.Id, "turnEnd", new Dictionary<string, object?>(), new SequenceDiceSource(new[] { 15 })));
+
+        Assert.DoesNotContain(await LogAsync(session), d => d.Contains("rolled") || d.Contains("Persistent damage"));
+    }
+
+    [Fact]
+    public async Task NextTurn_RollsThePersistentDamageCheck_AndStillLowersAValuedCondition()
+    {
+        // The real path: the combat console's next turn. The dice are the table's own, so the check may end the condition or not;
+        // the built-in lowering of frightened runs after the script either way (declaring turnEnd keeps it).
+        var (runtime, session, body) = await BurningAsync(ActorKind.Monster);
+        await using var _ = runtime;
+        await runtime.EnqueueAsync(new SetInitiativeCommand(body.Id, 15));
+        await runtime.EnqueueAsync(new AdjustConditionCommand(body.Id, "Frightened", 2));
+
+        await runtime.EnqueueAsync(new NextTurnCommand());
+
+        Assert.Equal(1, runtime.Snapshot.Actor(body.Id)!.Pool("condition_frightened"));
+        var log = await LogAsync(session);
+        Assert.Single(log, d => d.Contains("rolled d20"));
+        Assert.Contains(log, d => d.Contains("Persistent damage check DC 15"));
+    }
 }

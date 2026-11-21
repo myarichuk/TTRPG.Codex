@@ -364,6 +364,9 @@ values:
   Spends all hero points: Тратит все очки героизма
   Massive damage: Массивный урон
   No hero points: Нет очков героизма
+  Persistent damage check: Проверка прекращения продолжающегося урона
+  DC 15: СЛ 15
+  turnEnd: Конец хода
 
 sheetRules:
   lists:

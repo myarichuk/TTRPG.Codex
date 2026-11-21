@@ -8,7 +8,7 @@ export type ValueKey = "senseDc" | "speed";
 export type ConditionName = "Blinded" | "Broken" | "Clumsy" | "Concealed" | "Confused" | "Controlled" | "Dazzled" | "Deafened" | "Doomed" | "Drained" | "Dying" | "Encumbered" | "Enfeebled" | "Fascinated" | "Fatigued" | "Fleeing" | "Friendly" | "Frightened" | "Grabbed" | "Helpful" | "Hidden" | "Hostile" | "Immobilized" | "Indifferent" | "Invisible" | "Observed" | "Off-guard" | "Paralyzed" | "Persistent Damage" | "Petrified" | "Prone" | "Quickened" | "Restrained" | "Sickened" | "Slowed" | "Stunned" | "Stupefied" | "Unconscious" | "Undetected" | "Unfriendly" | "Unnoticed" | "Wounded";
 export type FunctionName = "degree";
 export type RollKey = "degreeCheck" | "strike";
-export type EventType = "turnStart" | "damaged" | "healed" | "heroicRecovery" | "sessionStart" | "dailyPrep";
+export type EventType = "turnStart" | "turnEnd" | "damaged" | "healed" | "heroicRecovery" | "sessionStart" | "dailyPrep";
 export type Plain = number | string | boolean | null;
 
 /** One pick of the list "trinkets" (Trinkets): the entry's id and its per-pick fields. */
@@ -80,6 +80,7 @@ export type Handler = (ev: Event, sheet: Sheet, ctx: Context) => Intent[];
 
 // The exports system.yaml names:
 //   rules.js#onTurnStart: the turnStart handler (Handler)
+//   rules.js#onTurnEnd: the turnEnd handler (Handler)
 //   rules.js#onDamaged: the damaged handler (Handler)
 //   rules.js#onHealed: the healed handler (Handler)
 //   rules.js#onHeroicRecovery: the heroicRecovery handler (Handler)

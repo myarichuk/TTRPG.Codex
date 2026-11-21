@@ -364,6 +364,9 @@ values:
   Spends all hero points: מוציא את כל נקודות הגבורה
   Massive damage: נזק מסיבי
   No hero points: אין נקודות גבורה
+  Persistent damage check: בדיקת הפסקת נזק מתמשך
+  DC 15: דרגת קושי 15
+  turnEnd: סוף התור
 
 sheetRules:
   boostSources:
