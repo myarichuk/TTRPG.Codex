@@ -291,7 +291,7 @@ public static partial class ImportPipeline
             Tags = e.Tags.ToList(),
             Raw = e.Raw.ToList(),
             // A subclass's own feature row is named like the subclass (a choice with one row): when a row has renamed the entry, the row takes the new name.
-            Features = e.Features.Select(f => new FinalFeature(e.Type == "subclass" && f.Name == e.Name ? kept[e.Id].Fields["name"] : f.Name, f.Level, kept[e.Id].Fields[ParsedEntry.FeatureField(f)], f.Adds.ToList())).ToList(),
+            Features = e.Features.Select(f => new FinalFeature(e.Type == "subclass" && f.Name == e.Name ? kept[e.Id].Fields["name"] : f.Name, f.Level, kept[e.Id].Fields[ParsedEntry.FeatureField(f)], f.Adds.ToList(), f.Uses)).ToList(),
         }).ToList();
 
         // The traits a versatile heritage gives (a heritage that names no ancestry): the words of its "You gain the X trait" sentence, read from the description after redaction, so a renamed heritage says its new key.
