@@ -20,21 +20,38 @@ internal static class SecretScan
     /// so fixing the block's unknown word (another issue) leaves it as it was.</param>
     public static IEnumerable<(TextField Field, SecretBlock Block, string Opening, string Key)> Blocks(WorldSnapshot s, Func<SecretBlock, bool> reported, bool withWord = true)
     {
+        // The blocks of every field are read once per snapshot (the three secret checks share them); which are reported and how they are numbered is each check's.
+        foreach (var (field, blocks) in s.Derived.SecretBlocks)
+        {
+            var seen = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var read in blocks)
+            {
+                if (!reported(read.Block)) continue;
+                var identity = withWord ? $"{read.Word}:{read.Content}" : read.Content;
+                seen[identity] = seen.GetValueOrDefault(identity) + 1;
+                yield return (field, read.Block, read.Opening, seen[identity] == 1 ? identity : $"{identity}.{seen[identity]}");
+            }
+        }
+    }
+
+    /// <summary>One block as the keys are made from it: its opening line, the slug of the word it was opened with and of its first line of content.</summary>
+    internal sealed record ReadBlock(SecretBlock Block, string Opening, string Word, string Content);
+
+    /// <summary>The blocks of every text field that has a marker, in field order, each read as <see cref="ReadBlock"/>.</summary>
+    internal static List<(TextField Field, IReadOnlyList<ReadBlock> Blocks)> Read(WorldSnapshot s)
+    {
+        var all = new List<(TextField, IReadOnlyList<ReadBlock>)>();
         foreach (var field in TextFields.Of(s))
         {
             if (!SecretText.HasMarkers(field.Text)) continue;
             // The same line splitting the parser uses, so SecretBlock.Line is the same line here.
             var lines = field.Text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
-            var seen = new Dictionary<string, int>(StringComparer.Ordinal);
-            foreach (var block in SecretText.Blocks(field.Text).Where(reported))
-            {
-                var opening = block.Line < lines.Length ? lines[block.Line] : string.Empty;
-                var content = Slug(FirstContentLine(block), "empty");
-                var identity = withWord ? $"{Slug(block.OpenerWord, "block")}:{content}" : content;
-                seen[identity] = seen.GetValueOrDefault(identity) + 1;
-                yield return (field, block, opening, seen[identity] == 1 ? identity : $"{identity}.{seen[identity]}");
-            }
+            all.Add((field, SecretText.Blocks(field.Text)
+                .Select(block => new ReadBlock(block, block.Line < lines.Length ? lines[block.Line] : string.Empty, Slug(block.OpenerWord, "block"), Slug(FirstContentLine(block), "empty")))
+                .ToList()));
         }
+
+        return all;
     }
 
     /// <summary>The block's first line that has something in it and is not itself a marker line (a nested block's opener or closer).</summary>
@@ -47,6 +64,15 @@ internal static class SecretScan
         var slug = WikiText.Slugify(text);
         return slug.Length > KeyLength ? slug[..KeyLength].TrimEnd('-') : slug;
     }
+}
+
+/// <summary>What the checks of one snapshot derive from the same texts, each worked out once, on first use, and then only read (<see cref="WorldSnapshot.Derived"/>).</summary>
+internal sealed class SnapshotDerived(WorldSnapshot snapshot)
+{
+    private readonly Lazy<List<(TextField Field, IReadOnlyList<SecretScan.ReadBlock> Blocks)>> secretBlocks = new(() => SecretScan.Read(snapshot), LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>The secret blocks of every text field that has a marker (<see cref="SecretScan.Read"/>).</summary>
+    public IReadOnlyList<(TextField Field, IReadOnlyList<SecretScan.ReadBlock> Blocks)> SecretBlocks => secretBlocks.Value;
 }
 
 /// <summary>A secret block that is never closed. It runs to the end of the text: everything after its opening line is the DM's alone.</summary>

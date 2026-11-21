@@ -144,6 +144,55 @@ public class CheckDifferentialTests
         Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(), snapshot, "almost");
     }
 
+    // ---- the secret blocks ----
+
+    private static readonly string[] SecretLines =
+    {
+        ":::dm", ":::DM", ":::party", ":::players", ":::partyy", ":::secret", ":::for [[actor:actors/1-A]]", ":::for [[actor:actors/9-Z]]", ":::for",
+        ":::for [[actor:actors/1-A]] [[actor:gone]]", ":::dm 2024-05-01", "  :::dm", ":::", ":::", ":::", "::: ", "The keeper lies.", "The keeper lies.", "",
+        "   ", "# Heading", "Plain text [[Some Page]].", "A very long first line of a secret block that is cut when it becomes a key of an issue id", "x"
+    };
+
+    private static string SecretText(Random r)
+    {
+        var lines = Enumerable.Range(0, r.Next(0, 25)).Select(_ => SecretLines[r.Next(SecretLines.Length)]);
+        return string.Join(r.Next(4) == 0 ? "\r\n" : "\n", lines);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    public void TheSecretChecks_FindWhatTheyFoundBefore_OnGeneratedWorlds(int seed)
+    {
+        var r = new Random(seed);
+        var found = 0;
+        for (var world = 0; world < 150; world++)
+        {
+            var pages = Enumerable.Range(0, r.Next(0, 6)).Select(i => Fx.Page($"wikipages/{i}-A", "Page " + i, SecretText(r))).ToList();
+            var actors = Enumerable.Range(0, r.Next(0, 4)).Select(i => Fx.Actor($"actors/{i}-A", bio: SecretText(r), notes: r.Next(2) == 0 ? SecretText(r) : null)).ToList();
+            var places = Enumerable.Range(0, r.Next(0, 3)).Select(i => new PlaceView("p" + i, "regions/1", "Place", SecretText(r), null)).ToList();
+            var facts = Enumerable.Range(0, r.Next(0, 3)).Select(i => new FactView($"facts/{i}", SecretText(r), r.Next(2) == 0 ? SecretText(r) : null)).ToList();
+            var snapshot = Fx.Snap(pages: pages, actors: actors, places: places, facts: facts);
+            // Each check on a fresh snapshot and all three on one (where they share what is read), in both orders.
+            foreach (var (oracle, current) in new (IConsistencyCheck, IConsistencyCheck)[]
+                     {
+                         (new OracleSecretUnclosedCheck(), new SecretUnclosedCheck()), (new OracleSecretUnknownAudienceCheck(), new SecretUnknownAudienceCheck()),
+                         (new OracleSecretForMissingCheck(), new SecretForMissingCheck())
+                     })
+            {
+                found += oracle.Run(snapshot).Count();
+                Same(oracle, current, snapshot, $"seed {seed} world {world} {current.Name}");
+                Same(oracle, current, Fx.Snap(pages: pages, actors: actors, places: places, facts: facts), $"seed {seed} world {world} {current.Name} fresh");
+            }
+        }
+
+        Assert.True(found > 0);
+    }
+
     // ---- the place tree ----
 
     private static List<PlaceView> RandomPlaces(Random r, int count, int regions)

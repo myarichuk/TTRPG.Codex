@@ -72,6 +72,12 @@ public sealed class WorldSnapshot
 {
     private WorldSnapshot() { }
 
+    private SnapshotDerived? derived;
+
+    /// <summary>What several checks derive from the same texts (the secret blocks), worked out once for this snapshot on first use and then only read.
+    /// A snapshot is immutable, so the derived values are the values; they live as long as the snapshot (one run in the app), never in anything static.</summary>
+    internal SnapshotDerived Derived => LazyInitializer.EnsureInitialized(ref derived, () => new SnapshotDerived(this));
+
     public IReadOnlyList<PageView> Pages { get; private init; } = Array.Empty<PageView>();
     public IReadOnlyList<ActorView> Actors { get; private init; } = Array.Empty<ActorView>();
     public IReadOnlyList<PlaceView> Places { get; private init; } = Array.Empty<PlaceView>();
