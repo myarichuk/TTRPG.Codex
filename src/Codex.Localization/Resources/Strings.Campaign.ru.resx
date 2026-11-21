@@ -1352,4 +1352,47 @@
   <data name="Campaign.Book.Hazard.NoneOnSave" xml:space="preserve"><value>нет урона при успехе</value></data>
   <data name="Campaign.Book.Hazard.Times" xml:space="preserve"><value>{0}, раз: {1}</value></data>
   <data name="Campaign.Book.Hazard.Strikes" xml:space="preserve"><value>применяет эффект</value></data>
+  <data name="Campaign.Issues.Title" xml:space="preserve"><value>Проблемы</value></data>
+  <data name="Campaign.Issues.Subtitle" xml:space="preserve"><value>Что собственные проверки приложения нашли неверным или пропущенным. Проверки — это код, а не модель: одна и та же кампания всегда даёт один и тот же список. Отклоняйте то, что так и задумано.</value></data>
+  <data name="Campaign.Issues.DmOnly" xml:space="preserve"><value>Проблемы видит только ведущий.</value></data>
+  <data name="Campaign.Issues.None" xml:space="preserve"><value>Открытых проблем нет: проверки не нашли ничего, что нужно исправлять.</value></data>
+  <data name="Campaign.Issues.NoMatch" xml:space="preserve"><value>Под этот фильтр ничего не подходит.</value></data>
+  <data name="Campaign.Issues.Counts" xml:space="preserve"><value>Открыто: {0} — ошибок: {1}, предупреждений: {2}, сведений: {3}</value></data>
+  <data name="Campaign.Issues.Severity.Error" xml:space="preserve"><value>Ошибки</value></data>
+  <data name="Campaign.Issues.Severity.Warning" xml:space="preserve"><value>Предупреждения</value></data>
+  <data name="Campaign.Issues.Severity.Info" xml:space="preserve"><value>Сведения</value></data>
+  <data name="Campaign.Issues.Filter.Severity" xml:space="preserve"><value>Важность</value></data>
+  <data name="Campaign.Issues.Filter.Kind" xml:space="preserve"><value>О чём</value></data>
+  <data name="Campaign.Issues.Filter.All" xml:space="preserve"><value>Все</value></data>
+  <data name="Campaign.Issues.Filter.Noise" xml:space="preserve"><value>Показывать и мелкие замечания</value></data>
+  <data name="Campaign.Issues.Filter.NoiseHint" xml:space="preserve"><value>Страницы без ссылок на них, односторонние связи, страницы персон без персонажа, упоминания выбывших персонажей. По умолчанию выключено.</value></data>
+  <data name="Campaign.Issues.Kind.page" xml:space="preserve"><value>Страницы</value></data>
+  <data name="Campaign.Issues.Kind.actor" xml:space="preserve"><value>Персонажи</value></data>
+  <data name="Campaign.Issues.Kind.place" xml:space="preserve"><value>Места</value></data>
+  <data name="Campaign.Issues.Kind.fact" xml:space="preserve"><value>Тайны</value></data>
+  <data name="Campaign.Issues.Kind.homebrew" xml:space="preserve"><value>Своё</value></data>
+  <data name="Campaign.Issues.Kind.campaign" xml:space="preserve"><value>Кампания</value></data>
+  <data name="Campaign.Issues.Dismiss" xml:space="preserve"><value>Отклонить</value></data>
+  <data name="Campaign.Issues.DismissNote" xml:space="preserve"><value>Почему? (необязательно)</value></data>
+  <data name="Campaign.Issues.DismissConfirm" xml:space="preserve"><value>Отклонить проблему</value></data>
+  <data name="Campaign.Issues.DismissFailed" xml:space="preserve"><value>Эта проблема уже не открыта, поэтому её нельзя отклонить.</value></data>
+  <data name="Campaign.Issues.DismissalsFull" xml:space="preserve"><value>Это максимальное число отклонённых проблем, которое хранит кампания ({0}). Восстановите несколько из списка отклонённых, прежде чем отклонять новые.</value></data>
+  <data name="Campaign.Issues.Open" xml:space="preserve"><value>Открыть</value></data>
+  <data name="Campaign.Issues.From" xml:space="preserve"><value>Нашла проверка {0}</value></data>
+  <data name="Campaign.Issues.DismissedTitle" xml:space="preserve"><value>Отклонённые ({0})</value></data>
+  <data name="Campaign.Issues.DismissedHint" xml:space="preserve"><value>Отложены намеренно и не учитываются. Восстановите одну, чтобы снова её увидеть.</value></data>
+  <data name="Campaign.Issues.Restore" xml:space="preserve"><value>Восстановить</value></data>
+  <data name="Campaign.Issues.NoNote" xml:space="preserve"><value>Без заметки</value></data>
+  <data name="Campaign.Issues.Gone" xml:space="preserve"><value>Проблемы больше нет. Отклонение остаётся и снова сработает, если та же проблема вернётся.</value></data>
+  <data name="Campaign.Issues.Error" xml:space="preserve"><value>Проверки не удалось выполнить.</value></data>
+  <data name="Campaign.Issues.Recheck.Title" xml:space="preserve"><value>После последнего применения</value></data>
+  <data name="Campaign.Issues.Recheck.Resolved" xml:space="preserve"><value>Исправлено: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.StillOpen" xml:space="preserve"><value>Всё ещё открыты, изменение их не исправило: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.New" xml:space="preserve"><value>Новые, появились из-за изменения: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.Unclaimed" xml:space="preserve"><value>Исправлены заодно, хотя о них не заявляли: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.NotFound" xml:space="preserve"><value>Не были проблемами ни до, ни после: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.Failed" xml:space="preserve"><value>Приложению не удалось заново выполнить проверки после применения. Само применение прошло.</value></data>
+  <data name="Campaign.Issues.Recheck.Nothing" xml:space="preserve"><value>Ничего не изменилось.</value></data>
+  <data name="Campaign.Issues.Recheck.Hide" xml:space="preserve"><value>Скрыть</value></data>
+  <data name="Campaign.Issues.Recheck.See" xml:space="preserve"><value>К проблемам</value></data>
 </root>

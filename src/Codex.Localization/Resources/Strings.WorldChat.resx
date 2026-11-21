@@ -183,4 +183,9 @@
   <data name="WorldChat.Usage.Cost" xml:space="preserve"><value>cost {0}</value></data>
   <data name="WorldChat.Usage.Total" xml:space="preserve"><value>Whole chat: {0} in / {1} out tokens</value></data>
   <data name="WorldChat.Usage.CostPartial" xml:space="preserve"><value>cost {0} (only {1} of {2} turns have a price)</value></data>
+  <data name="WorldChat.Edit.Sheet" xml:space="preserve"><value>changes the character's sheet</value></data>
+  <data name="WorldChat.Proposal.SheetChanges" xml:space="preserve"><value>Sheet changes</value></data>
+  <data name="WorldChat.Proposal.SheetNow" xml:space="preserve"><value>Now</value></data>
+  <data name="WorldChat.Proposal.SheetThen" xml:space="preserve"><value>After</value></data>
+  <data name="WorldChat.Proposal.SheetCleared" xml:space="preserve"><value>cleared</value></data>
 </root>

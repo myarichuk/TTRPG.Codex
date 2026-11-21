@@ -39,6 +39,13 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
         return declared.Concat(extra).ToList();
     }
 
+    /// <summary>A pack's entry by type and id, whether or not the campaign has its pack on; null when no loaded pack has it. In memory.</summary>
+    public ContentEntry? PackEntry(string systemId, string type, string id) => registry.GetEntry(systemId, type, id);
+
+    /// <summary>The ids of the packs the campaign's system has (translation packs are not toggles and are left out).</summary>
+    public IReadOnlyList<string> PackIds(CampaignDocument campaign) =>
+        registry.GetPacks(campaign.SystemId).Where(p => !p.IsTranslation).Select(p => p.Id).OrderBy(id => id, StringComparer.Ordinal).ToList();
+
     /// <summary>A homebrew entry as the Library shows it: whatever lore a flavor pack registered for its type and
     /// id fills in what the entry does not say itself.</summary>
     private ContentEntry ToEntry(HomebrewEntryDocument brew)

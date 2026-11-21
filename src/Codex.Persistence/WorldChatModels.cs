@@ -49,6 +49,13 @@ public class WorldChatDocument
     /// proposal a second time. An apply cut short without clearing it (a crash) stops counting after a while.</summary>
     public DateTime? ApplyingSince { get; set; }
 
+    /// <summary>The ids of the issues that were open before the first attempt to apply the waiting proposal, while it claimed some; null when no apply
+    /// is half done. Kept with the proposal so an apply that is tried again after part of it was saved compares with the world as it was before any of
+    /// it (the claims of the entries already saved are then still seen as issues that were open, and are gone). Cleared when the proposal is applied or discarded and when a fresh proposal replaces it (its claims were checked against the issues open then);
+    /// kept for <c>add_entries</c> (the same proposal) and across an apply cut short by a crash, whose retry is the case it exists for. A turn that is undone puts it back
+    /// with the proposal it belonged to.</summary>
+    public List<string>? ApplyBeforeIssueIds { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
@@ -61,6 +68,11 @@ public class WorldChatMessage
     public string Role { get; set; } = string.Empty;
 
     public string? Text { get; set; }
+
+    /// <summary>True for a line the app added on its own (the per-message count of open issues): not one of the game master's messages, so it
+    /// is not counted as one when old tool results are cut. Null (not written) for every other message, and in every chat stored before.</summary>
+    public bool? AppNote { get; set; }
+
     public List<WorldChatCall>? Calls { get; set; }
     public List<WorldChatResult>? Results { get; set; }
 }

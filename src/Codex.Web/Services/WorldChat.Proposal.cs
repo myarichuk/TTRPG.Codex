@@ -47,9 +47,21 @@ public sealed partial class WorldChat
             throw;
         }
 
+        // What the proposal says it resolves is read before it is cleared. Only entries that are saved count, and the checks only run
+        // (two snapshots) when something was claimed: the claim is what is checked, never what decides.
+        var claimedIds = WorldBuilderService.Kept(proposal).SelectMany(d => d.Resolves).Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToList();
+        IReadOnlyList<Codex.Core.Consistency.Issue>? before = null;
         WorldBuildResult result;
         try
         {
+            before = await BeforeApplyAsync(claimedIds, ct);
+            // The ids open before the first attempt are kept with the chat until the proposal is done: a retry after a part was saved takes its own
+            // "before" after that part, where the fixed issues are already gone and their claims would read as "never an issue".
+            if (before != null)
+            {
+                Document.ApplyBeforeIssueIds = before.Select(i => i.Id).Concat(Document.ApplyBeforeIssueIds ?? new List<string>()).Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToList();
+            }
+
             // Each entry is kept in the chat the moment it is stored, so an apply cut short by anything (a failure, a closed tab,
             // a restart) leaves a chat that knows what it made: Apply again only adds the rest.
             result = await builder.SaveAsync(campaign, access, proposal, ct, SaveAsync);
@@ -62,6 +74,14 @@ public sealed partial class WorldChat
         }
 
         Document.ApplyingSince = null;
+        // The save went through; nothing about the re-check can turn it into a failure.
+        if (claimedIds.Count > 0)
+        {
+            result = result with { Recheck = await RecheckAsync(before, Document.ApplyBeforeIssueIds, claimedIds) };
+        }
+
+        Document.ApplyBeforeIssueIds = null;
+
         Proposal = null;
         Held = null;
         Document.ProposalWarnings = new List<string>();
@@ -81,7 +101,7 @@ public sealed partial class WorldChat
             var what = change.Target switch
             {
                 EditTarget.Place => "description of the place", EditTarget.Actor => "history of the cast member", EditTarget.Homebrew => "homebrew entry",
-                EditTarget.Region => "region", EditTarget.Fact => "secret in Lore", _ => "text of the page"
+                EditTarget.Region => "region", EditTarget.Fact => "secret in Lore", EditTarget.Sheet => "sheet of the cast member", _ => "text of the page"
             };
             if (change.Removed)
             {
@@ -98,16 +118,49 @@ public sealed partial class WorldChat
                 continue;
             }
 
-            note.Append($" Changed: the {what} \"{change.Name}\" " + (change.Text ? "now reads as you wrote it" : "was renamed, moved or retyped as you asked") + "; " +
+            note.Append($" Changed: the {what} \"{change.Name}\" " + (change.Text ? "now reads as you wrote it" : change.Target == EditTarget.Sheet ? "now holds the sheet values you set (the sheet's own rules recomputed what they derive)" : "was renamed, moved or retyped as you asked") + "; " +
                         (change.Shared ? "the players can see it, so they read the change, all but its hidden blocks." : "it is hidden from the players."));
         }
 
         if (result.Shortlisted.Count > 0) note.Append(" On the Bestiary shortlist (the game master's own): " + string.Join("; ", result.Shortlisted.Select(c => $"\"{c.Name}\"")) + ".");
         if (result.Retagged > 0) note.Append($" Tags changed on {result.Retagged} page(s) or entries.");
+        if (result.Recheck is { } recheck) note.Append(recheck.Describe());
         history.Add(new ChatMessage(ChatRole.User, note.Append(')').ToString()));
         Document.Lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, Localizer.For(Lang)["WorldChat.Applied", result.Count], icon: "circle-check") { Links = Links(result) });
         await SaveAsync();
         return result;
+    }
+
+    // The issues before the save, when the proposal claims to resolve any. A check that fails is not a reason to refuse the apply: null
+    // says there is no "before", and the re-check then reports that it could not run.
+    private async Task<IReadOnlyList<Codex.Core.Consistency.Issue>?> BeforeApplyAsync(List<string> claimedIds, CancellationToken ct)
+    {
+        if (claimedIds.Count == 0) return null;
+        try
+        {
+            ct.ThrowIfCancellationRequested();
+            return await builder.OpenIssuesAsync(campaign, access);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
+    // The checks again, after the save, set against the checks before it. The model's claim is the thing being checked.
+    private async Task<ApplyRecheck> RecheckAsync(IReadOnlyList<Codex.Core.Consistency.Issue>? before, IReadOnlyList<string>? earlierIds, List<string> claimedIds)
+    {
+        if (before == null) return ApplyRecheck.Couldnt;
+        try
+        {
+            return await builder.OpenIssuesAsync(campaign, access) is { } after
+                ? ApplyRecheck.From(Codex.Core.Consistency.ConsistencyChecker.Compare(before.Select(i => i.Id).Concat(earlierIds ?? Array.Empty<string>()), after, claimedIds))
+                : ApplyRecheck.Couldnt;
+        }
+        catch (Exception)
+        {
+            return ApplyRecheck.Couldnt;
+        }
     }
 
     /// <summary>A link as the model reads it: what it is, and the key to use for it.</summary>
@@ -148,6 +201,7 @@ public sealed partial class WorldChat
         var kept = await builder.SavedLinksAsync(proposal, access);
         Proposal = null;
         Held = null;
+        Document.ApplyBeforeIssueIds = null;
         Document.ProposalWarnings = new List<string>();
         Document.Decided = new List<string>();
         var l = Localizer.For(Lang);

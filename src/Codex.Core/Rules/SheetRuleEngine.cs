@@ -248,6 +248,53 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
     private SheetRules? Rules => system.SheetRules;
 
+    /// <summary>
+    /// False for a caller that reads only the verdicts (the consistency checker's <c>sheet-rule</c>): <see cref="SheetEvaluation.AllowedOptions"/> and
+    /// <see cref="SheetEvaluation.ListOptions"/>, what a picker may offer, are then left out, which is most of the work of an evaluation (every
+    /// candidate of every list tested against the sheet). Nothing else reads them, so the violations, the warnings and the values written onto the
+    /// sheet are the same. They are still worked out where working them out could fail (a rule condition with a missing name, a candidate without
+    /// tags or properties, a list of candidates that cannot be read; <see cref="OptionsCannotFail"/>), so a sheet whose evaluation threw before still throws.
+    /// </summary>
+    public bool Options { get; init; } = true;
+
+    private bool? optionsCannotFail;
+
+    private bool SkipOptions => !Options && (optionsCannotFail ??= OptionsCannotFail());
+
+    /// <summary>Whether testing the candidates against the rules' conditions, as the options do, cannot throw: every name a condition reads is there, and
+    /// every candidate of the types the options read can be listed and has its tags and properties. Worked out once per engine.</summary>
+    private bool OptionsCannotFail()
+    {
+        if (Rules == null) return true;
+        static bool Safe(RuleCondition c) =>
+            c != null && c.Property != null && (c.In == null || c.In.All(o => o != null)) && Field(c.EqualsPropertyOfField) && Field(c.ContainsPropertyOfField)
+            && (c.LteLookup == null || c.LteLookup.Field != null && c.LteLookup.Table != null && c.LteLookup.ByField != null && c.LteLookup.RowKey != null && c.LteLookup.Column != null);
+        static bool Field(FieldProperty? f) => f == null || f.Field != null && f.Property != null && Field(f.Or);
+        var types = new List<string>();
+        foreach (var constraint in Rules.Constraints)
+        {
+            var field = system.ActorFields.FirstOrDefault(f => f.Key == constraint.Field);
+            if (field?.TargetEntityType == null) continue;
+            if (constraint.Where == null || !constraint.Where.All(Safe)) return false;
+            types.Add(field.TargetEntityType);
+        }
+
+        foreach (var list in Rules.Lists)
+        {
+            if (list.Where == null || !list.Where.All(Safe) || list.TargetEntityType == null) return false;
+            types.Add(list.TargetEntityType);
+        }
+
+        try
+        {
+            return types.All(t => resolver.Candidates(t).All(c => c != null && c.Tags != null && c.Properties != null));
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return false;
+        }
+    }
+
     public static string EffectiveEnforcement(SystemDefinition? system, string? campaignOverride)
     {
         var value = string.IsNullOrWhiteSpace(campaignOverride) || campaignOverride == "inherit"
@@ -325,9 +372,12 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         {
             var field = system.ActorFields.FirstOrDefault(f => f.Key == constraint.Field);
             if (field?.TargetEntityType == null) continue;
-            var allowed = resolver.Candidates(field.TargetEntityType).Where(c => constraint.Where.All(w => Holds(w, c, sheet))).ToList();
-            if (IsSubclassField(constraint.Field) && result.Classes.FirstOrDefault(c => c.IsFirst) is { } firstClass && firstClass.Level < Rules.Multiclass!.SubclassLevel) allowed.Clear();
-            result.AllowedOptions[constraint.Field] = allowed;
+            if (!SkipOptions)
+            {
+                var allowed = resolver.Candidates(field.TargetEntityType).Where(c => constraint.Where.All(w => Holds(w, c, sheet))).ToList();
+                if (IsSubclassField(constraint.Field) && result.Classes.FirstOrDefault(c => c.IsFirst) is { } firstClass && firstClass.Level < Rules.Multiclass!.SubclassLevel) allowed.Clear();
+                result.AllowedOptions[constraint.Field] = allowed;
+            }
 
             var chosen = YamlValues.GetString(sheet, constraint.Field);
             if (string.IsNullOrEmpty(chosen)) continue;
@@ -379,11 +429,14 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             }
 
             result.ListPicks[list.Key] = resolved;
-            var pickedIds = resolved.Select(p => p.Entry.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            result.ListOptions[list.Key] = resolver.Candidates(list.TargetEntityType)
-                .Where(c => (!pickedIds.Contains(c.Id) || IsRepeatable(list, c)) && views.Any(v => list.Where.All(w => Holds(w, c, v))))
-                .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            if (!SkipOptions)
+            {
+                var pickedIds = resolved.Select(p => p.Entry.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                result.ListOptions[list.Key] = resolver.Candidates(list.TargetEntityType)
+                    .Where(c => (!pickedIds.Contains(c.Id) || IsRepeatable(list, c)) && views.Any(v => list.Where.All(w => Holds(w, c, v))))
+                    .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
 
             foreach (var duplicate in resolved.GroupBy(p => p.Entry.Id, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1 && !IsRepeatable(list, g.First().Entry)))
             {

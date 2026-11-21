@@ -145,6 +145,15 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
     /// <summary>Takes a character out of play and off the live table; their document stays, so mentions still name them. False when not the DM.</summary>
     public Task<bool> RetireAsync(string actorId, CampaignAccess access) => runtimes.TryRetireActorAsync(actorId, access);
 
+    /// <summary>Brings the live state of a character (attributes, resource pools) in line with the sheet just changed, as saving the sheet page does.</summary>
+    public void SyncState(ActorDocument actor, SystemDefinition? system) => ActorSheetSync.ApplySheetToState(actor, system, components);
+
+    /// <summary>Saves a character's sheet the way the sheet page does: through the table while it is live and holds the character (their changes are
+    /// merged with the table's current state, field by field against <paramref name="baselineSheet"/>, the sheet as it was before the edit), otherwise
+    /// as an ordinary guarded save. Without this, the table's copy of the character would be written back over the edit at its next event.</summary>
+    public Task<bool> SaveSheetAsync(ActorDocument actor, IReadOnlyDictionary<string, object> baselineSheet, CampaignAccess access, SystemDefinition? system) =>
+        runtimes.TrySaveActorAsync(actor, baselineSheet, access, system);
+
     /// <summary>Lays a creature's stat block over an existing character's sheet: what the block prints replaces the same entries and
     /// the rest of the sheet (notes, gear, anything the block does not print) stays. False, changing nothing, when the item is not a
     /// creature. The caller saves the actor.</summary>

@@ -1352,4 +1352,47 @@
   <data name="Campaign.Book.Hazard.NoneOnSave" xml:space="preserve"><value>no damage on a save</value></data>
   <data name="Campaign.Book.Hazard.Times" xml:space="preserve"><value>{0}, {1} times</value></data>
   <data name="Campaign.Book.Hazard.Strikes" xml:space="preserve"><value>applies the effect</value></data>
+  <data name="Campaign.Issues.Title" xml:space="preserve"><value>Issues</value></data>
+  <data name="Campaign.Issues.Subtitle" xml:space="preserve"><value>What the app's own checks found wrong or missing. The checks are code, not a model: the same campaign always gives the same list. Dismiss what is meant to stay.</value></data>
+  <data name="Campaign.Issues.DmOnly" xml:space="preserve"><value>Issues are for the game master only.</value></data>
+  <data name="Campaign.Issues.None" xml:space="preserve"><value>No open issues: the checks found nothing to fix.</value></data>
+  <data name="Campaign.Issues.NoMatch" xml:space="preserve"><value>Nothing matches this filter.</value></data>
+  <data name="Campaign.Issues.Counts" xml:space="preserve"><value>{0} open: {1} errors, {2} warnings, {3} info</value></data>
+  <data name="Campaign.Issues.Severity.Error" xml:space="preserve"><value>Errors</value></data>
+  <data name="Campaign.Issues.Severity.Warning" xml:space="preserve"><value>Warnings</value></data>
+  <data name="Campaign.Issues.Severity.Info" xml:space="preserve"><value>Info</value></data>
+  <data name="Campaign.Issues.Filter.Severity" xml:space="preserve"><value>Severity</value></data>
+  <data name="Campaign.Issues.Filter.Kind" xml:space="preserve"><value>About</value></data>
+  <data name="Campaign.Issues.Filter.All" xml:space="preserve"><value>All</value></data>
+  <data name="Campaign.Issues.Filter.Noise" xml:space="preserve"><value>Also show minor findings</value></data>
+  <data name="Campaign.Issues.Filter.NoiseHint" xml:space="preserve"><value>Pages nothing links to, one-sided links, person pages with no character, mentions of retired characters. Off by default.</value></data>
+  <data name="Campaign.Issues.Kind.page" xml:space="preserve"><value>Pages</value></data>
+  <data name="Campaign.Issues.Kind.actor" xml:space="preserve"><value>Characters</value></data>
+  <data name="Campaign.Issues.Kind.place" xml:space="preserve"><value>Places</value></data>
+  <data name="Campaign.Issues.Kind.fact" xml:space="preserve"><value>Secrets</value></data>
+  <data name="Campaign.Issues.Kind.homebrew" xml:space="preserve"><value>Homebrew</value></data>
+  <data name="Campaign.Issues.Kind.campaign" xml:space="preserve"><value>Campaign</value></data>
+  <data name="Campaign.Issues.Dismiss" xml:space="preserve"><value>Dismiss</value></data>
+  <data name="Campaign.Issues.DismissNote" xml:space="preserve"><value>Why? (optional)</value></data>
+  <data name="Campaign.Issues.DismissConfirm" xml:space="preserve"><value>Dismiss this issue</value></data>
+  <data name="Campaign.Issues.DismissFailed" xml:space="preserve"><value>That issue is no longer open, so it could not be dismissed.</value></data>
+  <data name="Campaign.Issues.DismissalsFull" xml:space="preserve"><value>That is as many dismissed issues as a campaign keeps ({0}). Restore some from the dismissed list before dismissing more.</value></data>
+  <data name="Campaign.Issues.Open" xml:space="preserve"><value>Open</value></data>
+  <data name="Campaign.Issues.From" xml:space="preserve"><value>Found by {0}</value></data>
+  <data name="Campaign.Issues.DismissedTitle" xml:space="preserve"><value>Dismissed ({0})</value></data>
+  <data name="Campaign.Issues.DismissedHint" xml:space="preserve"><value>Set aside on purpose; they are not counted. Restore one to see it again.</value></data>
+  <data name="Campaign.Issues.Restore" xml:space="preserve"><value>Restore</value></data>
+  <data name="Campaign.Issues.NoNote" xml:space="preserve"><value>No note</value></data>
+  <data name="Campaign.Issues.Gone" xml:space="preserve"><value>The problem is gone. This stays set aside, and applies again if the same problem comes back.</value></data>
+  <data name="Campaign.Issues.Error" xml:space="preserve"><value>The checks could not run.</value></data>
+  <data name="Campaign.Issues.Recheck.Title" xml:space="preserve"><value>After the last apply</value></data>
+  <data name="Campaign.Issues.Recheck.Resolved" xml:space="preserve"><value>Fixed: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.StillOpen" xml:space="preserve"><value>Still open, the change did not fix them: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.New" xml:space="preserve"><value>New, introduced by the change: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.Unclaimed" xml:space="preserve"><value>Also fixed, though nobody claimed them: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.NotFound" xml:space="preserve"><value>Not issues before or after: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.Failed" xml:space="preserve"><value>The app could not re-run its checks after the apply. The apply itself went through.</value></data>
+  <data name="Campaign.Issues.Recheck.Nothing" xml:space="preserve"><value>Nothing changed.</value></data>
+  <data name="Campaign.Issues.Recheck.Hide" xml:space="preserve"><value>Hide</value></data>
+  <data name="Campaign.Issues.Recheck.See" xml:space="preserve"><value>See the issues</value></data>
 </root>

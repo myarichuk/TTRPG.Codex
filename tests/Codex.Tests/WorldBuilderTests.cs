@@ -416,6 +416,12 @@ public class WorldBuilderTests
         /// <summary>When set, storing a place fails once this many have been stored, as a save that breaks half-way would.</summary>
         public int? FailPlacesAfter { get; set; }
 
+        /// <summary>How many full consistency snapshots were taken (each reads the dismissals once).</summary>
+        public int Snapshots { get; set; }
+
+        /// <summary>When set, a consistency check fails once this many snapshots have been taken.</summary>
+        public int? FailChecksAfter { get; set; }
+
         /// <summary>The campaign as stored; its Bestiary shortlist is what saving added to it.</summary>
         public CampaignDocument Stored { get; } = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
     }
@@ -434,6 +440,9 @@ public class WorldBuilderTests
             }
         }
     };
+
+    /// <summary>The same fakes with pages the campaign already has, for the consistency tests.</summary>
+    internal static Saving ServiceWithPages(IEnumerable<WikiPageDocument> existingPages) => Service(existingPages, Array.Empty<RegionDocument>());
 
     private static Saving Service(IEnumerable<WikiPageDocument>? existingPages = null, params HomebrewEntryDocument[] existing) => Service(existingPages, Array.Empty<RegionDocument>(), existing);
 
@@ -462,6 +471,14 @@ public class WorldBuilderTests
         {
             var page = ci.Arg<WikiPageDocument>();
             // As the repository does: a page that already has an id is updated, not stored again.
+            // A page the campaign already had is updated in place too (a snapshot taken after an edit sees the edit).
+            var held = existingPages is List<WikiPageDocument> own && !string.IsNullOrEmpty(page.Id) ? own.FindIndex(p => p.Id == page.Id) : -1;
+            if (held >= 0)
+            {
+                ((List<WikiPageDocument>)existingPages!)[held] = page;
+                return ci.Arg<CampaignAccess>().IsDm ? SaveOutcome.Saved : SaveOutcome.Refused;
+            }
+
             var stored = string.IsNullOrEmpty(page.Id) ? -1 : pages.FindIndex(p => p.Id == page.Id);
             if (stored >= 0)
             {
@@ -487,7 +504,8 @@ public class WorldBuilderTests
         factRepo.SaveAsync(Arg.Do<FactDocument>(facts.Add), Arg.Any<CampaignAccess>()).Returns(true);
         factRepo.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>(), Arg.Any<IReadOnlySet<string>>()).Returns(_ => facts.ToList().AsEnumerable());
         var actorRepo = Substitute.For<IActorRepository>();
-        actorRepo.TrySaveAsync(Arg.Do<ActorDocument>(actors.Add), Arg.Any<CampaignAccess>()).Returns(true);
+        // An actor saved again (an edit of the one the campaign has) is the same document, not a second one.
+        actorRepo.TrySaveAsync(Arg.Do<ActorDocument>(a => { if (!actors.Contains(a)) actors.Add(a); }), Arg.Any<CampaignAccess>()).Returns(true);
         actorRepo.GetVisibleAsync(Arg.Any<string>(), Arg.Any<CampaignAccess>()).Returns(ci => actors.FirstOrDefault(a => a.Id == ci.ArgAt<string>(0)));
         actorRepo.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => actors.ToList().AsEnumerable());
         var catalog = Substitute.For<ISystemCatalog>();
@@ -505,7 +523,16 @@ public class WorldBuilderTests
         var regions = Substitute.For<IRegionRepository>();
         // No model is set up: picking a cast member's gear fails quietly and they are saved without it.
         var ai = new AiFeatures(providers, registry, catalog);
-        var saving = new Saving(new WorldBuilderService(catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns, actorRepo, ai), pages, entries, actors, facts);
+        var dismissals = Substitute.For<IConsistencyDismissalRepository>();
+        Saving? created = null;
+        dismissals.ListAsync(Arg.Any<CampaignAccess>()).Returns(_ =>
+        {
+            created!.Snapshots++;
+            if (created.FailChecksAfter is { } limit && created.Snapshots > limit) throw new InvalidOperationException("the checks broke");
+            return Task.FromResult<IReadOnlyList<IssueDismissal>>(Array.Empty<IssueDismissal>());
+        });
+        var consistency = new ConsistencyService(catalog, library, wiki, actorRepo, regions, factRepo, dismissals, homebrew);
+        var saving = created = new Saving(new WorldBuilderService(catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns, actorRepo, ai, consistency: consistency), pages, entries, actors, facts);
         regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => existingRegions.Concat(saving.NewRegions).ToList().AsEnumerable());
         campaigns.UpdateAsDmAsync(Arg.Any<CampaignAccess>(), Arg.Any<Action<CampaignDocument>>()).Returns(ci =>
         {
@@ -550,7 +577,8 @@ public class WorldBuilderTests
         Assert.Contains("Kinds of factions: rival criminal gangs", AiPrompts.WorldChat(request));
     }
 
-    internal static readonly CampaignDocument Campaign = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
+    // A new document on every read: saving a proposal adds to the campaign it is given (the Bestiary shortlist), and a shared one carried that into later tests.
+    internal static CampaignDocument Campaign => new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
     internal static readonly CampaignAccess Dm = new("c1", "dm", CampaignRole.DM);
 
     [Fact]

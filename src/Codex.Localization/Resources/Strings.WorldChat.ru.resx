@@ -183,4 +183,9 @@
   <data name="WorldChat.Usage.Cost" xml:space="preserve"><value>стоимость {0}</value></data>
   <data name="WorldChat.Usage.Total" xml:space="preserve"><value>Весь чат: {0} токенов на входе / {1} на выходе</value></data>
   <data name="WorldChat.Usage.CostPartial" xml:space="preserve"><value>стоимость {0} (цена задана только для {1} из {2} ходов)</value></data>
+  <data name="WorldChat.Edit.Sheet" xml:space="preserve"><value>изменяет лист персонажа</value></data>
+  <data name="WorldChat.Proposal.SheetChanges" xml:space="preserve"><value>Изменения листа</value></data>
+  <data name="WorldChat.Proposal.SheetNow" xml:space="preserve"><value>Сейчас</value></data>
+  <data name="WorldChat.Proposal.SheetThen" xml:space="preserve"><value>После</value></data>
+  <data name="WorldChat.Proposal.SheetCleared" xml:space="preserve"><value>очищено</value></data>
 </root>

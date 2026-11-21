@@ -46,7 +46,7 @@ public sealed class ProposalEntry
     [JsonPropertyName("pitch"), Description("One or two plain sentences, at most 300 characters, saying what the entry is: shown in lists and on the review card, and as a place's short description.")]
     public string? Pitch { get; set; }
 
-    [JsonPropertyName("target"), Description("For an edit: the key of what to change, as search_world, get_page, list_places or search_library show it: existing:<slug> (a page's text), existing:place:<id> (a place's short description), existing:actor:<id> (a cast member's history) or existing:homebrew:<type>/<id> (a homebrew entry), existing:region:<id> (a region) or existing:fact:<id> (a secret in Lore). When the edit changes the text of a page, place or cast member, the \"text\" is the COMPLETE new text, replacing the old; an edit may instead (or also) rename, move or retype a place, or delete.")]
+    [JsonPropertyName("target"), Description("For an edit: the key of what to change, as search_world, get_page, list_places or search_library show it: existing:<slug> (a page's text), existing:place:<id> (a place's short description), existing:actor:<id> (a cast member's history) or existing:homebrew:<type>/<id> (a homebrew entry), existing:region:<id> (a region), existing:fact:<id> (a secret in Lore) or existing:sheet:<id> (a character's sheet values; see \"sheet\"). When the edit changes the text of a page, place or cast member, the \"text\" is the COMPLETE new text, replacing the old; an edit may instead (or also) rename, move or retype a place, or delete.")]
     public string? Target { get; set; }
 
     [JsonPropertyName("rename"), Description("For an edit: its new name, when it should get one (a place, a cast member, a page's title or a homebrew entry).")]
@@ -102,6 +102,12 @@ public sealed class ProposalEntry
 
     [JsonPropertyName("remove"), Description("For a tags entry: the tags to take off every target.")]
     public List<string>? Remove { get; set; }
+
+    [JsonPropertyName("resolves"), Description("For an edit that fixes consistency issues: their ids exactly as list_issues gives them, each about the very thing this edit changes. Leave it out for any other entry. An id that is not an open issue, or is about something else, or cannot be fixed by a proposal (fix_via \"report-only\"), refuses the whole proposal. The app checks afterwards whether the issue is really gone.")]
+    public List<string>? Resolves { get; set; }
+
+    [JsonPropertyName("sheet"), Description("For an edit of a character's sheet (target existing:sheet:<id>, read it with get_page): the sheet keys to set, as {\"key\": value}; null clears a key. Only the keys get_page lists; a Library reference (class, background, inventory items) must be an id search_library lists. Never invent gear or values: set only what the game master asked for, or what the issue's own rule and the Library's text state. The app checks the values against the system's rules and refuses what would break them.")]
+    public Dictionary<string, JsonElement>? Sheet { get; set; }
 
     [JsonPropertyName("properties"), Description("For a homebrew entry: its fields, by the keys homebrew_fields lists. For an edit of one: only the fields that change.")]
     public Dictionary<string, JsonElement>? Properties { get; set; }

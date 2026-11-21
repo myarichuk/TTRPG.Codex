@@ -30,6 +30,11 @@ public class CampaignBundle
 
     /// <summary>The campaign's clocks and tables; null in bundles from before there were any.</summary>
     public CampaignObjectsDocument? Objects { get; set; }
+
+    /// <summary>The issues the DM set aside in the consistency checker, with their notes; null in bundles from before there were any, and for a campaign whose DM
+    /// never dismissed one. An id whose problem is gone is kept (it applies again if the problem comes back); ids of documents follow when the bundle is
+    /// imported as a new campaign, because they are written with the documents' own ids.</summary>
+    public ConsistencyDismissalsDocument? Dismissals { get; set; }
 }
 
 /// <summary>
@@ -50,7 +55,8 @@ public class CampaignExportService(
     IHomebrewRepository homebrew,
     IWikiRepository? wiki = null,
     ITemplateRepository? templates = null,
-    ICampaignObjectsRepository? objects = null)
+    ICampaignObjectsRepository? objects = null,
+    IConsistencyDismissalRepository? dismissals = null)
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -87,7 +93,8 @@ public class CampaignExportService(
             Homebrew = (await homebrew.GetAllForCampaignAsync(access.CampaignId)).ToList(),
             Wiki = wiki == null ? new List<WikiPageDocument>() : (await wiki.GetAllForCampaignAsync(access.CampaignId)).ToList(),
             Templates = templates == null ? null : await templates.GetDocumentAsync(access.CampaignId),
-            Objects = objects == null ? null : await objects.GetDocumentAsync(access.CampaignId)
+            Objects = objects == null ? null : await objects.GetDocumentAsync(access.CampaignId),
+            Dismissals = dismissals == null ? null : await dismissals.GetDocumentAsync(access.CampaignId)
         };
     }
 
@@ -251,6 +258,12 @@ public class CampaignExportService(
         if (objects != null && bundle.Objects is { } kept && kept.CampaignId == campaign.Id)
         {
             await objects.SaveDocumentAsync(kept);
+        }
+
+        // A bundle with none (an older one) leaves the stored dismissals as they are; one with a document replaces them, as every document of the file does.
+        if (dismissals != null && bundle.Dismissals is { } dismissed && dismissed.CampaignId == campaign.Id)
+        {
+            await dismissals.SaveDocumentAsync(dismissed.Sanitized(campaign.Id));
         }
 
         return true;

@@ -24,7 +24,8 @@ public class CampaignRepository(
     IBookBuildRepository? bookBuildRepository = null,
     IBookDraftRepository? bookDraftRepository = null,
     IVaultRepository? vaultRepository = null,
-    ICampaignObjectsRepository? campaignObjectsRepository = null) : ICampaignRepository
+    ICampaignObjectsRepository? campaignObjectsRepository = null,
+    IConsistencyDismissalRepository? consistencyDismissalRepository = null) : ICampaignRepository
 {
     public async Task<IEnumerable<CampaignDocument>> GetAllAsync()
     {
@@ -204,6 +205,7 @@ public class CampaignRepository(
         if (vaultRepository != null) await vaultRepository.DeleteAllRequestsForCampaignAsync(campaignId);
         if (templateRepository != null) await templateRepository.DeleteAllForCampaignAsync(campaignId);
         if (campaignObjectsRepository != null) await campaignObjectsRepository.DeleteAllForCampaignAsync(campaignId);
+        if (consistencyDismissalRepository != null) await consistencyDismissalRepository.DeleteAllForCampaignAsync(campaignId);
 
         // Attachments (cover art) are deleted with the document; the GM's book pictures are attachments of the book art document.
         session.Delete(BookArtDocument.IdFor(campaignId));

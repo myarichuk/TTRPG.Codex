@@ -1,4 +1,5 @@
 using Codex.Core;
+using Codex.Core.Rules;
 using Codex.Core.WorldBuilder;
 using Codex.Localization;
 using Codex.Persistence;
@@ -422,11 +423,42 @@ public sealed partial class WorldBuilderService
                         // The creature's stat block is laid over the sheet: what it prints replaces the same entries, and the rest of the sheet stays.
                         var system = catalog.GetDefinition(campaign.SystemId);
                         var item = await library.GetAsync(campaign, access, creature.Type, creature.Id, creature.Homebrew) ?? throw new LocalizedException("WorldBuilder.Error.StatsGone", draft.Name);
+                        // The sheet as stored before the block is laid over it (Restat sets keys in place and removes none), the baseline a live table
+                        // merges against: what the block prints wins, a key it leaves alone keeps the table's live value, a pool moves by the difference.
+                        var before = new Dictionary<string, object>(actor.Sheet ?? new Dictionary<string, object>());
                         if (!cast.Restat(actor, item, campaign, system)) throw new LocalizedException("WorldBuilder.Error.StatsGone", draft.Name);
+                        // As a sheet edit is saved: a creature at a live table through the table (it holds the creature's sheet and live state, and would write
+                        // its stale copy back), anyone else with an ordinary guarded save.
+                        if (!await cast.SaveSheetAsync(actor, before, access, system)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                        return new WorldEdit(target, id, actor.Name, actor.Visibility == ActorVisibility.Known, Text: draft.Body != null);
                     }
 
                     if (!await actorRepository.TrySaveAsync(actor, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
                     return new WorldEdit(target, id, actor.Name, actor.Visibility == ActorVisibility.Known, Text: draft.Body != null);
+                }
+            case EditTarget.Sheet:
+                {
+                    // Only the keys the review card showed, only if the sheet still holds what it showed, and only if the Library and the sheet's rules
+                    // still allow it: the same check the proposal passed, run again against the sheet as it is now.
+                    var actor = await actorRepository.GetVisibleAsync(id, access) ?? throw gone;
+                    var system = catalog.GetDefinition(campaign.SystemId) ?? throw gone;
+                    // As the proposal was checked: not a retired character, and not a bestiary creature or a hazard (the actor may have become one since).
+                    if (actor.Retired || ConsistencySnapshots.RoleOf(actor) == Codex.Core.Consistency.ActorRole.Monster) throw gone;
+                    var current = actor.Sheet ?? new Dictionary<string, object>();
+                    if (draft.BeforeSheet != null && !SheetProposal.Unchanged(current, draft.BeforeSheet)) throw changed;
+                    var resolver = await CachedEntryResolver.LoadAsync(library, campaign, access, system);
+                    var linked = await LinkedSheetsAsync(system, access, current);
+                    var (refused, _) = SheetProposal.Check(system, resolver, SheetRuleEngine.EffectiveEnforcement(system, campaign.RulesEnforcement), current, draft.SheetSet, draft.SheetClear, draft.Name, linked);
+                    if (refused.Count > 0) throw new LocalizedException("WorldBuilder.Error.SheetRefused", draft.Name);
+                    var next = SheetProposal.Apply(current, draft.SheetSet, draft.SheetClear);
+                    // What the sheet page runs after every edit, so what the rules derive (hit points, bonuses) follows the change.
+                    new SheetRuleEngine(system, resolver).Recompute(next, linked);
+                    actor.Sheet = next;
+                    cast.SyncState(actor, system);
+                    // As the sheet page saves: a character at a live table goes through the table (merged with its state, so the edit is not written back
+                    // over by the table's copy at its next event), anyone else is an ordinary save. The baseline is the sheet as stored before the edit.
+                    if (!await cast.SaveSheetAsync(actor, current, access, system)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                    return new WorldEdit(target, id, actor.Name, actor.Visibility == ActorVisibility.Known || actor.Kind == ActorKind.PlayerCharacter, Text: false);
                 }
             case EditTarget.Region:
                 {

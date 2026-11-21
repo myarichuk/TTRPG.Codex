@@ -60,11 +60,11 @@ public sealed partial class WorldChat
                 "search_world",
                 "Finds the campaign's wiki pages, places and cast members by name or text. Each line gives the key a proposal uses to link to it or change it."),
             AIFunctionFactory.Create(
-                ([Description("The key of a page (existing:slug) or its title; or existing:place:<id> for a place's description, existing:actor:<id> for a cast member's history, existing:fact:<id> for a secret in Lore, existing:region:<id> for a region.")] string page) =>
+                ([Description("The key of a page (existing:slug) or its title; or existing:place:<id> for a place's description, existing:actor:<id> for a cast member's history, existing:fact:<id> for a secret in Lore, existing:region:<id> for a region, existing:sheet:<id> for a character\'s sheet values.")] string page) =>
                     Step("get_page", new { page }, page, null,
-                        async () => await builder.PageAsync(access, page) ?? $"There is no page \"{page}\". Use search_world to find one."),
+                        async () => await builder.PageAsync(access, page, campaign) ?? $"There is no page \"{page}\". Use search_world to find one."),
                 "get_page",
-                "Reads one wiki page in full, or a place's description or a cast member's history by their key, which is what an edit replaces."),
+                "Reads one wiki page in full, or a place's description or a cast member's history by their key, which is what an edit replaces; or a character's sheet keys with their values, which a sheet edit sets."),
             AIFunctionFactory.Create(
                 () => Step("list_places", new { }, null, null, () => builder.PlacesAsync(access)),
                 "list_places",
@@ -90,6 +90,13 @@ public sealed partial class WorldChat
                 () => Step("list_tags", new { }, null, null, () => builder.TagsAsync(access)),
                 "list_tags",
                 "Lists the tags the campaign's wiki pages and homebrew entries use, with how many of each, so new tags match the old ones."),
+            AIFunctionFactory.Create(
+                ([Description("What to list: \"all\" (or empty), the name of a check such as broken-link, or one thing as page:<id>, actor:<id>, place:<id> or fact:<id>.")] string? scope = null,
+                    [Description("The least severe level to list: error, warning or info; empty lists all.")] string? severity = null) =>
+                    Step("list_issues", new { scope, severity }, string.IsNullOrWhiteSpace(scope) ? null : scope.Trim(), null, () => builder.IssuesAsync(campaign, access, scope, severity)),
+                "list_issues",
+                "Lists what the app's own checks found wrong or missing in the campaign (broken links, secrets that may leak, empty histories), most severe first, at most 50. " +
+                "The checks are code: you never judge whether something is broken. An edit entry fixes one by naming its id in \"resolves\"."),
             AIFunctionFactory.Create(
                 (AdditionInput additions) =>
                     Step("add_entries", additions, null, additions.Entries?.Count ?? 0, () => WithGearAsync(AddEntriesAsync(additions)), data: false),
@@ -147,10 +154,59 @@ public sealed partial class WorldChat
                    "Add fewer, or tell the game master to apply the proposal first and ask for the rest after.";
         }
 
-        var merged = new ProposalInput { Summary = input.Summary, Region = input.Region, RegionKind = input.RegionKind, Entries = (input.Entries ?? new List<ProposalEntry>()).Concat(added).ToList() };
+        // A claim on a waiting entry that is no longer an open issue (the game master dismissed it, or something fixed it, since) is dropped, not held
+        // against the new entries: add_entries cannot change a waiting entry, so refusing would leave the model nothing it could do. The result says which.
+        var (waiting, dropped) = await WithoutStaleClaimsAsync(input.Entries ?? new List<ProposalEntry>());
+        var merged = new ProposalInput { Summary = input.Summary, Region = input.Region, RegionKind = input.RegionKind, Entries = waiting.Concat(added).ToList() };
         var result = await ProposeAsync(merged, "add_entries", $"only the new entries (the {input.Entries?.Count ?? 0} waiting ones come first when errors are numbered, so your first new entry is entries[{input.Entries?.Count ?? 0}])", fresh: false);
-        if (!ReferenceEquals(Proposal, before) && Proposal != null) CarryOver(before, Proposal, decisions: true);
+        if (!ReferenceEquals(Proposal, before) && Proposal != null)
+        {
+            CarryOver(before, Proposal, decisions: true);
+            if (dropped.Count > 0)
+            {
+                result += "\nDropped from waiting entries, because they are no longer open issues (the game master dismissed them or they were fixed): " +
+                          string.Join("; ", dropped.Select(d => $"{d.Ref}: {JsonSerializer.Serialize(d.Ids, ProposalJson)}")) + ". Those entries stay in the proposal without those claims.";
+            }
+        }
+
         return result;
+    }
+
+    // The waiting entries as copies, each with only the claims that are still open issues; the ones that lost a claim carry an explicit (possibly
+    // empty) list, so the claims they had are replaced and not carried back over them. No check runs when no waiting entry claims anything.
+    private async Task<(List<ProposalEntry> Entries, List<(string Ref, List<string> Ids)> Dropped)> WithoutStaleClaimsAsync(List<ProposalEntry> waiting)
+    {
+        var dropped = new List<(string Ref, List<string> Ids)>();
+        if (!waiting.Any(e => e.Resolves is { Count: > 0 })) return (waiting, dropped);
+        IReadOnlyList<Codex.Core.Consistency.Issue>? open;
+        try
+        {
+            open = await builder.OpenIssuesAsync(campaign, access);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            open = null; // the checks could not run: nothing is dropped, and the check of the proposal says what it says
+        }
+
+        if (open == null) return (waiting, dropped);
+        var openIds = open.Select(i => i.Id).ToHashSet(StringComparer.Ordinal);
+        var kept = new List<ProposalEntry>();
+        foreach (var entry in waiting)
+        {
+            var stale = entry.Resolves?.Select(id => id.Trim()).Where(id => id.Length > 0 && !openIds.Contains(id)).Distinct(StringComparer.Ordinal).ToList();
+            if (stale is not { Count: > 0 })
+            {
+                kept.Add(entry);
+                continue;
+            }
+
+            var copy = JsonSerializer.Deserialize<ProposalEntry>(JsonSerializer.Serialize(entry, ProposalJson), ProposalJson)!;
+            copy.Resolves = entry.Resolves!.Where(id => !stale.Contains(id.Trim())).ToList();
+            kept.Add(copy);
+            dropped.Add((entry.Ref ?? string.Empty, stale));
+        }
+
+        return (kept, dropped);
     }
 
     /// <summary>Puts what belongs to the entries of <paramref name="before"/> on the same entries (by ref and kind) of
@@ -164,6 +220,13 @@ public sealed partial class WorldChat
         foreach (var draft in after.Drafts)
         {
             if (before.Find(draft.Ref) is not { } old || old.Kind != draft.Kind) continue;
+            // The issues an edit says it fixes belong to what it edits: a revision of it keeps them (unless it lists its own "resolves", even an empty
+            // list, which replaces them: the way to withdraw a claim), and one that now edits something else does not.
+            if (old.Resolves.Count > 0 && !draft.ResolvesGiven && string.Equals(old.Target, draft.Target, StringComparison.OrdinalIgnoreCase))
+            {
+                draft.Resolves = draft.Resolves.Concat(old.Resolves).Distinct(StringComparer.Ordinal).ToList();
+            }
+
             if (decisions)
             {
                 draft.Selected = old.Selected;
@@ -179,6 +242,7 @@ public sealed partial class WorldChat
                     draft.BeforeStamp = old.BeforeStamp;
                     draft.BeforeProperties = old.BeforeProperties;
                     draft.BeforeTags = old.BeforeTags;
+                    draft.BeforeSheet = old.BeforeSheet;
                 }
             }
             else
@@ -196,7 +260,8 @@ public sealed partial class WorldChat
             // The same change to the same thing: a rename, a move, a retype or a delete is not the text edit that came before it.
             DraftKinds.Edit => string.Equals(old.Target, draft.Target, StringComparison.OrdinalIgnoreCase) && old.Body == draft.Body && old.Remove == draft.Remove
                 && old.Rename == draft.Rename && old.MoveTo == draft.MoveTo && old.Parent == draft.Parent && old.PlaceKind == draft.PlaceKind
-                && old.RegionKind == draft.RegionKind && old.SuggestedStats == draft.SuggestedStats,
+                && old.RegionKind == draft.RegionKind && old.SuggestedStats == draft.SuggestedStats
+                && old.SheetSet.OrderBy(p => p.Key, StringComparer.Ordinal).SequenceEqual(draft.SheetSet.OrderBy(p => p.Key, StringComparer.Ordinal)) && old.SheetClear.SequenceEqual(draft.SheetClear),
             DraftKinds.Tags => false, // tagging again changes nothing that is already tagged
             _ => new[] { old.OutlineName, old.Name }.Any(name => string.Equals(name.Trim(), draft.Name.Trim(), StringComparison.OrdinalIgnoreCase))
         };
@@ -219,6 +284,9 @@ public sealed partial class WorldChat
         {
             Document.ProposalEpoch++;
             Document.Decided = new List<string>();
+            // The issues open before an earlier proposal's half-done apply belong to that proposal: this one's claims were checked against the issues open now,
+            // and its apply takes its own "before". Kept, they would read issues fixed meanwhile as fixed by it and hide one it brings back.
+            Document.ApplyBeforeIssueIds = null;
             // A proposal made again after an apply that failed part way: what was made then is not made twice.
             if (Proposal is { } waiting) CarryOver(waiting, check.Bundle, decisions: false);
         }

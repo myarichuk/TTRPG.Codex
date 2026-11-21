@@ -42,6 +42,7 @@ A whole game system described as data (`system.yaml`). This is what lets a homeb
 | `modifierTypes` | [ModifierTypesDefinition](#modifiertypesdefinition) | How bonuses of one type combine on one target. |
 | `progressions` | map of text (a number is text too) | Named per-level formulas (`bab.good: "level"`), read by `progression(name, level)`. |
 | `functions` | map of [FunctionDefinition](#functiondefinition) | Named functions, callable from any formula by name. |
+| `issueChecks` | list of [IssueCheckDefinition](#issuecheckdefinition) | Checks this system adds to the consistency checker (docs/WORLD_BUILDER.md, 9): rules over the sheet's own keys (`rule`), or compiled code (`type`), each with a severity and a message. They run beside the app's own checks, are listed to the game master and the model with the others, and cannot break the run. See IssueCheckDefinition. |
 | `widgets` | map of [WidgetDefinition](#widgetdefinition) | Widgets a DLL supplies (`{ type: "Acme.Street.Implants, Acme.Street" }`), placed by name in a layout like the host's own (`{ widget: implants }`). |
 | `conditionEffects` | map of [ConditionEffectDefinition](#conditioneffectdefinition) | What a condition or a spell effect does while it holds, by its name in Conditions or Effects. |
 | `hazards` | [HazardRules](#hazardrules) | What the system says about hazards beyond the type's own fields: how hard a hazard of each level is. Absent on a system with no hazard type. |
@@ -1197,6 +1198,38 @@ A named function: a one-line Formula (`"(a, b) => a + b"`), a Script export (`ru
 | `script` | text (a number is text too) | A script export, `file#export` (`rules.js#hitPoints`), read from the system's folder. |
 | `type` | text (a number is text too) | A compiled type, `"Namespace.Type, Assembly"`, from a DLL beside system.yaml. |
 | `reads` | list of text (a number is text too) | For a script function, the parameters it takes; only their count is used, and only when the script's own parameters cannot be read. |
+
+## IssueCheckDefinition
+
+One check a game system adds to the consistency checker. Either a Rule (data, layer 2) over a sheet key, or a compiled Type (code, layer 3); one of them. Keys it does not read, a rule it does not know and a field that is not a sheet key refuse the system at load, with a sentence naming the check.
+
+| Key | Type | What it is |
+|---|---|---|
+| `id` | text (a number is text too) | Required: the check's name, lower-case letters, digits, `-` and `_`, unique in the system. It is part of every issue's id (`system-rule:actor:<id>:<field>:<id>`), so renaming a check makes its issues new issues. |
+| `rule` | text (a number is text too) | The data rule: `required` (the field is filled in), `empty` (the field is empty), `range` (a number between `min` and `max`), `reference` (the field names a Library entry that exists) or `count` (a list holds between `min` and `max` entries). With `when` a rule only applies to sheets where the condition holds (`required` + `when` is "required when", `empty` + `when` is "empty when"). Leave out when `type` names compiled code. |
+| `type` | text (a number is text too) | A compiled check, `"Namespace.Type, Assembly"`, from a DLL beside system.yaml: a public class with a public parameterless constructor that implements `ICodexIssueCheck`. It is given plain copies of the campaign's cast, pages and places and returns issues as plain data; one that throws or returns what cannot be read becomes one `info` issue, "check-failed". Not with `rule`. |
+| `field` | text (a number is text too) | For a rule: the sheet key it is about, one of the system's attributes, actor fields, its inventory key or its list keys. |
+| `severity` | text (a number is text too) | For a rule: how serious a finding is, `error`, `warning` (the default) or `info`. |
+| `message` | text (a number is text too) | For a rule: the sentence for the game master and the model, in English. `{name}` is the character's name, `{field}` the field's label, `{value}` what the field holds (the number of entries for `count`), `{min}` and `{max}` the limits. Required. |
+| `fixHint` | text (a number is text too) | For a rule: what to do about it, in English, for the model: advice, never an instruction to invent content. A plain default is used when empty. |
+| `code` | text (a number is text too) | For a rule: the localisation key the app shows the sentence by (`Consistency.System.Wizard`); the app falls back to `message` where it has no text for the key. Default `Consistency.System.<id>`. |
+| `roles` | list of text (a number is text too) | For a rule: whose sheets it looks at, any of `pc` (player characters), `npc` and `monster`. Default `pc` and `npc`. A retired character is never checked. |
+| `when` | [IssueCondition](#issuecondition) | For a rule: only sheets where this holds are judged. |
+| `min` | number | For `range` and `count`: the lowest value or count that is fine. At least one of `min` and `max`. |
+| `max` | number | For `range` and `count`: the highest value or count that is fine. |
+| `targetEntityType` | text (a number is text too) | For `reference`: the content type the value is an entry of. Default: the field's own `targetEntityType`, or the inventory's or list's types. |
+
+## IssueCondition
+
+A condition on one sheet key, for When. Exactly one of `is`, `in`, `notEmpty` and `empty`.
+
+| Key | Type | What it is |
+|---|---|---|
+| `field` | text (a number is text too) | Required: the sheet key it reads. |
+| `is` | text (a number is text too) | The key's value is this (compared as text, any case; a number as it is written). |
+| `in` | list of text (a number is text too) | The key's value is one of these. |
+| `notEmpty` | true or false | True: the key holds something (a non-empty text or list, any number). |
+| `empty` | true or false | True: the key holds nothing. |
 
 ## WidgetDefinition
 

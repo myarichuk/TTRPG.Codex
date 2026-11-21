@@ -1,0 +1,251 @@
+@using Codex.Core.Consistency
+@using Codex.Persistence
+@inject ConsistencyService Issues
+@inject IssueRecheckLog Rechecks
+@inject IWikiRepository WikiRepo
+@inject ILogger<IssuesSection> Logger
+
+@* The Issues panel (docs/WORLD_BUILDER.md, 9): what the app's own checks found wrong in the campaign, most severe first, to filter, dismiss with a note and
+   restore, with what the last apply of the world builder did to them. The game master's alone: a player who reaches this address sees only that, and the
+   service refuses anyone else besides. The checks are code, so the same campaign gives the same list; the sentences are made here from each issue's code and
+   arguments in the reader's language. *@
+
+<div class="page-header mb-3">
+    <div>
+        <h2 class="mb-0">@L["Campaign.Issues.Title"]</h2>
+        @if (Ctx.IsDm)
+        {
+            <p class="page-subtitle">@L["Campaign.Issues.Subtitle"]</p>
+        }
+    </div>
+</div>
+
+@if (!Ctx.IsDm)
+{
+    <div class="empty" data-testid="issues-dm-only"><p>@L["Campaign.Issues.DmOnly"]</p></div>
+}
+else if (failed)
+{
+    <div class="empty" role="alert" data-testid="issues-error"><p>@L["Campaign.Issues.Error"]</p></div>
+}
+else if (report == null)
+{
+    <LoadingSkeleton />
+}
+else
+{
+    @if (Rechecks.Latest(Ctx.Campaign.Id) is { } recheck && !recheckHidden)
+    {
+        <ApplyRecheckNote Recheck="recheck" OnHide="HideRecheck" />
+    }
+
+    <p class="small-muted" data-testid="issues-counts">@L["Campaign.Issues.Counts", report.Open.Count, Count(IssueSeverity.Error), Count(IssueSeverity.Warning), Count(IssueSeverity.Info)]</p>
+
+    <div class="toolbar" data-testid="issues-filters">
+        <div class="chips" role="group" aria-label="@L["Campaign.Issues.Filter.Severity"]">
+            <button type="button" class="chip" aria-pressed="@(severity == null ? "true" : "false")" @onclick="() => severity = null" data-testid="issues-severity-all">@L["Campaign.Issues.Filter.All"]</button>
+            @foreach (var level in new[] { IssueSeverity.Error, IssueSeverity.Warning, IssueSeverity.Info })
+            {
+                var chosen = level;
+                <button type="button" class="chip" aria-pressed="@(severity == chosen ? "true" : "false")" @onclick="() => severity = chosen" data-testid="@("issues-severity-" + IssueListing.SeverityName(chosen))">@L[IssueText.SeverityKey(chosen)]</button>
+            }
+        </div>
+        <div class="chips" role="group" aria-label="@L["Campaign.Issues.Filter.Kind"]">
+            <button type="button" class="chip" aria-pressed="@(kind == null ? "true" : "false")" @onclick="() => kind = null" data-testid="issues-kind-all">@L["Campaign.Issues.Filter.All"]</button>
+            @foreach (var k in IssueText.Kinds.Where(k => report.Open.Any(i => i.EntityKind == k)))
+            {
+                var chosen = k;
+                <button type="button" class="chip" aria-pressed="@(kind == chosen ? "true" : "false")" @onclick="() => kind = chosen" data-testid="@("issues-kind-" + chosen)">@L[$"Campaign.Issues.Kind.{chosen}"]</button>
+            }
+        </div>
+        <label class="form-check" title="@L["Campaign.Issues.Filter.NoiseHint"]">
+            <input type="checkbox" class="form-check-input" checked="@noise" @onchange="NoiseChanged" data-testid="issues-noise" />
+            <span class="form-check-label">@L["Campaign.Issues.Filter.Noise"]</span>
+        </label>
+    </div>
+
+    @if (report.Open.Count == 0)
+    {
+        <div class="empty" data-testid="issues-none">
+            <div class="empty-icon"><LucideIcon IconName="shield-check" Size="28" /></div>
+            <p>@L["Campaign.Issues.None"]</p>
+        </div>
+    }
+    else if (!Shown.Any())
+    {
+        <p class="small-muted" data-testid="issues-nomatch">@L["Campaign.Issues.NoMatch"]</p>
+    }
+
+    @if (message != null)
+    {
+        <p class="wb-callout wb-callout-warning" role="status" data-testid="issues-message">@message</p>
+    }
+
+    @foreach (var level in new[] { IssueSeverity.Error, IssueSeverity.Warning, IssueSeverity.Info })
+    {
+        var group = Shown.Where(i => i.Severity == level).ToList();
+        if (group.Count == 0) continue;
+        <section class="mb-4" aria-labelledby="@("issues-h-" + IssueListing.SeverityName(level))" data-testid="@("issues-group-" + IssueListing.SeverityName(level))">
+            <h3 id="@("issues-h-" + IssueListing.SeverityName(level))" class="h6">@L[IssueText.SeverityKey(level)] <span class="pill">@group.Count</span></h3>
+            @foreach (var issue in group)
+            {
+                <article class="panel mb-2" data-testid="issue" data-issue-id="@issue.Id">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                            <span class="pill pill-@Tone(issue.Severity)">@L[IssueText.SeverityKey(issue.Severity)]</span>
+                            <span data-testid="issue-text">@IssueText.Message(L, issue)</span>
+                            <div class="small-muted">
+                                @L[$"Campaign.Issues.Kind.{issue.EntityKind}"] · @L["Campaign.Issues.From", issue.Check]
+                                @if (Href(issue) is { } href)
+                                {
+                                    <text> · </text><a href="@href" data-testid="issue-open">@L["Campaign.Issues.Open"]</a>
+                                }
+                            </div>
+                        </div>
+                        @if (dismissing != issue.Id)
+                        {
+                            <button type="button" class="cx-btn cx-btn-sm" @onclick="() => StartDismiss(issue.Id)" data-testid="issue-dismiss">@L["Campaign.Issues.Dismiss"]</button>
+                        }
+                    </div>
+                    @if (dismissing == issue.Id)
+                    {
+                        <div class="mt-2" data-testid="issue-dismiss-form">
+                            <label class="visually-hidden" for="@("dismiss-note-" + issue.Id)">@L["Campaign.Issues.DismissNote"]</label>
+                            <input id="@("dismiss-note-" + issue.Id)" class="field-input" maxlength="@RavenConsistencyDismissalRepository.MaxNoteLength" placeholder="@L["Campaign.Issues.DismissNote"]" @bind="note" @bind:event="oninput" data-testid="issue-note" />
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="button" class="cx-btn cx-btn-sm" @onclick="() => DismissAsync(issue.Id)" data-testid="issue-dismiss-confirm">@L["Campaign.Issues.DismissConfirm"]</button>
+                                <button type="button" class="cx-btn cx-btn-sm" @onclick="() => dismissing = null">@L["Common.Cancel"]</button>
+                            </div>
+                        </div>
+                    }
+                </article>
+            }
+        </section>
+    }
+
+    @if (dismissed.Count > 0)
+    {
+        <details class="mt-4" data-testid="issues-dismissed">
+            <summary>@L["Campaign.Issues.DismissedTitle", dismissed.Count]</summary>
+            <p class="small-muted">@L["Campaign.Issues.DismissedHint"]</p>
+            @foreach (var d in dismissed)
+            {
+                var issue = report.Dismissed.FirstOrDefault(i => i.Id == d.IssueId);
+                <article class="panel mb-2" data-testid="issue-dismissed" data-issue-id="@d.IssueId">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                            @if (issue != null)
+                            {
+                                <span>@IssueText.Message(L, issue)</span>
+                            }
+                            else
+                            {
+                                <code>@d.IssueId</code>
+                                <div class="small-muted">@L["Campaign.Issues.Gone"]</div>
+                            }
+                            <div class="small-muted" data-testid="issue-dismissed-note">@(string.IsNullOrWhiteSpace(d.Note) ? L["Campaign.Issues.NoNote"] : d.Note)</div>
+                        </div>
+                        <button type="button" class="cx-btn cx-btn-sm" @onclick="() => RestoreAsync(d.IssueId)" data-testid="issue-restore">@L["Campaign.Issues.Restore"]</button>
+                    </div>
+                </article>
+            }
+        </details>
+    }
+}
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private ConsistencyReport? report;
+    private List<IssueDismissal> dismissed = new();
+    private Dictionary<string, string> slugs = new();
+    private bool failed;
+    private bool noise;
+    private bool recheckHidden;
+    private IssueSeverity? severity;
+    private string? kind;
+    private string? dismissing;
+    private string note = string.Empty;
+    private string? message;
+    private CampaignContext? loadedFor;
+
+    private IEnumerable<Issue> Shown => (report?.Open ?? Array.Empty<Issue>()).Where(i => (severity == null || i.Severity == severity) && (kind == null || i.EntityKind == kind));
+
+    private int Count(IssueSeverity level) => report!.Open.Count(i => i.Severity == level);
+
+    private static string Tone(IssueSeverity level) => level switch { IssueSeverity.Error => "danger", IssueSeverity.Warning => "warning", _ => "success" };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Ctx == null || !Ctx.IsDm || ReferenceEquals(loadedFor, Ctx)) return;
+        loadedFor = Ctx;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            var result = await Issues.CheckAsync(Ctx.Campaign, Ctx.Access, noise);
+            report = result;
+            dismissed = (await Issues.DismissalsAsync(Ctx.Access)).ToList();
+            slugs = (await WikiRepo.GetVisibleForCampaignAsync(Ctx.Access)).GroupBy(p => p.Id).ToDictionary(g => g.Key, g => g.First().Slug);
+            failed = false;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Logger.LogWarning(ex, "The consistency checks could not run for campaign {Campaign}", Ctx.Campaign.Id);
+            failed = true;
+        }
+    }
+
+    private async Task NoiseChanged(ChangeEventArgs e)
+    {
+        noise = e.Value is true;
+        await LoadAsync();
+    }
+
+    private void HideRecheck() => recheckHidden = true;
+
+    private void StartDismiss(string id)
+    {
+        dismissing = id;
+        note = string.Empty;
+        message = null;
+    }
+
+    private async Task DismissAsync(string id)
+    {
+        var ok = false;
+        string? full = null;
+        try
+        {
+            await Ctx.WithCurrentRoleAsync(async () => ok = await Issues.DismissAsync(Ctx.Campaign, Ctx.Access, id, note));
+        }
+        catch (LocalizedException ex) when (ex.Key == "Campaign.Issues.DismissalsFull")
+        {
+            full = L[ex.Key, ex.Args];
+        }
+
+        dismissing = null;
+        message = full ?? (ok ? null : L["Campaign.Issues.DismissFailed"]);
+        await LoadAsync();
+    }
+
+    private async Task RestoreAsync(string id)
+    {
+        await Ctx.WithCurrentRoleAsync(async () => await Issues.RestoreAsync(Ctx.Access, id));
+        message = null;
+        await LoadAsync();
+    }
+
+    // Where the thing an issue is about can be opened; null when it has no page of its own.
+    private string? Href(Issue issue) => issue.EntityKind switch
+    {
+        "actor" => $"{Ctx.BasePath}/actors/{issue.EntityId}",
+        "place" => $"{Ctx.BasePath}/world#place-{issue.EntityId}",
+        "page" when slugs.TryGetValue(issue.EntityId, out var slug) => $"{Ctx.BasePath}/wiki/{slug}",
+        "homebrew" => $"{Ctx.BasePath}/library/{issue.EntityId}",
+        _ => null
+    };
+}

@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Codex.Core;
 using Codex.Core.AI;
+using Codex.Core.Rules;
 using Codex.Core.Systems;
 using Codex.Core.WorldBuilder;
 using Codex.Persistence;
@@ -37,11 +38,20 @@ public sealed partial class WorldBuilderService
         var brewKeys = brews.GroupBy(h => $"{h.Type}/{h.EntryId}", StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
         var regionNames = (await regions.GetVisibleForCampaignAsync(access)).GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First().Name);
         var factNames = (await facts.GetVisibleForCampaignAsync(access, new HashSet<string>())).GroupBy(f => f.Id).ToDictionary(g => g.Key, g => g.First().Summary);
+        var pageIds = (await wiki.GetVisibleForCampaignAsync(access)).GroupBy(p => p.Slug, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+        // The checker runs only for a proposal that cites issues: it reads the whole campaign.
+        var open = json.Contains("\"resolves\"", StringComparison.Ordinal) && consistency != null
+            ? (await consistency.CheckAsync(campaign, access)).Open
+            : Array.Empty<Codex.Core.Consistency.Issue>();
         var culture = Lang;
+        // The characters whose sheet a proposal may change: those the sheet checks look at (not retired, not a creature, not the vault's).
+        var sheetIds = json.Contains("\"sheet\"", StringComparison.Ordinal)
+            ? (await actorRepository.GetVisibleForCampaignAsync(access)).Where(a => !a.IsVault && !a.Retired && ConsistencySnapshots.RoleOf(a) != Codex.Core.Consistency.ActorRole.Monster).Select(a => a.Id).ToList()
+            : new List<string>();
         var rules = new ProposalRules(spellings, pages, places, key => fields.GetValueOrDefault(key) ?? Array.Empty<FieldSpec>(),
             system == null ? null : (key, value) => system.CanonicalOption(culture, key, value), castIds, brewKeys,
-            regionNames, factNames, HazardTypeOf(system));
-        var check = WorldBundleParser.ParseProposal(json, rules);
+            regionNames, factNames, HazardTypeOf(system), pageIds, system, sheetIds);
+        var check = WorldBundleParser.ParseProposal(json, rules, open);
 
         await FindStatsAsync(campaign, access, check.Bundle);
         var editErrors = await FillEditsAsync(check.Bundle, access);
@@ -55,6 +65,8 @@ public sealed partial class WorldBuilderService
             }
         }
 
+        var (sheetErrors, sheetWarnings) = await SheetsAsync(campaign, access, system, check.Bundle);
+        editErrors.AddRange(sheetErrors);
         editErrors.AddRange(await VariantsAsync(campaign, access, check.Bundle));
         var (hazardErrors, hazardWarnings) = await HazardsAsync(campaign, access, system, check.Bundle);
         editErrors.AddRange(hazardErrors);
@@ -62,12 +74,66 @@ public sealed partial class WorldBuilderService
         FillTagged(check.Bundle, (await wiki.GetVisibleForCampaignAsync(access)).ToList(), brews);
         var warnings = check.Warnings.ToList();
         warnings.AddRange(hazardWarnings);
+        warnings.AddRange(sheetWarnings);
         foreach (var draft in check.Bundle.Drafts.Where(d => d is { Kind: DraftKinds.Npc, Stats: null } && d.SuggestedStats != null))
         {
             warnings.Add($"{draft.Ref} (npc '{draft.Name}'): stats '{draft.SuggestedStats}' are not in the Library, so the sheet starts blank; use a name search_library finds.");
         }
 
         return check with { Warnings = warnings, Errors = check.Errors.Concat(editErrors).ToList() };
+    }
+
+    /// <summary>
+    /// What a sheet edit does to the character's sheet as it is now: names the entry after the character, keeps the values it replaces for the
+    /// review card (and so apply can tell the sheet changed since), and asks <see cref="SheetProposal.Check"/> about the Library and the
+    /// sheet rules. A sheet that is gone, retired or a creature's is an error: nothing is changed through a stale review.
+    /// </summary>
+    private async Task<(List<string> Errors, List<string> Warnings)> SheetsAsync(CampaignDocument campaign, CampaignAccess access, SystemDefinition? system, WorldBundle bundle)
+    {
+        var errors = new List<string>();
+        var warnings = new List<string>();
+        var drafts = bundle.Drafts.Where(d => d is { Kind: DraftKinds.Edit, Target: { } t } && WorldBundle.ParseTarget(t, out _) == EditTarget.Sheet).ToList();
+        if (drafts.Count == 0) return (errors, warnings);
+        if (system == null)
+        {
+            errors.AddRange(drafts.Select(d => $"{d.Ref} (edit '{d.Name}'): the campaign's game system is not installed, so no sheet can be changed."));
+            return (errors, warnings);
+        }
+
+        var resolver = await CachedEntryResolver.LoadAsync(library, campaign, access, system);
+        var actors = (await actorRepository.GetVisibleForCampaignAsync(access)).ToList();
+        var enforcement = SheetRuleEngine.EffectiveEnforcement(system, campaign.RulesEnforcement);
+        foreach (var draft in drafts)
+        {
+            WorldBundle.ParseTarget(draft.Target!, out var id);
+            var label = $"{draft.Ref} (edit '{draft.Name}')";
+            if (actors.FirstOrDefault(a => a.Id == id) is not { Retired: false } actor)
+            {
+                errors.Add($"{label}: that character is gone or retired.");
+                continue;
+            }
+
+            draft.Name = actor.Name;
+            draft.OutlineName = actor.Name;
+            draft.SharedWithPlayers = actor.Visibility == ActorVisibility.Known || actor.Kind == ActorKind.PlayerCharacter;
+            var sheet = actor.Sheet ?? new Dictionary<string, object>();
+            draft.BeforeSheet = SheetProposal.Current(sheet, draft.SheetSet.Keys.Concat(draft.SheetClear)).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
+            draft.BeforeStamp = Stamp(string.Join("\n", draft.BeforeSheet.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => p.Key + "=" + p.Value)));
+            var (e, w) = SheetProposal.Check(system, resolver, enforcement, sheet, draft.SheetSet, draft.SheetClear, label, await LinkedSheetsAsync(system, access, sheet));
+            errors.AddRange(e);
+            warnings.AddRange(w);
+        }
+
+        return (errors, warnings);
+    }
+
+    /// <summary>The sheets the character's links point to, loaded as the sheet page loads them (the campaign's own access, a system with sheet kinds,
+    /// the ids the sheet's link keys name); null when there is nothing to load. Without them the rules cannot tell what a link brings.</summary>
+    private async Task<ILinkedSheets?> LinkedSheetsAsync(SystemDefinition system, CampaignAccess access, IReadOnlyDictionary<string, object> sheet)
+    {
+        if (system.SheetKinds.Count == 0) return null;
+        var ids = Codex.Persistence.Runtime.ActorLinkedSheets.LinkedIds(sheet);
+        return ids.Count == 0 ? null : new Codex.Persistence.Runtime.ActorLinkedSheets(await actorRepository.GetForRulesAsync(access, ids));
     }
 
     /// <summary>The system's hazard type (HAZARDS_DESIGN.md 5), or null when it has none: then a place's hazard is ignored and its trap stays text.</summary>
@@ -248,6 +314,8 @@ public sealed partial class WorldBuilderService
                     }
 
                     break;
+                case EditTarget.Sheet:
+                    break; // named, stamped and checked by SheetsAsync
                 case EditTarget.Actor:
                     if (actors.FirstOrDefault(a => a.Id == id) is { } actor)
                     {

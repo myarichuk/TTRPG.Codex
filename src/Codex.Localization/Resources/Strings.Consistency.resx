@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Consistency.BrokenLink" xml:space="preserve"><value>The link [[{0}]] points to no page.</value></data>
+  <data name="Consistency.UnlinkedMention" xml:space="preserve"><value>The text says "{0}" in plain words, which is the name of the page "{1}".</value></data>
+  <data name="Consistency.VisibilityLeak" xml:space="preserve"><value>This party-visible page links [[{0}]], the page "{1}", which only the DM can open. Players see the words without the link, or nothing if the link has no label.</value></data>
+  <data name="Consistency.DanglingMention" xml:space="preserve"><value>The text mentions a {0} ({1}) that no longer exists.</value></data>
+  <data name="Consistency.DanglingReference" xml:space="preserve"><value>The {0}'s {1} points at a {2} ({3}) that no longer exists.</value></data>
+  <data name="Consistency.EmptyBio" xml:space="preserve"><value>"{0}" has no history written.</value></data>
+  <data name="Consistency.EmptyBody" xml:space="preserve"><value>The page "{0}" has no text.</value></data>
+  <data name="Consistency.TodoMarker" xml:space="preserve"><value>The text still holds the placeholder "{0}".</value></data>
+  <data name="Consistency.EmptyInventory" xml:space="preserve"><value>"{0}" carries nothing, though {1} bring starting equipment.</value></data>
+  <data name="Consistency.SecretUnclosed" xml:space="preserve"><value>The block opened by "{0}" (line {1}) is never closed with a line of :::, so it runs to the end of the text.</value></data>
+  <data name="Consistency.SecretUnknownAudience" xml:space="preserve"><value>The block opened by "{1}" (line {2}) names an audience the app does not know (":::{0}"), so only the DM can read it.</value></data>
+  <data name="Consistency.SecretForNobody" xml:space="preserve"><value>The block opened by "{0}" (line {1}) names no character, so no player can read it.</value></data>
+  <data name="Consistency.SecretForMissing" xml:space="preserve"><value>The block opened by "{1}" (line {2}) is for a character ({0}) that no longer exists.</value></data>
+  <data name="Consistency.SheetRule" xml:space="preserve"><value>{0}</value></data>
+  <data name="Consistency.SheetEvaluationFailed" xml:space="preserve"><value>The sheet rules could not be evaluated for "{0}" ({1}).</value></data>
+  <data name="Consistency.PlaceTreeSelf" xml:space="preserve"><value>The place "{0}" is inside itself.</value></data>
+  <data name="Consistency.PlaceTreeCrossRegion" xml:space="preserve"><value>The place "{0}" is inside "{1}", which is in another region; a place can only be inside one of its own region.</value></data>
+  <data name="Consistency.PlaceTreeMissing" xml:space="preserve"><value>The place "{0}" is inside a place ({1}) that no longer exists.</value></data>
+  <data name="Consistency.PlaceTreeCycle" xml:space="preserve"><value>These places are inside one another in a loop, with no top: {0}.</value></data>
+  <data name="Consistency.DuplicateSlug" xml:space="preserve"><value>The page "{0}" shares the address "{1}" with {2} other page(s); a link reaches only one of them.</value></data>
+  <data name="Consistency.NearDuplicateTitle" xml:space="preserve"><value>The page "{0}" has nearly the same title as {1} (they differ only by an article or a repeated word).</value></data>
+  <data name="Consistency.FactRelatedGone" xml:space="preserve"><value>The secret "{0}" is filed under a {1} ({2}) that no longer exists, though its text does not mention it.</value></data>
+  <data name="Consistency.FactKnowerGone" xml:space="preserve"><value>The secret "{0}" is known by a character ({1}) who is not on the cast.</value></data>
+  <data name="Consistency.PlacedCreatureGone" xml:space="preserve"><value>The place "{0}" says its creature is a cast member ({1}) who is not on the cast.</value></data>
+  <data name="Consistency.PlacedHazardGone" xml:space="preserve"><value>The hazard {1} placed on "{0}" is no longer in the Library.</value></data>
+  <data name="Consistency.HazardPlaceGone" xml:space="preserve"><value>The hazard "{0}" on the table stands on a place ({1}) that no longer exists.</value></data>
+  <data name="Consistency.OwnerNotMember" xml:space="preserve"><value>The character "{0}" belongs to a player ({1}) who is not a member of the campaign.</value></data>
+  <data name="Consistency.HomebrewDuplicate" xml:space="preserve"><value>The homebrew entry "{0}" shares its id {1} with {2, plural, one{# other entry} other{# other entries}}; only one can be reached.</value></data>
+  <data name="Consistency.HomebrewReference" xml:space="preserve"><value>The homebrew entry "{0}" names "{2}" as its {1}, which is not a {3} in the Library.</value></data>
+  <data name="Consistency.HazardShape" xml:space="preserve"><value>The hazard "{0}": {1}</value></data>
+  <data name="Consistency.TagCase" xml:space="preserve"><value>The tag "{0}" is also written "{1}" elsewhere, so the two are not found together.</value></data>
+  <data name="Consistency.SystemUnknown" xml:space="preserve"><value>The campaign's game system "{0}" is not installed, so no character sheet or Library entry can be read.</value></data>
+  <data name="Consistency.SystemDrift" xml:space="preserve"><value>The system "{0}" changed since this campaign last played under it ({1} change(s): {2}).</value></data>
+  <data name="Consistency.PackDrift" xml:space="preserve"><value>The campaign's pack choice names a pack "{0}" that the system no longer has.</value></data>
+  <data name="Consistency.PackProblem" xml:space="preserve"><value>Loading the system or its packs reported: {0}</value></data>
+  <data name="Consistency.BlueprintGone" xml:space="preserve"><value>"{0}" was made from the creature {1}, which the Library no longer has (its pack is off or gone).</value></data>
+  <data name="Consistency.InventoryItemGone" xml:space="preserve"><value>"{0}" carries "{1}", which is not in the Library.</value></data>
+  <data name="Consistency.BestiaryGone" xml:space="preserve"><value>The Bestiary lists "{0}" ({1}), which is not in the Library.</value></data>
+  <data name="Consistency.CheckFailed" xml:space="preserve"><value>The system's check "{0}" could not run ({1}), so what it looks for was not checked.</value></data>
+  <data name="Consistency.OrphanPage" xml:space="preserve"><value>Nothing links to the page "{0}".</value></data>
+  <data name="Consistency.BacklinkMismatch" xml:space="preserve"><value>"{0}" and "{1}" point at each other on one side only.</value></data>
+  <data name="Consistency.PersonPageNoActor" xml:space="preserve"><value>The person page "{0}" has no character on the cast.</value></data>
+  <data name="Consistency.RetiredMention" xml:space="preserve"><value>The text mentions "{0}", who is retired.</value></data>
+</root>

@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject WorldChatSessions Sessions
 @inject WorldBuilderService Builder
+@inject IssueRecheckLog Rechecks
 @inject IRegionRepository RegionRepo
 @inject AiFeatures Ai
 @inject NavigationManager Nav
@@ -272,6 +273,10 @@ else if (chat != null)
 
             @* ---- The proposal ---- *@
             <aside class="wb-ledger panel" id="world-proposal" aria-labelledby="world-proposal-heading">
+                @if (lastRecheck != null)
+                {
+                    <ApplyRecheckNote Recheck="lastRecheck" IssuesHref="@(Ctx.BasePath + "/issues")" OnHide="() => lastRecheck = null" />
+                }
                 <WorldProposalPanel @ref="panel" Proposal="proposal" Warnings="chat.ProposalWarnings" Decided="chat.Decided" Missing="missing" PlaceNames="placeNames"
                                     Locked="@(chat.IsBusy || applying)" Applying="applying" ApplyError="@applyError" Pinned="pinned"
                                     OnApply="ApplyAsync" OnDiscard="DiscardAsync" OnFill="FillAsync" OnDecided="DecidedAsync"
@@ -731,6 +736,9 @@ else if (chat != null)
         chats = await Sessions.ListAsync(Ctx.Access);
     }
 
+    // What the checks said after the last apply in this window (null before any, or when nothing claimed to fix anything).
+    private ApplyRecheck? lastRecheck;
+
     private async Task ApplyAsync()
     {
         if (chat?.Proposal == null || applying || chat.IsBusy) return;
@@ -739,7 +747,14 @@ else if (chat != null)
         try
         {
             // What was made is shown in the panel and the conversation; a flash above the workbench would only push it down.
-            await chat.ApplyAsync();
+            var built = await chat.ApplyAsync();
+            // What the app's own checks said about the change, for the DM: shown under the workbench and in the Issues panel.
+            if (built.Recheck is { } recheck)
+            {
+                Rechecks.Record(Ctx.Campaign.Id, recheck);
+                lastRecheck = recheck;
+            }
+
             // Every kind of entry, not only new people and places: an edited page or character, new tags or lore would otherwise
             // show as they were until the DM navigates (R14).
             await Ctx.ReloadAsync();
