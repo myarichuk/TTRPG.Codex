@@ -97,6 +97,18 @@ public class IssueIdStabilityTests
         Assert.Equal(new[] { before[0] }, AllSecretIds("Intro.\n:::party\nThe duke lies."));
     }
 
+    [Fact]
+    public void AForBlockWithNoIssue_NeverNumbersTheIdOfOneThatHasOne()
+    {
+        // Two :::for blocks with the same first line: the first names a character who exists (no issue), the second one who is gone. Only blocks
+        // with an issue are told apart by number, so the second's id has none, and removing or editing the first moves nothing.
+        var aria = Fx.Actor("actors/1");
+        var before = AllSecretIds(":::for [[actor:actors/1]]\nThe map is false.\n:::\n:::for [[actor:actors/9]]\nThe map is false.\n:::", aria);
+        Assert.Equal(new[] { "secret-for-missing:page:wikipages/1-A:body:for:the-map-is-false:actors/9" }, before);
+
+        Assert.Equal(before, AllSecretIds(":::for [[actor:actors/9]]\nThe map is false.\n:::", aria));
+    }
+
     /// <summary>One generated block: its opener word, the characters a <c>:::for</c> names, its first line, and whether it is closed.</summary>
     private sealed record GenBlock(string Word, List<string> Knowers, string Content, bool Closed)
     {

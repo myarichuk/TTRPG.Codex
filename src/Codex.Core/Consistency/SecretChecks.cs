@@ -100,7 +100,8 @@ public sealed class SecretForMissingCheck : IConsistencyCheck
     public IEnumerable<Issue> Run(WorldSnapshot s)
     {
         var actors = s.Actors.Select(a => a.Id).ToHashSet(StringComparer.Ordinal);
-        foreach (var (field, block, opening, key) in SecretScan.Blocks(s, b => b.Marked == SecretAudience.Some))
+        // Only the blocks with an issue (no character, or one who is gone), so a block for characters who exist never numbers another's key.
+        foreach (var (field, block, opening, key) in SecretScan.Blocks(s, b => b.Marked == SecretAudience.Some && (b.Knowers.Count == 0 || b.Knowers.Any(id => !actors.Contains(id)))))
         {
             if (block.Knowers.Count == 0)
             {
