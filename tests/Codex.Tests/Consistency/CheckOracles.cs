@@ -273,7 +273,9 @@ internal sealed class OracleSheetRuleCheck : IConsistencyCheck
             var args = (v.Args ?? Array.Empty<object?>()).Select(ArgText).ToList();
             // The rule's key and the field (already in the id), and, for a rule that is about one item among several on the field, which item: never
             // the numbers or the whole sentence, which a partial fix changes (a score lowered from 25 to 20 is still the same problem).
-            var detail = (v.Key ?? "rule") + Item(v.Key, args);
+            // Keyed by a Library entry's id, not its name, as the check is now (the id scheme changed after fa02e24; what this oracle stands for, the
+            // verdicts the engine gives with and without the pickers' options, did not).
+            var detail = (v.Key ?? "rule") + Item(v.Key, (v.Args ?? Array.Empty<object?>()).Select(a => a is ContentEntry { Id.Length: > 0 } e ? e.Id : ArgText(a)).ToList());
             // Fixable through a sheet edit only when the rule is about a key an edit may set; a derived value is the sheet's own to compute.
             var fixable = SheetProposal.IsEditable(system, v.FieldKey);
             yield return Make.Issue(Name, severity, "actor", actor.Id, v.FieldKey, detail, v.Key ?? "Consistency.SheetRule", args,

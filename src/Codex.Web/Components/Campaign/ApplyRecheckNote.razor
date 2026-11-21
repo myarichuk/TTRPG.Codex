@@ -14,7 +14,11 @@
             }
         </div>
     </header>
-    @if (Recheck.Failed)
+    @if (Recheck.Failed && Recheck.TimedOut)
+    {
+        <p class="mb-0 mt-2" data-testid="issues-recheck-incomplete">@L["Campaign.Issues.Recheck.Incomplete"]</p>
+    }
+    else if (Recheck.Failed)
     {
         <p class="mb-0 mt-2" data-testid="issues-recheck-failed">@L["Campaign.Issues.Recheck.Failed"]</p>
     }
@@ -26,8 +30,10 @@
             @Row("New", Recheck.New, "danger")
             @Row("Unclaimed", Recheck.ResolvedUnclaimed, "success")
             @Row("NotFound", Recheck.NotFound, "warning")
+            @* Hidden by a dismissal is not fixed: its own row, never counted with what the change fixed. *@
+            @Row("Dismissed", Recheck.Dismissed, "warning")
         </ul>
-        @if (Recheck.Resolved.Count + Recheck.StillOpen.Count + Recheck.New.Count + Recheck.ResolvedUnclaimed.Count + Recheck.NotFound.Count == 0)
+        @if (Recheck.Resolved.Count + Recheck.StillOpen.Count + Recheck.New.Count + Recheck.ResolvedUnclaimed.Count + Recheck.NotFound.Count + Recheck.Dismissed.Count == 0)
         {
             <p class="mb-0 mt-2">@L["Campaign.Issues.Recheck.Nothing"]</p>
         }

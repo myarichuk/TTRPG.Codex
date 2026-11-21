@@ -50,16 +50,16 @@ public sealed partial class WorldChat
         // What the proposal says it resolves is read before it is cleared. Only entries that are saved count, and the checks only run
         // (two snapshots) when something was claimed: the claim is what is checked, never what decides.
         var claimedIds = WorldBuilderService.Kept(proposal).SelectMany(d => d.Resolves).Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToList();
-        IReadOnlyList<Codex.Core.Consistency.Issue>? before = null;
+        Before? before = null;
         WorldBuildResult result;
         try
         {
             before = await BeforeApplyAsync(claimedIds, ct);
             // The ids open before the first attempt are kept with the chat until the proposal is done: a retry after a part was saved takes its own
             // "before" after that part, where the fixed issues are already gone and their claims would read as "never an issue".
-            if (before != null)
+            if (before?.Report is { } report)
             {
-                Document.ApplyBeforeIssueIds = before.Select(i => i.Id).Concat(Document.ApplyBeforeIssueIds ?? new List<string>()).Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToList();
+                Document.ApplyBeforeIssueIds = report.Open.Select(i => i.Id).Concat(Document.ApplyBeforeIssueIds ?? new List<string>()).Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToList();
             }
 
             // Each entry is kept in the chat the moment it is stored, so an apply cut short by anything (a failure, a closed tab,
@@ -77,7 +77,7 @@ public sealed partial class WorldChat
         // The save went through; nothing about the re-check can turn it into a failure.
         if (claimedIds.Count > 0)
         {
-            result = result with { Recheck = await RecheckAsync(before, Document.ApplyBeforeIssueIds, claimedIds) };
+            result = result with { Recheck = await RecheckAsync(before, Document.ApplyBeforeIssueIds, claimedIds, ct) };
         }
 
         Document.ApplyBeforeIssueIds = null;
@@ -131,31 +131,45 @@ public sealed partial class WorldChat
         return result;
     }
 
-    // The issues before the save, when the proposal claims to resolve any. A check that fails is not a reason to refuse the apply: null
-    // says there is no "before", and the re-check then reports that it could not run.
-    private async Task<IReadOnlyList<Codex.Core.Consistency.Issue>?> BeforeApplyAsync(List<string> claimedIds, CancellationToken ct)
+    // What the checks said before the save: the report (open and dismissed), or why there is none (the check failed, or ran out of its budget).
+    private sealed record Before(Codex.Web.Services.ConsistencyReport? Report, bool TimedOut);
+
+    // The issues before the save, when the proposal claims to resolve any. A check that fails or runs out of its budget is not a reason to refuse the
+    // apply: there is then no "before", and the re-check reports that it could not run, or that it is incomplete. Only the apply's own cancellation,
+    // before anything is saved, stops the apply.
+    private async Task<Before?> BeforeApplyAsync(List<string> claimedIds, CancellationToken ct)
     {
         if (claimedIds.Count == 0) return null;
+        ct.ThrowIfCancellationRequested();
         try
         {
-            ct.ThrowIfCancellationRequested();
-            return await builder.OpenIssuesAsync(campaign, access);
+            return new Before(await builder.RecheckReportAsync(campaign, access, ct), false);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            return new Before(null, true);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            return null;
+            return new Before(null, false);
         }
     }
 
-    // The checks again, after the save, set against the checks before it. The model's claim is the thing being checked.
-    private async Task<ApplyRecheck> RecheckAsync(IReadOnlyList<Codex.Core.Consistency.Issue>? before, IReadOnlyList<string>? earlierIds, List<string> claimedIds)
+    // The checks again, after the save, set against the checks before it. The model's claim is the thing being checked. The save went through, so nothing
+    // here throws: a check that fails is "could not run", one stopped by its budget (or by the apply's cancellation, now that the save is done) is "incomplete".
+    private async Task<ApplyRecheck> RecheckAsync(Before? before, IReadOnlyList<string>? earlierIds, List<string> claimedIds, CancellationToken ct)
     {
-        if (before == null) return ApplyRecheck.Couldnt;
+        if (before is not { Report: { } then }) return before?.TimedOut == true ? ApplyRecheck.Incomplete : ApplyRecheck.Couldnt;
         try
         {
-            return await builder.OpenIssuesAsync(campaign, access) is { } after
-                ? ApplyRecheck.From(Codex.Core.Consistency.ConsistencyChecker.Compare(before.Select(i => i.Id).Concat(earlierIds ?? Array.Empty<string>()), after, claimedIds))
-                : ApplyRecheck.Couldnt;
+            if (await builder.RecheckReportAsync(campaign, access, ct) is not { } after) return ApplyRecheck.Couldnt;
+            // Dismissed before or after: such an issue is hidden, never fixed, whatever the claim said.
+            var dismissed = then.Dismissed.Concat(after.Dismissed).Select(i => i.Id);
+            return ApplyRecheck.From(Codex.Core.Consistency.ConsistencyChecker.Compare(then.Open.Select(i => i.Id).Concat(earlierIds ?? Array.Empty<string>()), after.Open, claimedIds, dismissed));
+        }
+        catch (OperationCanceledException)
+        {
+            return ApplyRecheck.Incomplete;
         }
         catch (Exception)
         {

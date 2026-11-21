@@ -102,18 +102,25 @@ public sealed class SheetRuleCheck : IConsistencyCheck
         foreach (var v in violations)
         {
             if (v.Key != null && v.Key.StartsWith("Actor.Rule.PointBuy", StringComparison.Ordinal)) continue;
-            var args = (v.Args ?? Array.Empty<object?>()).Select(ArgText).ToList();
+            var raw = v.Args ?? Array.Empty<object?>();
+            var args = raw.Select(ArgText).ToList();
             // The rule's key and the field (already in the id), and, for a rule that is about one item among several on the field, which item: never
-            // the numbers or the whole sentence, which a partial fix changes (a score lowered from 25 to 20 is still the same problem).
-            var detail = (v.Key ?? "rule") + Item(v.Key, args);
+            // the numbers or the whole sentence, which a partial fix changes (a score lowered from 25 to 20 is still the same problem). A Library entry is
+            // named by its id, never by its display name: a pack that renames it, or another pack (or homebrew) whose entry of the same id wins by priority
+            // or load order, changes the name and not the problem.
+            var detail = (v.Key ?? "rule") + Item(v.Key, raw.Select(KeyText).ToList());
+            // The id as it was made before entries were keyed by id (by their name), so a dismissal stored then still matches (IssueDismissals.Split).
+            var former = (v.Key ?? "rule") + Item(v.Key, args);
             // Fixable through a sheet edit only when the rule is about a key an edit may set; a derived value is the sheet's own to compute.
             var fixable = SheetProposal.IsEditable(system, v.FieldKey);
-            yield return Make.Issue(Name, severity, "actor", actor.Id, v.FieldKey, detail, v.Key ?? "Consistency.SheetRule", args,
+            var issue = Make.Issue(Name, severity, "actor", actor.Id, v.FieldKey, detail, v.Key ?? "Consistency.SheetRule", args,
                 v.Message,
                 fixable
                     ? "Ask the DM which value they want, then propose a sheet edit of this key (existing:sheet:<actor id>); do not guess a value or invent an entry. Anything that stays broken is reported again."
                     : "This is a value the sheet works out itself, which no proposal can set. Tell the DM which rule the sheet breaks; do not guess.",
                 fixable ? FixVia.Sheet : FixVia.ReportOnly);
+            var formerId = Make.Id(Name, "actor", actor.Id, v.FieldKey, former);
+            yield return formerId == issue.Id ? issue : issue with { FormerId = formerId };
         }
     }
 
@@ -136,6 +143,9 @@ public sealed class SheetRuleCheck : IConsistencyCheck
         var item = string.Join('-', indexes.Where(i => i < args.Count).Select(i => Slug(args[i])).Where(t => t.Length > 0));
         return item.Length == 0 ? string.Empty : ":" + item;
     }
+
+    // What names an item in the id: a Library entry by its id (stable across packs, priorities and renames), anything else as the message shows it.
+    private static string KeyText(object? arg) => arg is ContentEntry { Id.Length: > 0 } e ? e.Id : ArgText(arg);
 
     private static string ArgText(object? arg) => arg switch
     {

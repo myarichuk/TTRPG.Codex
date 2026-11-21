@@ -44,6 +44,27 @@ public sealed partial class WorldBuilderService
         return consistency == null ? null : (await consistency.CheckAsync(campaign, access, cancel: cancel)).Open;
     }
 
+    /// <summary>How long one snapshot of the apply's re-check (the one before the save, and the one after it) may take before it is given up and the
+    /// re-check reported as incomplete (<see cref="ApplyRecheck.Incomplete"/>). Generous: the full checks of a very large campaign take well under a
+    /// second; this only means a pathological campaign, or a system's compiled check that never returns, cannot hold up an apply for ever. Separate from
+    /// <see cref="IssueSummaryBudget"/>, and never a reason to skip the next re-check.</summary>
+    public TimeSpan RecheckBudget { get; set; } = TimeSpan.FromSeconds(60);
+
+    /// <summary>
+    /// One full snapshot for the apply's re-check: the open issues and the ones the DM dismissed (a claim on a dismissed issue is hidden, not fixed),
+    /// under <see cref="RecheckBudget"/> and <paramref name="cancel"/>; null when no checker is available here. Throws
+    /// <see cref="OperationCanceledException"/> when the budget runs out or <paramref name="cancel"/> is cancelled (the caller reports the re-check as
+    /// incomplete), and whatever the check throws otherwise (the caller reports that it could not run). DM only.
+    /// </summary>
+    public async Task<ConsistencyReport?> RecheckReportAsync(CampaignDocument campaign, CampaignAccess access, CancellationToken cancel = default)
+    {
+        DmOnly(access);
+        if (consistency == null) return null;
+        using var budget = new CancellationTokenSource(RecheckBudget, Clock);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(budget.Token, cancel);
+        return await consistency.CheckAsync(campaign, access, cancel: linked.Token);
+    }
+
     /// <summary>How long the per-message count note may take before it is left out. The checks are pure code over one snapshot and are quick
     /// for any real campaign; this only means a pathological one can never hold up a chat message.</summary>
     public TimeSpan IssueSummaryBudget { get; set; } = TimeSpan.FromSeconds(5);
@@ -62,9 +83,11 @@ public sealed partial class WorldBuilderService
     /// is available, when the check fails, or when it takes longer than <see cref="IssueSummaryBudget"/> (a message is never held up by it). A campaign
     /// that went over the budget is skipped, silently and at once, for <see cref="IssueSummaryBackoff"/>, so a pathological one costs the budget once
     /// in that while, not on every message. Only the note is skipped: <c>list_issues</c>, the Issues panel and the apply's re-check run in full, with no
-    /// budget. Deterministic: the same issues give the same words.</summary>
-    public async Task<string?> IssueSummaryAsync(CampaignDocument campaign, CampaignAccess access)
+    /// budget. Deterministic: the same issues give the same words. Only <paramref name="cancel"/> (the turn being stopped) ends it with a throw: any other
+    /// cancellation from below (a store's own timeout, a load that gave up) is a failed check, and the message goes on without a note.</summary>
+    public async Task<string?> IssueSummaryAsync(CampaignDocument campaign, CampaignAccess access, CancellationToken cancel = default)
     {
+        cancel.ThrowIfCancellationRequested();
         if (summarySkippedUntil.TryGetValue(campaign.Id, out var until))
         {
             if (Clock.GetUtcNow() < until) return null;
@@ -72,9 +95,15 @@ public sealed partial class WorldBuilderService
         }
 
         using var budget = new CancellationTokenSource(IssueSummaryBudget, Clock);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(budget.Token, cancel);
         try
         {
-            return IssueSummaryOf(await OpenIssuesAsync(campaign, access, budget.Token));
+            return IssueSummaryOf(await OpenIssuesAsync(campaign, access, linked.Token));
+        }
+        catch (OperationCanceledException) when (cancel.IsCancellationRequested)
+        {
+            // The turn was stopped: that is the turn's to report, not the note's.
+            throw;
         }
         catch (OperationCanceledException) when (budget.IsCancellationRequested)
         {
@@ -83,9 +112,10 @@ public sealed partial class WorldBuilderService
             summarySkippedUntil[campaign.Id] = Clock.GetUtcNow() + IssueSummaryBackoff;
             return null;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception)
         {
-            // Failed: no note, the message goes on.
+            // Failed, a cancellation that is neither the budget's nor the turn's included (a store's own timeout): no note, the message goes on, and
+            // nothing is remembered, so the next message tries again.
             return null;
         }
     }

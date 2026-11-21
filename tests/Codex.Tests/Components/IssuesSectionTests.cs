@@ -258,6 +258,61 @@ public class IssuesSectionTests : ComponentTestBase
     }
 
     [Fact]
+    public async Task ADismissedMinorFinding_WithTheSwitchOff_IsNotChecked_NotGone_AndWithItOnIsListedAsDismissed()
+    {
+        dismissals.Held.Add(new IssueDismissal { IssueId = Lonely, DismissedBy = "dm", Note = "fine" });
+        var cut = Draw();
+        cut.WaitForState(() => cut.FindAll(Id("issue")).Count == 3);
+
+        // Its check did not run, so nothing is known about it: never "the problem is gone".
+        var row = cut.Find(Id("issue-dismissed"));
+        Assert.Contains(Lonely, row.TextContent);
+        Assert.Contains("Not checked now: minor findings are hidden", row.TextContent);
+        Assert.DoesNotContain("The problem is gone", row.TextContent);
+        Assert.Empty(cut.FindAll(Id("issue-dismissed-gone")));
+
+        await cut.Find(Id("issues-noise")).ChangeAsync(new Microsoft.AspNetCore.Components.ChangeEventArgs { Value = true });
+        cut.WaitForState(() => cut.FindAll(Id("issue-dismissed-unchecked")).Count == 0);
+        row = cut.Find(Id("issue-dismissed"));
+        Assert.Contains("Nothing links to the page", row.TextContent); // found, and shown as the dismissed issue it is
+        Assert.DoesNotContain("The problem is gone", row.TextContent);
+    }
+
+    [Fact]
+    public void ADismissedMinorFindingWhoseProblemIsReallyGone_IsGone_OnceItsCheckRan()
+    {
+        dismissals.Held.Add(new IssueDismissal { IssueId = "orphan-page:page:wikipages/9-Z:links", DismissedBy = "dm" });
+        var cut = Draw();
+        cut.WaitForState(() => cut.FindAll(Id("issue")).Count == 3);
+        Assert.NotEmpty(cut.FindAll(Id("issue-dismissed-unchecked")));
+
+        cut.Find(Id("issues-noise")).Change(new Microsoft.AspNetCore.Components.ChangeEventArgs { Value = true });
+        cut.WaitForState(() => cut.FindAll(Id("issue-dismissed-gone")).Count == 1);
+        Assert.Contains("The problem is gone", cut.Find(Id("issue-dismissed")).TextContent);
+    }
+
+    [Fact]
+    public void WhatTheLastApplyHidByADismissal_IsItsOwnRow_NeverWithWhatWasFixed()
+    {
+        rechecks.Record("c1", new ApplyRecheck(false, Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), Dismissed: new[] { Mere }));
+        var cut = Draw();
+        cut.WaitForState(() => cut.FindAll(Id("issue")).Count == 3);
+
+        var note = cut.Find(Id("issues-recheck"));
+        Assert.Contains("Dismissed by you, so hidden; not fixed: " + Mere, cut.Find(Id("issues-recheck-dismissed")).TextContent);
+        Assert.DoesNotContain("Fixed:", note.TextContent);
+        Assert.DoesNotContain("Nothing changed", note.TextContent);
+    }
+
+    [Fact]
+    public void AReCheckThatRanOutOfTime_SaysItIsIncomplete()
+    {
+        var cut = Render<ApplyRecheckNote>(p => p.Add(x => x.Recheck, ApplyRecheck.Incomplete));
+        Assert.Contains("incomplete", cut.Find(Id("issues-recheck-incomplete")).TextContent);
+        Assert.Empty(cut.FindAll(Id("issues-recheck-failed")));
+    }
+
+    [Fact]
     public void WhatTheLastApplyDid_IsShown_FromTheChecks_WithAWayToHideIt()
     {
         rechecks.Record("c1", new ApplyRecheck(false, new[] { "a:1" }, new[] { Mere }, Array.Empty<string>(), new[] { "b:2" }, new[] { "c:3" }));

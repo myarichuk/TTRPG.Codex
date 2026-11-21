@@ -1395,4 +1395,7 @@
   <data name="Campaign.Issues.Recheck.Nothing" xml:space="preserve"><value>שום דבר לא השתנה.</value></data>
   <data name="Campaign.Issues.Recheck.Hide" xml:space="preserve"><value>הסתרה</value></data>
   <data name="Campaign.Issues.Recheck.See" xml:space="preserve"><value>מעבר לבעיות</value></data>
+  <data name="Campaign.Issues.NotChecked" xml:space="preserve"><value>לא נבדק כרגע: הממצאים הקלים מוסתרים, ולכן הבדיקות שלהם לא רצו. הפעילו את "הצג גם ממצאים קלים" כדי לראות אם הבעיה עדיין קיימת.</value></data>
+  <data name="Campaign.Issues.Recheck.Dismissed" xml:space="preserve"><value>נדחו על ידיך, ולכן מוסתרים; לא תוקנו: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.Incomplete" xml:space="preserve"><value>הבדיקה החוזרת אחרי ההחלה נעצרה לפני שהסתיימה (נגמר לה הזמן), ולכן אינה שלמה: לא ידוע שמשהו תוקן. ההחלה עצמה הצליחה.</value></data>
 </root>

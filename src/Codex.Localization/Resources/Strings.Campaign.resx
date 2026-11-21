@@ -1395,4 +1395,7 @@
   <data name="Campaign.Issues.Recheck.Nothing" xml:space="preserve"><value>Nothing changed.</value></data>
   <data name="Campaign.Issues.Recheck.Hide" xml:space="preserve"><value>Hide</value></data>
   <data name="Campaign.Issues.Recheck.See" xml:space="preserve"><value>See the issues</value></data>
+  <data name="Campaign.Issues.NotChecked" xml:space="preserve"><value>Not checked now: minor findings are hidden, so their checks did not run. Turn on "Also show minor findings" to see whether it is still there.</value></data>
+  <data name="Campaign.Issues.Recheck.Dismissed" xml:space="preserve"><value>Dismissed by you, so hidden; not fixed: {0}</value></data>
+  <data name="Campaign.Issues.Recheck.Incomplete" xml:space="preserve"><value>The re-check after the apply was stopped before it finished (it ran out of time), so it is incomplete: nothing is known to be fixed. The apply itself went through.</value></data>
 </root>

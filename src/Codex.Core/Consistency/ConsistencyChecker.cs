@@ -83,8 +83,20 @@ public static class ConsistencyChecker
             }
 
             seen[id] = ++count;
-            all[i] = all[i] with { Id = $"{id}~{count}" };
+            all[i] = all[i] with { Id = $"{id}~{count}", FormerId = null };
             suffixed = true;
+        }
+
+        // A former id (the one an issue had under an earlier id scheme, for matching old dismissals) is kept only where it names this issue alone: shared by
+        // two issues, or equal to another issue's id, a dismissal stored under it would set aside more than the one problem it was made for.
+        if (all.Any(i => i.FormerId != null))
+        {
+            var current = all.Select(i => i.Id).ToHashSet(StringComparer.Ordinal);
+            var shared = all.Where(i => i.FormerId != null).GroupBy(i => i.FormerId!, StringComparer.Ordinal).Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet(StringComparer.Ordinal);
+            for (var i = 0; i < all.Count; i++)
+            {
+                if (all[i].FormerId is { } former && (shared.Contains(former) || current.Contains(former))) all[i] = all[i] with { FormerId = null };
+            }
         }
 
         // A suffix can move an issue within its group; sort once more so the order is the documented one. With no suffix nothing moved: the list
@@ -119,27 +131,42 @@ public static class ConsistencyChecker
     /// <see cref="Compare(IEnumerable{Issue}, IEnumerable{Issue}, IEnumerable{string})"/> with the ids that were open before as ids: an apply that is
     /// retried after part of it was saved passes the ids from before the first attempt as well, so a claim of an entry already saved is still seen as an
     /// issue that was there (and is now gone), not as one that was never an issue.
+    /// <para>The claims are judged against the ids open when the apply started, never taken as given: a claim that was not open then (fixed, or
+    /// never an issue) cannot have been fixed by the apply, so it is never <see cref="Recheck.Resolved"/> or <see cref="Recheck.StillOpen"/>; if the apply
+    /// brought it back it is <see cref="Recheck.New"/>, otherwise <see cref="Recheck.NotFound"/>. <paramref name="dismissed"/> are the ids the DM has set
+    /// aside (before or after the apply): one of those that is not open after the apply was hidden, not fixed, and is
+    /// <see cref="Recheck.Dismissed"/>, never resolved or "not an issue".</para>
     /// </summary>
-    public static Recheck Compare(IEnumerable<string> beforeIssueIds, IEnumerable<Issue> after, IEnumerable<string> claimed)
+    public static Recheck Compare(IEnumerable<string> beforeIssueIds, IEnumerable<Issue> after, IEnumerable<string> claimed, IEnumerable<string>? dismissed = null)
     {
         var beforeIds = beforeIssueIds.ToHashSet(StringComparer.Ordinal);
         var afterById = after.GroupBy(i => i.Id, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+        var hidden = (dismissed ?? Array.Empty<string>()).ToHashSet(StringComparer.Ordinal);
         var claims = claimed.Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToList();
+        bool Open(string id) => afterById.ContainsKey(id);
+        bool Hidden(string id) => !Open(id) && hidden.Contains(id);
 
         return new Recheck(
-            Resolved: claims.Where(id => beforeIds.Contains(id) && !afterById.ContainsKey(id)).ToList(),
-            StillOpen: claims.Where(id => afterById.ContainsKey(id)).ToList(),
-            NotFound: claims.Where(id => !beforeIds.Contains(id) && !afterById.ContainsKey(id)).ToList(),
-            ResolvedUnclaimed: beforeIds.Where(id => !afterById.ContainsKey(id) && !claims.Contains(id)).OrderBy(id => id, StringComparer.Ordinal).ToList(),
-            New: afterById.Values.Where(i => !beforeIds.Contains(i.Id)).OrderBy(i => i, Issue.Order).ToList());
+            Resolved: claims.Where(id => beforeIds.Contains(id) && !Open(id) && !Hidden(id)).ToList(),
+            StillOpen: claims.Where(id => beforeIds.Contains(id) && Open(id)).ToList(),
+            NotFound: claims.Where(id => !beforeIds.Contains(id) && !Open(id) && !Hidden(id)).ToList(),
+            ResolvedUnclaimed: beforeIds.Where(id => !Open(id) && !Hidden(id) && !claims.Contains(id)).OrderBy(id => id, StringComparer.Ordinal).ToList(),
+            New: afterById.Values.Where(i => !beforeIds.Contains(i.Id)).OrderBy(i => i, Issue.Order).ToList(),
+            Dismissed: claims.Concat(beforeIds).Where(Hidden).Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToList());
     }
 }
 
 /// <summary>The outcome of <see cref="ConsistencyChecker.Compare"/>.</summary>
-/// <param name="Resolved">Claimed, was an issue before, is gone now.</param>
-/// <param name="StillOpen">Claimed, and still an issue.</param>
-/// <param name="NotFound">Claimed, but neither before nor after: an id that never named an issue (a proposal naming one is refused before it is applied).</param>
+/// <param name="Resolved">Claimed, was an issue when the apply started, is gone now (and not merely dismissed).</param>
+/// <param name="StillOpen">Claimed, was an issue when the apply started, and still is: the change did not fix it.</param>
+/// <param name="NotFound">Claimed, but not an issue when the apply started and not one after: a claim gone stale (fixed meanwhile) or one that never
+/// named an issue. The apply cannot have fixed it.</param>
 /// <param name="ResolvedUnclaimed">Gone now, though nothing claimed it: the change fixed it as a side effect.</param>
-/// <param name="New">Not an issue before, one now: the change broke something.</param>
+/// <param name="New">Not an issue when the apply started, one now: the change broke something (or brought back what a stale claim named).</param>
+/// <param name="Dismissed">Claimed or open before, not open now because the DM set it aside: hidden, not fixed. Never counted as resolved.</param>
 public sealed record Recheck(IReadOnlyList<string> Resolved, IReadOnlyList<string> StillOpen, IReadOnlyList<string> NotFound,
-    IReadOnlyList<string> ResolvedUnclaimed, IReadOnlyList<Issue> New);
+    IReadOnlyList<string> ResolvedUnclaimed, IReadOnlyList<Issue> New, IReadOnlyList<string>? Dismissed = null)
+{
+    /// <summary>See the parameter; never null.</summary>
+    public IReadOnlyList<string> Dismissed { get; init; } = Dismissed ?? Array.Empty<string>();
+}

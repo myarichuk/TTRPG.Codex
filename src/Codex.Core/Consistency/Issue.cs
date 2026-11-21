@@ -59,6 +59,15 @@ public sealed record Issue(
     string Bundle,
     FixVia FixVia)
 {
+    /// <summary>The id this issue had under an earlier id scheme, when that differs (a <c>sheet-rule</c> issue about a Library entry was keyed by the
+    /// entry's display name; it is keyed by the entry's id now). Only for matching a dismissal stored before the change
+    /// (<see cref="IssueDismissals.Split"/>): never listed, never claimable, never stored. Null when the id did not change, and on an issue that took a
+    /// <c>~n</c> suffix (the old numbering cannot be matched safely).</summary>
+    public string? FormerId { get; init; }
+
+    /// <summary>Whether a dismissal stored under <paramref name="dismissedId"/> is about this issue: its id, or the id it had before (<see cref="FormerId"/>).</summary>
+    public bool Answers(string dismissedId) => string.Equals(Id, dismissedId, StringComparison.Ordinal) || FormerId != null && string.Equals(FormerId, dismissedId, StringComparison.Ordinal);
+
     /// <summary>The sort key every list of issues uses: most severe first, then by check, entity, field and id, all ordinal, so two runs
     /// over the same data list the same issues in the same order whatever order the database handed the documents out in.</summary>
     public static readonly IComparer<Issue> Order = Comparer<Issue>.Create(static (a, b) =>
@@ -193,12 +202,13 @@ public sealed record IssueFilter(string? Scope = null, IssueSeverity? MinSeverit
 /// the checks ran. Only the DM sets one aside; nothing a model says changes it.</summary>
 public static class IssueDismissals
 {
-    /// <summary>The issues split by whether the DM dismissed them, each in the order given.</summary>
+    /// <summary>The issues split by whether the DM dismissed them, each in the order given. A dismissal stored under an issue's
+    /// <see cref="Issue.FormerId"/> (made before its id scheme changed) still dismisses it: an id change never orphans a dismissal.</summary>
     public static (IReadOnlyList<Issue> Open, IReadOnlyList<Issue> Dismissed) Split(IEnumerable<Issue> issues, IReadOnlySet<string> dismissedIds)
     {
         var open = new List<Issue>();
         var dismissed = new List<Issue>();
-        foreach (var issue in issues) (dismissedIds.Contains(issue.Id) ? dismissed : open).Add(issue);
+        foreach (var issue in issues) (dismissedIds.Contains(issue.Id) || issue.FormerId != null && dismissedIds.Contains(issue.FormerId) ? dismissed : open).Add(issue);
         return (open, dismissed);
     }
 }

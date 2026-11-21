@@ -130,7 +130,7 @@ else
             <p class="small-muted">@L["Campaign.Issues.DismissedHint"]</p>
             @foreach (var d in dismissed)
             {
-                var issue = report.Dismissed.FirstOrDefault(i => i.Id == d.IssueId);
+                var issue = report.Dismissed.FirstOrDefault(i => i.Answers(d.IssueId));
                 <article class="panel mb-2" data-testid="issue-dismissed" data-issue-id="@d.IssueId">
                     <div class="d-flex justify-content-between align-items-start gap-2">
                         <div>
@@ -141,7 +141,15 @@ else
                             else
                             {
                                 <code>@d.IssueId</code>
-                                <div class="small-muted">@L["Campaign.Issues.Gone"]</div>
+                                @* Not found is "gone" only where its check ran: a minor finding's check runs only with the switch on, so with it off nothing is known. *@
+                                @if (!noise && IsMinor(d.IssueId))
+                                {
+                                    <div class="small-muted" data-testid="issue-dismissed-unchecked">@L["Campaign.Issues.NotChecked"]</div>
+                                }
+                                else
+                                {
+                                    <div class="small-muted" data-testid="issue-dismissed-gone">@L["Campaign.Issues.Gone"]</div>
+                                }
                             }
                             <div class="small-muted" data-testid="issue-dismissed-note">@(string.IsNullOrWhiteSpace(d.Note) ? L["Campaign.Issues.NoNote"] : d.Note)</div>
                         </div>
@@ -170,6 +178,9 @@ else
     private CampaignContext? loadedFor;
 
     private IEnumerable<Issue> Shown => (report?.Open ?? Array.Empty<Issue>()).Where(i => (severity == null || i.Severity == severity) && (kind == null || i.EntityKind == kind));
+
+    // A dismissal of one of the noisy checks' findings (its id starts with the check's name).
+    private static bool IsMinor(string issueId) => CheckNames.Noise.Any(check => issueId.StartsWith(check + ":", StringComparison.Ordinal));
 
     private int Count(IssueSeverity level) => report!.Open.Count(i => i.Severity == level);
 

@@ -422,6 +422,12 @@ public class WorldBuilderTests
         /// <summary>When set, a consistency check fails once this many snapshots have been taken.</summary>
         public int? FailChecksAfter { get; set; }
 
+        /// <summary>The issue ids the DM dismissed, as the dismissal store hands them out.</summary>
+        public List<string> Dismissed { get; } = new();
+
+        /// <summary>When set, reading the dismissals throws this instead (a store's own timeout, say).</summary>
+        public Exception? DismissalsThrow { get; set; }
+
         /// <summary>The campaign as stored; its Bestiary shortlist is what saving added to it.</summary>
         public CampaignDocument Stored { get; } = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
     }
@@ -529,7 +535,8 @@ public class WorldBuilderTests
         {
             created!.Snapshots++;
             if (created.FailChecksAfter is { } limit && created.Snapshots > limit) throw new InvalidOperationException("the checks broke");
-            return Task.FromResult<IReadOnlyList<IssueDismissal>>(Array.Empty<IssueDismissal>());
+            if (created.DismissalsThrow is { } thrown) throw thrown;
+            return Task.FromResult<IReadOnlyList<IssueDismissal>>(created.Dismissed.Select(id => new IssueDismissal { IssueId = id, DismissedBy = "dm" }).ToList());
         });
         var consistency = new ConsistencyService(catalog, library, wiki, actorRepo, regions, factRepo, dismissals, homebrew);
         var saving = created = new Saving(new WorldBuilderService(catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns, actorRepo, ai, consistency: consistency), pages, entries, actors, facts);

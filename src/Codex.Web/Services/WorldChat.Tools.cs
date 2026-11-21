@@ -156,57 +156,87 @@ public sealed partial class WorldChat
 
         // A claim on a waiting entry that is no longer an open issue (the game master dismissed it, or something fixed it, since) is dropped, not held
         // against the new entries: add_entries cannot change a waiting entry, so refusing would leave the model nothing it could do. The result says which.
-        var (waiting, dropped) = await WithoutStaleClaimsAsync(input.Entries ?? new List<ProposalEntry>());
+        // The claims judged are the waiting proposal's own (what the DM reviews), including those a revision carried over from the edit before it and
+        // which the stored input does not list: those would otherwise come back below (CarryOver) without ever being checked again.
+        var open = await OpenIdsIfClaimedAsync(before);
+        var (waiting, dropped) = WithoutStaleClaims(input.Entries ?? new List<ProposalEntry>(), before, open);
         var merged = new ProposalInput { Summary = input.Summary, Region = input.Region, RegionKind = input.RegionKind, Entries = waiting.Concat(added).ToList() };
         var result = await ProposeAsync(merged, "add_entries", $"only the new entries (the {input.Entries?.Count ?? 0} waiting ones come first when errors are numbered, so your first new entry is entries[{input.Entries?.Count ?? 0}])", fresh: false);
         if (!ReferenceEquals(Proposal, before) && Proposal != null)
         {
-            CarryOver(before, Proposal, decisions: true);
-            if (dropped.Count > 0)
-            {
-                result += "\nDropped from waiting entries, because they are no longer open issues (the game master dismissed them or they were fixed): " +
-                          string.Join("; ", dropped.Select(d => $"{d.Ref}: {JsonSerializer.Serialize(d.Ids, ProposalJson)}")) + ". Those entries stay in the proposal without those claims.";
-            }
+            var carried = CarryOver(before, Proposal, decisions: true);
+            // Whatever still came back is checked against the same open issues; nothing is carried that is not open now.
+            dropped.AddRange(DropStale(Proposal, carried, open));
+            if (dropped.Count > 0) result += "\n" + DroppedNote(dropped);
         }
 
         return result;
     }
 
-    // The waiting entries as copies, each with only the claims that are still open issues; the ones that lost a claim carry an explicit (possibly
-    // empty) list, so the claims they had are replaced and not carried back over them. No check runs when no waiting entry claims anything.
-    private async Task<(List<ProposalEntry> Entries, List<(string Ref, List<string> Ids)> Dropped)> WithoutStaleClaimsAsync(List<ProposalEntry> waiting)
+    // The note on claims dropped because they are no longer open issues, entry by entry in the proposal's order.
+    private static string DroppedNote(IEnumerable<(string Ref, List<string> Ids)> dropped) =>
+        "Dropped from waiting entries, because they are no longer open issues (the game master dismissed them or they were fixed): " +
+        string.Join("; ", dropped.GroupBy(d => d.Ref, StringComparer.Ordinal).Select(g => $"{g.Key}: {JsonSerializer.Serialize(g.SelectMany(d => d.Ids).Distinct(StringComparer.Ordinal).ToList(), ProposalJson)}")) +
+        ". Those entries stay in the proposal without those claims.";
+
+    // The ids open right now, when some entry of the proposal claims anything; null when nothing is claimed or the checks could not run (then nothing is dropped,
+    // and the check of the proposal says what it says).
+    private async Task<HashSet<string>?> OpenIdsIfClaimedAsync(WorldBundle proposal)
     {
-        var dropped = new List<(string Ref, List<string> Ids)>();
-        if (!waiting.Any(e => e.Resolves is { Count: > 0 })) return (waiting, dropped);
-        IReadOnlyList<Codex.Core.Consistency.Issue>? open;
+        if (!proposal.Drafts.Any(d => d.Resolves.Count > 0)) return null;
         try
         {
-            open = await builder.OpenIssuesAsync(campaign, access);
+            return (await builder.OpenIssuesAsync(campaign, access))?.Select(i => i.Id).ToHashSet(StringComparer.Ordinal);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            open = null; // the checks could not run: nothing is dropped, and the check of the proposal says what it says
+            return null;
         }
+    }
 
-        if (open == null) return (waiting, dropped);
-        var openIds = open.Select(i => i.Id).ToHashSet(StringComparer.Ordinal);
+    // The waiting entries as copies, each with exactly the claims of its draft in the waiting proposal (what the DM reviews, carried claims included) that are
+    // still open issues; an entry whose claims changed carries an explicit (possibly empty) list, so nothing is carried back over it unchecked. Unchanged
+    // entries are handed back as they are. Nothing changes when no check could run.
+    private static (List<ProposalEntry> Entries, List<(string Ref, List<string> Ids)> Dropped) WithoutStaleClaims(List<ProposalEntry> waiting, WorldBundle proposal, IReadOnlySet<string>? openIds)
+    {
+        var dropped = new List<(string Ref, List<string> Ids)>();
+        if (openIds == null) return (waiting, dropped);
         var kept = new List<ProposalEntry>();
         foreach (var entry in waiting)
         {
-            var stale = entry.Resolves?.Select(id => id.Trim()).Where(id => id.Length > 0 && !openIds.Contains(id)).Distinct(StringComparer.Ordinal).ToList();
-            if (stale is not { Count: > 0 })
+            var given = entry.Resolves?.Select(id => id.Trim()).Where(id => id.Length > 0).Distinct(StringComparer.Ordinal).ToList() ?? new List<string>();
+            var claims = proposal.Find(entry.Ref ?? string.Empty) is { } draft ? draft.Resolves.Union(given, StringComparer.Ordinal).ToList() : given;
+            var stale = claims.Where(id => !openIds.Contains(id)).ToList();
+            if (stale.Count == 0 && claims.Count == given.Count)
             {
                 kept.Add(entry);
                 continue;
             }
 
             var copy = JsonSerializer.Deserialize<ProposalEntry>(JsonSerializer.Serialize(entry, ProposalJson), ProposalJson)!;
-            copy.Resolves = entry.Resolves!.Where(id => !stale.Contains(id.Trim())).ToList();
+            copy.Resolves = claims.Where(id => !stale.Contains(id)).ToList();
             kept.Add(copy);
-            dropped.Add((entry.Ref ?? string.Empty, stale));
+            if (stale.Count > 0) dropped.Add((entry.Ref ?? string.Empty, stale));
         }
 
         return (kept, dropped);
+    }
+
+    // The claims <see cref="CarryOver"/> carried onto <paramref name="proposal"/> that are not open issues now, taken off their drafts. Nothing is dropped when
+    // the checks could not run.
+    private static List<(string Ref, List<string> Ids)> DropStale(WorldBundle proposal, IReadOnlyList<(string Ref, List<string> Ids)> carried, IReadOnlySet<string>? openIds)
+    {
+        var dropped = new List<(string Ref, List<string> Ids)>();
+        if (openIds == null) return dropped;
+        foreach (var (reference, ids) in carried)
+        {
+            var stale = ids.Where(id => !openIds.Contains(id)).ToList();
+            if (stale.Count == 0 || proposal.Find(reference) is not { } draft) continue;
+            draft.Resolves = draft.Resolves.Where(id => !stale.Contains(id, StringComparer.Ordinal)).ToList();
+            dropped.Add((reference, stale));
+        }
+
+        return dropped;
     }
 
     /// <summary>Puts what belongs to the entries of <paramref name="before"/> on the same entries (by ref and kind) of
@@ -215,8 +245,11 @@ public sealed partial class WorldChat
     /// DM decided (ticks, the cast box, a new name), a person's gear and, for an edit, the text it was proposed against: an edit
     /// whose target changed since stays refused. For a proposal made afresh, only an entry that is plainly the same one keeps what it
     /// became (and a person what was picked for them to carry): the same name, or for an edit the same target and text (one with a new text should be applied, and is checked against the stamp).</summary>
-    internal static void CarryOver(WorldBundle before, WorldBundle after, bool decisions)
+    /// <returns>The claims put on a draft from the one before it (by ref), which the check of <paramref name="after"/> never saw: the caller checks them
+    /// against the issues open now, so a claim cannot outlive what it named by being carried.</returns>
+    internal static List<(string Ref, List<string> Ids)> CarryOver(WorldBundle before, WorldBundle after, bool decisions)
     {
+        var carried = new List<(string Ref, List<string> Ids)>();
         foreach (var draft in after.Drafts)
         {
             if (before.Find(draft.Ref) is not { } old || old.Kind != draft.Kind) continue;
@@ -224,7 +257,9 @@ public sealed partial class WorldChat
             // list, which replaces them: the way to withdraw a claim), and one that now edits something else does not.
             if (old.Resolves.Count > 0 && !draft.ResolvesGiven && string.Equals(old.Target, draft.Target, StringComparison.OrdinalIgnoreCase))
             {
+                var added = old.Resolves.Except(draft.Resolves, StringComparer.Ordinal).ToList();
                 draft.Resolves = draft.Resolves.Concat(old.Resolves).Distinct(StringComparer.Ordinal).ToList();
+                if (added.Count > 0) carried.Add((draft.Ref, added));
             }
 
             if (decisions)
@@ -255,6 +290,8 @@ public sealed partial class WorldChat
             draft.SavedAs = new Dictionary<string, string>(old.SavedAs);
         }
 
+        return carried;
+
         static bool SameEntry(WorldDraft old, WorldDraft draft) => old.Kind switch
         {
             // The same change to the same thing: a rename, a move, a retype or a delete is not the text edit that came before it.
@@ -280,6 +317,7 @@ public sealed partial class WorldChat
         }
 
         Held = input;
+        var stale = string.Empty;
         if (fresh)
         {
             Document.ProposalEpoch++;
@@ -287,14 +325,23 @@ public sealed partial class WorldChat
             // The issues open before an earlier proposal's half-done apply belong to that proposal: this one's claims were checked against the issues open now,
             // and its apply takes its own "before". Kept, they would read issues fixed meanwhile as fixed by it and hide one it brings back.
             Document.ApplyBeforeIssueIds = null;
-            // A proposal made again after an apply that failed part way: what was made then is not made twice.
-            if (Proposal is { } waiting) CarryOver(waiting, check.Bundle, decisions: false);
+            // A proposal made again after an apply that failed part way: what was made then is not made twice. A revision of an edit keeps the claims of the
+            // one before it, which were checked then, not now: each is checked again here, and one that is no longer open is dropped and named.
+            if (Proposal is { } waiting && CarryOver(waiting, check.Bundle, decisions: false) is { Count: > 0 } carried)
+            {
+                var open = await OpenIdsIfClaimedAsync(check.Bundle);
+                if (DropStale(check.Bundle, carried, open) is { Count: > 0 } dropped)
+                {
+                    stale = "\nDropped from the earlier version of a revised edit, because they are no longer open issues (the game master dismissed them or they were fixed): " +
+                            string.Join("; ", dropped.Select(d => $"{d.Ref}: {JsonSerializer.Serialize(d.Ids, ProposalJson)}")) + ". Those entries stay in the proposal without those claims.";
+                }
+            }
         }
 
         Proposal = check.Bundle;
         Document.ProposalWarnings = check.Warnings.ToList();
         return $"The proposal ({check.Bundle.Drafts.Count} entries) is ready for the game master to review and apply; nothing is saved yet. Tell them in a sentence or two what it adds." +
-               (check.Warnings.Count > 0 ? "\nWarnings (fix them with a new proposal if they matter):\n" + Fenced("- " + string.Join("\n- ", check.Warnings)) : "");
+               (check.Warnings.Count > 0 ? "\nWarnings (fix them with a new proposal if they matter):\n" + Fenced("- " + string.Join("\n- ", check.Warnings)) : "") + stale;
     }
 
     private static readonly JsonSerializerOptions ProposalJson = new()
