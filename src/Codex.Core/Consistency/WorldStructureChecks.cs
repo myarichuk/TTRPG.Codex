@@ -48,23 +48,25 @@ public sealed class PlaceTreeCheck : IConsistencyCheck
                 }
             }
 
-            // Loops: each place has one parent, so the loops are separate; walk from every place and report a loop at its lowest id.
-            var reported = new HashSet<string>(StringComparer.Ordinal);
+            // Loops: each place has one parent, so the loops are separate; walk from every place and report a loop at its lowest id. A place
+            // already walked is not walked again (its chain was followed to its end or into its loop once), so a deep tree costs its size, not
+            // its size times its depth; a loop is found by the first place, in id order, whose chain reaches it, as when every walk went to the end.
+            var walked = new Dictionary<string, bool>(StringComparer.Ordinal); // true while on the walk under way
             foreach (var start in region.Value.Values.Where(p => tidy.Contains(p.Id)).OrderBy(p => p.Id, StringComparer.Ordinal))
             {
                 var path = new List<string>();
-                var seen = new HashSet<string>(StringComparer.Ordinal);
                 var at = start;
-                while (at != null && tidy.Contains(at.Id) && seen.Add(at.Id))
+                while (at != null && tidy.Contains(at.Id) && walked.TryAdd(at.Id, true))
                 {
                     path.Add(at.Id);
                     at = region.Value.GetValueOrDefault(at.ParentId!);
                 }
 
-                if (at == null || !seen.Contains(at.Id) || !tidy.Contains(at.Id)) continue;
+                var closed = at != null && tidy.Contains(at.Id) && walked[at.Id];
+                foreach (var id in path) walked[id] = false;
+                if (!closed) continue;
                 var loop = path.Skip(path.IndexOf(at.Id)).ToList();
                 var lowest = loop.Min(StringComparer.Ordinal)!;
-                if (!reported.Add(lowest)) continue;
                 var names = loop.OrderBy(id => id, StringComparer.Ordinal).Select(id => Make.Quote(region.Value[id].Name)).ToList();
                 yield return Issue(region.Value[lowest], "cycle", "Cycle", new[] { string.Join(", ", names.Select(n => "\"" + n + "\"")) },
                     $"These places are inside one another in a loop, with no top: {string.Join(", ", names.Select(n => "\"" + n + "\""))}.");
