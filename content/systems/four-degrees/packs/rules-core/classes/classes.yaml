@@ -232,6 +232,7 @@
           Through your deity's blessing, you gain additional spells that channel either the life force called vitality or its counterforce, the void. When you prepare your spells each day, you can prepare additional heal or harm spells, depending on your deity. Your faith says which divine font spell your deity provides; if both are listed, you can choose between heal or harm. Once you choose, you can't change your choice short of divine intervention.
           Healing Font: You gain 4 additional spell slots each day at your highest rank of cleric spell slots. You can prepare only heal spells in these slots. At 5th level, the number of additional slots increases to 5, and at 15th level, the total number of additional slots increases to 6.
           Harmful Font: You gain 4 additional spell slots each day at your highest rank of cleric spell slots. You can prepare only harm spells in these slots. At 5th level, the number of additional slots increases to 5, and at 15th level, the total number of additional slots increases to 6.
+        uses: { key: divineFont, max: "level >= 15 ? 6 : level >= 5 ? 5 : 4", recovers: [{ on: dailyPrep }] }
       - name: "Doctrine"
         level: 1
         description: "Even among followers of the same deity, approaches vary. At 1st level, you select cloistered cleric or warpriest and gain the benefits of its first doctrine. At 3rd level and every four levels thereafter, you gain another benefit from your doctrine."

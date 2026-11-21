@@ -90,4 +90,55 @@ public class FourDegreesDailyPrepTableTests : IClassFixture<RavenDbFixture>, IAs
         Assert.Equal(0, Pool("focusPoints"));
         Assert.All(slotKeys, key => Assert.Equal(0, Pool(key)));
     }
+
+    private Dictionary<string, object> ClericSheet(long level)
+    {
+        var resolver = new PackResolver(_content);
+        var sheet = new Dictionary<string, object>();
+        new SheetRuleEngine(_system, resolver).InitializeSheet(sheet);
+        sheet["ancestry"] = "dwarf-ancestry";
+        sheet["background"] = "acolyte";
+        sheet["class"] = "cleric-class";
+        sheet["level"] = level;
+        sheet[SheetRuleEngine.MethodKey] = SheetRuleEngine.ManualMethod;
+        foreach (var key in new[] { "str", "dex", "con", "int", "wis", "cha" }) sheet[SheetRuleEngine.BasePrefix + key] = 12L;
+        new SheetRuleEngine(_system, resolver).Recompute(sheet);
+        return sheet;
+    }
+
+    [Theory]
+    [InlineData(1L, 4L)]
+    [InlineData(4L, 4L)]
+    [InlineData(5L, 5L)]
+    [InlineData(14L, 5L)]
+    [InlineData(15L, 6L)]
+    [InlineData(20L, 6L)]
+    public void AClericsDivineFont_HasTheCountTheBookStepsUpToAtEachLevel(long level, long expected)
+    {
+        var sheet = ClericSheet(level);
+        Assert.Equal(expected, Convert.ToInt64(sheet["uses_divinefont_Max"]));
+    }
+
+    [Fact]
+    public async Task TheDailyPreparations_RefillAClericsDivineFont()
+    {
+        var resolver = new PackResolver(_content);
+        var sheet = ClericSheet(5L);
+        sheet["uses_divinefont"] = 0L;
+
+        var campaignId = Guid.NewGuid().ToString();
+        var doc = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Ilse", Kind = ActorKind.PlayerCharacter, Sheet = sheet };
+        ActorSheetSync.ApplySheetToState(doc, _system, _registry);
+        await _actors.SaveAsync(doc);
+        var session = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Status = SessionStatus.Live };
+        await _sessions.SaveAsync(session);
+        await using var runtime = new CampaignRuntime(campaignId, _actors, _registry, NullLogger.Instance, _sessions, session, system: _system) { Resolver = resolver };
+        runtime.Hydrate(new[] { doc });
+        int Pool(string key) => runtime.GetEntity(doc.Id)!.Value.Get<ResourcePoolComponent>().Get(key);
+        Assert.Equal(0, Pool("uses_divinefont"));
+
+        await runtime.EnqueueAsync(new MomentCommand(doc.Id, "dailyPrep"));
+
+        Assert.Equal(5, Pool("uses_divinefont"));
+    }
 }
