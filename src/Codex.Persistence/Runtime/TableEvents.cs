@@ -45,7 +45,7 @@ internal static class TableEvents
         return Change(runtime, actorId, ev.Type, (system, live, messages) =>
         {
             var raised = SheetEvents.Raise(system, runtime.Resolver, live, ev, actorId, runtime.CampaignObjectState, rolled, linked);
-            if (rolled.Said is { } faces) messages.Add(EventMessage.Of("Sheet.ScriptRolled", runtime.ActorTerm(actorId), Term(system, ev.Type), faces));
+            if (rolled.Said is { } faces) messages.Add(EventMessage.Of("Sheet.ScriptRolled", runtime.ActorTerm(actorId), EventWord(system, ev.Type), faces));
             Campaign(runtime, system, raised.Campaign, messages);
             return raised.Applied;
         }, linked);
@@ -79,11 +79,11 @@ internal static class TableEvents
         try
         {
             raised = SheetEvents.Raise(system, runtime.Resolver, new Dictionary<string, object>(), ev, null, runtime.CampaignObjectState, rolled);
-            if (rolled.Said is { } faces) messages.Add(EventMessage.Of("Sheet.ScriptRolled", system.Name, Term(system, ev.Type), faces));
+            if (rolled.Said is { } faces) messages.Add(EventMessage.Of("Sheet.ScriptRolled", system.Name, EventWord(system, ev.Type), faces));
         }
         catch (Exception ex) when (ex is SheetEventException or FormulaException)
         {
-            return new Outcome(new[] { EventMessage.Of("Campaign.Failed", Term(system, ev.Type), ex.Message) }, touched, ex.Message);
+            return new Outcome(new[] { EventMessage.Of("Campaign.Failed", EventWord(system, ev.Type), ex.Message) }, touched, ex.Message);
         }
 
         Campaign(runtime, system, raised.Campaign, messages);
@@ -425,5 +425,18 @@ internal static class TableEvents
 
     /// <summary>A word of the system's (a track's label, an event name, a log key), shown in the reader's language when the system's
     /// translation names it.</summary>
+    /// <summary>An event's name for a message. A system's own translation wins; with none, the two turn events read as plain English instead of the raw key
+    /// ("the end of turn rule rolled d20"), while the key stays the term's value for a translation to find.</summary>
+    private static EventTerm EventWord(SystemDefinition system, string type)
+    {
+        var shown = system.DisplayValue(type);
+        if (shown == type)
+        {
+            shown = type switch { "turnEnd" => "end of turn", "turnStart" => "start of turn", _ => type };
+        }
+
+        return new EventTerm(EventTerm.SystemKind, type, shown);
+    }
+
     private static EventTerm Term(SystemDefinition system, string word) => new(EventTerm.SystemKind, word, system.DisplayValue(word));
 }

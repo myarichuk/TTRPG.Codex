@@ -175,11 +175,11 @@ public class FourDegreesRulesTableTests : IClassFixture<RavenDbFixture>, IDispos
     private static bool Burning(CampaignRuntime runtime, ActorDocument body) => runtime.Snapshot.Actor(body.Id)!.Effects.Any(e => e.EffectId == "Persistent Damage");
 
     [Theory]
-    [InlineData(ActorKind.PlayerCharacter, 15, false)]
-    [InlineData(ActorKind.Monster, 15, false)]
-    [InlineData(ActorKind.PlayerCharacter, 14, true)]
-    [InlineData(ActorKind.Monster, 14, true)]
-    public async Task PersistentDamage_EndsOnASuccessfulFlatCheck_AndStaysOnAFailure(ActorKind kind, int face, bool stays)
+    [InlineData(ActorKind.PlayerCharacter, 15, false, "Success")]
+    [InlineData(ActorKind.Monster, 15, false, "Success")]
+    [InlineData(ActorKind.PlayerCharacter, 14, true, "Failure")]
+    [InlineData(ActorKind.Monster, 14, true, "Failure")]
+    public async Task PersistentDamage_EndsOnASuccessfulFlatCheck_AndStaysOnAFailure(ActorKind kind, int face, bool stays, string degree)
     {
         var (runtime, session, body) = await BurningAsync(kind);
         await using var _ = runtime;
@@ -189,7 +189,8 @@ public class FourDegreesRulesTableTests : IClassFixture<RavenDbFixture>, IDispos
         Assert.Equal(stays, Burning(runtime, body));
         var log = await LogAsync(session);
         Assert.Contains(log, d => d.Contains($"rolled d20: {face}"));
-        Assert.Contains(log, d => d.Contains("Persistent damage check DC 15"));
+        Assert.Contains(log, d => d.Contains($"Persistent damage check DC 15, {degree}"));
+        Assert.Contains(log, d => d.Contains("the end of turn rule rolled")); // the English log says the turn event in words, not its key
     }
 
     [Fact]
@@ -206,18 +207,69 @@ public class FourDegreesRulesTableTests : IClassFixture<RavenDbFixture>, IDispos
     [Fact]
     public async Task NextTurn_RollsThePersistentDamageCheck_AndStillLowersAValuedCondition()
     {
-        // The real path: the combat console's next turn. The dice are the table's own, so the check may end the condition or not;
-        // the built-in lowering of frightened runs after the script either way (declaring turnEnd keeps it).
+        // The real path: the combat console's next turn. The check ends the condition, and the built-in lowering of frightened runs after
+        // the script (declaring turnEnd keeps it).
         var (runtime, session, body) = await BurningAsync(ActorKind.Monster);
         await using var _ = runtime;
         await runtime.EnqueueAsync(new SetInitiativeCommand(body.Id, 15));
         await runtime.EnqueueAsync(new AdjustConditionCommand(body.Id, "Frightened", 2));
 
-        await runtime.EnqueueAsync(new NextTurnCommand());
+        await runtime.EnqueueAsync(new NextTurnCommand { Dice = new SequenceDiceSource(new[] { 16 }) });
 
         Assert.Equal(1, runtime.Snapshot.Actor(body.Id)!.Pool("condition_frightened"));
+        Assert.False(Burning(runtime, body));
         var log = await LogAsync(session);
         Assert.Single(log, d => d.Contains("rolled d20"));
-        Assert.Contains(log, d => d.Contains("Persistent damage check DC 15"));
+        Assert.Contains(log, d => d.Contains("Persistent damage check DC 15, Success"));
+    }
+
+    [Fact]
+    public async Task OneUndo_TakesBackTheCheckAndTheLoweringTogether()
+    {
+        var (runtime, _, body) = await BurningAsync(ActorKind.Monster);
+        await using var _ = runtime;
+        await runtime.EnqueueAsync(new SetInitiativeCommand(body.Id, 15));
+        await runtime.EnqueueAsync(new AdjustConditionCommand(body.Id, "Frightened", 2));
+        await runtime.EnqueueAsync(new NextTurnCommand { Dice = new SequenceDiceSource(new[] { 16 }) });
+        Assert.False(Burning(runtime, body));
+
+        await runtime.EnqueueAsync(new UndoLastChangeCommand(body.Id));
+
+        Assert.True(Burning(runtime, body));
+        Assert.Equal(2, runtime.Snapshot.Actor(body.Id)!.Pool("condition_frightened"));
+    }
+
+    [Fact]
+    public async Task ACheckThatChangesNothing_LeavesAnEarlierUndoAlone()
+    {
+        var (runtime, _, body) = await BurningAsync(ActorKind.Monster);
+        await using var _ = runtime;
+        await runtime.EnqueueAsync(new SetInitiativeCommand(body.Id, 15));
+        await runtime.EnqueueAsync(new ApplyDamageCommand(body.Id, "HP", 3, "fire"));
+        Assert.Equal(9, runtime.Snapshot.Actor(body.Id)!.Pool("HP"));
+
+        await runtime.EnqueueAsync(new NextTurnCommand { Dice = new SequenceDiceSource(new[] { 14 }) }); // a failed check: only a line in the log
+        Assert.True(Burning(runtime, body));
+        await runtime.EnqueueAsync(new UndoLastChangeCommand(body.Id));
+
+        Assert.Equal(12, runtime.Snapshot.Actor(body.Id)!.Pool("HP"));
+    }
+
+    [Fact]
+    public async Task OneUndo_TakesBackADyingCreaturesRecoveryAtTheStartOfItsTurn()
+    {
+        var (runtime, _, hero) = await TableAsync(dying: 1, wounded: 0);
+        await using var _ = runtime;
+        await runtime.EnqueueAsync(new SetInitiativeCommand(hero.Id, 10));
+
+        await runtime.EnqueueAsync(new NextTurnCommand { Dice = new SequenceDiceSource(new[] { 15 }) }); // its turn ends, and comes round to itself
+        var pool = runtime.GetEntity(hero.Id)!.Value.Get<ResourcePoolComponent>();
+        Assert.Equal(0, pool.Get("condition_dying"));
+        Assert.Equal(1, pool.Get("condition_wounded"));
+
+        await runtime.EnqueueAsync(new UndoLastChangeCommand(hero.Id));
+
+        Assert.Equal(1, pool.Get("condition_dying"));
+        Assert.Equal(0, pool.Get("condition_wounded"));
     }
 }

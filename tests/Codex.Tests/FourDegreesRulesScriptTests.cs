@@ -226,6 +226,15 @@ public sealed class FourDegreesRulesScriptTests : IDisposable
     }
 
     [Fact]
+    public void ADeadCreatureWithPersistentDamage_RollsNothing()
+    {
+        var dice = new SequenceDiceSource(new[] { 15 });
+
+        Assert.Empty(TurnEnd(System, Sheet(hp: 0, conditions: new[] { "Persistent Damage", "Dead" }), dice));
+        Assert.Equal(0, dice.Used);
+    }
+
+    [Fact]
     public void TheSystemDeclaresTurnEnd_AndLoadsWithScriptsOff()
     {
         Assert.True(System.Events.ContainsKey("turnEnd"));

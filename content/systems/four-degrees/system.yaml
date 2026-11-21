@@ -460,7 +460,7 @@ vitals:
 # the points left at the end of a session are lost, and setting the track to 1 does the same.
 events:
   turnStart: { script: rules.js#onTurnStart }
-  # Persistent damage (conditions persistent-damage): the end-of-turn flat check that may end it. The damage stays the GM's, dealt before Next turn.
+  # Persistent damage (conditions persistent-damage; rules step-1-roll-damage-dice and turns): the end-of-turn flat check that may end it. The damage stays the GM's, dealt before Next turn.
   # Declaring turnEnd keeps the built-in lowering of valued conditions, which runs after the handler.
   turnEnd: { script: rules.js#onTurnEnd }
   damaged: { script: rules.js#onDamaged }
