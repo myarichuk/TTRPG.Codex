@@ -1,3 +1,7 @@
+using System.Globalization;
+using Codex.Core.Rules;
+using Codex.Core.WorldBuilder;
+using Codex.Plugin.Abstractions;
 using Codex.Core;
 using Codex.Core.Consistency;
 
@@ -214,3 +218,106 @@ internal static class OracleTokenizer
         return tokens;
     }
 }
+
+/// <summary><see cref="SheetRuleCheck"/> at fa02e24: the engine works out the pickers' options as well.</summary>
+internal sealed class OracleSheetRuleCheck : IConsistencyCheck
+{
+    public string Name => CheckNames.SheetRule;
+
+    public IEnumerable<Issue> Run(WorldSnapshot s) => Run(s, CancellationToken.None);
+
+    /// <inheritdoc/>
+    public IEnumerable<Issue> Run(WorldSnapshot s, CancellationToken cancel)
+    {
+        if (s.System?.SheetRules == null || s.Enforcement == "off") yield break;
+        var engine = new SheetRuleEngine(s.System, s.Library);
+        // The sheets a character's links point to, from the same snapshot, as the sheet page runs the rules with them.
+        var linked = new SnapshotLinkedSheets(s.Actors);
+
+        foreach (var a in s.Actors.Where(a => a.Role != ActorRole.Monster && !a.Retired))
+        {
+            cancel.ThrowIfCancellationRequested();
+            var (evaluation, failure) = Evaluate(engine, a, linked);
+            if (evaluation == null)
+            {
+                yield return Make.Issue(Name, IssueSeverity.Info, "actor", a.Id, "sheet", "evaluation-failed", "Consistency.SheetEvaluationFailed",
+                    new[] { a.Name, failure! },
+                    $"The sheet rules could not be evaluated for \"{Make.Quote(a.Name)}\" ({failure}).",
+                    "Nothing to propose; tell the DM the sheet could not be read.", FixVia.ReportOnly);
+                continue;
+            }
+
+            foreach (var issue in Issues(s.System, a, evaluation.Violations, IssueSeverity.Error).Concat(Issues(s.System, a, evaluation.Warnings, IssueSeverity.Warning))) yield return issue;
+        }
+    }
+
+    // One bad sheet must not hide every other character's issues; it becomes an issue of its own. Not in the iterator: it cannot yield from a catch.
+    private static (SheetEvaluation? Evaluation, string? Failure) Evaluate(SheetRuleEngine engine, ActorView actor, ILinkedSheets linked)
+    {
+        try
+        {
+            // Recompute writes the values it derives onto the sheet it is given: a copy, so the snapshot stays as it was taken.
+            return (engine.Recompute(new Dictionary<string, object>(actor.Sheet), linked), null);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return (null, e.GetType().Name);
+        }
+    }
+
+    private IEnumerable<Issue> Issues(SystemDefinition? system, ActorView actor, IEnumerable<RuleViolation> violations, IssueSeverity severity)
+    {
+        foreach (var v in violations)
+        {
+            if (v.Key != null && v.Key.StartsWith("Actor.Rule.PointBuy", StringComparison.Ordinal)) continue;
+            var args = (v.Args ?? Array.Empty<object?>()).Select(ArgText).ToList();
+            // The rule's key and the field (already in the id), and, for a rule that is about one item among several on the field, which item: never
+            // the numbers or the whole sentence, which a partial fix changes (a score lowered from 25 to 20 is still the same problem).
+            var detail = (v.Key ?? "rule") + Item(v.Key, args);
+            // Fixable through a sheet edit only when the rule is about a key an edit may set; a derived value is the sheet's own to compute.
+            var fixable = SheetProposal.IsEditable(system, v.FieldKey);
+            yield return Make.Issue(Name, severity, "actor", actor.Id, v.FieldKey, detail, v.Key ?? "Consistency.SheetRule", args,
+                v.Message,
+                fixable
+                    ? "Ask the DM which value they want, then propose a sheet edit of this key (existing:sheet:<actor id>); do not guess a value or invent an entry. Anything that stays broken is reported again."
+                    : "This is a value the sheet works out itself, which no proposal can set. Tell the DM which rule the sheet breaks; do not guess.",
+                fixable ? FixVia.Sheet : FixVia.ReportOnly);
+        }
+    }
+
+    // For these rules, the args that name the item the violation is about (the entry, the missing id). Any other rule is one per field and key; two
+    // that still share an id are told apart by order (ConsistencyChecker.Run), the one limit of the scheme.
+    private static readonly Dictionary<string, int[]> ItemArgs = new(StringComparer.Ordinal)
+    {
+        ["Actor.Rule.NotInLibrary"] = new[] { 1 }, ["Actor.Rule.Pick"] = new[] { 1 }, ["Actor.Rule.Once"] = new[] { 1 }, ["Actor.Rule.SlotHolds"] = new[] { 1 },
+        ["Actor.Rule.Prerequisite"] = new[] { 0 }, ["Actor.Rule.ArmorUntrained"] = new[] { 0 }, ["Actor.Rule.ArmorStrength"] = new[] { 0 },
+        ["Actor.Rule.ArmorStealth"] = new[] { 0 }, ["Actor.Rule.WeaponUntrained"] = new[] { 0 }, ["Actor.Rule.FeatureError"] = new[] { 0 },
+        ["Actor.Rule.SpendNoPool"] = new[] { 0 }, ["Actor.Rule.NoHitDie"] = new[] { 0 }, ["Actor.Rule.NoHitPointsPerLevel"] = new[] { 0 },
+        ["Actor.Rule.NoSpellAbility"] = new[] { 0 }, ["Actor.Rule.NoSpellTable"] = new[] { 0 }, ["Actor.Rule.RuneNotFound"] = new[] { 1, 2 },
+        ["Actor.Rule.RuneWrongItem"] = new[] { 1, 2 }, ["Actor.Rule.IncNone"] = new[] { 1 }, ["Actor.Rule.IncRemaining"] = new[] { 1 },
+        ["Actor.Rule.IncGrants"] = new[] { 1 }, ["Actor.Rule.IncCant"] = new[] { 1 }
+    };
+
+    private static string Item(string? key, IReadOnlyList<string> args)
+    {
+        if (key == null || !ItemArgs.TryGetValue(key, out var indexes)) return string.Empty;
+        var item = string.Join('-', indexes.Where(i => i < args.Count).Select(i => Slug(args[i])).Where(t => t.Length > 0));
+        return item.Length == 0 ? string.Empty : ":" + item;
+    }
+
+    private static string ArgText(object? arg) => arg switch
+    {
+        null => string.Empty,
+        ContentEntry e => e.Name,
+        IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
+        _ => arg.ToString() ?? string.Empty
+    };
+
+    // A short readable stand-in for a sentence in an id: the slug of its words, cut so an id stays one line.
+    private static string Slug(string text)
+    {
+        var slug = WikiText.Slugify(text);
+        return slug.Length > 60 ? slug[..60].TrimEnd('-') : slug;
+    }
+}
+

@@ -61,7 +61,8 @@ public sealed class SheetRuleCheck : IConsistencyCheck
     public IEnumerable<Issue> Run(WorldSnapshot s, CancellationToken cancel)
     {
         if (s.System?.SheetRules == null || s.Enforcement == "off") yield break;
-        var engine = new SheetRuleEngine(s.System, s.Library);
+        // Only the verdicts are read here: the options a picker would offer are left out (SheetRuleEngine.Options), the same violations for a fraction of the work.
+        var engine = new SheetRuleEngine(s.System, s.Library) { Options = false };
         // The sheets a character's links point to, from the same snapshot, as the sheet page runs the rules with them.
         var linked = new SnapshotLinkedSheets(s.Actors);
 
