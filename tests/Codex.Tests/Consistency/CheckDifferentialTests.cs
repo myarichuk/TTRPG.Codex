@@ -42,6 +42,34 @@ public class CheckDifferentialTests
 
     // ---- the unlinked-mention scan ----
 
+    /// <summary>The scan as the app runs it, and with several workers whatever the size of the world (the path a large campaign takes), against the trie.</summary>
+    private static void SameScan(WorldSnapshot snapshot, string label)
+    {
+        Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(), snapshot, label);
+        Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(parallelFrom: 0), snapshot, label + " (several workers)");
+    }
+
+    [Fact]
+    public void TheScanWithSeveralWorkers_StopsAtTheToken_AndYieldsNothing()
+    {
+        var title = string.Join(' ', Enumerable.Range(0, 400).Select(i => i % 2 == 0 ? "Bo" : "Ka")) + " End";
+        var body = string.Join(' ', Enumerable.Range(0, 2000).Select(i => i % 2 == 0 ? "Bo" : "Ka")) + " " + title;
+        var snapshot = Fx.Snap(pages: new[] { Fx.Page("wikipages/0-A", title, "x") }.Concat(Enumerable.Range(1, 2000).Select(p => Fx.Page($"wikipages/{p}-A", "Page " + p, body))));
+        var yielded = 0;
+        using var budget = new CancellationTokenSource(TimeSpan.FromMilliseconds(30));
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        // An OperationCanceledException itself (never an AggregateException), before any issue is handed out.
+        Assert.ThrowsAny<OperationCanceledException>(() =>
+        {
+            foreach (var _ in new UnlinkedMentionCheck(parallelFrom: 0).Run(snapshot, budget.Token)) yielded++;
+        });
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(2), $"took {watch.ElapsedMilliseconds} ms");
+        Assert.Equal(0, yielded);
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+        Assert.ThrowsAny<OperationCanceledException>(() => ConsistencyChecker.Run(snapshot, new[] { new UnlinkedMentionCheck(parallelFrom: 0) }, cancelled.Token));
+    }
+
     private static readonly string[] Mixed =
     {
         "the", "The", "a", "A", "an", "Mere", "mere", "of", "Of", "Dead", "dead", "Men", "men's", "Men’s", "İstanbul", "istanbul", "ﬁre", "fire", "Fire",
@@ -82,7 +110,7 @@ public class CheckDifferentialTests
         {
             var snapshot = MentionWorld(r, Mixed, 10, 7, 80);
             found += new OracleUnlinkedMentionCheck().Run(snapshot).Count();
-            Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(), snapshot, $"seed {seed} world {world}");
+            SameScan(snapshot, $"seed {seed} world {world}");
         }
 
         Assert.True(found > 0);
@@ -99,8 +127,8 @@ public class CheckDifferentialTests
         var wide = new[] { "ﷺ", "ﷻ", "صلى", "الله", "عليه", "وسلم", "جل", "جلاله", "the", "The", "A", "x" };
         for (var world = 0; world < 400; world++)
         {
-            Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(), MentionWorld(r, articles, 8, 9, 120), $"articles seed {seed} world {world}");
-            Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(), MentionWorld(r, wide, 8, 9, 120), $"wide seed {seed} world {world}");
+            SameScan(MentionWorld(r, articles, 8, 9, 120), $"articles seed {seed} world {world}");
+            SameScan(MentionWorld(r, wide, 8, 9, 120), $"wide seed {seed} world {world}");
         }
     }
 
@@ -128,7 +156,7 @@ public class CheckDifferentialTests
 
         var snapshot = Fx.Snap(pages: pages);
         Assert.NotEmpty(new OracleUnlinkedMentionCheck().Run(snapshot));
-        Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(), snapshot, "nested");
+        SameScan(snapshot, "nested");
     }
 
     [Fact]
@@ -141,7 +169,7 @@ public class CheckDifferentialTests
         for (var p = 2; p < 12; p++) pages.Add(Fx.Page($"wikipages/{p}", "Page " + p, p % 3 == 0 ? body + " " + title : body));
         var snapshot = Fx.Snap(pages: pages);
         Assert.NotEmpty(new OracleUnlinkedMentionCheck().Run(snapshot));
-        Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(), snapshot, "almost");
+        SameScan(snapshot, "almost");
     }
 
     // ---- the secret blocks ----

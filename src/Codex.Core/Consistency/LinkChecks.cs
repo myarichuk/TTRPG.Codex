@@ -186,6 +186,13 @@ internal sealed class NameAutomaton
 /// </summary>
 public sealed class UnlinkedMentionCheck : IConsistencyCheck
 {
+    private readonly long parallelFrom;
+
+    public UnlinkedMentionCheck() : this(ParallelFrom) { }
+
+    /// <summary>A scan that uses several workers from <paramref name="parallelFrom"/> characters of page text on (tests set it low to run that path on small worlds).</summary>
+    internal UnlinkedMentionCheck(long parallelFrom) => this.parallelFrom = parallelFrom;
+
     public string Name => CheckNames.UnlinkedMention;
 
     public IEnumerable<Issue> Run(WorldSnapshot s) => Run(s, CancellationToken.None);
@@ -206,62 +213,124 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
         if (names.Names == 0) yield break;
         names.Complete();
 
-        // One run's words as parts, reused from run to run: the part numbers, the word each part belongs to, and whether a word starts at it.
-        var ids = new List<int>();
-        var wordOf = new List<int>();
-        var wordStart = new List<bool>();
-        var longest = new List<int>(); // per word of the run: the state of the longest name starting there, or -1
-        var words = new List<int>(); // and how many words of the text it covers
-        var forms = new WordForms(); // the words' compared forms, made once for the run
-
-        foreach (var page in s.Pages)
+        // The pages are scanned one by one, or, for a large campaign, several at a time (each page's issues are its own: the automaton and the lookup are
+        // only read, and each worker has its own scratch lists and word forms). The issues are yielded page by page in the snapshot's order either way, so
+        // the result is the same list; cancelled, the workers stop at their next look at the token and nothing is yielded.
+        var pages = s.Pages;
+        if (Workers(pages) is var workers && workers > 1)
         {
-            cancel.ThrowIfCancellationRequested();
-            if (string.IsNullOrWhiteSpace(page.Body)) continue;
-            var linked = WikiText.ExtractLinks(page.Body).Select(WikiText.Slugify).ToHashSet(StringComparer.Ordinal);
-            var text = TextFields.WithoutLinksAndMarkers(page.Body);
-            var reported = new HashSet<string>(StringComparer.Ordinal);
-
-            foreach (var run in TextNorm.Runs(text, forms))
+            var found = new List<Issue>[pages.Count];
+            try
             {
-                if (run.Count < 2) continue;
-                Longest(names, run, ids, wordOf, wordStart, longest, words, cancel);
-                for (var i = 0; i < run.Count; i++)
-                {
-                    if ((i & 255) == 255) cancel.ThrowIfCancellationRequested();
-                    // The longest name starting at this word wins; a name is two words of the text or more, ending where a word ends.
-                    if (longest[i] < 0) continue;
-                    var target = names.Page(longest[i]);
-                    var length = words[i];
-                    var first = run[i];
-                    var last = run[i + length - 1];
-                    // The words written before the name that are only articles ("the the Mere of Dead Men") belong to what the text says.
-                    var before = i;
-                    while (before > 0 && TextNorm.IsArticle(run[before - 1].Norm)) before--;
-                    var start = run[before].Start;
-                    i += length - 1; // the name is used up: a shorter name inside it is not a second mention
+                // One page at a time to whichever worker is free: a few long pages next to one another in id order are not left to one worker.
+                Parallel.ForEach(System.Collections.Concurrent.Partitioner.Create(0, pages.Count, 1),
+                    new ParallelOptions { CancellationToken = cancel, MaxDegreeOfParallelism = workers }, () => new Scratch(),
+                    (range, _, scratch) =>
+                    {
+                        for (var i = range.Item1; i < range.Item2; i++) found[i] = Scan(pages[i], names, scratch, cancel);
+                        return scratch;
+                    }, _ => { });
+            }
+            catch (AggregateException e)
+            {
+                // A worker's own look at the token, or anything else a page threw: rethrown as itself, as the one-by-one scan would.
+                var inner = e.Flatten().InnerExceptions;
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(inner.FirstOrDefault(x => x is OperationCanceledException) ?? inner[0]).Throw();
+            }
 
-                    if (target.Id == page.Id) continue;
-                    if (!first.Capitalized && length < 3) continue;
-                    if (linked.Contains(target.Slug) || linked.Contains(WikiText.Slugify(target.Title))) continue;
-                    if (page.PartyVisible && !target.PartyVisible) continue;
-                    if (!reported.Add(target.Id)) continue;
+            foreach (var issues in found)
+            {
+                foreach (var issue in issues) yield return issue;
+            }
 
-                    var written = Make.Quote(page.Body.Substring(start, Math.Min(last.End, page.Body.Length) - start));
-                    yield return Make.Issue(Name, IssueSeverity.Warning, "page", page.Id, "body", target.Id, "Consistency.UnlinkedMention",
-                        new[] { written, target.Title },
-                        $"The text says \"{written}\" in plain words, which is the name of the page \"{Make.Quote(target.Title)}\".",
-                        $"If a link was meant, write [[{Make.Quote(target.Title)}]] (or [[{Make.Quote(target.Title)}|{written}]] to keep the words). If not, dismiss the issue.",
-                        FixVia.Page);
-                }
+            yield break;
+        }
+
+        var one = new Scratch();
+        foreach (var page in pages)
+        {
+            foreach (var issue in Scan(page, names, one, cancel)) yield return issue;
+        }
+    }
+
+    /// <summary>The characters of page text a campaign must have before its pages are scanned several at a time: below it, starting the workers costs more than it saves.</summary>
+    internal const long ParallelFrom = 250_000;
+
+    /// <summary>How many pages to scan at once: one for a small campaign or a machine with one core, else at most four, so a check never takes the whole server.</summary>
+    private int Workers(IReadOnlyList<PageView> pages)
+    {
+        if (Environment.ProcessorCount < 2) return 1;
+        long text = 0;
+        foreach (var page in pages) text += page.Body?.Length ?? 0;
+        return text < parallelFrom ? 1 : Math.Min(Environment.ProcessorCount, 4);
+    }
+
+    /// <summary>What a scan reuses from page to page: one run's words as parts (the part numbers, the word each part belongs to, whether a word starts
+    /// at it), per word the state of the longest name starting there (or -1) and how many words it covers, and the written words' compared forms.
+    /// One per worker, never shared.</summary>
+    private sealed class Scratch
+    {
+        public readonly List<int> Ids = new();
+        public readonly List<int> WordOf = new();
+        public readonly List<bool> WordStart = new();
+        public readonly List<int> Longest = new();
+        public readonly List<int> Words = new();
+        public readonly WordForms Forms = new();
+    }
+
+    /// <summary>The issues of one page, in the order the scan meets them.</summary>
+    private List<Issue> Scan(PageView page, NameAutomaton names, Scratch scratch, CancellationToken cancel)
+    {
+        cancel.ThrowIfCancellationRequested();
+        var issues = new List<Issue>();
+        if (string.IsNullOrWhiteSpace(page.Body)) return issues;
+        var linked = WikiText.ExtractLinks(page.Body).Select(WikiText.Slugify).ToHashSet(StringComparer.Ordinal);
+        var text = TextFields.WithoutLinksAndMarkers(page.Body);
+        var reported = new HashSet<string>(StringComparer.Ordinal);
+        var (longest, words) = (scratch.Longest, scratch.Words);
+
+        foreach (var run in TextNorm.Runs(text, scratch.Forms))
+        {
+            if (run.Count < 2) continue;
+            Longest(names, run, scratch, cancel);
+            for (var i = 0; i < run.Count; i++)
+            {
+                if ((i & 255) == 255) cancel.ThrowIfCancellationRequested();
+                // The longest name starting at this word wins; a name is two words of the text or more, ending where a word ends.
+                if (longest[i] < 0) continue;
+                var target = names.Page(longest[i]);
+                var length = words[i];
+                var first = run[i];
+                var last = run[i + length - 1];
+                // The words written before the name that are only articles ("the the Mere of Dead Men") belong to what the text says.
+                var before = i;
+                while (before > 0 && TextNorm.IsArticle(run[before - 1].Norm)) before--;
+                var start = run[before].Start;
+                i += length - 1; // the name is used up: a shorter name inside it is not a second mention
+
+                if (target.Id == page.Id) continue;
+                if (!first.Capitalized && length < 3) continue;
+                if (linked.Contains(target.Slug) || linked.Contains(WikiText.Slugify(target.Title))) continue;
+                if (page.PartyVisible && !target.PartyVisible) continue;
+                if (!reported.Add(target.Id)) continue;
+
+                var written = Make.Quote(page.Body.Substring(start, Math.Min(last.End, page.Body.Length) - start));
+                issues.Add(Make.Issue(Name, IssueSeverity.Warning, "page", page.Id, "body", target.Id, "Consistency.UnlinkedMention",
+                    new[] { written, target.Title },
+                    $"The text says \"{written}\" in plain words, which is the name of the page \"{Make.Quote(target.Title)}\".",
+                    $"If a link was meant, write [[{Make.Quote(target.Title)}]] (or [[{Make.Quote(target.Title)}|{written}]] to keep the words). If not, dismiss the issue.",
+                    FixVia.Page));
             }
         }
+
+        return issues;
     }
 
     /// <summary>For every word of <paramref name="run"/>, the state of the longest name that starts at it, ends where a word of the text ends and
     /// covers two words of the text or more (-1 when none), found by reading the run backwards through the automaton once.</summary>
-    private static void Longest(NameAutomaton names, List<Token> run, List<int> ids, List<int> wordOf, List<bool> wordStart, List<int> longest, List<int> words, CancellationToken cancel)
+    private static void Longest(NameAutomaton names, List<Token> run, Scratch scratch, CancellationToken cancel)
     {
+        var (ids, wordOf, wordStart, longest, words) = (scratch.Ids, scratch.WordOf, scratch.WordStart, scratch.Longest, scratch.Words);
         ids.Clear();
         wordOf.Clear();
         wordStart.Clear();
