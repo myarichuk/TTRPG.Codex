@@ -16,6 +16,30 @@ public class CheckDifferentialTests
         Assert.True(expected.SequenceEqual(actual), $"{label}: expected\n{string.Join("\n", expected)}\nactual\n{string.Join("\n", actual)}");
     }
 
+    // ---- the words of a text ----
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    public void TheWordsOfAText_AreWhatTheyWereBefore_WithAndWithoutTheCacheOfForms(int seed)
+    {
+        var r = new Random(seed);
+        var pieces = Mixed.Concat(new[] { "'", "’", "‘", "ʼ", "men's", "'s", "o'", "\uD83D\uDE00", "\uD835\uDC00", "x\u0301", "e\u0301", "\u00C9", "ǅ", "Ⅻ", "²", "٣", "_", ":::", "[[", "]]", "\r\n", "\u200B", "ß", "ﬀ", "\uD83D", "\uDE00x" }).ToArray();
+        var forms = new WordForms();
+        for (var text = 0; text < 2000; text++)
+        {
+            var sb = new System.Text.StringBuilder();
+            for (var k = r.Next(0, 60); k > 0; k--) sb.Append(pieces[r.Next(pieces.Length)]).Append(r.Next(3) == 0 ? "" : Separators[r.Next(Separators.Length)]);
+            var written = sb.ToString();
+            var expected = OracleTokenizer.Tokenize(written);
+            Assert.Equal(expected, TextNorm.Tokenize(written));
+            Assert.Equal(expected, TextNorm.Tokenize(written, forms));
+        }
+    }
+
     // ---- the unlinked-mention scan ----
 
     private static readonly string[] Mixed =

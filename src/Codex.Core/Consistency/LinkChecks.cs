@@ -212,6 +212,7 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
         var wordStart = new List<bool>();
         var longest = new List<int>(); // per word of the run: the state of the longest name starting there, or -1
         var words = new List<int>(); // and how many words of the text it covers
+        var forms = new WordForms(); // the words' compared forms, made once for the run
 
         foreach (var page in s.Pages)
         {
@@ -221,7 +222,7 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
             var text = TextFields.WithoutLinksAndMarkers(page.Body);
             var reported = new HashSet<string>(StringComparer.Ordinal);
 
-            foreach (var run in TextNorm.Runs(text))
+            foreach (var run in TextNorm.Runs(text, forms))
             {
                 if (run.Count < 2) continue;
                 Longest(names, run, ids, wordOf, wordStart, longest, words, cancel);

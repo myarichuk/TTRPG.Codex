@@ -67,7 +67,11 @@ internal static class TextNorm
 
     private static bool IsApostrophe(char c) => c is '\'' or '’' or '‘' or 'ʼ';
 
-    public static List<Token> Tokenize(string? text)
+    public static List<Token> Tokenize(string? text) => Tokenize(text, null);
+
+    /// <summary>The words of <paramref name="text"/>. <paramref name="words"/>, when given, keeps each written word's compared form, so a word met again
+    /// (in this text or another of the same run of a check) is looked up instead of normalised again; the forms are the same either way.</summary>
+    public static List<Token> Tokenize(string? text, WordForms? words)
     {
         var tokens = new List<Token>();
         if (string.IsNullOrEmpty(text)) return tokens;
@@ -76,20 +80,35 @@ internal static class TextNorm
         {
             if (!char.IsLetterOrDigit(text[i])) { i++; continue; }
             var start = i;
-            var word = new StringBuilder();
+            var apostrophes = false;
             while (i < text.Length)
             {
                 var c = text[i];
-                if (char.IsLetterOrDigit(c)) { word.Append(c); i++; }
-                else if (IsApostrophe(c) && i + 1 < text.Length && char.IsLetterOrDigit(text[i + 1]) && word.Length > 0) i++; // "men's" is one word
+                if (char.IsLetterOrDigit(c)) i++;
+                else if (IsApostrophe(c) && i + 1 < text.Length && char.IsLetterOrDigit(text[i + 1])) { apostrophes = true; i++; } // "men's" is one word
                 else break;
             }
 
-            var norm = word.ToString().Normalize(NormalizationForm.FormKC).ToLowerInvariant();
+            // The word is its letters and digits: an apostrophe inside it is left out.
+            var norm = apostrophes ? Form(Letters(text, start, i)) : words != null ? words.Of(text.AsSpan(start, i - start)) : Form(text.Substring(start, i - start));
             tokens.Add(new Token(norm, start, i, char.IsUpper(text[start])));
         }
 
         return tokens;
+    }
+
+    /// <summary>A written word as titles are compared: Unicode-compatibility normalised, lower case.</summary>
+    internal static string Form(string word) => word.Normalize(NormalizationForm.FormKC).ToLowerInvariant();
+
+    private static string Letters(string text, int start, int end)
+    {
+        var word = new StringBuilder(end - start);
+        for (var k = start; k < end; k++)
+        {
+            if (char.IsLetterOrDigit(text[k])) word.Append(text[k]);
+        }
+
+        return word.ToString();
     }
 
     /// <summary>The words of a title, compared: no leading articles, no word twice in a row.</summary>
@@ -114,12 +133,15 @@ internal static class TextNorm
     /// so a name is never found across a full stop or a paragraph. Inside a run, a word written twice in a row is kept once, and
     /// <c>Starts</c> / <c>Ends</c> give each kept word's place in the text.
     /// </summary>
-    public static List<List<Token>> Runs(string text)
+    public static List<List<Token>> Runs(string text) => Runs(text, null);
+
+    /// <inheritdoc cref="Runs(string)"/>
+    public static List<List<Token>> Runs(string text, WordForms? words)
     {
         var runs = new List<List<Token>>();
         List<Token>? run = null;
         var previous = default(Token);
-        foreach (var token in Tokenize(text))
+        foreach (var token in Tokenize(text, words))
         {
             var joined = run != null && IsPlainGap(text, previous.End, token.Start);
             if (!joined)
@@ -154,6 +176,23 @@ internal static class TextNorm
         }
 
         return to > from && lineBreaks <= 1;
+    }
+}
+
+/// <summary>The compared forms of the written words one check has met (<see cref="TextNorm.Tokenize(string?, WordForms?)"/>): a cache made for one run of
+/// a check and dropped with it, never shared between threads or runs. A form depends on the written word alone, so a cached form is the form.</summary>
+internal sealed class WordForms
+{
+    private readonly Dictionary<string, string> forms = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string>.AlternateLookup<ReadOnlySpan<char>> bySpan;
+
+    public WordForms() => bySpan = forms.GetAlternateLookup<ReadOnlySpan<char>>();
+
+    public string Of(ReadOnlySpan<char> written)
+    {
+        if (bySpan.TryGetValue(written, out var form)) return form;
+        var word = written.ToString();
+        return forms[word] = TextNorm.Form(word);
     }
 }
 

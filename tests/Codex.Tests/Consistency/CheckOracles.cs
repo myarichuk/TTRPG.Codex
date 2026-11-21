@@ -183,3 +183,34 @@ internal sealed class OracleUnlinkedMentionCheck : IConsistencyCheck
     }
 }
 
+
+/// <summary><see cref="TextNorm.Tokenize(string?)"/> at fa02e24: every word built in a StringBuilder and normalised.</summary>
+internal static class OracleTokenizer
+{
+    private static bool IsApostrophe(char c) => c is '\'' or '’' or '‘' or 'ʼ';
+
+    public static List<Token> Tokenize(string? text)
+    {
+        var tokens = new List<Token>();
+        if (string.IsNullOrEmpty(text)) return tokens;
+        var i = 0;
+        while (i < text.Length)
+        {
+            if (!char.IsLetterOrDigit(text[i])) { i++; continue; }
+            var start = i;
+            var word = new System.Text.StringBuilder();
+            while (i < text.Length)
+            {
+                var c = text[i];
+                if (char.IsLetterOrDigit(c)) { word.Append(c); i++; }
+                else if (IsApostrophe(c) && i + 1 < text.Length && char.IsLetterOrDigit(text[i + 1]) && word.Length > 0) i++;
+                else break;
+            }
+
+            var norm = word.ToString().Normalize(System.Text.NormalizationForm.FormKC).ToLowerInvariant();
+            tokens.Add(new Token(norm, start, i, char.IsUpper(text[start])));
+        }
+
+        return tokens;
+    }
+}
