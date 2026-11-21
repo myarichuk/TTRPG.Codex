@@ -211,7 +211,7 @@ character who is gone; an unclosed block's key is the first line alone, `secret-
 unknown audience changes), never the block's number and never the rest of the opening line: a key is made only from what a fix of another issue does not touch, so
 closing a block, changing an unknown word to a known one, taking a missing character off a `:::for` line or adding a block elsewhere moves no other block's id
 (`SecretScan.Blocks`; a property test fixes each block of generated pages in turn). `.2`, `.3` tell apart only blocks that have the same issue and open with the same
-word and the same first line (the limit of the scheme for secret blocks: two such blocks are byte for byte alike where the key looks, and fixing the first gives its
+word (for unclosed blocks, any word) and the same first line (a `:::for` block naming only characters who exist has no issue and takes no number; the limit of the scheme for secret blocks: two such blocks are byte for byte alike where the key looks, and fixing the first gives its
 id to the second). A fix that rewrites a block's first line changes that block's own ids, which is read as its old issue gone and, if it is still broken, a new one. A `sheet-rule` issue's detail is the rule's key (the field is already in the id) and, for a rule about one item among several
 (`Actor.Rule.NotInLibrary`, `Pick`, `Once`, `Prerequisite`, the armor and weapon training rules and the like; `SheetChecks.ItemArgs`), the slug of that item; never
 the numbers or the sentence, which a partial fix changes (five feats picked where two are allowed is the same issue at four). Every id detail made from text a person
