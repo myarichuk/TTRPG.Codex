@@ -254,7 +254,7 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
     }
 
     /// <summary>The characters of page text a campaign must have before its pages are scanned several at a time: below it, starting the workers costs more than it saves.</summary>
-    internal const long ParallelFrom = 250_000;
+    internal const long ParallelFrom = 1_000_000;
 
     /// <summary>How many pages to scan at once: one for a small campaign or a machine with one core, else at most four, so a check never takes the whole server.</summary>
     private int Workers(IReadOnlyList<PageView> pages)
