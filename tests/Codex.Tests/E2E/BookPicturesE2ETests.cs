@@ -178,7 +178,7 @@ public class BookPicturesE2ETests : IClassFixture<AppFixture>
 
         // Suggestions and help off: no chips and no names, the text as it is.
         await Assertions.Expect(dm.Locator(".cm-book-chip")).ToHaveCountAsync(0);
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-assist");
         await dm.GetByTestId("book-draft-assist").ClickAsync();
         await Assertions.Expect(dm.Locator(".cm-book-arthint")).ToHaveCountAsync(0);
         await Assertions.Expect(dm.Locator(".cm-book-chip")).ToHaveCountAsync(0);

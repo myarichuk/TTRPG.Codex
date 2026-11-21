@@ -655,12 +655,12 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
 
         // The Homebrewery layer is on by default; turned off, the preview is drawn again without it, and that is stored too.
         await Assertions.Expect(preview.Locator("body.homebrewery-layer")).ToHaveCountAsync(1);
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-homebrewery");
         await dm.GetByTestId("book-draft-homebrewery").ClickAsync();
         await Assertions.Expect(preview.Locator("body.theme-ashen-vellum:not(.homebrewery-layer)")).ToHaveCountAsync(1);
         await Assertions.Expect(preview.Locator(".page", new() { HasText = "PUBLIC_BEFORE_THEME" })).ToHaveCountAsync(1);
         await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-homebrewery");
         await Assertions.Expect(dm.GetByTestId("book-draft-homebrewery")).ToHaveAttributeAsync("aria-checked", "false");
         await dm.GetByTestId("book-draft-more").ClickAsync();
 
@@ -745,7 +745,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         }
 
         // The Markdown file (41.24) is checked the same way: nothing is downloaded until Download anyway, which then gives the .md.
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-markdown");
         await dm.GetByTestId("book-draft-markdown").ClickAsync();
         await Assertions.Expect(hit).ToHaveCountAsync(1);
         await Assertions.Expect(dm.GetByTestId("book-draft-download-anyway")).ToBeEnabledAsync();
@@ -801,7 +801,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await E2EHelpers.OpenBookAsync(dm, campaignId, "party");
         await Assertions.Expect(dm.Locator("[data-testid=book-draft-chapter][data-section=cast]")).ToBeVisibleAsync(new() { Timeout = 30_000 });
 
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-for-player");
         var forPlayer = dm.GetByTestId("book-draft-for-player");
         await Assertions.Expect(forPlayer).ToHaveCountAsync(1);
         await Assertions.Expect(forPlayer).ToHaveTextAsync("Mira");
@@ -851,10 +851,24 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         // The editor must hold the focus before typing: on a slow runner the click lands before CodeMirror takes it, and "{{" typed
         // too early never opens the list. The list itself can take longer than the default 5 s to appear there.
         await Assertions.Expect(dm.Locator(".cm-editor.cm-focused")).ToBeVisibleAsync(new() { Timeout = 15_000 });
-        await dm.Keyboard.PressAsync("ControlOrMeta+End");
-        await dm.Keyboard.TypeAsync("\n{{");
         var list = dm.Locator(".cm-tooltip-autocomplete");
-        await Assertions.Expect(list).ToBeVisibleAsync(new() { Timeout = 15_000 });
+        for (var attempt = 1; ; attempt++)
+        {
+            await dm.Keyboard.PressAsync("ControlOrMeta+End");
+            await dm.Keyboard.TypeAsync("\n{{");
+            try
+            {
+                await Assertions.Expect(list).ToBeVisibleAsync(new() { Timeout = 15_000 });
+                break;
+            }
+            // On a loaded runner the chapter's text can still be loaded into the editor after the click, and that replaces what was
+            // typed (and closes the list). Type it once more then; if "{{" is there and no list opened, that is a real failure.
+            catch (PlaywrightException) when (attempt == 1)
+            {
+                if ((await dm.Locator(".cm-line").Last.InnerTextAsync()).TrimStart().StartsWith("{{"))
+                    throw;
+            }
+        }
         await Assertions.Expect(list).ToContainTextAsync("note");
         await Assertions.Expect(list).ToContainTextAsync("portrait");
         await Assertions.Expect(list).Not.ToContainTextAsync("secret");
@@ -873,7 +887,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.Locator(".cm-book-help")).ToContainTextAsync("Vera Holloway");
 
         // Off from the menu: nothing is offered, and it stays off after the page is loaded again.
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-assist");
         await Assertions.Expect(dm.GetByTestId("book-draft-assist")).ToHaveAttributeAsync("aria-checked", "true");
         await dm.GetByTestId("book-draft-assist").ClickAsync();
         // The menu closed: focus is back on the button that opened it.
@@ -883,7 +897,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await dm.Keyboard.TypeAsync("\n{{");
         await dm.WaitForTimeoutAsync(400);
         Assert.Equal(0, await list.CountAsync());
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-assist");
         await Assertions.Expect(dm.GetByTestId("book-draft-assist")).ToHaveAttributeAsync("aria-checked", "false");
         Assert.Equal("0", await dm.EvaluateAsync<string>("localStorage.getItem('codex.bookEditor.assist')"));
         Assert.Empty(pageErrors);
@@ -1112,7 +1126,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(preview.Locator(".page", new() { HasText = "Rows out to the lighthouse" })).ToHaveCountAsync(1, new() { Timeout = 30_000 });
 
         // The cost of the whole book first; nothing is sent.
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-shape-book");
         await dm.GetByTestId("book-draft-shape-book").ClickAsync();
         var confirm = dm.GetByTestId("book-draft-shape-confirm");
         await Assertions.Expect(confirm).ToContainTextAsync("fake-model");
@@ -1330,7 +1344,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
 
         // Start over is behind More, and still asks first.
         await Assertions.Expect(dm.GetByTestId("book-draft-start-over")).ToHaveCountAsync(0);
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-start-over");
         await dm.GetByTestId("book-draft-start-over").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("book-draft-start-over-yes")).ToBeVisibleAsync();
         await Assertions.Expect(dm.GetByTestId("book-draft-start-over")).ToHaveCountAsync(0);
@@ -1405,13 +1419,14 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
             Biography = "ורה שומרת על המגדלור של גרייווטר."
         }]);
         await E2EHelpers.OpenBookAsync(dm, campaignId, "party");
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-language-he");
         await dm.GetByTestId("book-draft-language-he").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("book-draft-chapters")).ToBeVisibleAsync(new() { Timeout = 30_000 });
-        await Assertions.Expect(dm.GetByTestId("book-page")).ToBeVisibleAsync();
+        // The preview draws its pages again in Hebrew: as slow as the first draw, so the same 30 s.
+        await Assertions.Expect(dm.GetByTestId("book-page")).ToBeVisibleAsync(new() { Timeout = 30_000 });
         await Assertions.Expect(dm.GetByTestId("book-homebrewery-credit").Locator("a[href='https://homebrewery.naturalcrit.com/']")).ToBeVisibleAsync();
 
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-theme-wizard");
         await dm.GetByTestId("book-draft-theme-wizard").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("book-theme-wizard")).ToBeVisibleAsync();
         await dm.GetByTestId("book-theme-name").FillAsync("Saltmere vellum");
@@ -1441,7 +1456,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
 
         await Assertions.Expect(dm.GetByTestId("book-theme-wizard")).ToHaveCountAsync(0);
         await Assertions.Expect(dm.GetByTestId("book-draft-theme")).ToHaveValueAsync(new System.Text.RegularExpressions.Regex("^custom:[0-9a-f]{32}$"));
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-homebrewery");
         await Assertions.Expect(dm.GetByTestId("book-draft-homebrewery")).ToHaveAttributeAsync("aria-checked", "false");
         await dm.GetByTestId("book-draft-more").ClickAsync();
         var preview = dm.FrameLocator("[data-testid=book-draft-preview]");
@@ -1450,7 +1465,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         var pdf = await context.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/party/draft/he/pdf");
         Assert.Equal(200, pdf.Status);
 
-        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await E2EHelpers.OpenBookMenuAsync(dm, "book-draft-theme-wizard");
         await dm.GetByTestId("book-draft-theme-wizard").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("book-theme-item")).ToContainTextAsync("Saltmere vellum");
         Assert.Empty(pageErrors);

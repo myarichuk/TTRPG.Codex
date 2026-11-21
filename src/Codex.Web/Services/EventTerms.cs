@@ -46,7 +46,7 @@ public static class EventTerms
     {
         var rule = system?.SheetRules?.SlotPools.FirstOrDefault(p => p.Owns(key));
         if (rule == null || !int.TryParse(key[(rule.Key.Length + 1)..], out var level)) return null;
-        if (l.Culture.TwoLetterISOLanguageName == "en") return null;
+        if (l.IsEnglish) return null;
         return l["Event.Slot.Other", level, shown?.DisplayValue(rule.UnitName) ?? rule.UnitName];
     }
 }

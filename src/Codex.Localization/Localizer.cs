@@ -28,6 +28,11 @@ public sealed class Localizer
 
     public CultureInfo Culture => _culture ?? CultureInfo.CurrentUICulture;
 
+    /// <summary>True when the text shown is English: an English culture, or the invariant one (a server or runner with no
+    /// language set), which reads the neutral files, and they are English. Code that words English differently asks this,
+    /// not the culture's two letters ("iv" for the invariant culture).</summary>
+    public bool IsEnglish => Culture.TwoLetterISOLanguageName is "en" or "iv";
+
     public string this[string key] => Get(key);
 
     public string this[string key, params object?[] args] => Get(key, args);

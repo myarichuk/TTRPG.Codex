@@ -8,10 +8,37 @@ public static class E2EHelpers
     public static async Task LoginAsync(IPage page, string username, string password)
     {
         await page.GotoAsync("/login");
+        await WaitForSplashGoneAsync(page);
         await page.Locator("#username").FillAsync(username);
         await page.Locator("#password").FillAsync(password);
         await page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync();
         await page.WaitForURLAsync(url => !url.Contains("/login"));
+    }
+
+    /// <summary>Waits until the loading splash is gone. It covers the page until Blazor has started (or 8 s after the page's load),
+    /// then fades for 0.3 s, and takes every click meanwhile. On a loaded CI runner that has taken longer than a click's 30 s, so
+    /// Sign in was never pressed.</summary>
+    public static Task WaitForSplashGoneAsync(IPage page) =>
+        page.Locator("#boot-splash").WaitForAsync(new() { State = WaitForSelectorState.Detached, Timeout = 60_000 });
+
+    /// <summary>Opens the book editor's More menu and waits for <paramref name="item"/> in it. The menu opens on the server; a
+    /// click that lands while the page is redrawn (straight after a language switch, say) is lost, so one more click is made
+    /// if the menu has still not said it is open after a while. Not for closing the menu: that is a plain click.</summary>
+    public static async Task OpenBookMenuAsync(IPage page, string item)
+    {
+        var more = page.GetByTestId("book-draft-more");
+        await more.ClickAsync();
+        try
+        {
+            await Assertions.Expect(more).ToHaveAttributeAsync("aria-expanded", "true", new() { Timeout = 10_000 });
+        }
+        catch (PlaywrightException)
+        {
+            if (await more.GetAttributeAsync("aria-expanded") != "true")
+                await more.ClickAsync();
+        }
+
+        await Assertions.Expect(page.GetByTestId(item)).ToBeVisibleAsync(new() { Timeout = 30_000 });
     }
 
     /// <summary>Creates a campaign through the New campaign dialog and returns its id (from the URL).</summary>
@@ -102,8 +129,11 @@ public static class E2EHelpers
         await Assertions.Expect(page.GetByTestId("ai-name")).ToHaveValueAsync(defaultName);
     }
 
-    public static Task WaitForInteractiveAsync(IPage page) =>
-        page.Locator("[data-interactive]").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });
+    public static async Task WaitForInteractiveAsync(IPage page)
+    {
+        await page.Locator("[data-interactive]").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });
+        await WaitForSplashGoneAsync(page);
+    }
 
     /// <summary>Form controls and buttons on the page that have no accessible name - the single most
     /// common screen-reader failure. Returns a description of each offender, so the assertion message

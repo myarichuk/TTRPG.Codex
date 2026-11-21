@@ -64,7 +64,7 @@
                 .FirstOrDefault(t => string.Equals(t.Type, EntryType, StringComparison.OrdinalIgnoreCase))?.PluralOrLabel
                 ?? CampaignLibrary.Humanize(EntryType);
             // English reads "No classes ...": lowercase it there. Other languages keep the label as the system words it.
-            return L.Culture.TwoLetterISOLanguageName == "en" ? label.ToLowerInvariant() : label;
+            return L.IsEnglish ? label.ToLowerInvariant() : label;
         }
     }
 
