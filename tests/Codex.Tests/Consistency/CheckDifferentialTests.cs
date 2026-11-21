@@ -1,3 +1,4 @@
+using Codex.Core;
 using Codex.Core.Consistency;
 
 namespace Codex.Tests.Consistency;
@@ -13,6 +14,110 @@ public class CheckDifferentialTests
         var expected = oracle.Run(snapshot).Select(Fx.Flat).ToList();
         var actual = current.Run(snapshot).Select(Fx.Flat).ToList();
         Assert.True(expected.SequenceEqual(actual), $"{label}: expected\n{string.Join("\n", expected)}\nactual\n{string.Join("\n", actual)}");
+    }
+
+    // ---- the unlinked-mention scan ----
+
+    private static readonly string[] Mixed =
+    {
+        "the", "The", "a", "A", "an", "Mere", "mere", "of", "Of", "Dead", "dead", "Men", "men's", "Men’s", "İstanbul", "istanbul", "ﬁre", "fire", "Fire",
+        "שלום", "Мир", "мир", "ＦＵＬＬ", "full", "x", "X", "صلى", "الله", "عليه", "وسلم", "ﷺ", "ﷻ", "جل", "جلاله", "Bo", "Ka", "bo"
+    };
+
+    private static readonly string[] Separators = { " ", " ", " ", " ", "  ", "\n", "\n\n", ". ", ", ", "-", "'", " [[Mere of Dead]] ", " [[x x]] ", "\n:::secret\n", "\n:::\n", "\t" };
+
+    private static WorldSnapshot MentionWorld(Random r, string[] vocabulary, int maxPages, int maxTitleWords, int maxBodyWords)
+    {
+        var v = vocabulary.OrderBy(_ => r.Next()).Take(r.Next(3, vocabulary.Length + 1)).ToArray();
+        string Words(int n) => string.Join(" ", Enumerable.Range(0, n).Select(_ => v[r.Next(v.Length)]));
+        var pages = new List<PageView>();
+        for (var i = 0; i < r.Next(1, maxPages); i++)
+        {
+            var title = Words(r.Next(1, maxTitleWords));
+            var body = new System.Text.StringBuilder();
+            for (var k = r.Next(0, maxBodyWords); k > 0; k--) body.Append(v[r.Next(v.Length)]).Append(r.Next(3) == 0 ? Separators[r.Next(Separators.Length)] : " ");
+            if (r.Next(3) == 0 && pages.Count > 0) body.Append(pages[r.Next(pages.Count)].Title);
+            pages.Add(new PageView($"pages/{i}", WikiText.Slugify(title), title, body.ToString(), r.Next(2) == 0));
+        }
+
+        return Fx.Snap(pages: pages);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    public void TheMentionScan_FindsWhatTheTrieFound_OnGeneratedWorlds(int seed)
+    {
+        var r = new Random(seed);
+        var found = 0;
+        for (var world = 0; world < 400; world++)
+        {
+            var snapshot = MentionWorld(r, Mixed, 10, 7, 80);
+            found += new OracleUnlinkedMentionCheck().Run(snapshot).Count();
+            Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(), snapshot, $"seed {seed} world {world}");
+        }
+
+        Assert.True(found > 0);
+    }
+
+    [Theory]
+    [InlineData(11)]
+    [InlineData(12)]
+    [InlineData(13)]
+    public void TheMentionScan_FindsWhatTheTrieFound_WithArticlesAndLettersOfSeveralWords(int seed)
+    {
+        var r = new Random(seed);
+        var articles = new[] { "the", "The", "A", "a", "B", "b", "an", "C" };
+        var wide = new[] { "ﷺ", "ﷻ", "صلى", "الله", "عليه", "وسلم", "جل", "جلاله", "the", "The", "A", "x" };
+        for (var world = 0; world < 400; world++)
+        {
+            Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(), MentionWorld(r, articles, 8, 9, 120), $"articles seed {seed} world {world}");
+            Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(), MentionWorld(r, wide, 8, 9, 120), $"wide seed {seed} world {world}");
+        }
+    }
+
+    [Fact]
+    public void TheMentionScan_FindsWhatTheTrieFound_WhereNamesNestAndOverlap()
+    {
+        // Names that are prefixes, suffixes and middles of one another over two words, so every position starts several names and almost-names:
+        // alternating titles of every length up to 40, with and without an end word, and texts made of the same two words with the end word here and there.
+        var pages = new List<PageView>();
+        for (var n = 2; n <= 40; n++)
+        {
+            var words = Enumerable.Range(0, n).Select(i => i % 2 == 0 ? "Bo" : "Ka").ToList();
+            if (n % 3 == 0) words.Add("End");
+            if (n % 5 == 0) words.Insert(0, "Ka");
+            var title = string.Join(' ', words);
+            pages.Add(Fx.Page($"wikipages/t{n:D2}", title, "x", party: n % 4 == 0));
+        }
+
+        var r = new Random(3);
+        for (var p = 0; p < 30; p++)
+        {
+            var body = string.Join(r.Next(5) == 0 ? "  " : " ", Enumerable.Range(0, 400).Select(i => r.Next(30) == 0 ? "End" : r.Next(40) == 0 ? "bo" : i % 2 == 0 ? "Bo" : "Ka"));
+            pages.Add(Fx.Page($"wikipages/b{p:D2}", "Body " + p, body, party: p % 2 == 0));
+        }
+
+        var snapshot = Fx.Snap(pages: pages);
+        Assert.NotEmpty(new OracleUnlinkedMentionCheck().Run(snapshot));
+        Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(), snapshot, "nested");
+    }
+
+    [Fact]
+    public void TheMentionScan_FindsWhatTheTrieFound_WhenALongNameAlmostMatchesEverywhere()
+    {
+        // The reviewer's case, smaller: a long alternating title that the texts follow to its last word and then miss.
+        var title = string.Join(' ', Enumerable.Range(0, 60).Select(i => i % 2 == 0 ? "Bo" : "Ka")) + " End";
+        var body = string.Join(' ', Enumerable.Range(0, 300).Select(i => i % 2 == 0 ? "Bo" : "Ka"));
+        var pages = new List<PageView> { Fx.Page("wikipages/0", title, "x"), Fx.Page("wikipages/1", "Bo Ka", "x") };
+        for (var p = 2; p < 12; p++) pages.Add(Fx.Page($"wikipages/{p}", "Page " + p, p % 3 == 0 ? body + " " + title : body));
+        var snapshot = Fx.Snap(pages: pages);
+        Assert.NotEmpty(new OracleUnlinkedMentionCheck().Run(snapshot));
+        Same(new OracleUnlinkedMentionCheck(), new UnlinkedMentionCheck(), snapshot, "almost");
     }
 
     // ---- the place tree ----
