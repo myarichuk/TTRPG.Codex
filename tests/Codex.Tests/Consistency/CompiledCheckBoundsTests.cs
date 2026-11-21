@@ -58,6 +58,12 @@ public class CompiledCheckBoundsTests
         public IReadOnlyList<CodexIssue> Check(CodexIssueWorld world) => throw new InvalidOperationException("boom");
     }
 
+    /// <summary>Throws a cancellation of its own, with nobody having cancelled anything.</summary>
+    private sealed class CancelsItself : ICodexIssueCheck
+    {
+        public IReadOnlyList<CodexIssue> Check(CodexIssueWorld world) => throw new OperationCanceledException("not the run's");
+    }
+
     /// <summary>Waits for its token (up to 30 s) and says when it saw it.</summary>
     private sealed class HonoursTheToken : ICodexIssueCheck
     {
@@ -155,6 +161,16 @@ public class CompiledCheckBoundsTests
         var failed = Assert.Single(issues, i => i.Id == "check-failed:campaign:c1:issueChecks:boom");
         Assert.Equal((IssueSeverity.Info, "Consistency.CheckFailed"), (failed.Severity, failed.Code));
         Assert.Equal(new[] { "boom", "InvalidOperationException" }, failed.Args);
+        Assert.Contains(issues, i => i.Id == "system-rule:actor:actors/1-A:-:long-name");
+    }
+
+    [Fact]
+    public void ACheckThatThrowsACancellationOfItsOwn_IsAFailedCheck_NotACancelledRun()
+    {
+        var issues = Run(SystemOf(("quits", new CancelsItself()), ("long-name", new OldStyle())), Short);
+
+        var failed = Assert.Single(issues, i => i.Id == "check-failed:campaign:c1:issueChecks:quits");
+        Assert.Equal(new[] { "quits", "OperationCanceledException" }, failed.Args);
         Assert.Contains(issues, i => i.Id == "system-rule:actor:actors/1-A:-:long-name");
     }
 

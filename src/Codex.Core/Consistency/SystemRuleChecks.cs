@@ -248,8 +248,10 @@ public sealed class SystemRuleCheck : IConsistencyCheck
         {
             return (null, TimedOut);
         }
-        catch (Exception e) when (e is not OutOfMemoryException and not OperationCanceledException)
+        catch (Exception e) when (e is not OutOfMemoryException && !(e is OperationCanceledException && cancel.IsCancellationRequested))
         {
+            // A cancellation the check threw of its own (the run's token being live) is a failure of the check like any other; only the run's own
+            // cancellation goes through.
             return (null, e.GetType().Name);
         }
 
