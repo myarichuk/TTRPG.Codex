@@ -267,11 +267,14 @@ They run only for `list_issues` scope `noise` (or one of their names) or the Iss
 with the switch on), which changes nothing about what the default list, the note or `resolves` see; a made-up id is still refused. (A dismissed minor finding shows as
 "the problem is gone" in the dismissed list while the switch is off, since its check does not run then.)
 
-**Cost and the time budget.** The plain-text mention scan walks a trie of the pages' names word by word (`UnlinkedMentionCheck`), so a position in a text costs
-as many steps as the name it could be, not the length of the longest title (500 pages of 1000 words with a 40-word title: 10.7 s before, 0.24 s after; 1000 pages of
-2000 words with a 60-word title: 80 s before, 0.56 s after, snapshot included). Which mentions are reported is unchanged; a test keeps the first, simple
-version as an oracle on generated worlds, also with letters whose compatibility form is several words (U+FDFA, U+FDFB: a word of the text then walks the trie
-one part at a time, as the first version compared the words joined by spaces; a name still needs two words of the text and ends where one ends). `ConsistencyChecker.Run` takes a `CancellationToken` and looks at it between checks, between the issues a check yields, and
+**Cost and the time budget.** The plain-text mention scan (`UnlinkedMentionCheck`) finds, at every word of a text, the longest page name that starts there in
+one backward pass: the names are an Aho-Corasick automaton over their words written backwards (`NameAutomaton`), so reading a run of words from its end, the
+state at a word and its output links are exactly the names that start at it, longest first. A word costs a few steps whatever the names' length (the first
+version joined strings for every length up to the longest title: 500 pages of 1000 words with a 40-word title took 10.7 s; the trie that followed cost as many
+steps as the text followed a name, which a long title the text almost matches everywhere made 401 steps a word). Which mentions are reported is unchanged; tests
+keep the first, joined-string version and the trie as oracles on generated worlds, also with letters whose compatibility form is several words (U+FDFA, U+FDFB:
+a word of the text then is several parts of the automaton, as the first version compared the words joined by spaces; a name still needs two words of the text and
+ends where one ends). `ConsistencyChecker.Run` takes a `CancellationToken` and looks at it between checks, between the issues a check yields, and
 inside the loops of the long checks (`IConsistencyCheck.Run(snapshot, cancel)`, a default method that runs the check as it is: the mention scan looks at every page and
 every 256 positions, the sheet rules at every character); the token is the only thing a check reads besides the snapshot, so whatever is not cancelled gives the same
 issues, and a cancelled run throws and returns nothing, never a part of the list. The systems' own compiled checks (`ICodexIssueCheck`) are unchanged and are not
@@ -280,8 +283,36 @@ on its own, unread). The per-message count note (`WorldBuilderService.IssueSumma
 when the check goes over it; that campaign's note is then skipped at once, with no snapshot, for `IssueSummaryBackoff` (10 minutes, on the service's `Clock`, per
 campaign and per service, never static), so a pathological campaign costs the budget once in that while instead of on every message. A check that fails for another
 reason is not remembered. `list_issues`, the Issues panel and the apply's re-check have no budget and are never skipped. (The reviewer's case, a 401-word title of
-alternating "Bo Ka" and 500 pages of 2000 such words: the scan alone takes 2 to 4 s; with a 300 ms budget the note gave up after the whole scan, about 3 s, and now
-after about 0.3 s, and the next message pays nothing.)
+alternating "Bo Ka" and 500 pages of 2000 such words: the trie scan alone took 2 to 4 s, and a budget that ran out stopped it within the budget; the scan now
+takes about 20 ms and the whole default run about 40 ms in Release, and the note through the service about 0.17 s, so the note no longer comes near its budget.)
+
+**Performance (measured in Release, median, on a 4-core machine; `ConsistencyChecker.Run` with the default checks; snapshot made beforehand).** Before and after the
+optimisation pass (fa02e24 and now, the same benchmark built against each): 300 pages of 800 words, 60 characters, 300 places, 150 facts: 159 ms to 119 ms;
+500 pages of 1200 words, 100 characters: 319 ms to 173 ms; 1000 pages of 2000 words, 200 characters: 981 ms to 396 ms (1447 MB allocated to 602 MB); the Bo/Ka
+campaign 2403 ms to 39 ms; 10,000 places in two 5000-deep chains 2453 ms to 33 ms; 2000 characters with srd5e sheets 2435 ms to 654 ms; 20 pages of 5000 links
+476 ms to 448 ms. Campaigns of 100 pages or fewer were 20 to 50 ms before and are about the same (the differences there are within the noise of the machine).
+What made the difference, each change with its own differential test against the version
+before (the oracles in `tests/Codex.Tests/Consistency/CheckOracles.cs`, `CheckDifferentialTests`, `SheetRuleDifferentialTests`: byte-identical issues in the same
+order on seeded generated and adversarial worlds):
+- the mention scan's automaton (above); the written words' compared forms (NFKC, lower case) made once per run of the check (`WordForms`, one per run and per
+  worker, never shared or static: a form depends on the written word alone); and, from 1,000,000 characters of page text (about 150,000 words) on a machine with two cores or more, the
+  pages scanned on at most min(cores, 4) workers, one page at a time to whichever is free. The automaton and the page lookup are built first and only read; each
+  page's issues are its own list, and the lists are yielded in the snapshot's page order, so the result is the same sequence as the one-by-one scan; the workers look
+  at the token at every page and every 256 words, and a cancelled scan throws `OperationCanceledException` itself, with nothing yielded.
+- `sheet-rule` asks the engine for verdicts only (`SheetRuleEngine.Options = false`): the pickers' options (`AllowedOptions`, `ListOptions`: every candidate of
+  every list tested against the sheet) were most of an evaluation and nothing reads them; they are still worked out where testing the candidates could throw (a
+  rule condition with a missing name, a candidate without tags or properties, a candidate list that cannot be read; checked once per engine), so a sheet that
+  failed to evaluate still gives the same `evaluation-failed` issue. The sheet page and every other caller keep the options (the default).
+- the secret blocks of every text are read once per snapshot (`WorldSnapshot.Derived`, built on first use, thread-safe, kept with the snapshot and never in anything
+  static) and shared by the three secret checks; each still filters and numbers its own keys.
+- the place tree walks each place once (a deep tree cost its size times its depth).
+- `Run` sorts a second time only when a `~n` suffix was given.
+Not done, and why: the checks are not run side by side (they share the Library's resolver, the engine's formula and script machinery and the systems' compiled
+checks, none of which promises to be safe to call from two threads at once); the sheet rules are not run on several workers for the same reason; the service's loads
+are not started together (measured against embedded Raven: no difference in the whole check, 510 ms against 506 ms for 1000 pages of 2000 words); results and
+snapshots are not cached between the calls of one chat turn (no cheap change signal covers everything a result depends on: the documents, the campaign, the
+loaded packs and homebrew, the system's files; a stale "still open" would break the recheck after an apply, which must always read the documents); and no
+incremental index of mentions is kept (the same missing change signal, and the full scan is now about 140 ms on the 1000-page campaign).
 
 **Loading cost.** The count note runs a snapshot per DM message, so the v2 checks add no heavy reading: members, packs, the system's changes and
 what the loader reported are in memory, and the only new read is the campaign's homebrew list, one query beside the several the Library's resolver
