@@ -21,4 +21,5 @@ license:
   - The legal text of the licence is at https://creativecommons.org/licenses/by/3.0/legalcode.
   - This pack is not affiliated with or endorsed by One Seven Design.
 kind: rules
+activeByDefault: true
 isTranslation: false
