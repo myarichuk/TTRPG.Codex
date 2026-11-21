@@ -272,4 +272,28 @@ public class FourDegreesRulesTableTests : IClassFixture<RavenDbFixture>, IDispos
         Assert.Equal(1, pool.Get("condition_dying"));
         Assert.Equal(0, pool.Get("condition_wounded"));
     }
+
+    [Fact]
+    public async Task ALoneCreature_TurnEndAndTurnStart_AreOneUndo()
+    {
+        // Persistent damage and frightened at the end of its turn, dying at the start of the next (which is its own again).
+        var (runtime, _, hero) = await TableAsync(dying: 1, wounded: 0);
+        await using var _ = runtime;
+        await runtime.EnqueueAsync(new SetInitiativeCommand(hero.Id, 10));
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(hero.Id, "Persistent Damage", hero.Id, ActiveEffect.Indefinite, EffectExpiry.EndOfTurn, hero.Id));
+        await runtime.EnqueueAsync(new AdjustConditionCommand(hero.Id, "Frightened", 2));
+        var pool = runtime.GetEntity(hero.Id)!.Value.Get<ResourcePoolComponent>();
+
+        await runtime.EnqueueAsync(new NextTurnCommand { Dice = new SequenceDiceSource(new[] { 16, 15 }) });
+        Assert.False(Burning(runtime, hero));
+        Assert.Equal(1, pool.Get("condition_frightened"));
+        Assert.Equal(0, pool.Get("condition_dying"));
+
+        await runtime.EnqueueAsync(new UndoLastChangeCommand(hero.Id));
+
+        Assert.True(Burning(runtime, hero));
+        Assert.Equal(2, pool.Get("condition_frightened"));
+        Assert.Equal(1, pool.Get("condition_dying"));
+        Assert.Equal(0, pool.Get("condition_wounded"));
+    }
 }

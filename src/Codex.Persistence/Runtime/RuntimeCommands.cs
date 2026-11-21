@@ -606,28 +606,38 @@ public sealed record NextTurnCommand : IRuntimeCommand
         // A system with sheet kinds hears the turn end and the next one start (a death save each turn while mortally wounded).
         // The handler and the drop below are one change to the creature whose turn ends, so one Undo takes both back (a persistent damage check that ended
         // the condition, and frightened going down).
+        // When the turn comes round to the same creature (it is alone in the order), its start belongs in the same undo point, so one Undo takes back all of it.
+        var startedHere = false;
         runtime.ApplyUndoably(current.ActorId, "TurnAdvance", () =>
         {
             if (TableEvents.Handles(runtime, "turnEnd")) _raised.AddRange(TableEvents.Raise(runtime, current.ActorId, new Codex.Core.Rules.SheetEvent("turnEnd", new Dictionary<string, object?>()), Dice).Messages);
 
             // Valued conditions that fall at the end of a turn (frightened 2 -> 1): on every system, with or without an events: handler.
             _raised.AddRange(runtime.DecreaseConditionsUndoably(current.ActorId, "turnEnd"));
+
+            current.HasActed = true;
+            runtime.MoveTurnOn(encounter, fromPointer: false);
+            runtime.MarkEncounterDirty();
+
+            if (encounter.Participants.Count > 0 && encounter.Participants[encounter.TurnIndex].ActorId == current.ActorId)
+            {
+                StartTurn(runtime, current.ActorId);
+                startedHere = true;
+            }
         });
 
-        current.HasActed = true;
-        runtime.MoveTurnOn(encounter, fromPointer: false);
-        runtime.MarkEncounterDirty();
-
-        if (encounter.Participants.Count > 0)
+        if (!startedHere && encounter.Participants.Count > 0)
         {
             // Likewise for the creature whose turn begins: the handler (a dying creature's recovery check) and the drop are one undo point.
             var next = encounter.Participants[encounter.TurnIndex].ActorId;
-            runtime.ApplyUndoably(next, "TurnAdvance", () =>
-            {
-                if (TableEvents.Handles(runtime, "turnStart")) _raised.AddRange(TableEvents.Raise(runtime, next, new Codex.Core.Rules.SheetEvent("turnStart", new Dictionary<string, object?>()), Dice).Messages);
-                _raised.AddRange(runtime.DecreaseConditionsUndoably(next, "turnStart"));
-            });
+            runtime.ApplyUndoably(next, "TurnAdvance", () => StartTurn(runtime, next));
         }
+    }
+
+    private void StartTurn(CampaignRuntime runtime, string actorId)
+    {
+        if (TableEvents.Handles(runtime, "turnStart")) _raised.AddRange(TableEvents.Raise(runtime, actorId, new Codex.Core.Rules.SheetEvent("turnStart", new Dictionary<string, object?>()), Dice).Messages);
+        _raised.AddRange(runtime.DecreaseConditionsUndoably(actorId, "turnStart"));
     }
 
     private readonly List<EventMessage> _raised = new();
