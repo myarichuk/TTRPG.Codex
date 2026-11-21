@@ -194,6 +194,58 @@ public sealed class FourDegreesRulesScriptTests : IDisposable
         Assert.Contains("condition_wounded", result.Applied.Changed);
     }
 
+    // ---- Persistent damage (conditions persistent-damage: a DC 15 flat check at the end of the turn) ----
+
+    private static IReadOnlyList<SheetIntent> TurnEnd(SystemDefinition system, Dictionary<string, object> sheet, IDiceSource dice) =>
+        SheetEvents.Handle(system, NullEntryResolver.Instance, sheet, SheetEvent.Of("turnEnd"), dice);
+
+    [Theory]
+    [InlineData(15, "Success", true)]
+    [InlineData(20, "Critical success", true)]
+    [InlineData(14, "Failure", false)]
+    [InlineData(1, "Critical failure", false)]
+    public void PersistentDamage_RollsADc15FlatCheck_AndEndsOnASuccess(int face, string degree, bool ends)
+    {
+        var dice = new SequenceDiceSource(new[] { face });
+
+        var said = Said(TurnEnd(System, Sheet(hp: 12, conditions: "Persistent Damage"), dice));
+
+        Assert.Equal($"log key=Persistent damage check args=[DC 15,{degree}]", said[0]);
+        Assert.Equal(ends ? new[] { "condition remove=Persistent Damage" } : Array.Empty<string>(), said.Skip(1));
+        Assert.Equal(1, dice.Used);
+    }
+
+    [Fact]
+    public void NoPersistentDamage_RollsNothing_AndSaysNothing()
+    {
+        var dice = new SequenceDiceSource(new[] { 15 });
+
+        Assert.Empty(TurnEnd(System, Sheet(hp: 12, conditions: "Prone"), dice));
+        Assert.Empty(TurnEnd(System, Sheet(hp: 12), dice));
+        Assert.Equal(0, dice.Used);
+    }
+
+    [Fact]
+    public void ADeadCreatureWithPersistentDamage_RollsNothing()
+    {
+        var dice = new SequenceDiceSource(new[] { 15 });
+
+        Assert.Empty(TurnEnd(System, Sheet(hp: 0, conditions: new[] { "Persistent Damage", "Dead" }), dice));
+        Assert.Equal(0, dice.Used);
+    }
+
+    [Fact]
+    public void TheSystemDeclaresTurnEnd_AndLoadsWithScriptsOff()
+    {
+        Assert.True(System.Events.ContainsKey("turnEnd"));
+        var off = SystemDefinitionLoader.Load(Path.Combine(Folder, SystemDefinitionLoader.FileName));
+        var left = SystemScripts.LeaveOut(off);
+
+        Assert.Contains("rules.js#onTurnEnd", left);
+        Assert.False(off.Events.ContainsKey("turnEnd")); // no handler: the GM rolls the check by hand
+        Assert.Empty(TurnEnd(off, Sheet(hp: 12, conditions: "Persistent Damage"), new SequenceDiceSource(new[] { 15 })));
+    }
+
     // ---- Damage, healing and heroic recovery (the scripts' intents; the table's own rules are in FourDegreesDyingTableTests) ----
 
     private static IReadOnlyList<SheetIntent> Damaged(SystemDefinition system, Dictionary<string, object> sheet, double dealt, double after, double max = 20, bool critical = false, string? save = null, bool died = false)

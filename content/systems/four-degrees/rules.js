@@ -1,6 +1,6 @@
 // @ts-check
 // Scripted rules of this system: the dying condition, from the recovery check to what damage, healing and a hero point do to it (rules
-// dying-rule, getting-knocked-out, wounded, instant-death and hero-points). The host hands plain read-only data and reads
+// dying-rule, getting-knocked-out, wounded, instant-death and hero-points), and the flat check that may end persistent damage. The host hands plain read-only data and reads
 // a list of intents back; nothing here changes anything itself, and the host's dice are the only dice (ctx.d).
 // codex.d.ts beside this file is written by Codex.SystemCheck --types; the JSDoc types below read it.
 /** @typedef {import("./codex").Event} Event */
@@ -16,6 +16,9 @@ const DEGREES = ["Critical failure", "Failure", "Success", "Critical success"];
 
 // The dying value at which a creature dies.
 const DEATH = 4;
+
+// The flat check that may end persistent damage (conditions persistent-damage).
+const PERSISTENT_DC = 15;
 
 // The start of a turn: a dying creature at 0 hit points makes a flat check against 10 plus its dying value. The dying value moves by the
 // degree. At the value it dies at (4, less its doomed value) it dies; at 0 it loses the condition. Losing the condition, whatever the
@@ -44,6 +47,23 @@ export function onTurnStart(ev, sheet, ctx) {
 
   if (next <= 0) return [said, ...recover()];
   return [said, { condition: { add: "Dying", value: next } }];
+}
+
+// The end of a turn: a creature with the persistent damage condition (conditions persistent-damage; rules step-1-roll-damage-dice and turns)
+// rolls a DC 15 flat check after it has taken the damage, and the condition ends on a success. The damage itself stays the GM's (the
+// condition carries its amount and type in the text, not in a value), so it is dealt before the turn is advanced. It is one check for the
+// whole condition: a creature with two instances (fire and bleed) rolls once, and a success ends them all, so the GM adds back any
+// instance that should stay. A creature without the condition does nothing, and rolls nothing. Next turn makes this and the built-in
+// lowering of valued conditions (frightened), which runs after the handler, one undo step. Every creature's turn raises this event.
+/** @param {Event} ev @param {Sheet} sheet @param {Context} ctx @returns {Intent[]} */
+export function onTurnEnd(ev, sheet, ctx) {
+  if (!sheet.conditions.includes("Persistent Damage") || sheet.conditions.includes("Dead")) return [];
+  const natural = ctx.d(20);
+  // A flat check: the die is the whole total.
+  const degree = ctx.call("degree", natural, PERSISTENT_DC, natural);
+  /** @type {Intent} */
+  const said = { log: { key: "Persistent damage check", args: [`DC ${PERSISTENT_DC}`, DEGREES[degree]] } };
+  return degree >= 2 ? [said, { condition: { remove: "Persistent Damage" } }] : [said];
 }
 
 // Damage was taken (the table raises this after its own damage, once per blow; rules dying-rule, getting-knocked-out, wounded and
