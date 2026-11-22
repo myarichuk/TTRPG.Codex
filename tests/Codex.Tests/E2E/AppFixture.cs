@@ -92,7 +92,14 @@ public sealed class AppFixture : IAsyncLifetime
 
         _playwright = await Playwright.CreateAsync();
         Browser = await _playwright.Chromium.LaunchAsync(LaunchOptions());
+        // Each E2E class boots its own app and browser, and they run beside the rest of the suite. On a CI runner that load
+        // has made a page that draws in under a second locally miss the 5 s default (the book's page after a language switch).
+        // A passing wait returns as soon as it holds, so only a failing one takes longer.
+        Assertions.SetDefaultExpectTimeout(ExpectTimeoutMs);
     }
+
+    /// <summary>The default wait of an <c>Expect(...)</c> in the E2E tests, in place of Playwright's 5 s.</summary>
+    public const float ExpectTimeoutMs = 15_000;
 
     /// <summary>Headless Chromium, for every test that launches a browser of its own too.</summary>
     public static BrowserTypeLaunchOptions LaunchOptions()
