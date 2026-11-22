@@ -124,8 +124,8 @@ entityTypes:
       # A class whose choice decides the tradition (a witch's patron) leaves the class's own `tradition` empty and writes it here; the sheet's spell lists read the class's, else the subclass's.
       - { key: tradition,    label: Tradition,     type: Dropdown, options: [arcane, divine, occult, primal], description: "The tradition of the spells a character of this choice casts, for a class that leaves its own empty. The sheet's spells and cantrips are those whose traditions hold it." }
       - { key: features,     label: Features,      type: Collection, description: "One row per feature: name, level (1 when none), description, and grants (adds) to the sheet's ranked lists." }
-  # An animal companion of one type: what the book prints in the type's block, one field to each line. Nothing on the character sheet reads a companion yet; the entry is a reference to read at the table.
-  # The six modifiers and the hit points are the starting numbers of a young companion; the advancement rules (rule entries) say how they grow.
+  # An animal companion of one type: what the book prints in the type's block, one field to each line. The `companion` sheet kind (below) picks one as its type and reads these fields.
+  # The six modifiers and the hit points are the starting numbers of a young companion; the advancement rules (rule entries) say how they grow, and the sheet kind's stage and specialization apply them.
   - type: companion
     label: Animal companion
     pluralLabel: Animal companions
@@ -151,7 +151,7 @@ entityTypes:
       - { key: supportBenefit, label: Support benefit,  type: LongText, description: "What the owner gains when the companion uses the Support action." }
       - { key: advancedManeuver, label: Advanced maneuver, type: Text, description: "The name of the action the type learns when it becomes nimble or savage; its text is in the description." }
       - { key: traits,         label: Traits,           type: TagList, description: "Trait keys beyond the animal and minion ones every companion has (a rarity word, a creature type that replaces animal)." }
-  # One ability of the familiars' two lists: a familiar ability changes the familiar itself, a master ability changes its master or the magic between them. Nothing on the character sheet reads a familiar yet.
+  # One ability of the familiars' two lists: a familiar ability changes the familiar itself, a master ability changes its master or the magic between them. The `familiar` sheet kind (below) picks them from this type.
   - type: familiar-ability
     label: Familiar ability
     pluralLabel: Familiar abilities
@@ -690,10 +690,15 @@ dice:
 
 functions:
   degree: { formula: "(total, dc, natural) => min(3, max(0, (total >= dc + 10 ? 3 : total >= dc ? 2 : total > dc - 10 ? 1 : 0) + (natural == 20 ? 1 : natural == 1 ? -1 : 0)))" }
+  # The companion kinds' formulas: a rank (0 untrained to 4 legendary) is worth level + 2 a rank; a skill's rank before its specialization; a rank raised by one.
+  rankBonus: { formula: "(lvl, rank) => rank > 0 ? lvl + 2 * rank : 0" }
+  typeRank: { formula: "(own, grown) => own ? (grown > 0 ? 2 : 1) : (grown > 0 ? 1 : 0)" }
+  raised: { formula: "(rank, up) => up ? (rank >= 2 ? 3 : 2) : rank" }
 
 sheetRules:
   enforcement: warn
-  # The character build runs on character sheets only; a companion or familiar kind (docs/COMPANIONS_DESIGN.md) runs its own model.
+  # The character build runs on character sheets only. The companion and familiar kinds (sheetKinds below, docs/COMPANIONS_DESIGN.md) run their own model:
+  # their numbers are values of the kind, read from the owner through links, and the conditions reach them by the same target names.
   kinds: [character]
   # A heritage is picked from those of the chosen ancestry, or from those that name none (the versatile heritages, which any ancestry may take).
   constraints:
@@ -710,6 +715,11 @@ sheetRules:
     flatProperty: hp
     attribute: con
     once: { field: ancestry, property: hp }
+
+  # How many familiar abilities a character's feats add beyond the familiar's own two. Nothing sets it: a feat that adds some gives a modifier aimed at
+  # `familiarAbilities`, and the familiar kind reads the total through its link. The pack's feats carry no such modifier (they are generated), so a table's own entry does.
+  derived:
+    - { key: familiarAbilities, label: Extra familiar abilities, formula: "0", signed: false }
 
   # Attributes: typed in, or built from boosts. Each source gives boosts to different attributes (an ancestry's own, the class's, and
   # four free ones at levels 1, 5, 10, 15 and 20); a boost is +1 to the modifier, but from +4 it is half of that.
@@ -918,6 +928,150 @@ sheetKinds:
     features:
       - { list: trinkets }
 
+  # An animal companion (docs/COMPANIONS_DESIGN.md): a creature of its own, owned by a character, not a party member. Its numbers come from its type (a `companion` entry),
+  # its stage and specialization (the player sets both; they are not checked against the owner's feats) and the owner's level. Ranks are 0 untrained to 4 legendary
+  # (rankBonus). A type skill other than Intimidation, Stealth and Survival is trained and no stage raises it. Not modelled: size, Speeds, senses, barding, each attack
+  # row's dice and traits (they stay on the type's entry), and the Strength modifier on damage, which is added by hand.
+  - kind: companion
+    label: Animal companion
+    role: player
+    partyMember: false
+    links:
+      - { key: owner, kind: character, label: Owner }
+    lists:
+      - key: type
+        label: Type
+        type: companion
+        rules:
+          - { check: "count(type, t => true) <= 1", key: Actor.Rule.CompanionType, message: "a companion has one type." }
+          # The stage and specialization are inputs, so the rule that joins them sits on this list.
+          - { check: "specializationSet == 0 || nimble + savage > 0", key: Actor.Rule.CompanionSpecialization, message: "a specialization needs a nimble or savage companion; it gives nothing before that." }
+    values:
+      - { key: level, label: Level, formula: "link('owner', 'level')" }
+      - { key: stage, label: Stage, input: true, options: [young, mature, nimble, savage], default: young }
+      - { key: specialization, label: Specialization, input: true, options: [none, ambusher, bully, daredevil, racer, tracker, wrecker], default: none }
+      # Flags (1 or 0) the formulas below read: past the young stage, nimble, savage, and any specialization.
+      # A value that is none of the stage's names is young; one that is none of the specialization's names is none. A specialization counts only on a nimble or savage companion.
+      - { key: grown, label: Grown, formula: "stage == 'mature' || stage == 'nimble' || stage == 'savage' ? 1 : 0" }
+      - { key: nimble, label: Nimble, formula: "stage == 'nimble' ? 1 : 0" }
+      - { key: savage, label: Savage, formula: "stage == 'savage' ? 1 : 0" }
+      - { key: ambusher, label: Ambusher, formula: "nimble + savage > 0 && specialization == 'ambusher' ? 1 : 0" }
+      - { key: bully, label: Bully, formula: "nimble + savage > 0 && specialization == 'bully' ? 1 : 0" }
+      - { key: daredevil, label: Daredevil, formula: "nimble + savage > 0 && specialization == 'daredevil' ? 1 : 0" }
+      - { key: racer, label: Racer, formula: "nimble + savage > 0 && specialization == 'racer' ? 1 : 0" }
+      - { key: tracker, label: Tracker, formula: "nimble + savage > 0 && specialization == 'tracker' ? 1 : 0" }
+      - { key: wrecker, label: Wrecker, formula: "nimble + savage > 0 && specialization == 'wrecker' ? 1 : 0" }
+      - { key: specialized, label: Specialized, formula: "ambusher + bully + daredevil + racer + tracker + wrecker" }
+      - { key: specializationSet, label: Specialization set, formula: "specialization == 'ambusher' || specialization == 'bully' || specialization == 'daredevil' || specialization == 'racer' || specialization == 'tracker' || specialization == 'wrecker' ? 1 : 0" }
+      # Attribute modifiers: the type's, plus the stage's and the specialization's increases.
+      - { key: str, label: Strength,     formula: "first(type).str + grown + nimble + 2 * savage + bully + wrecker" }
+      - { key: dex, label: Dexterity,    formula: "first(type).dex + grown + 2 * nimble + savage + specialized + ambusher + daredevil" }
+      - { key: con, label: Constitution, formula: "first(type).con + grown + nimble + savage + racer" }
+      - { key: int, label: Intelligence, formula: "first(type).int + 2 * specialized" }
+      - { key: wis, label: Wisdom,       formula: "first(type).wis + grown + nimble + savage + tracker" }
+      - { key: cha, label: Charisma,     formula: "first(type).cha + 3 * bully" }
+      # Armor class (rank by specialization).
+      - { key: ac, label: Armor class, formula: "10 + dex + rankBonus(level, ambusher + daredevil > 0 ? 2 : 1)", modifiers: armorClass }
+      # Saves and Perception (rank by stage and specialization).
+      - { key: fortitude, label: Fortitude, formula: "con + rankBonus(level, racer > 0 ? 4 : 1 + grown + specialized)", modifiers: [save, save.con] }
+      - { key: reflex,    label: Reflex,    formula: "dex + rankBonus(level, 1 + grown + specialized)", modifiers: [save, save.dex] }
+      - { key: will,      label: Will,      formula: "wis + rankBonus(level, 1 + grown + specialized)", modifiers: [save, save.wis] }
+      - { key: perception, label: Perception, formula: "wis + rankBonus(level, 1 + grown + specialized)", modifiers: perception }
+      # Attack bonuses: with Strength, and with the better of Strength and Dexterity (a finesse attack).
+      # These already count the conditions (target `attack`), so the companion's own strike roll (below) does not add `modifiers('strike')` again.
+      - { key: attack,        label: Attack bonus (Str),        formula: "str + rankBonus(level, 1 + specialized)", modifiers: attack }
+      - { key: attackFinesse, label: Attack bonus (Str or Dex), formula: "max(str, dex) + rankBonus(level, 1 + specialized)", modifiers: attack }
+      # How many of the type's dice an attack rolls, and the extra damage each hit adds.
+      - { key: damageDice,  label: Damage dice per attack, formula: "1 + grown + specialized" }
+      - { key: damageExtra, label: Extra damage,           formula: "(2 * nimble + 3 * savage) * (1 + specialized)" }
+      # Skills (rank by type, stage and specialization).
+      - { key: acrobatics,   label: Acrobatics,   formula: "dex + rankBonus(level, daredevil > 0 ? 3 : 1 + nimble)", modifiers: [check, check.dex, check.skill.acrobatics] }
+      - { key: athletics,    label: Athletics,    formula: "str + rankBonus(level, wrecker > 0 ? 3 : bully > 0 ? 2 : 1 + savage)", modifiers: [check, check.str, check.skill.athletics] }
+      - { key: intimidation, label: Intimidation, formula: "cha + rankBonus(level, raised(typeRank(first(type).skill == 'intimidation', grown), bully > 0))", modifiers: [check, check.cha, check.skill.intimidation] }
+      - { key: stealth,      label: Stealth,      formula: "dex + rankBonus(level, raised(typeRank(first(type).skill == 'stealth', grown), ambusher > 0))", modifiers: [check, check.dex, check.skill.stealth] }
+      - { key: survival,     label: Survival,     formula: "wis + rankBonus(level, raised(typeRank(first(type).skill == 'survival', grown), tracker > 0))", modifiers: [check, check.wis, check.skill.survival] }
+    tracks:
+      # The type's hit points, plus a number and the Constitution modifier for each level.
+      - { key: HP, label: Hit Points, max: "first(type).hp + (6 + con) * level + modifiers('HP_Max')", start: max, display: number }
+    layout:
+      - section: Companion
+        widgets:
+          - { widget: link, key: owner }
+          - { widget: list, key: type }
+          - { widget: values, keys: [level, stage, specialization] }
+          - { widget: track, key: HP }
+      - section: Defenses
+        widgets:
+          - { widget: values, keys: [ac, fortitude, reflex, will, perception] }
+          - { widget: modifiers, target: armorClass }
+      - section: Attacks
+        widgets:
+          - { widget: values, keys: [attack, attackFinesse, damageDice, damageExtra] }
+          - { widget: roll, roll: companionStrike }
+      - section: Skills
+        widgets:
+          - { widget: values, keys: [acrobatics, athletics, intimidation, stealth, survival] }
+          - { widget: roll, roll: degreeCheck }
+      - section: Attributes
+        widgets:
+          - { widget: values, keys: [str, dex, con, int, wis, cha] }
+
+  # A familiar (docs/COMPANIONS_DESIGN.md): a creature of its own, owned by a character (its master), not a party member. Its level, armor class and saves come from the master
+  # through the link; its abilities a day are a base number plus the master's `familiarAbilities` (a derived number of the character rules, which a feat's modifier reaches).
+  # Not modelled: its senses, Speed and traits, and the abilities' effects (their entries are the text).
+  - kind: familiar
+    label: Familiar
+    role: player
+    partyMember: false
+    links:
+      - { key: master, kind: character, label: Bonded to }
+    lists:
+      # A list has no moment of its own (changes_on is per row choice), so the picks can change at any time; the description says when they are meant to.
+      - key: abilities
+        label: Abilities
+        type: familiar-ability
+        description: "Choose them at the daily preparations; they stay until the next ones. Familiar and master abilities count alike, and so does the tough ability."
+        rules:
+          - { check: "count(abilities, a => true) + (tough == 'yes' ? 1 : 0) <= abilityCount", key: Actor.Rule.FamiliarAbilities, message: "more abilities than {abilityCount} (tough counts as one)." }
+    features:
+      - { list: abilities }
+    values:
+      - { key: level, label: Level, formula: "link('master', 'level')" }
+      - { key: abilityCount, label: Abilities per day, formula: "2 + link('master', 'familiarAbilities')" }
+      # Armor class and saves, read from the master with no condition holding and no shield counted (`plain.` names), so its own conditions apply once, to it.
+      - { key: ac,        label: Armor class, formula: "link('master', 'plain.armorClass')", modifiers: armorClass }
+      - { key: fortitude, label: Fortitude,   formula: "link('master', 'plain.saves.con')", modifiers: [save, save.con] }
+      - { key: reflex,    label: Reflex,      formula: "link('master', 'plain.saves.dex')", modifiers: [save, save.dex] }
+      - { key: will,      label: Will,        formula: "link('master', 'plain.saves.wis')", modifiers: [save, save.wis] }
+      # Perception, Acrobatics and Stealth read the master's spellcasting modifier, which is typed in: the character rules do not publish it on its own.
+      - { key: casterModifier, label: Master's spellcasting modifier, input: true, default: 0 }
+      - { key: perception, label: Perception, formula: "level + max(3, casterModifier)", modifiers: perception }
+      - { key: acrobatics, label: Acrobatics, formula: "level + max(3, casterModifier)", modifiers: [check, check.dex, check.skill.acrobatics] }
+      - { key: stealth,    label: Stealth,    formula: "level + max(3, casterModifier)", modifiers: [check, check.dex, check.skill.stealth] }
+      - { key: skills,     label: Other skills, formula: "level", modifiers: check }
+      # The tough pet ability has no entry of its own, so it is an input.
+      - { key: tough, label: Tough, input: true, options: ["no", "yes"], default: "no" }
+    tracks:
+      - { key: HP, label: Hit Points, max: "(5 + (tough == 'yes' ? 2 : 0)) * level + modifiers('HP_Max')", start: max, display: number }
+    layout:
+      - section: Familiar
+        widgets:
+          - { widget: link, key: master }
+          - { widget: values, keys: [level, tough] }
+          - { widget: track, key: HP }
+      - section: Defenses
+        widgets:
+          - { widget: values, keys: [ac, fortitude, reflex, will] }
+          - { widget: modifiers, target: armorClass }
+      - section: Skills
+        widgets:
+          - { widget: values, keys: [casterModifier, perception, acrobatics, stealth, skills] }
+          - { widget: roll, roll: degreeCheck }
+      - section: Abilities
+        widgets:
+          - { widget: values, keys: [abilityCount] }
+          - { widget: list, key: abilities }
+
 rolls:
   # A check against a DC, with the bonus given: the four degrees and the natural 20 / 1 shift.
   - key: degreeCheck
@@ -927,6 +1081,20 @@ rolls:
     inputs:
       - { key: bonus,  from: roller, label: Bonus }
       - { key: target, from: gm,     label: DC }
+    outcomes:
+      - { name: criticalSuccess, when: "degree(total, target, natural) == 3", mark: critical }
+      - { name: success,         when: "degree(total, target, natural) == 2" }
+      - { name: failure,         when: "degree(total, target, natural) == 1" }
+      - { name: criticalFailure, mark: fumble }
+  # A companion's strike: the same, but its attack bonus value already holds the conditions (target `attack`), so nothing is read from `strike` again.
+  - key: companionStrike
+    label: Strike
+    dice: 1d20
+    add: ["bonus", "attackPenalty(attackNumber)"]
+    inputs:
+      - { key: bonus,        from: roller, label: Attack bonus }
+      - { key: target,       from: gm,     label: Armor class }
+      - { key: attackNumber, from: roller, label: Attack this turn, default: 1 }
     outcomes:
       - { name: criticalSuccess, when: "degree(total, target, natural) == 3", mark: critical }
       - { name: success,         when: "degree(total, target, natural) == 2" }

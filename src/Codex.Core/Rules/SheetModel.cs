@@ -1246,7 +1246,9 @@ public sealed class SheetModel
         // Every other name (level, armorClass, a value of the kind) reads the plain linked model, with no pass over the linked sheet.
         if (SheetRuleEngine.WorksOut(_system, name) && SheetRuleEngine.AppliesTo(_system, linked.Model.Kind))
         {
-            var worked = linked.WorkedOut();
+            var plain = name.StartsWith(SheetEvaluation.PlainRoot + ".", StringComparison.Ordinal);
+            var worked = plain ? linked.WorkedOutPlain() : linked.WorkedOut();
+            if (plain) name = name[(SheetEvaluation.PlainRoot.Length + 1)..];
             if (linked.Failed && _result.Warnings.All(w => w.FieldKey != "link:" + key))
             {
                 // The linked sheet's rules threw: what only they give reads 0, and the sheet says so.
@@ -1291,6 +1293,51 @@ public sealed class SheetModel
             catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
             {
                 // A sheet the rules cannot work out has no such numbers (they read 0, and the outer sheet warns); the kind's own names are still read.
+                Failed = true;
+                return null;
+            }
+            finally
+            {
+                _current = outer;
+            }
+        }
+
+        private IReadOnlyDictionary<string, double>? _plain;
+        private bool _triedPlain;
+
+        /// <summary>The numbers of <see cref="WorkedOut"/> with no condition holding and no shield counted, under the same names, plus the armor class under its key
+        /// (<c>link('x', 'plain.saves.con')</c>); null as <see cref="WorkedOut"/> is.</summary>
+        public IReadOnlyDictionary<string, double>? WorkedOutPlain()
+        {
+            if (_triedPlain) return _plain;
+            _triedPlain = true;
+            if (!SheetRuleEngine.AppliesTo(owner._system, Model.Kind)) return null;
+            var outer = _current;
+            try
+            {
+                // The sheet with no condition holding, worked out as it stands. The armor class is the rules' total less the shields worn (the sheet adds a
+                // shield's bonus whenever it is equipped); a sheet that keeps its own armor class keeps that.
+                var bare = new Dictionary<string, object>(sheet) { [ConditionsKey] = new List<object>() };
+                foreach (var (_, key, _) in SheetConditions.Valued(owner._system)) bare[key] = 0L;
+                var evaluation = new SheetRuleEngine(owner._system, owner._resolver) { Options = false }.Evaluate(bare);
+                var values = new Dictionary<string, double>(evaluation.WorkedOut(), StringComparer.Ordinal);
+                if (owner._system.SheetRules?.ArmorClass is { } armor)
+                {
+                    if (evaluation.ArmorClass is { Active: true } summary)
+                    {
+                        var shields = summary.Parts.Where(p => p.Kind == "bonus" && p.Entry != null && SheetRuleEngine.IsShield(p.Entry, armor)).Sum(p => p.Value);
+                        values[armor.Key] = summary.Total - shields;
+                    }
+                    else if (YamlValues.ToNumber(sheet.GetValueOrDefault(armor.Key)) is { } stored)
+                    {
+                        values[armor.Key] = stored;
+                    }
+                }
+
+                return _plain = values;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
+            {
                 Failed = true;
                 return null;
             }

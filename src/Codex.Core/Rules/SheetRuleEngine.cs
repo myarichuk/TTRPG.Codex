@@ -223,6 +223,11 @@ public sealed class SheetEvaluation
     /// <summary>The name of a skill's bonus in <see cref="WorkedOut"/>: <c>skills.</c> and the skill's key.</summary>
     public const string SkillsPrefix = "skills.";
 
+    /// <summary>The root of the names <c>link()</c> reads a linked sheet's numbers by when they are worked out with no condition holding and no shield counted
+    /// (<c>plain.saves.con</c>, <c>plain.armorClass</c>, <c>plain.perception</c>): a creature whose defences are its owner's before bonuses and penalties
+    /// from conditions and effects. <see cref="SheetModel"/> works them out; <see cref="WorksOut"/> knows the root.</summary>
+    public const string PlainRoot = "plain";
+
     /// <summary>The name of a saving throw's bonus in <see cref="WorkedOut"/>: <c>saves.</c> and the save's key.</summary>
     public const string SavesPrefix = "saves.";
 
@@ -297,6 +302,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         var root = name.Split('.')[0];
         if (root.Length == 0) return false;
         if (root is "skills" or "saves") return rules.Skills != null;
+        if (root == SheetEvaluation.PlainRoot) return true;
         return rules.Derived.Any(d => d.Key == root) || rules.Ranked.Any(l => l.Key == root || l.Keys().Any(k => k.Key == root));
     }
 

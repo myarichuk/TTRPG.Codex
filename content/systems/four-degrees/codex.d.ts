@@ -3,16 +3,26 @@
 // changing it changes nothing. A script keeps no state between calls, and rolls only through ctx.d.
 
 export type AttributeKey = "str" | "dex" | "con" | "int" | "wis" | "cha";
-export type TrackKey = "heroPoints" | "focusPoints" | (string & {});
-export type ValueKey = "senseDc" | "speed";
+export type TrackKey = "heroPoints" | "focusPoints" | "HP" | (string & {});
+export type ValueKey = "senseDc" | "speed" | "level" | "stage" | "specialization" | "grown" | "nimble" | "savage" | "ambusher" | "bully" | "daredevil" | "racer" | "tracker" | "wrecker" | "specialized" | "specializationSet" | "str" | "dex" | "con" | "int" | "wis" | "cha" | "ac" | "fortitude" | "reflex" | "will" | "perception" | "attack" | "attackFinesse" | "damageDice" | "damageExtra" | "acrobatics" | "athletics" | "intimidation" | "stealth" | "survival" | "abilityCount" | "casterModifier" | "skills" | "tough";
 export type ConditionName = "Blinded" | "Broken" | "Clumsy" | "Concealed" | "Confused" | "Controlled" | "Dazzled" | "Deafened" | "Doomed" | "Drained" | "Dying" | "Encumbered" | "Enfeebled" | "Fascinated" | "Fatigued" | "Fleeing" | "Friendly" | "Frightened" | "Grabbed" | "Helpful" | "Hidden" | "Hostile" | "Immobilized" | "Indifferent" | "Invisible" | "Observed" | "Off-guard" | "Paralyzed" | "Persistent Damage" | "Petrified" | "Prone" | "Quickened" | "Restrained" | "Sickened" | "Slowed" | "Stunned" | "Stupefied" | "Unconscious" | "Undetected" | "Unfriendly" | "Unnoticed" | "Wounded";
-export type FunctionName = "degree";
-export type RollKey = "degreeCheck" | "strike";
+export type FunctionName = "degree" | "rankBonus" | "typeRank" | "raised";
+export type RollKey = "degreeCheck" | "companionStrike" | "strike";
 export type EventType = "turnStart" | "turnEnd" | "damaged" | "healed" | "heroicRecovery" | "sessionStart" | "dailyPrep";
 export type Plain = number | string | boolean | null;
 
 /** One pick of the list "trinkets" (Trinkets): the entry's id and its per-pick fields. */
 export interface TrinketsPick {
+  readonly id: string;
+  readonly [field: string]: Plain | undefined;
+}
+/** One pick of the list "type" (Type): the entry's id and its per-pick fields. */
+export interface TypePick {
+  readonly id: string;
+  readonly [field: string]: Plain | undefined;
+}
+/** One pick of the list "abilities" (Abilities): the entry's id and its per-pick fields. */
+export interface AbilitiesPick {
   readonly id: string;
   readonly [field: string]: Plain | undefined;
 }
@@ -27,10 +37,13 @@ export interface Sheet {
   readonly tracks: {
     readonly heroPoints: number;
     readonly focusPoints: number;
+    readonly HP: number;
     readonly [key: string]: number | undefined;
   };
   readonly lists: {
     readonly trinkets: readonly TrinketsPick[];
+    readonly type: readonly TypePick[];
+    readonly abilities: readonly AbilitiesPick[];
   };
   /** The conditions that hold, those the tracks' thresholds bring included. */
   readonly conditions: readonly ConditionName[];
@@ -59,8 +72,8 @@ export type Intent =
   | { clear: { track: TrackKey; by?: number; level?: number; text?: string; actor?: string } }
   /** A valued condition: add with value sets it, add with by raises or lowers it, remove sets it to 0 (always within 0 and its maximum). */
   | { condition: { add: ConditionName; value?: number; by?: number; actor?: string } | { remove: ConditionName; actor?: string } }
-  | { set: { list: "trinkets"; key: string; field: string; to: Plain; actor?: string } }
-  | { adjust: { list: "trinkets"; key: string; field: string; by: number; actor?: string } }
+  | { set: { list: "trinkets" | "type" | "abilities"; key: string; field: string; to: Plain; actor?: string } }
+  | { adjust: { list: "trinkets" | "type" | "abilities"; key: string; field: string; by: number; actor?: string } }
   | { roll: { definition: RollKey; actor?: string; [input: string]: unknown } }
   | { ask: { who: "gm" | "player"; choices: string[] } }
   | { log: { key: string; args?: Plain[] } }

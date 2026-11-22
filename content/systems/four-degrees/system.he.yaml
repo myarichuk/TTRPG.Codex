@@ -367,8 +367,62 @@ values:
   Persistent damage check: בדיקת הפסקת נזק מתמשך
   DC 15: דרגת קושי 15
   turnEnd: סוף התור
+  # בן לוויה חייתי ויצור קשור. נדרשת בדיקה של דובר שפת אם; «אדון» אינו «מנחה»: מנחה הוא מי שמנחה את המשחק.
+  Animal companion: בן לוויה חייתי
+  Familiar: יצור קשור
+  Companion: בן לוויה
+  Owner: בעלים
+  Bonded to: אדון
+  Type: סוג
+  Abilities: יכולות
+  "Choose them at the daily preparations; they stay until the next ones. Familiar and master abilities count alike, and so does the tough ability.": נבחרות בהכנות היומיות ונשארות עד ההכנות הבאות. יכולות של היצור הקשור ויכולות של אדונו נספרות יחד, וכך גם היכולת «קשוח».
+  Level: דרגה
+  Stage: שלב
+  Specialization: התמחות
+  Strength: כוח
+  Dexterity: זריזות
+  Constitution: חוסן
+  Intelligence: תבונה
+  Wisdom: חוכמה
+  Charisma: כריזמה
+  Fortitude: עמידות
+  Reflex: רפלקס
+  Will: רצון
+  Attack bonus (Str): בונוס תקיפה (כוח)
+  Attack bonus (Str or Dex): בונוס תקיפה (כוח או זריזות)
+  Damage dice per attack: קוביות נזק לתקיפה
+  Extra damage: נזק נוסף
+  Acrobatics: אקרובטיקה
+  Athletics: אתלטיקה
+  Intimidation: הפחדה
+  Stealth: התגנבות
+  Survival: הישרדות
+  Abilities per day: יכולות ליום
+  "Master's spellcasting modifier": מתאם תכונת הטלת הלחשים של האדון
+  Other skills: שאר המיומנויות
+  Tough: קשוח
+  Hit Points: נקודות חיים
+  Defenses: הגנות
+  Attacks: תקיפות
+  Skills: מיומנויות
+  Attributes: תכונות
+  young: צעיר
+  mature: בוגר
+  nimble: זריז
+  savage: פראי
+  none: ללא
+  ambusher: אורב
+  bully: בריון
+  daredevil: נועז
+  racer: רץ
+  tracker: גשש
+  wrecker: מנפץ
+  "no": לא
+  "yes": כן
 
 sheetRules:
+  derived:
+    familiarAbilities: יכולות נוספות של יצור קשור
   boostSources:
     ancestry: מוצא
     background: רקע
@@ -397,6 +451,8 @@ sheetRules:
     "not on your class's spell list.": אינו ברשימת הלחשים של המקצוע שלך.
     "cantrips go in the cantrips list.": לחשונים נכנסים לרשימת הלחשונים.
     "above the highest spell rank you can cast.": גבוה מדרגת הלחש הגבוהה ביותר שאתה יכול להטיל.
+    "a companion has one type.": לבן לוויה יש סוג אחד.
+    "a specialization needs a nimble or savage companion; it gives nothing before that.": התמחות דורשת בן לוויה זריז או פראי; לפני כן היא אינה נותנת דבר.
   skills:
     acrobatics: אקרובטיקה
     arcana: מאגיה
