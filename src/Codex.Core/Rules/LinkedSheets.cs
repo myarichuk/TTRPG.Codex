@@ -76,11 +76,12 @@ public static class SheetLinks
         linked != null && ActorId(sheet, linkKey) is { } id && linked.Sheet(id) == null ? linked.Status(id) : null;
 
     /// <summary>The sheet a known link points to: null when there is no link, it is unknown, the actor is missing, or the actor's sheet is not of the
-    /// kind the link declares (judged by the sheet's own <c>kind</c>, so a sheet with none is not taken for the system's first kind).</summary>
-    public static IReadOnlyDictionary<string, object>? Linked(SheetKindDefinition? kind, IReadOnlyDictionary<string, object> sheet, string linkKey, ILinkedSheets? linked)
+    /// kind the link declares. The linked sheet's kind is found as <see cref="SheetLayout.KindOf"/> finds it, so a sheet saved before kinds (no <c>kind</c> key) is the
+    /// system's default kind, as it is everywhere else.</summary>
+    public static IReadOnlyDictionary<string, object>? Linked(SystemDefinition system, SheetKindDefinition? kind, IReadOnlyDictionary<string, object> sheet, string linkKey, ILinkedSheets? linked)
     {
         if (linked == null || kind?.Links.FirstOrDefault(l => l.Key == linkKey) is not { } link || ActorId(sheet, linkKey) is not { } id) return null;
         if (linked.Sheet(id) is not { } found) return null;
-        return string.Equals(YamlValues.GetString(found, SheetModel.KindKey), link.Kind, StringComparison.OrdinalIgnoreCase) ? found : null;
+        return string.Equals(SheetLayout.KindOf(system, found)?.Kind, link.Kind, StringComparison.OrdinalIgnoreCase) ? found : null;
     }
 }

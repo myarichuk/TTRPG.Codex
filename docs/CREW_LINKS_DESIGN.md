@@ -209,7 +209,7 @@ Through the fitd importer, never by hand in the pack:
 
 - `SheetKindDefinition.Links` (`key`, `kind`, `label`), `FeatureSource.Link`, `ILinkedSheets.Sheet(actorId)`, `LinkState` (`None`, `Known`, `Unknown`), `SheetLinks`
   (`LinkedSheets.cs`). A link source needs `list` (of the linked kind) and `property`; `choose` is refused on it (a grant map's own `options` and `choose` do that).
-- The linked sheet is checked by its own `kind` string, not by the system's default kind. A linked actor of another kind is a known, empty link.
+- The linked sheet is checked by its own kind, found as `SheetLayout.KindOf` finds it, so a sheet saved before kinds (no `kind` key) is the system's default kind (P11a changed this; CL1 compared the stored string). A linked actor of another kind is a known, empty link.
 - A link to an actor the host cannot give a sheet for (deleted, in the trash, or not found in the campaign) is **unknown**, not empty: nothing the link made is swept,
   clamped or judged, and the deleted actor's sheet is never handed out. Restoring the crew brings everything back as it was. Data goes only when the player changes
   or clears the link; then the new link (or none) is evaluated as known. `ILinkedSheets.Status` says deleted or not found, and the link widget tells the member

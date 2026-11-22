@@ -295,7 +295,7 @@ else
                 var held = HeldConditions;
                 var canSetConditions = CanSetConditions;
             }
-            @if (system != null && Rules != null && (held.Count > 0 || canSetConditions))
+            @if (system?.SheetRules != null && (held.Count > 0 || canSetConditions))
             {
                 @* The conditions and spell effects that hold, with their values. At a live table they are the table's and read-only here; off the
                    table only the GM sets them (the sheet's conditions key and the valued keys), and a player sees them read-only. *@
@@ -1249,7 +1249,9 @@ else
     }
 
     private bool CanEdit => access != null && actor != null && (access.IsDm || actor.OwnerUserId == currentUserId);
-    private SheetRules? Rules => system?.SheetRules;
+    // The character rules only on a sheet of a kind they apply to (sheetRules.kinds): the header armor class, the hit point and armor class panels, and the
+    // attribute and opt-in sections read these, and a companion has none of them. The conditions panel reads system.SheetRules itself.
+    private SheetRules? Rules => system != null && SheetRuleEngine.AppliesTo(system, editSheet) ? system.SheetRules : null;
     private string Enforcement => SheetRuleEngine.EffectiveEnforcement(system, campaign?.RulesEnforcement);
 
     private static string FormatSigned(object value) => Bidi.Ltr(value is long l && l >= 0 ? "+" + l : value.ToString() ?? string.Empty);
@@ -1654,7 +1656,7 @@ else
         // The slot pools that recover at this moment fill up, as the table's moment command does.
         SystemMoments.RefillSlots(system, editSheet, moment);
 
-        if (resolver != null && SheetEvents.Handles(system, moment))
+        if (resolver != null && SheetEvents.Handles(system, moment) && SystemMoments.RunsHandler(system, editSheet))
         {
             try
             {

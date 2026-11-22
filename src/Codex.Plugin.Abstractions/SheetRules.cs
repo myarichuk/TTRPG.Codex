@@ -15,6 +15,10 @@ public class SheetRules
     /// A campaign can override this (house rules).</summary>
     public string Enforcement { get; set; } = "strict";
 
+    /// <summary>The sheet kinds these rules apply to (docs/COMPANIONS_DESIGN.md). Left out, they apply to every kind. A sheet of another kind
+    /// runs only its kind's own model, as a system with no <c>sheetRules</c> does. Each name must be one of the system's <c>sheetKinds</c>.</summary>
+    public List<string> Kinds { get; set; } = new();
+
     /// <summary>How scores are generated (point buy, standard array, typed in), capped and raised. Null: scores are typed in,
     /// kept within each attribute's <c>min</c> and <c>max</c>.</summary>
     public AttributeRules? Attributes { get; set; }

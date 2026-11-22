@@ -375,6 +375,7 @@ The rules a system applies to a character sheet, declared in `system.yaml` so a 
 | Key | Type | What it is |
 |---|---|---|
 | `enforcement` | text (a number is text too) | "strict": players can't save a sheet that breaks a rule (the DM always can); "warn": violations are shown but saving is allowed; "off": rules are not evaluated. A campaign can override this (house rules). |
+| `kinds` | list of text (a number is text too) | The sheet kinds these rules apply to (docs/COMPANIONS_DESIGN.md). Left out, they apply to every kind. A sheet of another kind runs only its kind's own model, as a system with no `sheetRules` does. Each name must be one of the system's `sheetKinds`. |
 | `attributes` | [AttributeRules](#attributerules) | How scores are generated (point buy, standard array, typed in), capped and raised. Null: scores are typed in, kept within each attribute's `min` and `max`. |
 | `derived` | list of [DerivedField](#derivedfield) | Read-only fields computed from the sheet (proficiency bonus from level, ...). |
 | `constraints` | list of [FieldConstraint](#fieldconstraint) | Conditions a single-pick reference field's chosen entry must satisfy. |
@@ -907,6 +908,7 @@ A kind of sheet (`character`, `crew`): its values, modifiers, lists and keyed li
 | `kind` | text (a number is text too) | Required: the kind's key (`character`, `crew`), which each sheet of it records. |
 | `label` | text (a number is text too) | The kind's name as the app shows it (where a new sheet's kind is chosen); `kind` when empty. |
 | `role` | text (a number is text too) | The host role: `player`, `npc`, `creature` or `shared`. |
+| `partyMember` | true or false | Whether an actor with this kind of sheet is one of the party: counted in party sizes and given what every player character gets (the hero points at the start of a session). False for a companion or familiar, which a player owns without being a member of the party. It says nothing about who may edit or see the actor. |
 | `values` | list of [ValueDefinition](#valuedefinition) | The sheet's numbers and choices, worked out or entered. Their order does not matter: each is worked out when first read. |
 | `modifiers` | list of [ModifierDefinition](#modifierdefinition) | Modifiers every sheet of the kind has, beside those from picks and conditions. |
 | `lists` | list of [PickListDefinition](#picklistdefinition) | Lists of picks (classes, feats, items), each with fields of its own per pick. |

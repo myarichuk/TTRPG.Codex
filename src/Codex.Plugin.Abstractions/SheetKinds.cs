@@ -17,6 +17,11 @@ public sealed class SheetKindDefinition
     /// <summary>The host role: <c>player</c>, <c>npc</c>, <c>creature</c> or <c>shared</c>.</summary>
     public string? Role { get; set; }
 
+    /// <summary>Whether an actor with this kind of sheet is one of the party: counted in party sizes and given what every player character gets
+    /// (the hero points at the start of a session). False for a companion or familiar, which a player owns without being a member of the party.
+    /// It says nothing about who may edit or see the actor.</summary>
+    public bool PartyMember { get; set; } = true;
+
     /// <summary>The sheet's numbers and choices, worked out or entered. Their order does not matter: each is worked out when
     /// first read.</summary>
     public List<ValueDefinition> Values { get; set; } = new();

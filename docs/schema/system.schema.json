@@ -1561,6 +1561,17 @@
           ],
           "description": "\"strict\": players can't save a sheet that breaks a rule (the DM always can); \"warn\": violations are shown but saving is allowed; \"off\": rules are not evaluated. A campaign can override this (house rules)."
         },
+        "kinds": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "description": "The sheet kinds these rules apply to (docs/COMPANIONS_DESIGN.md). Left out, they apply to every kind. A sheet of another kind runs only its kind's own model, as a system with no `sheetRules` does. Each name must be one of the system's `sheetKinds`."
+        },
         "attributes": {
           "$ref": "#/$defs/AttributeRules",
           "description": "How scores are generated (point buy, standard array, typed in), capped and raised. Null: scores are typed in, kept within each attribute's `min` and `max`."
@@ -3761,6 +3772,10 @@
             "boolean"
           ],
           "description": "The host role: `player`, `npc`, `creature` or `shared`."
+        },
+        "partyMember": {
+          "type": "boolean",
+          "description": "Whether an actor with this kind of sheet is one of the party: counted in party sizes and given what every player character gets (the hero points at the start of a session). False for a companion or familiar, which a player owns without being a member of the party. It says nothing about who may edit or see the actor."
         },
         "values": {
           "type": "array",

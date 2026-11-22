@@ -201,6 +201,12 @@ public sealed partial class SheetRuleEngine
     /// entry (or whose actor is gone) is an ordinary absence, and its picks are taken off.</param>
     public void PruneChoices(Dictionary<string, object> sheet, ILinkedSheets? linked = null)
     {
+        if (Apart(sheet) is { } apart)
+        {
+            apart.PruneChoices(sheet, linked);
+            return;
+        }
+
         if (system.SheetKinds.Count > 0 && SheetLinks.AnyUnknown(SheetLayout.KindOf(system, sheet), sheet, linked)) return;
         var kind = SheetLayout.KindOf(system, sheet) is { Features.Count: > 0 } withFeatures ? withFeatures : null;
         if (Rules is not { Features.Count: > 0 } && kind == null) return;

@@ -350,10 +350,8 @@ public sealed class CurrentEngineHost : IReferenceHost
             var (result, evaluation) = Evaluate(sheet);
             var values = new Dictionary<string, double>(StringComparer.Ordinal);
             foreach (var (key, value) in result) if (Number(value) is { } n) values[key] = n;
-            foreach (var (key, value) in evaluation.Derived) if (Number(value) is { } n) values[key] = n;
-            // The ranked skills and saving throws the sheet-rules stages work out: `skills.<key>` and `saves.<key>` (the bonus).
-            foreach (var skill in evaluation.Skills) values["skills." + skill.Key] = skill.Bonus;
-            foreach (var save in evaluation.SavingThrows) values["saves." + save.Key] = save.Bonus;
+            // The derived numbers, and the ranked skills and saving throws the sheet-rules stages work out (`skills.<key>`, `saves.<key>`): the engine's own names.
+            foreach (var (key, value) in evaluation.WorkedOut()) values[key] = value;
             return CheckOr<IReadOnlyDictionary<string, double>>.Of(values);
         }
 

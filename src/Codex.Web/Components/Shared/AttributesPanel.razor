@@ -335,7 +335,8 @@
     [Parameter] public EventCallback Changed { get; set; }
     [Parameter] public EventCallback<RollRequest> OnRoll { get; set; }
 
-    private SheetRules? Rules => Definition.SheetRules;
+    // The character rules only on a sheet of a kind they apply to (sheetRules.kinds): a companion's attributes are plain.
+    private SheetRules? Rules => SheetRuleEngine.AppliesTo(Definition, Sheet) ? Definition.SheetRules : null;
     private string AttrMethod => (YamlValues.GetString(Sheet, SheetRuleEngine.MethodKey) ?? Rules?.Attributes?.Default ?? SheetRuleEngine.ManualMethod).ToLowerInvariant();
     private bool Printed => AttrMethod == SheetRuleEngine.PrintedMethod;
     private bool Boosting => AttrMethod == SheetRuleEngine.BoostsMethod && Evaluation?.Attributes?.Boosts != null;

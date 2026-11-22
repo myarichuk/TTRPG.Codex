@@ -414,6 +414,11 @@ public static class SystemDefinitionLoader
             yield return $"sheetRules.enforcement '{rules.Enforcement}' must be strict, warn or off.";
         }
 
+        foreach (var kind in rules.Kinds.Where(k => !definition.SheetKinds.Any(s => string.Equals(s.Kind, k, StringComparison.OrdinalIgnoreCase))))
+        {
+            yield return $"sheetRules.kinds: '{kind}' is not one of the system's sheet kinds.";
+        }
+
         var fieldKeys = definition.ActorFields.Select(f => f.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var referenceFields = definition.ActorFields.Where(f => f.Type == FieldType.EntityReference).Select(f => f.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -1271,7 +1276,9 @@ public static class SystemDefinitionLoader
     private static IEnumerable<string> ValidateConditionRouting(SystemDefinition definition)
     {
         if (definition.SheetRules == null || definition.SheetKinds.Count == 0) yield break;
-        var kindTargets = Codex.Core.Rules.SheetConditions.KindTargets(definition);
+        // Only the kinds the rules apply to (sheetRules.kinds): on another kind every condition modifier goes to the kind's values and the sheet-rules side takes none,
+        // so a companion's own 'ac' beside the character's armor class is no clash.
+        var kindTargets = Codex.Core.Rules.SheetConditions.KindTargets(definition, kind => Codex.Core.Rules.SheetRuleEngine.AppliesTo(definition, kind));
         foreach (var (name, effect) in definition.ConditionEffects)
         {
             for (var i = 0; i < effect.Modifiers.Count; i++)
@@ -1358,7 +1365,30 @@ public static class SystemDefinitionLoader
     }
 
     private static readonly System.Text.RegularExpressions.Regex LinkCall =
-        new(@"\blink\s*\(\s*(?:'(?<key>[^']*)'|""(?<key>[^""]*)"")", System.Text.RegularExpressions.RegexOptions.Compiled);
+        new(@"\blink\s*\(\s*(?:'(?<key>[^']*)'|""(?<key>[^""]*)"")(?:\s*,\s*(?:'(?<name>[^']*)'|""(?<name>[^""]*)""))?", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>Whether <c>link(..., 'name')</c> can read <paramref name="name"/> off a sheet of <paramref name="linked"/>: a name the kind declares (a value, a track and its
+    /// <c>_Max</c>, a list, a keyed list), a name the system declares for any sheet (an attribute, an actor field, a resource, a valued condition), or, when the
+    /// system's <c>sheetRules</c> apply to the kind, one the rule engine works out or stores (a derived or published value, <c>skills.*</c>, <c>saves.*</c>, the
+    /// hit point and armor class keys, a slot pool, a list). Only the part before the first dot is checked. A sheet can hold any other stored key, so a
+    /// name from none of these is a typo or a stale name, which would read as 0 for ever.</summary>
+    private static bool LinkNameKnown(SystemDefinition definition, SheetKindDefinition linked, string name)
+    {
+        var root = name.Split('.')[0];
+        if (root.Length == 0) return false;
+        bool Is(string key) => string.Equals(key, root, StringComparison.Ordinal);
+        bool Templated(string key) => key.IndexOf('{') is var brace and > 0 ? root.StartsWith(key[..brace], StringComparison.Ordinal) : Is(key);
+        if (linked.Values.Any(v => Is(v.Key)) || linked.Lists.Any(l => Is(l.Key)) || linked.KeyedLists.Any(l => Is(l.Key))) return true;
+        if (linked.Tracks.Any(t => Templated(t.Key) || Templated(t.Key + "_Max"))) return true;
+        if (definition.Attributes.Any(a => Is(a.Key)) || definition.ActorFields.Any(f => Is(f.Key)) || definition.Resources.Any(r => Is(r.Key) || Is(r.MaxKey ?? string.Empty))) return true;
+        if (Codex.Core.Rules.SheetConditions.Valued(definition).Any(c => Is(c.Key))) return true;
+        if (definition.FieldRoles.Level is { } level && Is(level)) return true;
+        if (!Codex.Core.Rules.SheetRuleEngine.AppliesTo(definition, linked) || definition.SheetRules is not { } rules) return false;
+        if (Is("skills") || Is("saves")) return rules.Skills != null;
+        return Codex.Core.Rules.SheetRuleEngine.WorksOut(definition, name)
+            || (rules.HitPoints is { } hp && (Is(hp.Key) || Is(hp.CurrentKey))) || (rules.ArmorClass is { } ac && Is(ac.Key))
+            || rules.SlotPools.Any(p => p.Owns(root)) || rules.Lists.Any(l => Is(l.Key)) || (rules.Inventory is { } inventory && Is(inventory.Key));
+    }
 
     /// <summary>The problems with the links a system's sheet kinds declare: each needs a key (unique in its kind) and the kind of a sheet the system
     /// has; and a <c>link('key', ...)</c> in a formula of the kind must name one of the kind's links (a roll's, one of any kind's).</summary>
@@ -1383,6 +1413,12 @@ public static class SystemDefinitionLoader
                 {
                     var key = call.Groups["key"].Value;
                     if (!keys.Contains(key)) yield return $"sheetKinds.{kind.Kind}.{at}: link('{key}', ...) names a link the kind does not have.";
+                    else if (call.Groups["name"].Success && kind.Links.First(l => l.Key == key) is { } link
+                             && definition.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, link.Kind, StringComparison.OrdinalIgnoreCase)) is { } linkedKind
+                             && !LinkNameKnown(definition, linkedKind, call.Groups["name"].Value))
+                    {
+                        yield return $"sheetKinds.{kind.Kind}.{at}: link('{key}', '{call.Groups["name"].Value}') names nothing that '{linkedKind.Kind}' or the rules have, so it would always read 0.";
+                    }
                 }
             }
         }

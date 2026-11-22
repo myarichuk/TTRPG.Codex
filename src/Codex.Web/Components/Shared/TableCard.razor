@@ -253,7 +253,8 @@
         restChoices = SheetRuleEngine.ChoicesToChangeAfter(Actor.Sheet, rest.Name).ToList();
     }
     private VitalsRules? Vitals => Definition?.Vitals;
-    private SheetRules? Rules => Definition?.SheetRules;
+    // The character rules only on a sheet of a kind they apply to (sheetRules.kinds): a companion's card shows its own numbers, not a character's armor class.
+    private SheetRules? Rules => Definition != null && SheetRuleEngine.AppliesTo(Definition, Actor.Sheet) ? Definition.SheetRules : null;
     private string PrimaryKey => SystemDefinition.PrimaryKeyOf(Definition);
     private static readonly DownRules NoDownRules = new();
     private DownRules DownRules => Vitals?.Down ?? NoDownRules;

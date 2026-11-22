@@ -187,7 +187,8 @@ public static class ActorChecks
     /// <summary>The armor class a sheet carries (a stat block's, or a manual one), read from the live sheet so a status the table put on it counts.</summary>
     public static CheckBonus? PrintedArmorClass(SystemDefinition system, IReadOnlyDictionary<string, object> sheet)
     {
-        var key = system.SheetRules?.ArmorClass?.Key;
+        // The armor class key is the character rules'; a sheet of a kind they do not apply to (a companion) has its own, which this does not read.
+        var key = SheetRuleEngine.AppliesTo(system, sheet) ? system.SheetRules?.ArmorClass?.Key : null;
         return key != null && YamlValues.GetInt(sheet, key) is { } own ? new CheckBonus(own, CheckBonusSource.Printed, Array.Empty<RollBonus>()) : null;
     }
 

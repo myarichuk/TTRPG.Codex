@@ -693,6 +693,8 @@ functions:
 
 sheetRules:
   enforcement: warn
+  # The character build runs on character sheets only; a companion or familiar kind (docs/COMPANIONS_DESIGN.md) runs its own model.
+  kinds: [character]
   # A heritage is picked from those of the chosen ancestry, or from those that name none (the versatile heritages, which any ancestry may take).
   constraints:
     - field: heritage

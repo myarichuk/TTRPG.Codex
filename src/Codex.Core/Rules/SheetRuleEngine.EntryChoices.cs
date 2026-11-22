@@ -31,7 +31,7 @@ public sealed partial class SheetRuleEngine
     public IReadOnlyList<(string Key, string Type, IReadOnlyList<string> Ids)> EntryPicks(IReadOnlyDictionary<string, object> sheet)
     {
         var found = new List<(string, string, IReadOnlyList<string>)>();
-        if (Rules == null || Rules.Features.Count == 0) return found;
+        if (Rules == null || Rules.Features.Count == 0 || Apart(sheet) != null) return found;
         foreach (var feature in ActiveFeatures(sheet).Where(f => !f.OnKind))
         {
             foreach (var add in feature.Adds)

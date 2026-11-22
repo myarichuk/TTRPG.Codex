@@ -155,7 +155,7 @@ public sealed partial class SheetRuleEngine
     /// changed since last time; later hand edits are left alone until the entry changes again.</summary>
     public void ApplyInherited(Dictionary<string, object> sheet)
     {
-        if (Rules == null) return;
+        if (Rules == null || Apart(sheet) != null) return;
         foreach (var rule in Rules.Inherits)
         {
             var id = YamlValues.GetString(sheet, rule.Field);

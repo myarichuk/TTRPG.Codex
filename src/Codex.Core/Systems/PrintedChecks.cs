@@ -11,7 +11,8 @@ internal static class PrintedChecks
     public static IEnumerable<string> Problems(SystemDefinition definition)
     {
         if (definition.SheetRules is not { Printed.Count: > 0 } rules) yield break;
-        var kindTargets = definition.SheetKinds.Count > 0 ? SheetConditions.KindTargets(definition) : new HashSet<string>();
+        // A printed number is the sheet-rules side's, so only the kinds the rules apply to (sheetRules.kinds) can claim a target of it.
+        var kindTargets = definition.SheetKinds.Count > 0 ? SheetConditions.KindTargets(definition, kind => SheetRuleEngine.AppliesTo(definition, kind)) : new HashSet<string>();
         for (var i = 0; i < rules.Printed.Count; i++)
         {
             var entry = rules.Printed[i];

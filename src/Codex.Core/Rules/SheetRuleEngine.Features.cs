@@ -238,6 +238,7 @@ public sealed partial class SheetRuleEngine
     /// are features; the sheet's own stored picks decide, so this is the one place that selection is made.</summary>
     internal IReadOnlyList<ActiveFeature> CollectFeatures(IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, ILinkedSheets? linked = null)
     {
+        if (Apart(sheet) is { } apart) return apart.CollectFeatures(sheet, collected, linked);
         var found = new List<ActiveFeature>();
         var copies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); // across every list: a feat in two lists is copy 1 and copy 2
         if (Rules is { Features.Count: > 0 } rules) CollectRuleFeatures(rules, sheet, collected, found, copies);
@@ -298,7 +299,7 @@ public sealed partial class SheetRuleEngine
     {
         var entries = new List<(SheetLinkDefinition, ContentEntry)>();
         if (source.Link == null || source.List == null || kind.Links.FirstOrDefault(l => l.Key == source.Link) is not { } link) return entries;
-        if (SheetLinks.Linked(kind, sheet, link.Key, linked) is not { } other) return entries;
+        if (SheetLinks.Linked(system, kind, sheet, link.Key, linked) is not { } other) return entries;
         var otherKind = system.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, link.Kind, StringComparison.OrdinalIgnoreCase));
         if (otherKind?.Lists.FirstOrDefault(l => l.Key == source.List) is not { Type: { } type }) return entries;
         foreach (var id in PickIds(other, source.List))
@@ -648,7 +649,7 @@ public sealed partial class SheetRuleEngine
 
     /// <summary>Where a modifier's target lands. A value the sheet has wins over a roll word of the same name; a roll target (<see cref="RollSiteTargets"/>)
     /// is read by the roll it names, where the bonus is worked out, so it is neither unknown nor a value of the sheet.</summary>
-    private TargetKind KindOf(string target) => KindOf(system, target);
+    private TargetKind KindOf(string target) => Rules == null ? TargetKind.Unknown : KindOf(system, target);
 
     /// <summary><see cref="KindOf(string)"/> for any system: <see cref="TargetKind.Unknown"/> without <c>sheetRules</c>. The loader asks it which of a
     /// condition's targets the sheet-rules side claims (docs/SHEET_CONDITIONS_DESIGN.md, "The hybrid rule").</summary>
@@ -946,7 +947,7 @@ public sealed partial class SheetRuleEngine
     /// when the feature does, while an entry the player picked themself stays).</summary>
     public void ApplyGranted(Dictionary<string, object> sheet)
     {
-        if (Rules == null) return;
+        if (Rules == null || Apart(sheet) != null) return;
         CleanUpGrantedRanks(sheet);
         var features = Rules.Features.Count == 0 ? Array.Empty<ActiveFeature>() : ActiveFeatures(sheet);
 

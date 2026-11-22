@@ -41,6 +41,11 @@ public static class SheetLayout
         return system.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, kind, StringComparison.OrdinalIgnoreCase)) ?? system.SheetKinds.FirstOrDefault();
     }
 
+    /// <summary>Whether an actor with this sheet is one of the party: its kind is not <c>partyMember: false</c> (a companion or familiar a player owns). Every
+    /// place that counts the party, or gives every player character something (a session's hero points), asks this; who may edit or see the actor does not.</summary>
+    public static bool IsPartyMember(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet) =>
+        system == null || system.SheetKinds.Count == 0 || KindOf(system, sheet)?.PartyMember != false;
+
     /// <summary>The kinds a new actor of a host role may be: those whose <c>role</c> is it, then those with none.</summary>
     public static IReadOnlyList<SheetKindDefinition> KindsFor(SystemDefinition system, string role) =>
         system.SheetKinds.Where(k => string.Equals(k.Role, role, StringComparison.OrdinalIgnoreCase))
