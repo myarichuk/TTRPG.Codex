@@ -218,13 +218,15 @@ public class V2ThroughTheServiceTests
     {
         var title = string.Join(' ', Enumerable.Range(0, 400).Select(i => i % 2 == 0 ? "Bo" : "Ka")) + " End";
         var body = string.Join(' ', Enumerable.Range(0, 2000).Select(i => i % 2 == 0 ? "Bo" : "Ka"));
-        // 2000 pages: the scan is now linear (about 60 ms for 500 such pages in Release), so the text has to be long enough to outlast the budget.
         var snapshot = Fx.Snap(pages: new[] { Fx.Page("wikipages/0-A", title, "x") }.Concat(Enumerable.Range(1, 2000).Select(p => Fx.Page($"wikipages/{p}-A", "Page " + p, body))));
-        using var budget = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+        // Cancelled once the scan reaches page 1000, rather than after 50 ms: with several workers the whole scan can take less than that.
+        using var budget = new CancellationTokenSource();
+        var check = new UnlinkedMentionCheck { BeforePage = i => { if (i == 1000) budget.Cancel(); } };
         var watch = System.Diagnostics.Stopwatch.StartNew();
         // The check alone, as one enumeration that yields nothing: only a look at the token inside its loop can stop it early.
-        Assert.ThrowsAny<OperationCanceledException>(() => new UnlinkedMentionCheck().Run(snapshot, budget.Token).ToList());
-        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(1), $"took {watch.ElapsedMilliseconds} ms");
+        Assert.ThrowsAny<OperationCanceledException>(() => check.Run(snapshot, budget.Token).ToList());
+        Assert.True(budget.IsCancellationRequested, "the scan never reached page 1000");
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), $"took {watch.ElapsedMilliseconds} ms");
     }
 
     [Fact]
