@@ -21,6 +21,25 @@ public static class E2EHelpers
     public static Task WaitForSplashGoneAsync(IPage page) =>
         page.Locator("#boot-splash").WaitForAsync(new() { State = WaitForSelectorState.Detached, Timeout = 60_000 });
 
+    /// <summary>Hovers <paramref name="target"/> once it has stopped moving. A page still filling in (a wiki page's notes, say) can
+    /// shift its text just after the pointer arrives; the pointer is then off the link before a preview's delay is up, and the card
+    /// rightly never opens. Its box must read the same twice, a quarter second apart, before the hover.</summary>
+    public static async Task HoverWhenStillAsync(ILocator target, LocatorHoverOptions? options = null)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(15);
+        var last = await target.BoundingBoxAsync();
+        while (DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(250);
+            var now = await target.BoundingBoxAsync();
+            if (now != null && last != null && now.X == last.X && now.Y == last.Y && now.Width == last.Width && now.Height == last.Height)
+                break;
+            last = now;
+        }
+
+        await target.HoverAsync(options);
+    }
+
     /// <summary>Opens the book editor's More menu and waits for <paramref name="item"/> in it. The menu opens on the server; a
     /// click that lands while the page is redrawn (straight after a language switch, say) is lost, so one more click is made
     /// if the menu has still not said it is open after a while. Not for closing the menu: that is a plain click.</summary>

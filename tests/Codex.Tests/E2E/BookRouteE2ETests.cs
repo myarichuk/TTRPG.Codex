@@ -883,7 +883,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         Assert.DoesNotContain("))", await dm.Locator(".cm-content").InnerTextAsync());
 
         // Hovering an entry's marker says whose it is.
-        await dm.Locator(".cm-line", new() { HasText = "{{entry,#e-" }).First.HoverAsync(new() { Position = new() { X = 30, Y = 5 } });
+        await E2EHelpers.HoverWhenStillAsync(dm.Locator(".cm-line", new() { HasText = "{{entry,#e-" }).First, new() { Position = new() { X = 30, Y = 5 } });
         await Assertions.Expect(dm.Locator(".cm-book-help")).ToContainTextAsync("Vera Holloway");
 
         // Off from the menu: nothing is offered, and it stays off after the page is loaded again.
