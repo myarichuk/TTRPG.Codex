@@ -89,6 +89,55 @@ Below it, tabs hold the attributes and skills, the picks (feats, spells and so o
 
 ![Regions and places, with Reveal and Edit buttons, plus places offered by packs.](shot:places)
 
+### Maps {#maps}
+
+A map is a picture, such as a region, a town or a dungeon floor, with your places marked on it. Any region or place can have maps. Players open the maps you show them and see the places they already know.
+
+**Put a map on a place.**
+
+1. Open [[ui:Page.Campaign.Section.Places]] and find the region or place. Press [[ui:Map.Add]] on it.
+2. Choose a picture: a JPEG, PNG or WebP, up to 25 MB and 67 million pixels. If it is bigger, the page says so and asks for a smaller one. [[ui:Map.Picture.Replace]] swaps it later.
+3. The map starts hidden from players. Show it when you are ready (see below).
+
+> [!WARNING]
+> Once a map is shown, players see the whole picture, not only the places they know. Upload a picture that is safe for the players to see, with no secret rooms, hidden names or notes on it.
+
+**Look around.** Zoom with + and −, or with Ctrl (Cmd on a Mac) and the mouse wheel. Press 0 to fit the picture to the screen. Move with the arrow keys or by dragging; on a phone, pinch to zoom. The side panel lists the places on the map: [[ui:Campaign.World.Reveal]], [[ui:Campaign.World.Edit]], [[ui:Map.Move]], [[ui:Map.Remove]] and [[ui:Campaign.World.OpenPage]] are on each row. [[ui:Map.Remove]] only takes the place off the map. The place stays.
+
+**Put a place on the map.** In the side panel, under [[ui:Map.Panel.NotOnMap]], press [[ui:Map.PlaceOnMap]] on a place. Then choose its shape:
+
+- **[[ui:Map.Placing.Pin]]:** click the map where it is.
+- **[[ui:Map.Placing.Area]]:** click each corner of the area. Finish by double-clicking, by clicking the first corner again, or with [[ui:Map.Placing.Finish]]. An area needs at least 3 corners.
+
+You can also place without a mouse. Move the cross-hair with the arrow keys (hold Shift to go ten times further). Press Enter to drop a pin. For an area, press Space at each corner and Enter to finish. Backspace takes the last corner back, and Escape stops.
+
+**Maps inside maps.** A place can have its own map. On the map of its region, pick the place and press [[ui:Map.OpenMap]]. A breadcrumb at the top leads back up.
+
+### Versions of a map {#maps-versions}
+
+The same place can need more than one picture: summer and winter, before and after a siege or a fire, the ground floor and the cellar. Each is a version of the map.
+
+1. On the map, press [[ui:Map.Version.Copy]].
+2. Give the new version a label, such as Winter, After the fire or Second floor. The copy keeps the picture and the places on it. It starts hidden from players.
+3. Use [[ui:Map.Picture.Replace]] to give it its own picture, and move the places that changed.
+
+The versions are listed under [[ui:Map.Versions]]. Pick one to open it. The open version can be [[ui:Map.Version.MakeCurrent]] (the one that opens first), [[ui:Map.Version.Rename]], [[ui:Map.Version.Show]] or [[ui:Map.Version.Hide]], or [[ui:Map.Version.Delete]]. Deleting a version removes its picture and where the places sit on it, but not the places. It asks first, and it cannot be undone. A place with only one map shows "map" instead of "version", with [[ui:Map.Single.Delete]] in place of the delete button.
+
+### What players see on a map {#maps-players}
+
+Players see a map only when all of this is true:
+
+- the map is shown to them,
+- it has a picture, and
+- they know the place it belongs to. For a region's own map, they know at least one place in the region.
+
+On it they see only the pins and areas of places they know. A place you have not revealed stays off their map, and so does its name. A player who opens a map you showed sees the whole picture, and a nested map appears with [[ui:Map.OpenMap]] once they know that place.
+
+To check, switch the map between [[ui:Map.View.Gm]] and [[ui:Map.View.Party]] under [[ui:Map.ViewAs]]. The players' view says why they cannot see a map yet.
+
+> [!NOTE]
+> Players do not get live updates yet. When you show a map or reveal a place, they see the change the next time they open the map.
+
 ### The wiki {#wiki}
 
 [[ui:Page.Campaign.Section.Wiki]] is a set of pages you write in plain text.
