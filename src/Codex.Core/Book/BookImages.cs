@@ -33,9 +33,14 @@ public static class BookImageSanitizer
 
     public const long MaxPixels = 50_000_000;
 
-    public static BookImageProblem TrySanitize(byte[] bytes, out BookImage? image)
+    public static BookImageProblem TrySanitize(byte[] bytes, out BookImage? image) => TrySanitize(bytes, MaxSide, MaxPixels, out image);
+
+    /// <summary>As <see cref="TrySanitize(byte[], out BookImage?)"/>, with other limits: a map page takes larger pictures than a book prints
+    /// (MAPS_DESIGN.md 9.3). Nothing is decoded either way, so the size is known before any decoder sees the file.</summary>
+    public static BookImageProblem TrySanitize(byte[] bytes, int maxSide, long maxPixels, out BookImage? image)
     {
         image = null;
+        var limits = (maxSide, maxPixels);
         if (bytes.Length < 12)
         {
             return BookImageProblem.Malformed;
@@ -43,9 +48,9 @@ public static class BookImageSanitizer
 
         try
         {
-            if (bytes[0] == 0xFF && bytes[1] == 0xD8) return Jpeg(bytes, out image);
-            if (bytes.AsSpan(0, 8).SequenceEqual(PngSignature)) return Png(bytes, out image);
-            if (Is(bytes, 0, "RIFF") && Is(bytes, 8, "WEBP")) return WebP(bytes, out image);
+            if (bytes[0] == 0xFF && bytes[1] == 0xD8) return Jpeg(bytes, limits, out image);
+            if (bytes.AsSpan(0, 8).SequenceEqual(PngSignature)) return Png(bytes, limits, out image);
+            if (Is(bytes, 0, "RIFF") && Is(bytes, 8, "WEBP")) return WebP(bytes, limits, out image);
         }
         catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or OverflowException)
         {
@@ -65,13 +70,13 @@ public static class BookImageSanitizer
         return true;
     }
 
-    private static BookImageProblem Size(long width, long height) =>
+    private static BookImageProblem Size(long width, long height, (int MaxSide, long MaxPixels) limits) =>
         width < 1 || height < 1 ? BookImageProblem.Malformed
-        : width > MaxSide || height > MaxSide || width * height > MaxPixels ? BookImageProblem.TooLarge
+        : width > limits.MaxSide || height > limits.MaxSide || width * height > limits.MaxPixels ? BookImageProblem.TooLarge
         : BookImageProblem.None;
 
     // JPEG: keep the structure and the colour (JFIF, an ICC profile, Adobe's colour transform), drop every other APPn and comment.
-    private static BookImageProblem Jpeg(byte[] b, out BookImage? image)
+    private static BookImageProblem Jpeg(byte[] b, (int MaxSide, long MaxPixels) limits, out BookImage? image)
     {
         image = null;
         var output = new MemoryStream(b.Length);
@@ -129,7 +134,7 @@ public static class BookImageSanitizer
                 // The scan: entropy-coded data up to the end of the file, copied as it is.
                 if (width == 0) return BookImageProblem.Malformed;
                 output.Write(b, at, b.Length - at);
-                var problem = Size(width, height);
+                var problem = Size(width, height, limits);
                 if (problem != BookImageProblem.None) return problem;
                 image = new BookImage(output.ToArray(), "image/jpeg", width, height);
                 return BookImageProblem.None;
@@ -143,7 +148,7 @@ public static class BookImageSanitizer
     };
 
     // PNG: an allow-list of chunks; text, EXIF, time and every unknown ancillary chunk go. Kept chunks are copied whole, CRC included.
-    private static BookImageProblem Png(byte[] b, out BookImage? image)
+    private static BookImageProblem Png(byte[] b, (int MaxSide, long MaxPixels) limits, out BookImage? image)
     {
         image = null;
         var output = new MemoryStream(b.Length);
@@ -171,7 +176,7 @@ public static class BookImageSanitizer
             if (type == "IEND")
             {
                 if (!sawData) return BookImageProblem.Malformed;
-                var problem = Size(width, height);
+                var problem = Size(width, height, limits);
                 if (problem != BookImageProblem.None) return problem;
                 image = new BookImage(output.ToArray(), "image/png", (int)width, (int)height);
                 return BookImageProblem.None;
@@ -182,7 +187,7 @@ public static class BookImageSanitizer
     }
 
     // WebP: drop the EXIF and XMP chunks, clear their flags in VP8X, and make the RIFF size say what is left.
-    private static BookImageProblem WebP(byte[] b, out BookImage? image)
+    private static BookImageProblem WebP(byte[] b, (int MaxSide, long MaxPixels) limits, out BookImage? image)
     {
         image = null;
         var declared = (long)b[4] | ((long)b[5] << 8) | ((long)b[6] << 16) | ((long)b[7] << 24);
@@ -238,7 +243,7 @@ public static class BookImageSanitizer
         }
 
         if (!sawImage) return BookImageProblem.Malformed;
-        var problem = Size(width, height);
+        var problem = Size(width, height, limits);
         if (problem != BookImageProblem.None) return problem;
         var result = output.ToArray();
         var riff = result.Length - 8;

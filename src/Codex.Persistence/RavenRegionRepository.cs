@@ -47,10 +47,13 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
         return region;
     }
 
+    /// <summary>Whether players may see a place at all: the one rule for the places list and for maps' markers (MAPS_DESIGN.md 9.4).</summary>
+    public static bool KnownToPlayers(LocationDocument location) => location.Visibility == ActorVisibility.Known;
+
     /// <summary>The places a player may see, each description without the blocks they may not read (see <see cref="SecretText"/>)
     /// and without a feature's notes.</summary>
     private static List<LocationDocument> ForPlayers(IEnumerable<LocationDocument> locations, IReadOnlySet<string> ownedActorIds) =>
-        locations.Where(l => l.Visibility == ActorVisibility.Known)
+        locations.Where(KnownToPlayers)
             .Select(l =>
             {
                 l.Description = string.IsNullOrEmpty(l.Description) ? l.Description : SecretText.ForPlayers(l.Description, ownedActorIds);
@@ -242,42 +245,57 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
             return false;
         }
 
-        using var session = dbService.Store.OpenAsyncSession();
-        var from = await session.LoadAsync<RegionDocument>(fromRegionId);
-        var to = await session.LoadAsync<RegionDocument>(toRegionId);
-        var place = from?.Locations.FirstOrDefault(l => l.Id == locationId);
-        if (from == null || to == null || place == null || from.CampaignId != access.CampaignId || to.CampaignId != access.CampaignId)
+        // Both regions and the maps that move or lose markers are saved together; a save that lands on any of them in between makes
+        // the move start again from a fresh load, so a marker placed meanwhile is neither lost nor left behind.
+        for (var attempt = 1; ; attempt++)
         {
-            return false;
-        }
+            using var session = dbService.Store.OpenAsyncSession();
+            session.Advanced.UseOptimisticConcurrency = true;
+            var from = await session.LoadAsync<RegionDocument>(fromRegionId);
+            var to = await session.LoadAsync<RegionDocument>(toRegionId);
+            var place = from?.Locations.FirstOrDefault(l => l.Id == locationId);
+            if (from == null || to == null || place == null || from.CampaignId != access.CampaignId || to.CampaignId != access.CampaignId)
+            {
+                return false;
+            }
 
-        if (newParentId != null && to.Locations.All(l => l.Id != newParentId))
-        {
-            return false;
-        }
+            if (newParentId != null && to.Locations.All(l => l.Id != newParentId))
+            {
+                return false;
+            }
 
-        // The place and everything inside it, parents first.
-        var moving = new List<LocationDocument> { place };
-        for (var i = 0; i < moving.Count; i++)
-        {
-            moving.AddRange(from.Locations.Where(l => l.ParentId == moving[i].Id && moving.All(m => m.Id != l.Id)));
-        }
+            // The place and everything inside it, parents first.
+            var moving = new List<LocationDocument> { place };
+            for (var i = 0; i < moving.Count; i++)
+            {
+                moving.AddRange(from.Locations.Where(l => l.ParentId == moving[i].Id && moving.All(m => m.Id != l.Id)));
+            }
 
-        if (moving.Any(l => l.HasArt))
-        {
-            return false;
-        }
+            if (moving.Any(l => l.HasArt))
+            {
+                return false;
+            }
 
-        place.ParentId = newParentId;
-        foreach (var l in moving)
-        {
-            from.Locations.Remove(l);
-            to.Locations.Add(l);
-        }
+            place.ParentId = newParentId;
+            foreach (var l in moving)
+            {
+                from.Locations.Remove(l);
+                to.Locations.Add(l);
+            }
 
-        from.UpdatedAt = to.UpdatedAt = DateTime.UtcNow;
-        await session.SaveChangesAsync();
-        return true;
+            // Their own maps go with them; their markers come off the maps left behind (MAPS_DESIGN.md 9.2).
+            await RavenMapRepository.MovePlacesAsync(session, fromRegionId, toRegionId, moving.Select(l => l.Id).ToHashSet(StringComparer.Ordinal));
+
+            from.UpdatedAt = to.UpdatedAt = DateTime.UtcNow;
+            try
+            {
+                await session.SaveChangesAsync();
+                return true;
+            }
+            catch (Raven.Client.Exceptions.ConcurrencyException) when (attempt < 8)
+            {
+            }
+        }
     }
 
     /// <summary>How long a deleted place's art is kept for Undo: well past the toast's twelve seconds.</summary>
@@ -350,7 +368,8 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
             return false;
         }
 
-        // The art of the region's places is stored on the region document and goes with it.
+        // The art of the region's places is stored on the region document and goes with it; its maps are their own documents.
+        await RavenMapRepository.DeleteForRegionAsync(session, regionId);
         session.Delete(region);
         await session.SaveChangesAsync();
         return true;
@@ -369,6 +388,8 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
             session.Delete(doc.Id);
         }
 
+        // A campaign's maps belong to its regions, so they go with them (B13 cascade).
+        await RavenMapRepository.DeleteForCampaignAsync(session, campaignId);
         await session.SaveChangesAsync();
     }
 }

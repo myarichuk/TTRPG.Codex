@@ -115,6 +115,8 @@ public class RavenMediaStore(RavenDbService dbService, StorageQuota? quota = nul
                 HomebrewEntryDocument brew => brew.CampaignId == access.CampaignId && role == CampaignRole.DM,
                 RegionDocument region => region.CampaignId == access.CampaignId && role == CampaignRole.DM,
                 WikiPageDocument page => page.CampaignId == access.CampaignId && role == CampaignRole.DM,
+                // A map's picture goes through IMapRepository.PutImageAsync, which checks its type, size and pixels; this is the same rule.
+                MapDocument map => map.CampaignId == access.CampaignId && role == CampaignRole.DM,
                 _ => false
             });
 

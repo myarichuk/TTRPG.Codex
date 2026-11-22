@@ -330,6 +330,12 @@ MapDocument
     leave out a building that's gone, or mark it with an area of its own.
   - **Shown to players** is off for a version the party mustn't see yet, such as the town after the fire before the fire happens.
     Players get only versions that are shown and, of those, the current one first.
+  - **New maps and copies start hidden from players.** Players see the whole picture of a shown map (there are no covered parts yet,
+    9.4), so uploading a GM's picture must never publish it. Show to players is the GM's own step, and the page says what it shows.
+    A map with no picture is never offered to players, by its pin, its Map button or the version list.
+  - **Add map on a place that already has a map with no picture opens that map** instead of making another, so pressing it twice
+    makes one map. A guard document per owner (`MapOwnerGuards/{campaign}/{place or region}`), saved with each new map under optimistic
+    concurrency, keeps two Add map presses at once from making two maps, or two current ones.
   - Switching the current version is the GM's move at the table: "the siege begins" switches the map for everyone (live, §3).
 - **Coordinates are in the image's own pixels.** A replacement image of a different size asks the GM to keep markers in proportion or
   leave them where they are.

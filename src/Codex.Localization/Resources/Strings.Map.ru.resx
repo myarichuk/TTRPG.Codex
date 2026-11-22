@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Map.Open" xml:space="preserve"><value>Карта</value></data>
+  <data name="Map.OpenLabel" xml:space="preserve"><value>Открыть карту: {0}</value></data>
+  <data name="Map.OpenMap" xml:space="preserve"><value>Открыть карту</value></data>
+  <data name="Map.Add" xml:space="preserve"><value>Добавить карту</value></data>
+  <data name="Map.AddLabel" xml:space="preserve"><value>Добавить карту: {0}</value></data>
+  <data name="Map.AddFailed" xml:space="preserve"><value>Не удалось добавить карту. Возможно, место удалено; обновите страницу и попробуйте ещё раз.</value></data>
+  <data name="Map.Region.Open" xml:space="preserve"><value>Карта региона</value></data>
+  <data name="Map.Region.OpenLabel" xml:space="preserve"><value>Открыть карту региона {0}</value></data>
+  <data name="Map.Region.AddLabel" xml:space="preserve"><value>Добавить карту региона {0}</value></data>
+  <data name="Map.NotFound.Title" xml:space="preserve"><value>Этой карты здесь нет</value></data>
+  <data name="Map.NotFound.Body" xml:space="preserve"><value>Её удалили, или её пока не показывают игрокам.</value></data>
+  <data name="Map.NotFound.Body.Gm" xml:space="preserve"><value>Возможно, её удалили.</value></data>
+  <data name="Map.Subtitle.WaitsForPlace" xml:space="preserve"><value>Игроки увидят эту карту, когда узнают место «{0}».</value></data>
+  <data name="Map.Subtitle.WaitsForRegion" xml:space="preserve"><value>Игроки увидят эту карту, когда узнают хотя бы одно место в регионе {0}.</value></data>
+  <data name="Map.BackToPlaces" xml:space="preserve"><value>Назад к местам</value></data>
+  <data name="Map.Breadcrumb" xml:space="preserve"><value>Где находится эта карта</value></data>
+  <data name="Map.Places" xml:space="preserve"><value>Места</value></data>
+  <data name="Map.Subtitle.Shown" xml:space="preserve"><value>Игроки видят всю картинку и известные им места на ней.</value></data>
+  <data name="Map.Subtitle.HiddenFromPlayers" xml:space="preserve"><value>Эта версия скрыта от игроков. Когда вы её покажете, они увидят всю картинку.</value></data>
+  <data name="Map.ViewAs" xml:space="preserve"><value>Показать карту как</value></data>
+  <data name="Map.View.Gm" xml:space="preserve"><value>Мастер</value></data>
+  <data name="Map.View.Party" xml:space="preserve"><value>Игроки</value></data>
+  <data name="Map.Party.Hidden" xml:space="preserve"><value>Игроки пока этого не видят: у карты нет картинки, она от них скрыта, или они ещё не знают место «{0}».</value></data>
+  <data name="Map.Alt" xml:space="preserve"><value>Карта: {0}, место: {1}</value></data>
+  <data name="Map.AltRegion" xml:space="preserve"><value>Карта: {0}, регион {1}</value></data>
+  <data name="Map.Toolbar" xml:space="preserve"><value>Инструменты карты</value></data>
+  <data name="Map.ZoomIn" xml:space="preserve"><value>Приблизить</value></data>
+  <data name="Map.ZoomOut" xml:space="preserve"><value>Отдалить</value></data>
+  <data name="Map.Fit" xml:space="preserve"><value>Вписать в экран</value></data>
+  <data name="Map.KeysHint" xml:space="preserve"><value>Масштаб — клавиши + и − или Ctrl и колесо мыши, сдвиг — стрелки, 0 вписывает картинку в экран.</value></data>
+  <data name="Map.Markers" xml:space="preserve"><value>Места на карте</value></data>
+  <data name="Map.Marker.Hidden" xml:space="preserve"><value>{0}, скрыто</value></data>
+  <data name="Map.Picture.None.Gm" xml:space="preserve"><value>У этой карты пока нет картинки. Выберите её, чтобы отметить на ней места.</value></data>
+  <data name="Map.Picture.None.Player" xml:space="preserve"><value>У этой карты пока нет картинки.</value></data>
+  <data name="Map.Picture.Choose" xml:space="preserve"><value>Картинка</value></data>
+  <data name="Map.Picture.Replace" xml:space="preserve"><value>Заменить картинку</value></data>
+  <data name="Map.Picture.Hint" xml:space="preserve"><value>JPEG, PNG или WebP, не больше 25 МБ. Когда карту покажут, игроки увидят всю картинку, поэтому не оставляйте на ней секретов.</value></data>
+  <data name="Map.Picture.Uploading" xml:space="preserve"><value>Загружаем картинку…</value></data>
+  <data name="Map.Picture.Saved" xml:space="preserve"><value>Картинка сохранена.</value></data>
+  <data name="Map.Picture.Problem.TooManyBytes" xml:space="preserve"><value>Картинка больше 25 МБ. Сохраните её меньше или в JPEG либо WebP и попробуйте ещё раз.</value></data>
+  <data name="Map.Picture.Problem.TooManyPixels" xml:space="preserve"><value>В картинке больше 67 миллионов пикселей. Уменьшите её и попробуйте ещё раз.</value></data>
+  <data name="Map.Picture.Problem.Unsupported" xml:space="preserve"><value>Этот файл — не картинка JPEG, PNG или WebP.</value></data>
+  <data name="Map.Picture.Problem.Malformed" xml:space="preserve"><value>Картинка повреждена, и её не прочитать. Попробуйте сохранить её заново.</value></data>
+  <data name="Map.Picture.Problem.NotAllowed" xml:space="preserve"><value>Менять картинку карты может только мастер.</value></data>
+  <data name="Map.Picture.Problem.Failed" xml:space="preserve"><value>Не удалось загрузить картинку: {0}</value></data>
+  <data name="Map.Panel" xml:space="preserve"><value>Места этой карты</value></data>
+  <data name="Map.Panel.OnMap" xml:space="preserve"><value>На карте</value></data>
+  <data name="Map.Panel.NotOnMap" xml:space="preserve"><value>Ещё не на карте</value></data>
+  <data name="Map.Panel.NoneOnMap.Gm" xml:space="preserve"><value>На этой карте пока нет мест. Выберите место ниже и нажмите «На карту».</value></data>
+  <data name="Map.Panel.NoneOnMap.Player" xml:space="preserve"><value>Вы пока не нашли мест на этой карте.</value></data>
+  <data name="Map.Panel.AllPlaced" xml:space="preserve"><value>Все места отсюда уже на карте.</value></data>
+  <data name="Map.Panel.NoPlacesUnder" xml:space="preserve"><value>Внутри места «{0}» пока ничего нет. Добавьте места на странице «Места».</value></data>
+  <data name="Map.PlaceOnMap" xml:space="preserve"><value>На карту</value></data>
+  <data name="Map.PlaceOnMapLabel" xml:space="preserve"><value>Отметить на карте: {0}</value></data>
+  <data name="Map.Move" xml:space="preserve"><value>Переместить на карте</value></data>
+  <data name="Map.MoveLabel" xml:space="preserve"><value>Переместить на карте: {0}</value></data>
+  <data name="Map.Remove" xml:space="preserve"><value>Убрать с карты</value></data>
+  <data name="Map.RemoveLabel" xml:space="preserve"><value>Убрать с карты: {0}</value></data>
+  <data name="Map.Removed" xml:space="preserve"><value>«{0}» убрано с карты. Само место осталось.</value></data>
+  <data name="Map.Placed" xml:space="preserve"><value>«{0}» теперь на карте.</value></data>
+  <data name="Map.PlaceFailed" xml:space="preserve"><value>Не удалось отметить на карте. Обновите страницу и попробуйте ещё раз.</value></data>
+  <data name="Map.Failed" xml:space="preserve"><value>Не получилось. Обновите страницу и попробуйте ещё раз.</value></data>
+  <data name="Map.Placing.Title" xml:space="preserve"><value>Отмечаем: {0}</value></data>
+  <data name="Map.Placing.Shape" xml:space="preserve"><value>Форма</value></data>
+  <data name="Map.Placing.Pin" xml:space="preserve"><value>Точка</value></data>
+  <data name="Map.Placing.Area" xml:space="preserve"><value>Область</value></data>
+  <data name="Map.Placing.PinHelp" xml:space="preserve"><value>Щёлкните по карте. Или двигайте перекрестье стрелками (с Shift — дальше) и нажмите Enter. Escape — отмена.</value></data>
+  <data name="Map.Placing.AreaHelp" xml:space="preserve"><value>Щёлкните по каждому углу, а чтобы закончить, щёлкните дважды или щёлкните по первому углу. Или двигайте перекрестье стрелками, нажимайте пробел на каждом углу и Enter, чтобы закончить. Backspace — убрать угол, Escape — отмена.</value></data>
+  <data name="Map.Placing.Finish" xml:space="preserve"><value>Готово</value></data>
+  <data name="Map.Placing.Corners" xml:space="preserve"><value>{0, plural, one{# угол} few{# угла} many{# углов} other{# угла}}</value></data>
+  <data name="Map.Placing.NeedCorners" xml:space="preserve"><value>У области должно быть не меньше 3 углов.</value></data>
+  <data name="Map.Placing.Cancelled" xml:space="preserve"><value>Отметка отменена.</value></data>
+  <data name="Map.Placing.Cross" xml:space="preserve"><value>Перекрестье: {0}% по ширине, {1}% по высоте</value></data>
+  <data name="Map.Versions" xml:space="preserve"><value>Версии</value></data>
+  <data name="Map.Version.Numbered" xml:space="preserve"><value>Версия {0}</value></data>
+  <data name="Map.Version.Current" xml:space="preserve"><value>текущая</value></data>
+  <data name="Map.Version.HiddenFromPlayers" xml:space="preserve"><value>скрыта от игроков</value></data>
+  <data name="Map.Version.ThisOne" xml:space="preserve"><value>Эта версия</value></data>
+  <data name="Map.Version.MakeCurrent" xml:space="preserve"><value>Сделать текущей</value></data>
+  <data name="Map.Version.MadeCurrent" xml:space="preserve"><value>Теперь эта версия открывается первой.</value></data>
+  <data name="Map.Version.Show" xml:space="preserve"><value>Показать игрокам</value></data>
+  <data name="Map.Version.Hide" xml:space="preserve"><value>Скрыть от игроков</value></data>
+  <data name="Map.Version.Shown" xml:space="preserve"><value>Теперь игроки видят эту версию.</value></data>
+  <data name="Map.Version.Hidden" xml:space="preserve"><value>Теперь эта версия скрыта от игроков.</value></data>
+  <data name="Map.Version.Rename" xml:space="preserve"><value>Переименовать</value></data>
+  <data name="Map.Version.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Map.Version.Label" xml:space="preserve"><value>Подпись версии</value></data>
+  <data name="Map.Version.LabelHint" xml:space="preserve"><value>Какая это версия, например «Лето». Оставьте пустым, если у места одна карта.</value></data>
+  <data name="Map.Version.Saved" xml:space="preserve"><value>Карта сохранена.</value></data>
+  <data name="Map.Version.Copy" xml:space="preserve"><value>Копировать как новую версию</value></data>
+  <data name="Map.Version.CopyLabel" xml:space="preserve"><value>Подпись новой версии</value></data>
+  <data name="Map.Version.CopyHint" xml:space="preserve"><value>Например «Зима», «После пожара» или «Второй этаж». В копии останутся картинка и места на ней, и сначала она скрыта от игроков.</value></data>
+  <data name="Map.Version.Copied" xml:space="preserve"><value>Скопировано как «{0}». Копия скрыта от игроков, пока вы её не покажете.</value></data>
+  <data name="Map.Version.Delete" xml:space="preserve"><value>Удалить версию</value></data>
+  <data name="Map.Version.DeleteTitle" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Map.Version.DeleteBody" xml:space="preserve"><value>Вместе с ней удалятся картинка и отметки мест на ней. Сами места останутся. Это нельзя отменить.</value></data>
+  <data name="Map.Version.Deleted" xml:space="preserve"><value>«{0}» удалена.</value></data>
+  <data name="Map.Viewport" xml:space="preserve"><value>Просмотр карты</value></data>
+  <data name="Map.Selected" xml:space="preserve"><value>Выбрано: {0}.</value></data>
+  <data name="Map.Selected.Hidden" xml:space="preserve"><value>Выбрано: {0}. Это место скрыто от игроков.</value></data>
+  <data name="Map.Subtitle.NoPicture" xml:space="preserve"><value>Игроки увидят эту карту, когда у неё будет картинка.</value></data>
+  <data name="Map.Single.ThisOne" xml:space="preserve"><value>Эта карта</value></data>
+  <data name="Map.Single.Delete" xml:space="preserve"><value>Удалить карту</value></data>
+  <data name="Map.Single.HiddenFromPlayers" xml:space="preserve"><value>Эта карта скрыта от игроков. Когда вы её покажете, они увидят всю картинку.</value></data>
+  <data name="Map.Single.Shown" xml:space="preserve"><value>Теперь игроки видят эту карту.</value></data>
+  <data name="Map.Single.Hidden" xml:space="preserve"><value>Теперь эта карта скрыта от игроков.</value></data>
+</root>

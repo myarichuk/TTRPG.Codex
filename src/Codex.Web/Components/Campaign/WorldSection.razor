@@ -14,8 +14,23 @@
 @inject PlaceWikiSync PlaceSync
 @inject ITemplateRepository TemplateRepo
 @inject NavigationManager Nav
+@inject IMapRepository MapRepo
 @implements IDisposable
 
+@if (MapId != null)
+{
+    @* A map of a place (MAPS_DESIGN.md 9.5): it lists the places as this page loaded them, and its Edit opens this page's editor. *@
+    @if (regions == null)
+    {
+        <LoadingSkeleton />
+    }
+    else
+    {
+        <MapView MapId="@MapId" Regions="regions" Pages="wikiPages" Mentions="noteMentions" OnEdit="EditFromMapAsync" OnPlacesChanged="LoadAsync" FeatureNotes="FeatureNotesOf" />
+    }
+}
+else
+{
 <div class="page-header mb-3">
     <div>
         <h2 class="mb-0">@L["Campaign.World.Title"]</h2>
@@ -65,6 +80,7 @@ else
                             @if (Ctx.IsDm)
                             {
                                 <div class="d-flex gap-2">
+                                    @RegionMapButton(region)
                                     <label for="region-kind-@region.Id" class="visually-hidden">@L["Campaign.Regions.KindOf", region.Name]</label>
                                     <select id="region-kind-@region.Id" class="field-select field-sm" value="@region.Kind" @onchange="e => SetRegionKindAsync(region, e.Value)" data-testid="region-kind-select">
                                         @foreach (var kind in Enum.GetValues<RegionKind>())
@@ -75,6 +91,10 @@ else
                                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="() => StartRename(region)" aria-label="@L["Campaign.World.RenameLabel", region.Name]" data-testid="rename-region">@L["Campaign.World.Rename"]</CodexButton>
                                     <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Class="cx-blood" Icon="trash-2" Label="@L["Campaign.World.DeleteRegionLabel", region.Name]" OnClick="() => DeleteRegionAsync(region)" data-testid="delete-region" />
                                 </div>
+                            }
+                            else if (MapOf(region.Id, null) != null)
+                            {
+                                @RegionMapButton(region)
                             }
                         }
                     </div>
@@ -132,9 +152,23 @@ else
                                         </details>
                                     }
                                 </div>
+                                @if (!Ctx.IsDm && MapOf(region.Id, location.Id) is { } playerMap)
+                                {
+                                    <div class="row-actions">
+                                        <a class="cx-btn cx-rune cx-sm" href="@MapHref(playerMap)" aria-label="@L["Map.OpenLabel", location.Name]" title="@L["Map.Open"]" data-testid="open-place-map"><LucideIcon IconName="map" Size="14" /></a>
+                                    </div>
+                                }
                                 @if (Ctx.IsDm)
                                 {
                                     <div class="row-actions">
+                                        @if (MapOf(region.Id, location.Id) is { } placeMap)
+                                        {
+                                            <a class="cx-btn cx-rune cx-sm" href="@MapHref(placeMap)" aria-label="@L["Map.OpenLabel", location.Name]" title="@L["Map.Open"]" data-testid="open-place-map"><LucideIcon IconName="map" Size="14" /></a>
+                                        }
+                                        else
+                                        {
+                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="image-plus" Label="@L["Map.AddLabel", location.Name]" title="@L["Map.Add"]" Busy="@AddingMap(region, location)" OnClick="() => AddMapAsync(region, location)" data-testid="add-place-map" />
+                                        }
                                         @if (PageOf(location) == null)
                                         {
                                             <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="plus" Label="@L["Campaign.World.CreatePageLabel", location.Name]" title="@L["Campaign.World.CreatePage"]" OnClick="() => CreatePageAsync(region, location)" data-testid="create-place-page" />
@@ -221,6 +255,7 @@ else
             </div>
         }
     </div>
+}
 }
 
 @if (Ctx.IsDm)
@@ -381,6 +416,65 @@ else
 @code {
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
 
+    /// <summary>The map open over the places (<c>world/map/{id}</c>), or null for the list.</summary>
+    [Parameter] public string? MapId { get; set; }
+
+    // ---- Maps (MAPS_DESIGN.md 9.5): the one each place's Map button opens, as the caller may see it. ----
+
+    // "regionId|locationId" (empty for the region's own map) to that owner's current version for this caller.
+    private Dictionary<string, MapDocument> currentMaps = new();
+
+    private static string MapKey(string regionId, string? locationId) => $"{regionId}|{locationId}";
+
+    private MapDocument? MapOf(string regionId, string? locationId) => currentMaps.GetValueOrDefault(MapKey(regionId, locationId));
+
+    private string MapHref(MapDocument map) => $"{Ctx.BasePath}/world/map/{Uri.EscapeDataString(map.Id)}";
+
+    // One query for the whole campaign. Each owner's current version comes first; the repository gives a player only maps with a picture.
+    private async Task LoadMapsAsync()
+    {
+        var maps = new Dictionary<string, MapDocument>();
+        foreach (var map in await MapRepo.ListForCampaignAsync(Ctx.Access)) maps.TryAdd(MapKey(map.RegionId, map.LocationId), map);
+        currentMaps = maps;
+    }
+
+    // The owner whose map is being made ("regionId|locationId"): its button is busy, and a second press does nothing.
+    private string? addingMap;
+
+    /// <summary>Add map (GM): makes the map, then opens it, where the page asks for its picture.</summary>
+    private async Task AddMapAsync(RegionDocument region, LocationDocument? location)
+    {
+        if (addingMap != null) return;
+        addingMap = MapKey(region.Id, location?.Id);
+        try
+        {
+            if (await MapRepo.CreateAsync(region.Id, location?.Id, null, null, Ctx.Access) is { } map) Nav.NavigateTo(MapHref(map));
+            else Ctx.Notify(Flash.Error(L["Map.AddFailed"]));
+        }
+        finally
+        {
+            addingMap = null;
+        }
+    }
+
+    private bool AddingMap(RegionDocument region, LocationDocument? location) => addingMap == MapKey(region.Id, location?.Id);
+
+    private RenderFragment RegionMapButton(RegionDocument region) => MapOf(region.Id, null) is { } map
+        ? @<a class="cx-btn cx-etched cx-sm" href="@MapHref(map)" aria-label="@L["Map.Region.OpenLabel", region.Name]" data-testid="open-region-map"><LucideIcon IconName="map" Size="14" /> @L["Map.Region.Open"]</a>
+        : @<CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="image-plus" Busy="@AddingMap(region, null)" OnClick="() => AddMapAsync(region, null)" aria-label="@L["Map.Region.AddLabel", region.Name]" data-testid="add-region-map">@L["Map.Add"]</CodexButton>;
+
+    /// <summary>The map's Edit: the usual place editor, over the map.</summary>
+    private async Task EditFromMapAsync(LocationDocument location)
+    {
+        var region = regions?.FirstOrDefault(r => r.Locations.Any(l => l.Id == location.Id));
+        var listed = region?.Locations.First(l => l.Id == location.Id);
+        if (region != null && listed != null) await EditLocationAsync(region, listed);
+    }
+
+    private RenderFragment<LocationDocument> FeatureNotesOf => location => @<PlaceFeatureNotes Feature="location.Feature!" Creature="@CreatureOf(location.Feature!)"
+        CreatureHref="@(CreatureOf(location.Feature!) is { } creature ? $"{Ctx.BasePath}/actors/{creature.Id}" : null)"
+        HazardName="@HazardNameOf(location.Feature!)" HazardHref="@HazardHrefOf(location.Feature!)" />;
+
     private RegionDocument? editingRegion;
     private LocationDocument? editingLocation;
     private string? locationError;
@@ -476,6 +570,7 @@ else
             : Array.Empty<LibraryItem>();
 
         packLocations = Ctx.IsDm ? Registry.GetLocationsBySystem(Ctx.Campaign.SystemId).OrderBy(l => l.Name).ToList() : new List<ILocationDefinition>();
+        await LoadMapsAsync();
     }
 
     private WikiPageDocument? PageOf(LocationDocument location) =>

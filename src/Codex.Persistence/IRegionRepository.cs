@@ -46,16 +46,17 @@ public interface IRegionRepository
     /// <summary>Moves a place and every place inside it from one region to another, the place itself going inside
     /// <paramref name="newParentId"/> (a place of the destination; null: the top of it), in one stored change. DM only. False when
     /// either region is outside the campaign, the place or the new parent is not where it should be, or a place being moved has art
-    /// (art is stored on its region and does not travel).</summary>
+    /// (art is stored on its region and does not travel). The moving places' own maps go with them; their markers come off the maps
+    /// left in the old region (MAPS_DESIGN.md 9.2).</summary>
     Task<bool> MoveLocationAsync(string fromRegionId, string toRegionId, string locationId, string? newParentId, CampaignAccess access);
 
     /// <summary>Puts a removed place back, and the places that moved out of it back inside it (those still where the removal put
     /// them). DM only.</summary>
     Task<bool> RestoreLocationAsync(string regionId, RemovedLocation removed, CampaignAccess access);
 
-    /// <summary>Deletes a region with every place in it and their art (U7). DM only; false for a region outside the campaign.</summary>
+    /// <summary>Deletes a region with every place in it, their art and the region's maps (U7). DM only; false for a region outside the campaign.</summary>
     Task<bool> DeleteAsync(string regionId, CampaignAccess access);
 
-    /// <summary>Deletes every region belonging to a campaign (cascade delete).</summary>
+    /// <summary>Deletes every region belonging to a campaign, and every map of the campaign (cascade delete).</summary>
     Task DeleteAllForCampaignAsync(string campaignId);
 }
