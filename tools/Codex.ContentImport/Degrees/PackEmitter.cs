@@ -111,6 +111,11 @@ public static class PackEmitter
                         {
                             properties.Append("        adds: [").Append(string.Join(", ", f.Adds)).Append("]\n");
                         }
+
+                        if (f.Uses != null)
+                        {
+                            properties.Append("        uses: ").Append(f.Uses).Append('\n');
+                        }
                     }
                 }
 

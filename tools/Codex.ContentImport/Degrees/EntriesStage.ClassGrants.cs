@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Codex.ContentImport.Degrees;
@@ -42,6 +43,58 @@ public static partial class EntriesStage
         }
 
         return adds;
+    }
+
+    private static readonly Regex AdditionalPerDay = new(@"\bYou gain (?<n>\d+) additional (?<what>[a-z]+(?: [a-z]+)?) each day\b", RegexOptions.CultureInvariant);
+
+    private static readonly Regex AdditionalStep = new(@"\b[Aa]t (?<l>\d+)(?:st|nd|rd|th) level, the (?:total )?number of additional (?<what>[a-z]+(?: [a-z]+)?) increases to (?<n>\d+)\b", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// The counter a class feature's text gives: <c>You gain N additional things each day</c>, then <c>At Lth level, the number of additional things increases to M</c> (one or more such steps).
+    /// The result is the flow-map YAML of the feature's <c>uses</c>: a maximum that steps up at those levels, refilled at the daily preparations (the text says the things come back each day).
+    /// A text with no count, no step, steps that do not climb in both level and number, or paragraphs that give different counts (a choice between two otherwise equal lines gives the same one) makes none.
+    /// The key is made from <paramref name="featureName"/> as the parser reads it, before any redaction rename: only class features are read today, so a renamed row would keep the old word in its key.
+    /// </summary>
+    public static string? DailyCounter(string featureName, string text)
+    {
+        var flat = text.Replace('\n', ' ');
+        var shapes = new HashSet<string>(StringComparer.Ordinal);
+        string? formula = null;
+        foreach (Match start in AdditionalPerDay.Matches(flat))
+        {
+            var what = start.Groups["what"].Value;
+            var after = flat[(start.Index + start.Length)..];
+            var next = AdditionalPerDay.Match(after);
+            var scope = next.Success ? after[..next.Index] : after;
+            var steps = AdditionalStep.Matches(scope)
+                .Where(m => what == m.Groups["what"].Value || what.EndsWith(" " + m.Groups["what"].Value, StringComparison.Ordinal))
+                .Select(m => (Level: int.Parse(m.Groups["l"].Value, CultureInfo.InvariantCulture), Count: int.Parse(m.Groups["n"].Value, CultureInfo.InvariantCulture)))
+                .ToList();
+            var baseCount = int.Parse(start.Groups["n"].Value, CultureInfo.InvariantCulture);
+            var climbs = true;
+            var (previousLevel, previousCount) = (1, baseCount);
+            foreach (var (level, count) in steps)
+            {
+                climbs &= level > previousLevel && count > previousCount;
+                (previousLevel, previousCount) = (level, count);
+            }
+
+            if (steps.Count == 0 || !climbs)
+            {
+                return null;
+            }
+
+            formula = string.Concat(steps.AsEnumerable().Reverse().Select(s => $"level >= {s.Level} ? {s.Count} : ")) + baseCount.ToString(CultureInfo.InvariantCulture);
+            shapes.Add(formula);
+        }
+
+        if (shapes.Count != 1 || formula == null)
+        {
+            return null;
+        }
+
+        var key = Regex.Replace(Slug(featureName), @"-([a-z0-9])", m => m.Groups[1].Value.ToUpperInvariant(), RegexOptions.CultureInvariant);
+        return "{ key: " + key + ", max: \"" + formula + "\", recovers: [{ on: dailyPrep }] }";
     }
 
     /// <summary>
