@@ -193,6 +193,10 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
     /// <summary>A scan that uses several workers from <paramref name="parallelFrom"/> characters of page text on (tests set it low to run that path on small worlds).</summary>
     internal UnlinkedMentionCheck(long parallelFrom) => this.parallelFrom = parallelFrom;
 
+    /// <summary>Called with a page's place in the snapshot just before it is scanned (tests cancel from here, so the scan is stopped mid-way
+    /// on any machine, however fast).</summary>
+    internal Action<int>? BeforePage { get; init; }
+
     public string Name => CheckNames.UnlinkedMention;
 
     public IEnumerable<Issue> Run(WorldSnapshot s) => Run(s, CancellationToken.None);
@@ -227,7 +231,11 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
                     new ParallelOptions { CancellationToken = cancel, MaxDegreeOfParallelism = workers }, () => new Scratch(),
                     (range, _, scratch) =>
                     {
-                        for (var i = range.Item1; i < range.Item2; i++) found[i] = Scan(pages[i], names, scratch, cancel);
+                        for (var i = range.Item1; i < range.Item2; i++)
+                        {
+                            BeforePage?.Invoke(i);
+                            found[i] = Scan(pages[i], names, scratch, cancel);
+                        }
                         return scratch;
                     }, _ => { });
             }
@@ -247,9 +255,10 @@ public sealed class UnlinkedMentionCheck : IConsistencyCheck
         }
 
         var one = new Scratch();
-        foreach (var page in pages)
+        for (var i = 0; i < pages.Count; i++)
         {
-            foreach (var issue in Scan(page, names, one, cancel)) yield return issue;
+            BeforePage?.Invoke(i);
+            foreach (var issue in Scan(pages[i], names, one, cancel)) yield return issue;
         }
     }
 

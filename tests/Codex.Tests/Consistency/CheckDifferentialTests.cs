@@ -56,14 +56,17 @@ public class CheckDifferentialTests
         var body = string.Join(' ', Enumerable.Range(0, 2000).Select(i => i % 2 == 0 ? "Bo" : "Ka")) + " " + title;
         var snapshot = Fx.Snap(pages: new[] { Fx.Page("wikipages/0-A", title, "x") }.Concat(Enumerable.Range(1, 2000).Select(p => Fx.Page($"wikipages/{p}-A", "Page " + p, body))));
         var yielded = 0;
-        using var budget = new CancellationTokenSource(TimeSpan.FromMilliseconds(30));
+        // Cancelled once a worker reaches page 1000, rather than after a time: a 30 ms budget let a fast runner finish the whole scan first.
+        using var budget = new CancellationTokenSource();
+        var check = new UnlinkedMentionCheck(parallelFrom: 0) { BeforePage = i => { if (i == 1000) budget.Cancel(); } };
         var watch = System.Diagnostics.Stopwatch.StartNew();
         // An OperationCanceledException itself (never an AggregateException), before any issue is handed out.
         Assert.ThrowsAny<OperationCanceledException>(() =>
         {
-            foreach (var _ in new UnlinkedMentionCheck(parallelFrom: 0).Run(snapshot, budget.Token)) yielded++;
+            foreach (var _ in check.Run(snapshot, budget.Token)) yielded++;
         });
-        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(2), $"took {watch.ElapsedMilliseconds} ms");
+        Assert.True(budget.IsCancellationRequested, "the scan never reached page 1000");
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), $"took {watch.ElapsedMilliseconds} ms");
         Assert.Equal(0, yielded);
         using var cancelled = new CancellationTokenSource();
         cancelled.Cancel();
