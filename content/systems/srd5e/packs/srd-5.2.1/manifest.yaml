@@ -21,4 +21,5 @@ license:
   - "The class feature tables' numbers were read from the Markdown transcription at https://github.com/downfallx/dnd-5e-srd-markdown (CC-BY-4.0): numbers only, no rules text."
   - This pack is “5E compatible”. It is not affiliated with or endorsed by Wizards of the Coast.
 kind: rules
+activeByDefault: true
 isTranslation: false

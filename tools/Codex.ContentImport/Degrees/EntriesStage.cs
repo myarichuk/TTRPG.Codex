@@ -175,6 +175,9 @@ public sealed class ClassFeature
     /// <summary>Grants to ranked lists, each one the flow-map YAML of an <c>adds</c> row.</summary>
     public List<string> Adds { get; set; } = new();
 
+    /// <summary>The flow-map YAML of the feature's <c>uses</c> counter when its text gives a count that grows by level and comes back each day (<see cref="DailyCounter"/>), else null.</summary>
+    public string? Uses { get; set; }
+
     /// <summary>When a row says the feature's heading in other words (<c>featureNames</c>): the book's own heading, whose words are reserved names (with their plurals) for the denylist.</summary>
     public string? BookName { get; set; }
 
@@ -182,7 +185,7 @@ public sealed class ClassFeature
 }
 
 /// <summary>A feature row after redaction: what the pack file holds.</summary>
-public sealed record FinalFeature(string Name, int Level, string Description, List<string> Adds);
+public sealed record FinalFeature(string Name, int Level, string Description, List<string> Adds, string? Uses = null);
 
 /// <summary>
 /// Stage 4. Reads the blocks of each taken range into entries: the header by the entry-header font, then the trait line, labelled fields and degree sections.

@@ -993,6 +993,7 @@ public static partial class EntriesStage
                 }
 
                 feature.BookName = plain == null ? null : f.Name;
+                feature.Uses = DailyCounter(feature.Name, feature.Render());
                 try
                 {
                     feature.Adds = SentenceGrants(feature.Render(), row, out _);

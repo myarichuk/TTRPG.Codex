@@ -133,7 +133,7 @@ public class EditorPolishE2ETests : IClassFixture<AppFixture>
 
         // And on the page: hovering the mention shows the card.
         await E2EHelpers.GotoInteractiveAsync(player, $"/campaigns/{campaignId}/wiki/saltmere");
-        await player.GetByTestId("wiki-body").Locator("a.mention").HoverAsync();
+        await E2EHelpers.HoverWhenStillAsync(player.GetByTestId("wiki-body").Locator("a.mention"));
         await Assertions.Expect(player.GetByTestId("hover-card")).ToBeVisibleAsync();
         await Assertions.Expect(player.GetByTestId("hover-card")).ToContainTextAsync("Hooded stranger");
         await player.Keyboard.PressAsync("Escape");
