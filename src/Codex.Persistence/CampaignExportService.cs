@@ -35,6 +35,10 @@ public class CampaignBundle
     /// never dismissed one. An id whose problem is gone is kept (it applies again if the problem comes back); ids of documents follow when the bundle is
     /// imported as a new campaign, because they are written with the documents' own ids.</summary>
     public ConsistencyDismissalsDocument? Dismissals { get; set; }
+
+    /// <summary>The GM's prepared encounters (GM prep, like the bestiary shortlist); empty in bundles from before there were any. Never in the book. Their ids,
+    /// and the region and actor ids in them, follow when the bundle is imported as a new campaign.</summary>
+    public List<PreparedEncounterDocument> PreparedEncounters { get; set; } = new();
 }
 
 /// <summary>
@@ -56,7 +60,8 @@ public class CampaignExportService(
     IWikiRepository? wiki = null,
     ITemplateRepository? templates = null,
     ICampaignObjectsRepository? objects = null,
-    IConsistencyDismissalRepository? dismissals = null)
+    IConsistencyDismissalRepository? dismissals = null,
+    IPreparedEncounterRepository? preparedEncounters = null)
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -94,7 +99,8 @@ public class CampaignExportService(
             Wiki = wiki == null ? new List<WikiPageDocument>() : (await wiki.GetAllForCampaignAsync(access.CampaignId)).ToList(),
             Templates = templates == null ? null : await templates.GetDocumentAsync(access.CampaignId),
             Objects = objects == null ? null : await objects.GetDocumentAsync(access.CampaignId),
-            Dismissals = dismissals == null ? null : await dismissals.GetDocumentAsync(access.CampaignId)
+            Dismissals = dismissals == null ? null : await dismissals.GetDocumentAsync(access.CampaignId),
+            PreparedEncounters = preparedEncounters == null ? new List<PreparedEncounterDocument>() : (await preparedEncounters.GetAllForCampaignAsync(access.CampaignId)).ToList()
         };
     }
 
@@ -121,6 +127,8 @@ public class CampaignExportService(
             return null;
         }
 
+        // The world builder chat a plan came from is not in the bundle, so the copy points at nothing.
+        foreach (var plan in copy.PreparedEncounters) plan.FromChatId = null;
         campaign.OwnerId = requestingUserId;
         campaign.Members.RemoveAll(m => m.UserId == requestingUserId);
         campaign.InviteCode = string.Empty;
@@ -140,6 +148,7 @@ public class CampaignExportService(
             .Concat(bundle.Regions.Select(d => d.Id))
             .Concat(bundle.Homebrew.Select(d => d.Id))
             .Concat(bundle.Wiki.Select(d => d.Id))
+            .Concat(bundle.PreparedEncounters.Select(d => d.Id))
             .Where(id => !string.IsNullOrEmpty(id))
             .Distinct(StringComparer.Ordinal);
 
@@ -258,6 +267,15 @@ public class CampaignExportService(
         if (objects != null && bundle.Objects is { } kept && kept.CampaignId == campaign.Id)
         {
             await objects.SaveDocumentAsync(kept);
+        }
+
+        // The plans in the file are written over the stored ones; plans the file does not have stay (a bundle from before there were any holds none).
+        if (preparedEncounters != null)
+        {
+            foreach (var plan in bundle.PreparedEncounters.Where(p => p.CampaignId == campaign.Id))
+            {
+                await preparedEncounters.RestoreAsync(plan);
+            }
         }
 
         // A bundle with none (an older one) leaves the stored dismissals as they are; one with a document replaces them, as every document of the file does.

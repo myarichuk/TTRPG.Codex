@@ -1,8 +1,14 @@
 # Encounter builder: design
 
-Status: designed 2026-11-15, open questions decided the same day (the recommendations; see section 12), not built. It depends on the hazards PR (`feat/hazards`: `SetEncounterPlaceCommand`, `HazardsTable`,
-`PlacedHazard`) being merged first. It fits HAZARDS_DESIGN.md H5 (complex hazards in initiative) and H6 (world builder hazards), and
-reuses the world builder chat (WORLD_BUILDER.md) for its AI part. An MCP server is a later phase of this design (section 8).
+Status: designed 2026-11-15, open questions decided the same day (the recommendations; see section 12). Building from 2026-11-23,
+step by step (section 10). What it depended on is on main: the hazards PR (`SetEncounterPlaceCommand`, `HazardsTable`, `PlacedHazard`),
+H5 (complex hazards in initiative, `ActorDocument.Hazard`) and H6 (world builder hazards), so the "after H5" parts can be built in their
+steps rather than waited for. It reuses the world builder chat (WORLD_BUILDER.md) for its AI part. An MCP server is a later phase of this
+design (section 8).
+
+**The party** (the readout's characters, and any count of them) is the campaign's player characters whose sheet kind is a party member:
+`SheetLayout.IsPartyMember(system, sheet)`, since P11 (COMPANIONS_DESIGN.md) a companion or familiar is a player-character actor whose
+kind says `partyMember: false`, and it does not count.
 
 ## What it is
 
@@ -398,3 +404,56 @@ The user agreed with every recommendation below. Two are settled by what H5 buil
 9. **Difficulty for systems with no rule.** **Recommended:** no readout at all, and no "unknown" badge; the section reads the same without it.
 10. **Where a complex hazard added to a plan keeps its state.** **Recommended:** adding one from the Hazards group places it on the
     encounter's place, so its state has the one home H4b gives it; no unplaced hazard lines. Settle with H5's design.
+
+## 13. B1 as built (2026-11-23)
+
+Storage only: no service, no UI, no start.
+
+**Files** (`Codex.Persistence`): `PreparedEncounterModels.cs` (document, line, the two enums), `IPreparedEncounterRepository.cs`,
+`RavenPreparedEncounterRepository.cs`, `PreparedEncountersByCampaignIndex` in `CampaignScopedIndexes.cs`. `EncounterDocument.PreparedEncounterId`
+is added. Tests: `PreparedEncounterRepositoryTests.cs` (26).
+
+**Wired in**
+- `RavenDbService`: the index is created with the others.
+- `Program.cs`: `IPreparedEncounterRepository` as a singleton.
+- `CampaignRepository`: optional `preparedEncounterRepository`; the cascade delete calls it beside the encounters. Optional, like the newer
+  repositories, so no test or caller had to change.
+- `CampaignExportService`: optional `preparedEncounters`; `CampaignBundle.PreparedEncounters` (GM only, as the whole export is). Import
+  restores them under their stored ids. Import as a copy adds their ids to the ids it renames, so the plan ids, and the region and actor ids
+  inside the lines, follow. A place keeps its id in the copy (as `EncounterDocument.LocationId` does), so `PlaceId` still points at it.
+  `FromChatId` is cleared in a copy (the chat is not in the bundle). **Copied plans have bare-GUID ids, not the `preparedencounters/` prefix**,
+  so no route or check may rely on the prefix.
+- JSON backups use the same bundle, so they carry the plans with no extra code.
+- Not wired, on purpose: the book (`BookSourceReader` never reads the repository), `IEncounterRepository` and the table's restore (a plan
+  is in no session's `EncounterIds`), account deletion (a plan belongs to the campaign, which the hand-over keeps), place and cast-member
+  deletion (B2's page reports it), `DocumentVersions` (see below).
+
+**Access, at the repository**
+- Reads (`GetAsync`, `ListAsync`) need a GM access whose role the campaign still stores as GM, read again on each call, so a demoted co-GM
+  reads nothing more. A missing system still reads. A party preview is a player's access, so it reads nothing.
+- Writes (`SaveAsync`, `DeleteAsync`, `MarkRunAsync`) need the same, and also refuse `SystemMissing`. `MarkRunAsync` takes the access like the
+  others, so a start path cannot mark another campaign's plan.
+- Every path checks the plan's `CampaignId` against the access's campaign, so a GM of campaign A cannot read, save over, delete or mark B's
+  plan by id.
+- A plan is looked up in its own collection only (a query on the id), so another kind of document's id (a session's, a world chat's) is never
+  deserialized as a plan: Get, Delete, MarkRun and Save answer null or false for it.
+- A co-GM reads, edits and deletes like the GM.
+- `GetAllForCampaignAsync` and `RestoreAsync` take no access: the export service has already required a GM. `RestoreAsync` writes over a
+  stored plan of the same campaign, or at an id nothing is stored at that a plan can have (the prefix, or a bare GUID). It writes nothing for
+  an id stored as anything else, or for a per-campaign id such as `ConsistencyDismissals/{id}` or `CampaignObjects/{id}` (a plan there would
+  break that campaign's later saves). The import has no pre-check stage, so a crafted plan is skipped silently while the rest of the file is
+  imported; nothing is written for it and nothing throws.
+
+**Decisions**
+- Counts are not clamped or normalised in the repository. It stores what it is given; B2's `CheckAsync` checks 1 to 20 and 1.
+- One rule for `Ran`: only `MarkRunAsync` sets it. `SaveAsync` keeps the stored run list and creator whatever the copy carries. A stored plan
+  with runs stays `Ran` whatever the copy says; one with none is never `Ran` (a copy saying `Ran` is saved as `Ready`). It is based on the
+  stored runs only, so the editor need not carry `RunEncounterIds`. The plan's other fields are last-writer-wins, as the design says;
+  `SaveAsync` returns a bool, not a `SaveOutcome`, so it does not tell the editor that the plan changed under it.
+- `MarkRunAsync` loads, adds the run id once, sets `Ran` and saves under optimistic concurrency, retrying up to eight times (the
+  `RavenUpdate.RunAsync` pattern, written out because it also looks the plan up in its own collection).
+- The repository gives a new plan its id (`preparedencounters/<guid>`), always takes `CreatedBy` from the access's user, and stamps
+  `UpdatedAt` on every `SaveAsync` and `MarkRunAsync`. `RestoreAsync` keeps the file's `UpdatedAt`.
+
+**For B2:** a plan whose `Id` is set but not stored is refused by `SaveAsync` (create with an empty id); use `DocumentVersions` and a
+`SaveOutcome` if the editor must warn about a plan changed in another tab; list is by `UpdatedAt` newest first, with no paging.
