@@ -493,6 +493,7 @@
   <data name="Actor.Link.Missing" xml:space="preserve"><value>Связанная банда не найдена. Её бонусы приостановлены, пока она не вернётся или вы не выберете другую банду.</value></data>
   <data name="Actor.Members.Heading" xml:space="preserve"><value>Участники</value></data>
   <data name="Actor.Members.Empty" xml:space="preserve"><value>Участников пока нет</value></data>
+  <data name="Actor.Members.LinkedHeading" xml:space="preserve"><value>Связаны с этим листом</value></data>
   <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>Не учитывается: учтён лучший того же типа</value></data>
   <data name="Actor.Widget.Of" xml:space="preserve"><value>{0} из {1}</value></data>
   <data name="Actor.Widget.Remove" xml:space="preserve"><value>Убрать</value></data>

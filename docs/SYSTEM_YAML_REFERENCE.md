@@ -490,6 +490,7 @@ A read-only number worked out from the sheet (`sheetRules.derived`): proficiency
 | `formula` | text (a number is text too) | A C#-style expression over the sheet's numeric fields and attribute scores, e.g. `2 + (level - 1) / 4`. Integer arithmetic; `floor`, `ceil`, `max`, `min` and `mod(key)` (an attribute's modifier) are available. |
 | `category` | text (a number is text too) | A group heading for the value. Translated with the system's other headings, but this version does not group derived values by it. |
 | `signed` | true or false | Whether the sheet shows the value with its sign, as a bonus (`+2`). Default true; false for a count or a threshold that is not added to anything (attacks per action `2`, critical hit from `19`). |
+| `hidden` | true or false | Whether the sheet and the table leave the value out of what they show. Formulas, rules, modifiers aimed at it and a `link()` read from another sheet still see it: a number that only feeds another sheet (a familiar's extra abilities) need not be on every character. |
 
 ## FieldConstraint
 
@@ -974,7 +975,8 @@ Picks of an entry type, each with its own fields.
 | `key` | text (a number is text too) | Required: the sheet key the picks are stored under, and the name formulas and layouts use for the list. |
 | `label` | text (a number is text too) | The list's name as the sheet shows it. |
 | `type` | text (a number is text too) | The entry type the picks are of; none for a list of plain records (`hpRolls`). |
-| `description` | text (a number is text too) | A line about the list. Reserved; not read by this version. |
+| `description` | text (a number is text too) | A line about the list, shown under it on the sheet. |
+| `changesOn` | list of text (a number is text too) | The moments (a rest, one the system declares, `initiative`, `dawn`) at which the picks are usually changed, as a row choice's `changesOn` says of its pick. The sheet says so under the list, and after the moment the sheet and the table point at the list. Nothing is locked: a pick can be changed at any time. |
 | `itemFields` | list of [ItemFieldDefinition](#itemfielddefinition) | The fields each pick carries besides its entry (`classLevel`, `equipped`). |
 | `modifiersFrom` | [ModifiersFromDefinition](#modifiersfromdefinition) | Each pick's entry property holding modifiers, and when a pick's count (`"i => i.equipped"`). |
 | `prerequisites` | text (a number is text too) | The entry property holding prerequisites, checked on the sheet without the pick. |

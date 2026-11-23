@@ -1080,6 +1080,10 @@ public class DerivedField
     /// <summary>Whether the sheet shows the value with its sign, as a bonus (<c>+2</c>). Default true; false for a count or a
     /// threshold that is not added to anything (attacks per action <c>2</c>, critical hit from <c>19</c>).</summary>
     public bool Signed { get; set; } = true;
+
+    /// <summary>Whether the sheet and the table leave the value out of what they show. Formulas, rules, modifiers aimed at it and a <c>link()</c> read
+    /// from another sheet still see it: a number that only feeds another sheet (a familiar's extra abilities) need not be on every character.</summary>
+    public bool Hidden { get; set; }
 }
 
 /// <summary>Conditions the entry chosen in a single-pick reference field must meet (<c>sheetRules.constraints</c>); the field's

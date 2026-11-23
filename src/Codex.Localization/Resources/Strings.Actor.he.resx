@@ -493,6 +493,7 @@
   <data name="Actor.Link.Missing" xml:space="preserve"><value>הצוות המקושר לא נמצא. הבונוסים שלו מושהים עד שיחזור או עד שתבחרו צוות אחר.</value></data>
   <data name="Actor.Members.Heading" xml:space="preserve"><value>חברים</value></data>
   <data name="Actor.Members.Empty" xml:space="preserve"><value>אין חברים עדיין</value></data>
+  <data name="Actor.Members.LinkedHeading" xml:space="preserve"><value>מקושרים לגיליון הזה</value></data>
   <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>לא נספר: נספר הטוב יותר מאותו סוג</value></data>
   <data name="Actor.Widget.Of" xml:space="preserve"><value>{0} מתוך {1}</value></data>
   <data name="Actor.Widget.Remove" xml:space="preserve"><value>הסרה</value></data>

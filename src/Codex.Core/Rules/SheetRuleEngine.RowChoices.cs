@@ -103,6 +103,19 @@ public sealed partial class SheetRuleEngine
             keep.Add(key + UsesLabelSuffix);
         }
 
+        // A pick list of the sheet's kind with a changesOn is told the same way, under its own key (a row choice's key is never a list key).
+        if (SheetLayout.KindOf(system, sheet) is { } kind)
+        {
+            foreach (var list in kind.Lists.Where(l => l.ChangesOn.Count > 0))
+            {
+                var key = ChangesOnPrefix + list.Key;
+                sheet[key] = string.Join("|", list.ChangesOn);
+                sheet[key + UsesLabelSuffix] = string.IsNullOrWhiteSpace(list.Label) ? list.Key : list.Label;
+                keep.Add(key);
+                keep.Add(key + UsesLabelSuffix);
+            }
+        }
+
         // A choice a link feature owns is not in the evaluation while its link is unknown, so its moments stay as stored (see ApplyCounters).
         if (evaluation.LinksUnknown) return;
         foreach (var stale in sheet.Keys.Where(k => k.StartsWith(ChangesOnPrefix, StringComparison.Ordinal) && !keep.Contains(k)).ToList()) sheet.Remove(stale);

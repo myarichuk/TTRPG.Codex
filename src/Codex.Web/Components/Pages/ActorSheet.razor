@@ -801,7 +801,11 @@ else
         "moments" => system != null && sheetView != null && SystemMoments.Of(system).Any(m => m.Kind == MomentKind.Declared && SystemMoments.Offered(system, editSheet, m.Key)),
         "level-up" => CanEdit && HasLevel,
         // A vault character belongs to no campaign: there is no actor to link to, and nobody links to it.
-        "link" or "members" => !Vault && sheetView?.Shows(widget) == true,
+        "link" => !Vault && sheetView?.Shows(widget) == true,
+        // The generic sheet's own members widget is there only while something links to this actor, so a sheet with nobody linked has no such section.
+        "members" => !Vault && sheetView?.Shows(widget) == true
+            && (widget.Key != SheetLayout.GeneratedMembers || (actor != null && sheetView.Kind != null && system != null
+                && LinkWidgets.Members(noteActors.Values, system, sheetView.Kind.Kind, actor.Id, access?.IsDm == true).Count > 0)),
         _ => sheetView?.Shows(widget) == true
     };
 
@@ -1207,7 +1211,7 @@ else
     {
         if (Rules != null && evaluation != null)
         {
-            foreach (var derived in Rules.Derived)
+            foreach (var derived in Rules.Derived.Where(d => !d.Hidden))
             {
                 if (evaluation.Derived.TryGetValue(derived.Key, out var value)) yield return (derived.Label, derived.Signed ? FormatSigned(value) : value.ToString() ?? string.Empty);
             }
@@ -1736,9 +1740,17 @@ else
     private void OpenChoice(string key)
     {
         openChoices.Add(key);
-        activeTab = SectionWith(w => Is(w, Rules?.Skills != null ? "skills" : "features")) ?? ActiveTab;
+        // A pick list of the sheet's kind with a changesOn (a familiar's abilities) is shown by its own list widget, not by the choices' tab.
+        var list = KindList(key);
+        activeTab = list != null
+            ? LinkWidgets.TabOfList(Layout, list.Key) ?? ActiveTab
+            : SectionWith(w => Is(w, Rules?.Skills != null ? "skills" : "features")) ?? ActiveTab;
         pendingRule = key;
     }
+
+    /// <summary>The pick list of the sheet's kind stored under <paramref name="key"/>, if it is one.</summary>
+    private PickListDefinition? KindList(string key) =>
+        system == null ? null : SheetLayout.KindOf(system, editSheet)?.Lists.FirstOrDefault(l => l.Key == key);
 
     // A link from the table (a card, the party rest) names a choice in the address: #choice-… opens it once the sheet is evaluated.
     private bool fragmentHandled;
@@ -1750,9 +1762,10 @@ else
         var fragment = Nav.ToAbsoluteUri(Nav.Uri).Fragment.TrimStart('#');
         if (!fragment.StartsWith("choice-", StringComparison.Ordinal)) return;
         var choice = evaluation.PendingChoices.Concat(evaluation.MadeChoices).FirstOrDefault(c => ChoicePicker.AnchorFor(c.Key) == fragment);
-        if (choice != null)
+        var list = choice != null || system == null ? null : LinkWidgets.ListAnchoredAt(system, editSheet, fragment);
+        if (choice != null || list != null)
         {
-            OpenChoice(choice.Key);
+            OpenChoice(choice?.Key ?? list!.Key);
             StateHasChanged();
         }
     }

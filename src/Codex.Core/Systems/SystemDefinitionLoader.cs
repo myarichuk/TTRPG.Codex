@@ -316,6 +316,11 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        foreach (var error in ValidateListMoments(definition))
+        {
+            yield return error;
+        }
+
         foreach (var error in ValidateModifiers(definition))
         {
             yield return error;
@@ -1388,6 +1393,28 @@ public static class SystemDefinitionLoader
         return Codex.Core.Rules.SheetRuleEngine.WorksOut(definition, name)
             || (rules.HitPoints is { } hp && (Is(hp.Key) || Is(hp.CurrentKey))) || (rules.ArmorClass is { } ac && Is(ac.Key))
             || rules.SlotPools.Any(p => p.Owns(root)) || rules.Lists.Any(l => Is(l.Key)) || (rules.Inventory is { } inventory && Is(inventory.Key));
+    }
+
+    /// <summary>The problems with a pick list's <c>changesOn</c>: each names a moment of the table, as a row choice's does.</summary>
+    private static IEnumerable<string> ValidateListMoments(SystemDefinition definition)
+    {
+        var moments = Codex.Core.Rules.SystemMoments.ChangeMoments(definition);
+        foreach (var kind in definition.SheetKinds)
+        {
+            foreach (var list in kind.Lists)
+            {
+                // The sheet keeps `changes_on__{listKey}` for a list beside those of row choices, whose keys start with `choice__`: no list may take that form.
+                if (list.Key.StartsWith(Codex.Core.Rules.SheetRuleEngine.ChoicePrefix, StringComparison.Ordinal))
+                {
+                    yield return $"sheetKinds.{kind.Kind}.lists.{list.Key}: a list key cannot start with '{Codex.Core.Rules.SheetRuleEngine.ChoicePrefix}' (row choices are stored under that).";
+                }
+
+                foreach (var moment in list.ChangesOn.Where(m => !moments.Contains(m, StringComparer.OrdinalIgnoreCase)))
+                {
+                    yield return $"sheetKinds.{kind.Kind}.lists.{list.Key}: changesOn '{moment}' is not one of the system's moments (a rest, one it declares, initiative or dawn).";
+                }
+            }
+        }
     }
 
     /// <summary>The problems with the links a system's sheet kinds declare: each needs a key (unique in its kind) and the kind of a sheet the system

@@ -41,6 +41,15 @@ public static class LinkWidgets
             .OrderBy(c => c.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
 
+    /// <summary>The pick list of the sheet's kind whose notice anchor (<see cref="ChoicePicker.AnchorFor"/>) is <paramref name="fragment"/>: where the party bar's and the
+    /// rest's "change it now" links go for a list that has a <c>changesOn</c>.</summary>
+    public static PickListDefinition? ListAnchoredAt(SystemDefinition system, IReadOnlyDictionary<string, object> sheet, string fragment) =>
+        SheetLayout.KindOf(system, sheet)?.Lists.FirstOrDefault(l => l.ChangesOn.Count > 0 && ChoicePicker.AnchorFor(l.Key) == fragment);
+
+    /// <summary>The tab (the first section that is not aside) whose widgets show the list <paramref name="listKey"/>; null when the layout shows it nowhere.</summary>
+    public static string? TabOfList(IReadOnlyList<LayoutSection> layout, string listKey) =>
+        layout.FirstOrDefault(s => !s.Aside && s.Widgets.Any(w => string.Equals(w.Widget, "list", StringComparison.OrdinalIgnoreCase) && w.Key == listKey))?.Section;
+
     /// <summary>The sheet kind a sheet is, by the sheet's own <c>kind</c>.</summary>
     private static bool IsKind(ActorDocument actor, string kind) =>
         string.Equals(YamlValues.GetString(actor.Sheet, SheetModel.KindKey), kind, StringComparison.OrdinalIgnoreCase);

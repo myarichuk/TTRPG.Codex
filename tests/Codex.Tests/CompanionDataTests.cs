@@ -2,6 +2,7 @@ using Codex.Core;
 using Codex.Core.Rules;
 using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
+using Codex.Web.Components.Shared;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Codex.Tests;
@@ -545,6 +546,102 @@ public class CompanionDataTests : IAsyncLifetime
         Assert.Equal(abilities, sheet["abilities"]);
         Assert.Equal(7L, sheet["HP"]);
         Assert.DoesNotContain(evaluation.Violations, v => v.Key == "Actor.Rule.FamiliarAbilities"); // the count is not judged while the master is unknown
+    }
+
+    // ---- P11c: the owner's sheet, a companion's damage, the familiar's list moment, the hidden number ----
+
+    [Fact]
+    public void TheCharactersSheet_EndsWithAMembersWidget_AndTheKindsWithTheirOwnLayoutAreUnchanged()
+    {
+        // A character saved with no kind key is the system's first kind, so it gets the same sheet.
+        foreach (var sheet in new[] { new Dictionary<string, object> { ["kind"] = "character" }, new Dictionary<string, object>() })
+        {
+            var widgets = Assert.Single(SheetLayout.For(_system, sheet)).Widgets;
+            Assert.Equal("members", widgets[^1].Widget);
+            Assert.Equal(1, widgets.Count(w => w.Widget == "members"));
+        }
+
+        foreach (var kind in new[] { "companion", "familiar" })
+        {
+            var layout = SheetLayout.For(_system, new Dictionary<string, object> { ["kind"] = kind });
+            Assert.DoesNotContain(layout.SelectMany(s => s.Widgets), w => w.Widget == "members");
+        }
+
+        Assert.Empty(SheetLayout.Problems(_system));
+    }
+
+    [Theory]
+    [InlineData("young", "none", 0)]
+    [InlineData("mature", "none", 1)]
+    [InlineData("nimble", "none", 4)]   // Strength +2 (grown, nimble), extra damage 2
+    [InlineData("savage", "none", 6)]   // Strength +3 (grown, savage twice), extra damage 3
+    [InlineData("savage", "bully", 10)] // Strength +4, extra damage 3 doubled by the specialization
+    public void ACompanionsDamageBonus_IsItsStrengthPlusItsExtraDamage(string stage, string specialization, int aboveTheTypesStrength)
+    {
+        var evaluation = Engine().Recompute(Companion("wolf", stage, specialization), new Actors(("owner", Master(9))));
+        var typeStrength = Convert.ToInt32(CompanionType("wolf").Properties["str"], global::System.Globalization.CultureInfo.InvariantCulture);
+
+        Assert.Equal(typeStrength + aboveTheTypesStrength, Value(evaluation, "damageBonus"));
+        Assert.Equal(Value(evaluation, "str") + Value(evaluation, "damageExtra"), Value(evaluation, "damageBonus"));
+    }
+
+    [Fact]
+    public void ACompanionsSheet_ShowsItsDamageBonusWithItsAttacks()
+    {
+        var attacks = _system.SheetKinds.Single(k => k.Kind == "companion").Layout.Single(s => s.Section == "Attacks");
+        Assert.Contains("damageBonus", attacks.Widgets.SelectMany(w => w.Keys));
+    }
+
+    [Fact]
+    public void TheFamiliarsAbilityList_NamesTheDailyPreparations_AndTheSheetKeysSayWhoOffersThem()
+    {
+        var list = _system.SheetKinds.Single(k => k.Kind == "familiar").Lists.Single(l => l.Key == "abilities");
+        Assert.Equal(new[] { "dailyPrep" }, list.ChangesOn);
+
+        var picks = _registry.GetEntries(SystemId, "familiar-ability", Packs).Select(e => (object)e.Id).Take(2).ToList();
+        var sheet = Familiar(("abilities", picks));
+        Assert.False(SystemMoments.Matters(_system, sheet, "dailyPrep")); // nothing yet tells the table
+
+        Engine().Recompute(sheet, new Actors(("master", Master(5))));
+
+        Assert.Equal("dailyPrep", sheet["changes_on__abilities"]);
+        Assert.Equal("Abilities", sheet["changes_on__abilities_Label"]);
+        Assert.Equal(new[] { ("abilities", "Abilities") }, SheetRuleEngine.ChoicesToChangeAfter(sheet, "dailyPrep"));
+        Assert.Empty(SheetRuleEngine.ChoicesToChangeAfter(sheet, "sessionStart"));
+        // A familiar is not a party member, and the moment still reaches it through its own keys.
+        Assert.True(SystemMoments.Matters(_system, sheet, "dailyPrep"));
+        Assert.True(SystemMoments.ReachesPartyMember(_system, sheet, "dailyPrep"));
+        Assert.False(SystemMoments.ReachesPartyMember(_system, sheet, "sessionStart"));
+        Assert.Equal(picks, sheet["abilities"]); // the picks are guidance, never cleared by a recompute
+    }
+
+    [Fact]
+    public void ThePartyBarsLinkToTheFamiliarsList_ResolvesToTheList_AndTheTabThatShowsIt()
+    {
+        var sheet = Familiar();
+        var list = LinkWidgets.ListAnchoredAt(_system, sheet, "choice-abilities");
+        Assert.Equal("abilities", list?.Key);
+        Assert.Equal("Abilities", LinkWidgets.TabOfList(SheetLayout.For(_system, sheet), list!.Key));
+
+        // Only a list with a changesOn is a target; a list without one, and a name that is none, are not.
+        Assert.Null(LinkWidgets.ListAnchoredAt(_system, sheet, "choice-nothing"));
+        Assert.Null(LinkWidgets.ListAnchoredAt(_system, new Dictionary<string, object> { ["kind"] = "character" }, "choice-trinkets"));
+    }
+
+    [Fact]
+    public void ACharacter_HasNoListMoment_AndTheExtraFamiliarAbilitiesNumberIsHiddenButStillRead()
+    {
+        var derived = _system.SheetRules!.Derived.Single(d => d.Key == "familiarAbilities");
+        Assert.True(derived.Hidden);
+        var plain = Master(5); // Master recomputes the sheet, which is where the keys would be written
+        Assert.DoesNotContain(plain.Keys, k => k.StartsWith(SheetRuleEngine.ChangesOnPrefix, StringComparison.Ordinal));
+        Engine().Recompute(plain);
+        Assert.DoesNotContain(plain.Keys, k => k.StartsWith(SheetRuleEngine.ChangesOnPrefix, StringComparison.Ordinal));
+
+        // Hidden from the sheet only: the evaluation holds it, and the familiar reads it through the link.
+        var bonded = Master(5, bondFeat: true);
+        Assert.Equal(1L, Engine().Evaluate(bonded).Derived["familiarAbilities"]);
+        Assert.Equal(3, Value(Engine().Evaluate(Familiar(), new Actors(("master", bonded))), "abilityCount"));
     }
 
     // ---- Strings ----

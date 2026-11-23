@@ -354,7 +354,7 @@
 
         if (Rules != null && Evaluation != null)
         {
-            foreach (var derived in Rules.Derived)
+            foreach (var derived in Rules.Derived.Where(d => !d.Hidden))
             {
                 if (PrintedAt(derived.Key) is { } printedDerived)
                 {

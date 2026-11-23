@@ -375,7 +375,7 @@ values:
   Bonded to: אדון
   Type: סוג
   Abilities: יכולות
-  "Choose them at the daily preparations; they stay until the next ones. Familiar and master abilities count alike, and so does the tough ability.": נבחרות בהכנות היומיות ונשארות עד ההכנות הבאות. יכולות של היצור הקשור ויכולות של אדונו נספרות יחד, וכך גם היכולת «קשוח».
+  "They stay until the next daily preparations. Familiar and master abilities count alike, and so does the tough ability.": הן נשארות עד ההכנות היומיות הבאות. יכולות של היצור הקשור ויכולות של אדונו נספרות יחד, וכך גם היכולת «קשוח».
   Level: דרגה
   Stage: שלב
   Specialization: התמחות
@@ -392,6 +392,7 @@ values:
   Attack bonus (Str or Dex): בונוס תקיפה (כוח או זריזות)
   Damage dice per attack: קוביות נזק לתקיפה
   Extra damage: נזק נוסף
+  Damage bonus: בונוס נזק
   Acrobatics: אקרובטיקה
   Athletics: אתלטיקה
   Intimidation: הפחדה

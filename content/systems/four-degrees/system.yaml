@@ -717,9 +717,9 @@ sheetRules:
     once: { field: ancestry, property: hp }
 
   # How many familiar abilities a character's feats add beyond the familiar's own two. Nothing sets it: a feat that adds some gives a modifier aimed at
-  # `familiarAbilities`, and the familiar kind reads the total through its link. The pack's feats carry no such modifier (they are generated), so a table's own entry does.
+  # `familiarAbilities`, and the familiar kind reads the total through its link. Hidden: a character without a familiar has no use for it on the sheet.
   derived:
-    - { key: familiarAbilities, label: Extra familiar abilities, formula: "0", signed: false }
+    - { key: familiarAbilities, label: Extra familiar abilities, formula: "0", signed: false, hidden: true }
 
   # Attributes: typed in, or built from boosts. Each source gives boosts to different attributes (an ancestry's own, the class's, and
   # four free ones at levels 1, 5, 10, 15 and 20); a boost is +1 to the modifier, but from +4 it is half of that.
@@ -931,7 +931,7 @@ sheetKinds:
   # An animal companion (docs/COMPANIONS_DESIGN.md): a creature of its own, owned by a character, not a party member. Its numbers come from its type (a `companion` entry),
   # its stage and specialization (the player sets both; they are not checked against the owner's feats) and the owner's level. Ranks are 0 untrained to 4 legendary
   # (rankBonus). A type skill other than Intimidation, Stealth and Survival is trained and no stage raises it. Not modelled: size, Speeds, senses, barding, each attack
-  # row's dice and traits (they stay on the type's entry), and the Strength modifier on damage, which is added by hand.
+  # row's dice and traits (they stay on the type's entry; a list widget cannot show a collection, so the sheet shows the damage bonus and the type's entry holds the rows).
   - kind: companion
     label: Animal companion
     role: player
@@ -984,6 +984,8 @@ sheetKinds:
       # How many of the type's dice an attack rolls, and the extra damage each hit adds.
       - { key: damageDice,  label: Damage dice per attack, formula: "1 + grown + specialized" }
       - { key: damageExtra, label: Extra damage,           formula: "(2 * nimble + 3 * savage) * (1 + specialized)" }
+      # What each hit adds to the dice: its Strength modifier plus the extra damage, so the player does not add Strength by hand.
+      - { key: damageBonus, label: Damage bonus,           formula: "str + damageExtra" }
       # Skills (rank by type, stage and specialization).
       - { key: acrobatics,   label: Acrobatics,   formula: "dex + rankBonus(level, daredevil > 0 ? 3 : 1 + nimble)", modifiers: [check, check.dex, check.skill.acrobatics] }
       - { key: athletics,    label: Athletics,    formula: "str + rankBonus(level, wrecker > 0 ? 3 : bully > 0 ? 2 : 1 + savage)", modifiers: [check, check.str, check.skill.athletics] }
@@ -1006,7 +1008,7 @@ sheetKinds:
           - { widget: modifiers, target: armorClass }
       - section: Attacks
         widgets:
-          - { widget: values, keys: [attack, attackFinesse, damageDice, damageExtra] }
+          - { widget: values, keys: [attack, attackFinesse, damageDice, damageExtra, damageBonus] }
           - { widget: roll, roll: companionStrike }
       - section: Skills
         widgets:
@@ -1026,11 +1028,13 @@ sheetKinds:
     links:
       - { key: master, kind: character, label: Bonded to }
     lists:
-      # A list has no moment of its own (changes_on is per row choice), so the picks can change at any time; the description says when they are meant to.
+      # The picks are meant to change at the daily preparations (`changesOn`): the sheet says so under the list, and after that moment the sheet and the table point
+      # back to it. It is guidance, as a row choice's `changesOn` is; nothing is locked.
       - key: abilities
         label: Abilities
         type: familiar-ability
-        description: "Choose them at the daily preparations; they stay until the next ones. Familiar and master abilities count alike, and so does the tough ability."
+        changesOn: [dailyPrep]
+        description: "They stay until the next daily preparations. Familiar and master abilities count alike, and so does the tough ability."
         rules:
           - { check: "count(abilities, a => true) + (tough == 'yes' ? 1 : 0) <= abilityCount", key: Actor.Rule.FamiliarAbilities, message: "more abilities than {abilityCount} (tough counts as one)." }
     features:

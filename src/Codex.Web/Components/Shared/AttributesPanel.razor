@@ -289,12 +289,13 @@
         </div>
     }
 
-    @if (Evaluation != null && Evaluation.Derived.Count > 0)
+    @if (Evaluation != null && (Rules!.Derived.Any(d => !d.Hidden && Evaluation.Derived.ContainsKey(d.Key))
+                                 || Rules.Ranked.Where(l => l.Publish).SelectMany(l => l.Keys()).Any(k => Evaluation.Derived.ContainsKey(k.Key))))
     {
         <dl class="prop-list mt-3 mb-0" data-testid="derived-fields">
             @foreach (var derived in Rules!.Derived)
             {
-                if (!Evaluation.Derived.TryGetValue(derived.Key, out var value)) continue;
+                if (derived.Hidden || !Evaluation.Derived.TryGetValue(derived.Key, out var value)) continue;
                 <dt>@derived.Label</dt>
                 <dd><bdi dir="ltr" data-testid="derived-@derived.Key">@(derived.Signed ? FormatSigned(value) : value.ToString())</bdi>
                     @if (ShowSums && !string.IsNullOrWhiteSpace(derived.Formula))

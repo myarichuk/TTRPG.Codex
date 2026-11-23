@@ -375,7 +375,7 @@ values:
   Bonded to: Хозяин
   Type: Тип
   Abilities: Способности
-  "Choose them at the daily preparations; they stay until the next ones. Familiar and master abilities count alike, and so does the tough ability.": Выбираются при ежедневной подготовке и действуют до следующей. Способности фамильяра и хозяина считаются вместе, как и «Выносливый».
+  "They stay until the next daily preparations. Familiar and master abilities count alike, and so does the tough ability.": Действуют до следующей ежедневной подготовки. Способности фамильяра и хозяина считаются вместе, как и «Выносливый».
   Level: Уровень
   Stage: Стадия
   Specialization: Специализация
@@ -392,6 +392,7 @@ values:
   Attack bonus (Str or Dex): Бонус атаки (Сила или Ловкость)
   Damage dice per attack: Кубиков урона за атаку
   Extra damage: Добавочный урон
+  Damage bonus: Бонус к урону
   Acrobatics: Акробатика
   Athletics: Атлетика
   Intimidation: Запугивание
