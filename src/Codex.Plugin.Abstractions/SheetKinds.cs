@@ -17,6 +17,11 @@ public sealed class SheetKindDefinition
     /// <summary>The host role: <c>player</c>, <c>npc</c>, <c>creature</c> or <c>shared</c>.</summary>
     public string? Role { get; set; }
 
+    /// <summary>Whether an actor with this kind of sheet is one of the party: counted in party sizes and given what every player character gets
+    /// (the hero points at the start of a session). False for a companion or familiar, which a player owns without being a member of the party.
+    /// It says nothing about who may edit or see the actor.</summary>
+    public bool PartyMember { get; set; } = true;
+
     /// <summary>The sheet's numbers and choices, worked out or entered. Their order does not matter: each is worked out when
     /// first read.</summary>
     public List<ValueDefinition> Values { get; set; } = new();
@@ -193,8 +198,14 @@ public sealed class PickListDefinition
     /// <summary>The entry type the picks are of; none for a list of plain records (<c>hpRolls</c>).</summary>
     public string? Type { get; set; }
 
-    /// <summary>A line about the list. Reserved; not read by this version.</summary>
+    /// <summary>A line about the list, shown under it on the sheet.</summary>
     public string? Description { get; set; }
+
+    /// <summary>The moments (a rest, one the system declares, <c>initiative</c>, <c>dawn</c>) at which the picks are usually changed, as a row
+    /// choice's <c>changesOn</c> says of its pick. The sheet says so under the list, and after the moment the sheet and the table point at the list. Nothing
+    /// is locked: a pick can be changed at any time.</summary>
+    public List<string> ChangesOn { get; set; } = new();
+
     /// <summary>The fields each pick carries besides its entry (<c>classLevel</c>, <c>equipped</c>).</summary>
     public List<ItemFieldDefinition> ItemFields { get; set; } = new();
 

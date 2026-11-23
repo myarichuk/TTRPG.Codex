@@ -1561,6 +1561,17 @@
           ],
           "description": "\"strict\": players can't save a sheet that breaks a rule (the DM always can); \"warn\": violations are shown but saving is allowed; \"off\": rules are not evaluated. A campaign can override this (house rules)."
         },
+        "kinds": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "description": "The sheet kinds these rules apply to (docs/COMPANIONS_DESIGN.md). Left out, they apply to every kind. A sheet of another kind runs only its kind's own model, as a system with no `sheetRules` does. Each name must be one of the system's `sheetKinds`."
+        },
         "attributes": {
           "$ref": "#/$defs/AttributeRules",
           "description": "How scores are generated (point buy, standard array, typed in), capped and raised. Null: scores are typed in, kept within each attribute's `min` and `max`."
@@ -1973,6 +1984,10 @@
         "signed": {
           "type": "boolean",
           "description": "Whether the sheet shows the value with its sign, as a bonus (`+2`). Default true; false for a count or a threshold that is not added to anything (attacks per action `2`, critical hit from `19`)."
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "Whether the sheet and the table leave the value out of what they show. Formulas, rules, modifiers aimed at it and a `link()` read from another sheet still see it: a number that only feeds another sheet (a familiar's extra abilities) need not be on every character."
         }
       },
       "additionalProperties": false
@@ -3762,6 +3777,10 @@
           ],
           "description": "The host role: `player`, `npc`, `creature` or `shared`."
         },
+        "partyMember": {
+          "type": "boolean",
+          "description": "Whether an actor with this kind of sheet is one of the party: counted in party sizes and given what every player character gets (the hero points at the start of a session). False for a companion or familiar, which a player owns without being a member of the party. It says nothing about who may edit or see the actor."
+        },
         "values": {
           "type": "array",
           "items": {
@@ -4007,7 +4026,18 @@
             "number",
             "boolean"
           ],
-          "description": "A line about the list. Reserved; not read by this version."
+          "description": "A line about the list, shown under it on the sheet."
+        },
+        "changesOn": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "description": "The moments (a rest, one the system declares, `initiative`, `dawn`) at which the picks are usually changed, as a row choice's `changesOn` says of its pick. The sheet says so under the list, and after the moment the sheet and the table point at the list. Nothing is locked: a pick can be changed at any time."
         },
         "itemFields": {
           "type": "array",

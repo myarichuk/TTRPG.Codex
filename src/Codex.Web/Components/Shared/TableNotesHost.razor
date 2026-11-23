@@ -10,7 +10,7 @@
 
 @if (runtime != null)
 {
-    <TableNotesDrawer Notes="snapshot.Notes" Encounter="snapshot.Encounter" Actors="Actors" Access="Access" CurrentUserId="@CurrentUserId"
+    <TableNotesDrawer Notes="snapshot.Notes" Encounter="snapshot.Encounter" Actors="Actors" Access="Access" Definition="runtime.System" CurrentUserId="@CurrentUserId"
                       CampaignId="@CampaignId" Mentions="mentions" Send="runtime.EnqueueAsync" Open="Open" OpenChanged="OpenChanged" />
 }
 

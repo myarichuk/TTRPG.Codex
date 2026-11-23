@@ -704,7 +704,12 @@ else
     /// <summary>Whether <paramref name="moment"/> does anything to some player character at the table: a counter refills at it, a choice is
     /// usually changed then, or the system's handler for it touches the character's sheet kind. The table then offers the GM the moment.</summary>
     private bool Matters(string moment) =>
-        Actors.Any(a => a.Kind == ActorKind.PlayerCharacter && SystemMoments.Matters(Definition, a.Sheet, moment));
+        Actors.Any(a => ReceivesMoment(a, moment) && SystemMoments.Matters(Definition, a.Sheet, moment));
+
+    /// <summary>Whether the party bar's <paramref name="moment"/> reaches this actor: a player character, and for a declared moment (a session's hero points) a member of the
+    /// party, not a companion or familiar (<c>partyMember: false</c>). Dawn goes to every character, as it always has.</summary>
+    private bool ReceivesMoment(ActorDocument actor, string moment) =>
+        actor.Kind == ActorKind.PlayerCharacter && SystemMoments.ReachesPartyMember(Definition, actor.Sheet, moment);
 
     /// <summary>The moments that are not rests which the GM calls with a button, and that matter here: declared moments, then dawn.
     /// (Initiative is fired by the roll.)</summary>
@@ -715,7 +720,7 @@ else
     {
         var dawn = string.Equals(moment, FeatureRecovery.Dawn, StringComparison.OrdinalIgnoreCase);
         // Dawn goes to every character, as it always has; a declared moment only to those whose sheet it touches.
-        foreach (var actor in Actors.Where(a => a.Kind == ActorKind.PlayerCharacter && snapshot.Actor(a.Id) != null && (dawn || SystemMoments.Matters(Definition, a.Sheet, moment))))
+        foreach (var actor in Actors.Where(a => ReceivesMoment(a, moment) && snapshot.Actor(a.Id) != null && (dawn || SystemMoments.Matters(Definition, a.Sheet, moment))))
         {
             await SendAsync(new MomentCommand(actor.Id, moment));
         }

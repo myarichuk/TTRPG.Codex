@@ -367,8 +367,63 @@ values:
   Persistent damage check: Проверка прекращения постоянного урона
   DC 15: СЛ 15
   turnEnd: Конец хода
+  # Животный спутник и фамильяр. Нужна проверка носителем языка; «хозяин» нарочно не «мастер»: мастером здесь зовут ведущего игру.
+  Animal companion: Животный спутник
+  Familiar: Фамильяр
+  Companion: Спутник
+  Owner: Владелец
+  Bonded to: Хозяин
+  Type: Тип
+  Abilities: Способности
+  "They stay until the next daily preparations. Familiar and master abilities count alike, and so does the tough ability.": Действуют до следующей ежедневной подготовки. Способности фамильяра и хозяина считаются вместе, как и «Выносливый».
+  Level: Уровень
+  Stage: Стадия
+  Specialization: Специализация
+  Strength: Сила
+  Dexterity: Ловкость
+  Constitution: Телосложение
+  Intelligence: Интеллект
+  Wisdom: Мудрость
+  Charisma: Харизма
+  Fortitude: Стойкость
+  Reflex: Реакция
+  Will: Воля
+  Attack bonus (Str): Бонус атаки (Сила)
+  Attack bonus (Str or Dex): Бонус атаки (Сила или Ловкость)
+  Damage dice per attack: Кубиков урона за атаку
+  Extra damage: Добавочный урон
+  Damage bonus: Бонус к урону
+  Acrobatics: Акробатика
+  Athletics: Атлетика
+  Intimidation: Запугивание
+  Stealth: Скрытность
+  Survival: Выживание
+  Abilities per day: Способностей в день
+  "Master's spellcasting modifier": Модификатор заклинательной характеристики хозяина
+  Other skills: Остальные навыки
+  Tough: Выносливый
+  Hit Points: Очки здоровья
+  Defenses: Защита
+  Attacks: Атаки
+  Skills: Навыки
+  Attributes: Характеристики
+  young: молодой
+  mature: зрелый
+  nimble: проворный
+  savage: свирепый
+  none: нет
+  ambusher: засадник
+  bully: задира
+  daredevil: сорвиголова
+  racer: бегун
+  tracker: следопыт
+  wrecker: разрушитель
+  "no": нет
+  "yes": да
 
 sheetRules:
+  derived:
+    familiarAbilities: Дополнительные способности фамильяра
   lists:
     feats: Черты
     cantrips: Заговоры
@@ -397,6 +452,8 @@ sheetRules:
     "not on your class's spell list.": нет в списке заклинаний вашего класса.
     "cantrips go in the cantrips list.": заговоры вносятся в список заговоров.
     "above the highest spell rank you can cast.": выше самого высокого ранга заклинаний, который вы можете наложить.
+    "a companion has one type.": у спутника один тип.
+    "a specialization needs a nimble or savage companion; it gives nothing before that.": специализация нужна проворному или свирепому спутнику; раньше она ничего не даёт.
   skills:
     acrobatics: Акробатика
     arcana: Магия

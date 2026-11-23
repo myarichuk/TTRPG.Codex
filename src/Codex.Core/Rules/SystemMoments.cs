@@ -142,16 +142,29 @@ public static class SystemMoments
         return named == null || named.Any(t => kind.Tracks.Any(k => Same(k.Key, t)));
     }
 
+    /// <summary>Whether the console's party bar sends <paramref name="moment"/> to the player character with this sheet. Dawn goes to every character, as it always
+    /// has. A member of the party gets any moment that matters to it (<see cref="Matters"/>). A companion or familiar (<c>partyMember: false</c>,
+    /// <see cref="SheetLayout.IsPartyMember"/>) gets it only through its own sheet keys (a counter that refills then, a choice usually changed then, a slot pool), never
+    /// through the system's event handler alone: that is how a session's hero point arrives, and a companion is not given one.</summary>
+    public static bool ReachesPartyMember(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet, string moment) =>
+        Same(moment, FeatureRecovery.Dawn) || SheetLayout.IsPartyMember(system, sheet) || MattersByItsKeys(system, sheet, moment);
+
+    /// <summary>Whether the system's own handler for a moment (<c>events.{moment}</c>) runs for this sheet. The handlers are the party's (a session's hero point), so
+    /// only a member of the party gets them; a companion or familiar (<c>partyMember: false</c>) still gets its own sheet's recoveries (counters, slot pools, choices,
+    /// tracks) at every moment. One rule for the party bar, the sheet's own moment button and <c>MomentCommand</c>.</summary>
+    public static bool RunsHandler(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet) => SheetLayout.IsPartyMember(system, sheet);
+
     /// <summary>Whether <paramref name="moment"/> does anything to this sheet: a counter of it refills at the moment (<c>uses_*_Rest</c>), a
     /// row choice on it is usually changed then (<c>changes_on__*</c>), or the system's handler for it touches the sheet's kind
     /// (<see cref="HandlerTouches"/>). The table and the sheet offer a moment's button only where this holds.</summary>
-    public static bool Matters(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet, string moment)
-    {
-        if (sheet.Keys.Any(k => SheetRuleEngine.IsUsesKey(k) && FeatureRecovery.For(sheet, k, moment).Count > 0)) return true;
-        if (SlotKeysRecoveredAt(system, sheet.Keys, moment).Count > 0) return true;
-        if (SheetRuleEngine.ChoicesToChangeAfter(sheet, moment).Count > 0) return true;
-        return system is { SheetKinds.Count: > 0 } && HandlerTouches(system, SheetLayout.KindOf(system, sheet), moment);
-    }
+    public static bool Matters(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet, string moment) =>
+        MattersByItsKeys(system, sheet, moment)
+        || (system is { SheetKinds.Count: > 0 } && RunsHandler(system, sheet) && HandlerTouches(system, SheetLayout.KindOf(system, sheet), moment));
+
+    private static bool MattersByItsKeys(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet, string moment) =>
+        sheet.Keys.Any(k => SheetRuleEngine.IsUsesKey(k) && FeatureRecovery.For(sheet, k, moment).Count > 0)
+        || SlotKeysRecoveredAt(system, sheet.Keys, moment).Count > 0
+        || SheetRuleEngine.ChoicesToChangeAfter(sheet, moment).Count > 0;
 
     /// <summary>The slot pools whose <c>recoversOn</c> names <paramref name="moment"/>: a declared moment or dawn refills them as a rest does, with no rest
     /// button of its own.</summary>

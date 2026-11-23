@@ -219,6 +219,36 @@ public sealed class SheetEvaluation
     public bool LinksUnknown { get; set; }
 
     public bool HasViolations => Violations.Count > 0;
+
+    /// <summary>The name of a skill's bonus in <see cref="WorkedOut"/>: <c>skills.</c> and the skill's key.</summary>
+    public const string SkillsPrefix = "skills.";
+
+    /// <summary>The root of the names <c>link()</c> reads a linked sheet's numbers by when they are worked out with no condition holding and no shield counted
+    /// (<c>plain.saves.con</c>, <c>plain.armorClass</c>, <c>plain.perception</c>): a creature whose defences are its owner's before bonuses and penalties
+    /// from conditions and effects. <see cref="SheetModel"/> works them out; <see cref="WorksOut"/> knows the root.</summary>
+    public const string PlainRoot = "plain";
+
+    /// <summary>The name of a saving throw's bonus in <see cref="WorkedOut"/>: <c>saves.</c> and the save's key.</summary>
+    public const string SavesPrefix = "saves.";
+
+    /// <summary>
+    /// The numbers the rules worked out that a sheet does not store, by the name a <c>link()</c> in a formula reads them by (docs/COMPANIONS_DESIGN.md), and
+    /// the names the system checker's expectations use: each derived number (<see cref="Derived"/>: the system's derived values, and the scores of a
+    /// published ranked list such as Perception, a spell attack or a spell DC, under their own keys), <c>skills.{key}</c> (a skill's bonus) and
+    /// <c>saves.{key}</c> (a saving throw's bonus). Values only; nothing here is written to a sheet.
+    /// </summary>
+    public IReadOnlyDictionary<string, double> WorkedOut()
+    {
+        var values = new Dictionary<string, double>(StringComparer.Ordinal);
+        foreach (var (key, value) in Derived)
+        {
+            if (value switch { long l => l, int i => i, double d => d, _ => (double?)null } is { } number) values[key] = number;
+        }
+
+        foreach (var skill in Skills) values[SkillsPrefix + skill.Key] = skill.Bonus;
+        foreach (var save in SavingThrows) values[SavesPrefix + save.Key] = save.Bonus;
+        return values;
+    }
 }
 
 /// <summary>
@@ -246,7 +276,40 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     public const string BasePrefix = "base_";
     public const string BonusPrefix = "bonus_";
 
-    private SheetRules? Rules => system.SheetRules;
+    private SheetRules? Rules => KindOnly ? null : system.SheetRules;
+
+    /// <summary>This engine runs only the sheet kind's own model (values, tracks, lists, features), as for a system with no <c>sheetRules</c>. Set on the
+    /// engine <see cref="Apart"/> hands out for a sheet of a kind the rules do not apply to (<see cref="SheetRules.Kinds"/>).</summary>
+    private bool KindOnly { get; init; }
+
+    private SheetRuleEngine? _kindOnly;
+
+    /// <summary>Whether the system's <c>sheetRules</c> apply to a sheet of this kind: the system has them, and either its <c>kinds</c> list is empty (every kind) or
+    /// names this one. A sheet has the kind <see cref="SheetLayout.KindOf"/> gives it, so a sheet with no stored kind key is the system's first kind, never "no kind".</summary>
+    public static bool AppliesTo(SystemDefinition system, SheetKindDefinition? kind) =>
+        system.SheetRules is { } rules && (rules.Kinds.Count == 0 || (kind != null && rules.Kinds.Contains(kind.Kind, StringComparer.OrdinalIgnoreCase)));
+
+    /// <summary><see cref="AppliesTo(SystemDefinition, SheetKindDefinition?)"/> for a stored sheet, by its kind as <see cref="SheetLayout.KindOf"/> finds it.</summary>
+    public static bool AppliesTo(SystemDefinition system, IReadOnlyDictionary<string, object> sheet) =>
+        system.SheetRules is { Kinds.Count: 0 } || AppliesTo(system, SheetLayout.KindOf(system, sheet));
+
+    /// <summary>Whether <paramref name="name"/> (as <c>link('key', 'name')</c> reads it off a sheet) is one only the rules work out, which a sheet does not store, so
+    /// <see cref="SheetEvaluation.WorkedOut"/> has it: a derived value, a published ranked key, <c>skills.*</c> or <c>saves.*</c> (when the rules have skills). Only the part
+    /// before the first dot is looked at. A stored key (the level, the armor class the rules write back) is not one: it reads from the sheet.</summary>
+    public static bool WorksOut(SystemDefinition system, string name)
+    {
+        if (system.SheetRules is not { } rules) return false;
+        var root = name.Split('.')[0];
+        if (root.Length == 0) return false;
+        if (root is "skills" or "saves") return rules.Skills != null;
+        if (root == SheetEvaluation.PlainRoot) return true;
+        return rules.Derived.Any(d => d.Key == root) || rules.Ranked.Any(l => l.Key == root || l.Keys().Any(k => k.Key == root));
+    }
+
+    /// <summary>The engine to hand a sheet to when the rules do not apply to its kind (it runs only the kind's model), or null when this engine is the one:
+    /// the system has no rules, this already is that engine, or the rules apply to the sheet's kind.</summary>
+    private SheetRuleEngine? Apart(IReadOnlyDictionary<string, object> sheet) =>
+        Rules == null || AppliesTo(system, sheet) ? null : _kindOnly ??= new SheetRuleEngine(system, resolver) { Options = Options, KindOnly = true };
 
     /// <summary>
     /// False for a caller that reads only the verdicts (the consistency checker's <c>sheet-rule</c>): <see cref="SheetEvaluation.AllowedOptions"/> and
@@ -307,6 +370,12 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     /// let hit points and armor class follow the rules.</summary>
     public void InitializeSheet(Dictionary<string, object> sheet)
     {
+        if (Apart(sheet) is { } apart)
+        {
+            apart.InitializeSheet(sheet);
+            return;
+        }
+
         if (Rules?.HitPoints is { } hitPoints) sheet[hitPoints.ModeKey] = hitPoints.Default;
         if (Rules?.ArmorClass is { } armorClass) sheet[armorClass.ModeKey] = "auto";
 
@@ -329,12 +398,15 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     /// </summary>
     public SheetEvaluation Recompute(Dictionary<string, object> sheet, ILinkedSheets? linked = null)
     {
+        if (Apart(sheet) is { } apart) return apart.Recompute(sheet, linked);
         StripGranted(sheet);
         ApplyInherited(sheet);
         ApplyAttributeTotals(sheet);
         ApplyGranted(sheet);
-        var evaluation = Evaluate(sheet, linked);
-        ApplyTracks(sheet, linked);
+        // The evaluation and the track maxima read the same links: what a linked sheet's rules work out is worked out once for both.
+        var links = new SheetModel.LinkCache();
+        var evaluation = Evaluate(sheet, linked, links);
+        ApplyTracks(sheet, linked, links);
         ApplySlotPools(sheet, evaluation);
         ApplyCounters(sheet, evaluation);
         ApplyChoiceMoments(sheet, evaluation);
@@ -345,13 +417,16 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
     /// <param name="linked">Resolves the sheets this sheet's links point to (docs/CREW_LINKS_DESIGN.md). None: a link the sheet has is
     /// unknown, which <see cref="SheetEvaluation.LinksUnknown"/> records, and what the sweeps and clamps do about it is in <see cref="ApplyCounters"/>.</param>
-    public SheetEvaluation Evaluate(IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked = null)
+    public SheetEvaluation Evaluate(IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked = null) => Evaluate(sheet, linked, null);
+
+    internal SheetEvaluation Evaluate(IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked, SheetModel.LinkCache? links)
     {
+        if (Apart(sheet) is { } apart) return apart.Evaluate(sheet, linked, links);
         var result = new SheetEvaluation();
         if (system.SheetKinds.Count > 0)
         {
             result.LinksUnknown = SheetLinks.AnyUnknown(SheetLayout.KindOf(system, sheet), sheet, linked);
-            EvaluateModel(sheet, result, linked);
+            EvaluateModel(sheet, result, linked, links);
         }
 
         if (Rules == null)
@@ -708,7 +783,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     /// <summary>Writes base + bonus + increases into each attribute's total key, so the ECS sees final scores.</summary>
     public void ApplyAttributeTotals(Dictionary<string, object> sheet)
     {
-        if (Rules?.Attributes is not { } rules) return;
+        if (Rules?.Attributes is not { } rules || Apart(sheet) != null) return;
         var printed = Method(sheet, rules) == PrintedMethod;
         var boosting = Method(sheet, rules) == BoostsMethod && rules.Boosts != null;
         if (boosting) PruneBoostChoices(rules.Boosts!, sheet);
@@ -1018,7 +1093,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     /// </summary>
     public void ApplySlotPools(Dictionary<string, object> sheet, SheetEvaluation evaluation)
     {
-        if (Rules == null) return;
+        if (Rules == null || Apart(sheet) != null) return;
         foreach (var rule in Rules.SlotPools)
         {
             var pool = evaluation.SlotPools.FirstOrDefault(p => p.Rule == rule);
@@ -1050,9 +1125,9 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
     /// <summary>A system with sheet kinds: its values, keyed-list entries and rules (<see cref="SheetModel"/>). Numbers land in
     /// <see cref="SheetEvaluation.Derived"/> beside the <c>derived</c> ones, whole numbers as <c>long</c>.</summary>
-    private void EvaluateModel(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result, ILinkedSheets? linked = null)
+    private void EvaluateModel(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result, ILinkedSheets? linked = null, SheetModel.LinkCache? links = null)
     {
-        var model = new SheetModel(system, resolver, sheet, linked).Evaluate();
+        var model = new SheetModel(system, resolver, sheet, linked, links ?? new SheetModel.LinkCache()).Evaluate();
         result.Model = model;
         foreach (var (key, value) in model.Values)
         {
@@ -1070,10 +1145,10 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     /// an <c>each</c> makes are slots; neither is written.</summary>
     /// <remarks>While a link is unknown (<paramref name="linked"/> is none and the sheet names a linked actor), the maximum of a track whose
     /// formula reads modifiers or a link is unknown too (<see cref="SheetTrack.Max"/> is null), so its <c>{key}_Max</c> is left as stored.</remarks>
-    private void ApplyTracks(Dictionary<string, object> sheet, ILinkedSheets? linked = null)
+    private void ApplyTracks(Dictionary<string, object> sheet, ILinkedSheets? linked = null, SheetModel.LinkCache? links = null)
     {
         if (system.SheetKinds.Count == 0) return;
-        var model = new SheetModel(system, resolver, sheet, linked);
+        var model = new SheetModel(system, resolver, sheet, linked, links ?? new SheetModel.LinkCache());
         foreach (var key in model.TrackKeys())
         {
             if (model.TrackOf(key) is not { IsSlots: false, Definition.Each: null } track) continue;

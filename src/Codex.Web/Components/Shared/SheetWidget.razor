@@ -174,7 +174,7 @@
     case "table":
         var rows = View.Rows(Widget);
         var keyed = View.IsKeyedList(Widget.Key!);
-        <div class="table-scroll" data-testid="@($"widget-{Widget.Key}")">
+        <div class="table-scroll" data-testid="@($"widget-{Widget.Key}")" data-rule-key="@(keyed ? null : Widget.Key)">
             <table class="table table-sm small mb-1">
                 <thead><tr><th scope="col">@L["Actor.Widget.Name"]</th>@foreach (var column in Widget.Columns) { <th scope="col">@ColumnLabel(column)</th> }@if (!keyed && CanEdit) { <th scope="col"><span class="visually-hidden">@L["Actor.Widget.Remove"]</span></th> }</tr></thead>
                 <tbody>
@@ -226,6 +226,18 @@
                     }
                 </tbody>
             </table>
+            @if (!keyed && View.Kind?.Lists.FirstOrDefault(l => l.Key == Widget.Key) is { } pickList)
+            {
+                @if (!string.IsNullOrWhiteSpace(pickList.Description))
+                {
+                    <p class="small-muted mb-1" data-testid="@($"list-{Widget.Key}-note")">@Say(pickList.Description)</p>
+                }
+
+                @if (pickList.ChangesOn.Count > 0)
+                {
+                    <p id="@ChoicePicker.AnchorFor(pickList.Key)" class="small-muted mb-1" data-testid="@($"list-{Widget.Key}-changes-on")">@L["Actor.Choice.ChangesOn", string.Join(", ", pickList.ChangesOn.Select(MomentName))]</p>
+                }
+            }
             @if (!keyed && CanEdit && View.ListType(Widget.Key!) is { } type && Candidates(type).ToList() is { Count: > 0 } candidates)
             {
                 <div class="d-flex gap-2">
@@ -365,8 +377,10 @@
         @if (!Vault && View.Kind != null && ActorId != null)
         {
             var members = LinkWidgets.Members(Actors, Definition, View.Kind.Kind, ActorId, ViewerIsDm);
+            var generated = Widget.Key == SheetLayout.GeneratedMembers; // the generic sheet's own: its heading, and nothing while nothing links
+            if (generated && members.Count == 0) break;
             <div class="sheet-members mb-2" data-testid="widget-members">
-                <div class="field-label" id="@($"{id}-members")">@(Widget.Label ?? L["Actor.Members.Heading"])</div>
+                <div class="field-label" id="@($"{id}-members")">@(Widget.Label ?? L[generated ? "Actor.Members.LinkedHeading" : "Actor.Members.Heading"])</div>
                 @if (members.Count == 0)
                 {
                     <p class="small-muted mb-0" data-testid="members-empty">@L["Actor.Members.Empty"]</p>
@@ -563,6 +577,9 @@
     /// <summary>A word of the system as the reader reads it (<c>values</c> of the system's translation, whichever copy of the definition this is);
     /// the word itself when it has none. Only what is shown: keys and submitted values are never passed through.</summary>
     private string Say(string text) => Definition.DisplayOption(L.Culture.Name, string.Empty, text);
+
+    /// <summary>A moment's name in the reader's language: the label a system declares for it, else a rest's or built-in name through the system's words.</summary>
+    private string MomentName(string moment) => SystemMoments.Find(Definition, moment) is { Kind: MomentKind.Declared } declared ? declared.Label : SlotTracker.RestName(Definition, moment);
 
     private string ColumnLabel(string column) =>
         Say((View.Kind?.Lists.FirstOrDefault(l => l.Key == Widget.Key)?.ItemFields ?? View.Kind?.KeyedLists.FirstOrDefault(l => l.Key == Widget.Key)?.ItemFields)

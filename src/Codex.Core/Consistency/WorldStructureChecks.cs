@@ -422,7 +422,8 @@ public sealed class LibraryReferenceCheck : IConsistencyCheck
                 }
             }
 
-            if (inventory == null || rulesRun && a.Role != ActorRole.Monster) continue;
+            // A companion's kind is one the rules do not run on (sheetRules.kinds), so its inventory is left to this check.
+            if (inventory == null || rulesRun && a.Role != ActorRole.Monster && SheetRuleEngine.AppliesTo(s.System, a.Sheet)) continue;
             foreach (var id in SheetRuleEngine.RawList(a.Sheet, inventory.Key).Select(raw => SheetRuleEngine.ParsePick(raw).Id).Distinct(StringComparer.Ordinal).OrderBy(i => i, StringComparer.Ordinal))
             {
                 if (inventory.Types.Any(t => s.Library.Resolve(t, id) != null)) continue;

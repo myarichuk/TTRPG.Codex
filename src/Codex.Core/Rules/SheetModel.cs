@@ -98,7 +98,11 @@ public sealed class SheetModel
     private readonly IReadOnlySet<string> _ticked;
 
     private readonly ILinkedSheets? _linked;
-    private readonly Dictionary<string, SheetModel?> _linkModels = new(StringComparer.Ordinal);
+    private readonly LinkCache _linkCache;
+    private readonly Dictionary<string, LinkedSheet?> _linkModels;
+
+    /// <summary>The system's <c>sheetRules</c> when they apply to this sheet's kind (<see cref="SheetRules.Kinds"/>), else null: on another kind the model reads only the kind's own names.</summary>
+    private readonly SheetRules? _rules;
 
     /// <summary>Whether a link of the sheet is unknown: it names a linked actor, and no <see cref="ILinkedSheets"/> was supplied. The maximum of a
     /// track whose formula reads modifiers or a link is then unknown too (null), and a rule that reads one is not judged, because the link
@@ -153,10 +157,18 @@ public sealed class SheetModel
     {
     }
 
+    /// <summary>A model that shares the linked sheets another model of the same sheet has worked out (<see cref="LinkCache"/>).</summary>
+    internal SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked, LinkCache links)
+        : this(system, resolver, sheet, checkPrerequisites: true, linked: linked, links: links)
+    {
+    }
+
     private SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, bool checkPrerequisites,
-        IReadOnlyDictionary<string, object?>? input = null, IReadOnlySet<string>? optIns = null, ILinkedSheets? linked = null)
+        IReadOnlyDictionary<string, object?>? input = null, IReadOnlySet<string>? optIns = null, ILinkedSheets? linked = null, LinkCache? links = null)
     {
         _linked = linked;
+        _linkCache = links ?? new LinkCache();
+        _linkModels = _linkCache.Models;
         _ticked = optIns ?? new HashSet<string>(StringComparer.Ordinal);
         _input = input == null ? FormulaItem.Empty : new FormulaItem(name => input.TryGetValue(name, out var value) ? Plain(value) : null);
         _system = system;
@@ -168,6 +180,8 @@ public sealed class SheetModel
         Kind = system.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, kind, StringComparison.OrdinalIgnoreCase)) ?? system.SheetKinds.FirstOrDefault();
         _held = SheetConditions.Holding(system, sheet);
         _conditions = _held.Select(h => h.Name).ToList();
+        // A system without sheet kinds has none to leave out: its rules are the sheet's own.
+        _rules = SheetRuleEngine.AppliesTo(system, Kind) ? system.SheetRules : null;
         if (Kind == null) return;
 
         foreach (var value in Kind.Values) _valueDefinitions.TryAdd(value.Key, value);
@@ -177,7 +191,7 @@ public sealed class SheetModel
         // A list of the sheet rules (the focus spells a feature grants) is a pick list in a kind's formulas too, so a track's maximum can count it.
         // Its entries missing from the Library are the sheet rules' own violation (SheetRuleEngine), not this model's. The loader refuses a name
         // the kind already uses, so nothing here is shadowed.
-        foreach (var rule in system.SheetRules?.Lists ?? new List<ListRule>())
+        foreach (var rule in _rules?.Lists ?? new List<ListRule>())
         {
             if (_lists.ContainsKey(rule.Key)) continue;
             _lists[rule.Key] = PickList(new PickListDefinition { Key = rule.Key, Label = rule.Label, Type = rule.TargetEntityType }, reportMissing: false);
@@ -914,7 +928,7 @@ public sealed class SheetModel
             yield return new Track(resource.Key, resource.Label, new TrackDefinition { Key = resource.Key, Label = resource.Label, Max = resource.MaxKey, Min = "0" }, none);
         }
 
-        foreach (var pool in _system.SheetRules?.SlotPools ?? new List<SlotPoolRule>())
+        foreach (var pool in _rules?.SlotPools ?? new List<SlotPoolRule>())
         {
             foreach (var key in _sheet.Keys.Where(k => pool.Owns(k) && !k.EndsWith(MaxSuffix, StringComparison.Ordinal)).Order(StringComparer.Ordinal))
             {
@@ -1117,7 +1131,7 @@ public sealed class SheetModel
             if (items[index].Get(list.Prerequisites!) is not IEnumerable prerequisites || prerequisites is string) continue;
             var position = _rawIndex[list.Key][index];
             var without = new Dictionary<string, object>(_sheet) { [list.Key] = picks.Where((_, i) => i != position).ToList() };
-            var before = new SheetModel(_system, _resolver, without, checkPrerequisites: false, linked: _linked);
+            var before = new SheetModel(_system, _resolver, without, checkPrerequisites: false, linked: _linked, links: _linkCache);
             var name = items[index].Get("name")?.ToString() ?? items[index].Get("id")?.ToString();
             foreach (var prerequisite in prerequisites.OfType<IDictionary<string, object>>())
             {
@@ -1226,15 +1240,127 @@ public sealed class SheetModel
     {
         var key = linkKey?.ToString() ?? string.Empty;
         if (Kind == null || Kind.Links.All(l => l.Key != key)) throw new FormulaException($"no link called \"{key}\"");
-        if (LinkModel(key) is not { } model || model.Path(value?.ToString() ?? string.Empty) is not { } found) return 0;
-        return SheetFormulas.Number(found);
+        if (LinkModel(key) is not { } linked) return 0;
+        var name = value?.ToString() ?? string.Empty;
+        // What only the rules work out and the sheet does not store (saves.fort, skills.stealth, perception) first; the rule engine runs for those names alone.
+        // Every other name (level, armorClass, a value of the kind) reads the plain linked model, with no pass over the linked sheet.
+        if (SheetRuleEngine.WorksOut(_system, name) && SheetRuleEngine.AppliesTo(_system, linked.Model.Kind))
+        {
+            var plain = name.StartsWith(SheetEvaluation.PlainRoot + ".", StringComparison.Ordinal);
+            var worked = plain ? linked.WorkedOutPlain() : linked.WorkedOut();
+            if (plain) name = name[(SheetEvaluation.PlainRoot.Length + 1)..];
+            if (linked.Failed && _result.Warnings.All(w => w.FieldKey != "link:" + key))
+            {
+                // The linked sheet's rules threw: what only they give reads 0, and the sheet says so.
+                var label = Kind.Links.First(l => l.Key == key).Label ?? key;
+                _result.Warnings.Add(new RuleViolation("link:" + key,
+                    $"{label}: the system's formula for this can't be worked out, so it is left out. The GM can check the system's rules.",
+                    "Actor.Rule.FormulaError", new object?[] { label }));
+            }
+
+            if (worked != null && worked.TryGetValue(name, out var number)) return number;
+        }
+
+        return linked.Model.Path(name) is { } found ? SheetFormulas.Number(found) : 0;
     }
 
-    private SheetModel? LinkModel(string linkKey)
+    /// <summary>The sheet a link points to: its model, and, when the system's <c>sheetRules</c> apply to its kind, what the rule engine works out of it
+    /// (<see cref="SheetEvaluation.WorkedOut"/>), worked out once, the first time a name needs it.</summary>
+    internal sealed class LinkedSheet(SheetModel owner, IReadOnlyDictionary<string, object> sheet, SheetModel model)
+    {
+        private IReadOnlyDictionary<string, double>? _worked;
+        private bool _tried;
+
+        public SheetModel Model { get; } = model;
+
+        /// <summary>Whether the rule engine threw on the linked sheet (<see cref="WorkedOut"/> then gave none).</summary>
+        public bool Failed { get; private set; }
+
+        /// <summary>The rule engine's numbers for the linked sheet, its own links not followed (no <see cref="ILinkedSheets"/> is passed), or null when the
+        /// rules do not apply to its kind or it cannot be worked out. The pass runs in the middle of the outer formula, so the model the formula functions
+        /// read (<see cref="Need"/>) is put back when it returns, an exception included.</summary>
+        public IReadOnlyDictionary<string, double>? WorkedOut()
+        {
+            if (_tried) return _worked;
+            _tried = true;
+            if (!SheetRuleEngine.AppliesTo(owner._system, Model.Kind)) return null;
+            var outer = _current;
+            try
+            {
+                // Values only: the pickers' options (every candidate of every list tested against the sheet) are left out.
+                return _worked = new SheetRuleEngine(owner._system, owner._resolver) { Options = false }.Evaluate(sheet).WorkedOut();
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
+            {
+                // A sheet the rules cannot work out has no such numbers (they read 0, and the outer sheet warns); the kind's own names are still read.
+                Failed = true;
+                return null;
+            }
+            finally
+            {
+                _current = outer;
+            }
+        }
+
+        private IReadOnlyDictionary<string, double>? _plain;
+        private bool _triedPlain;
+
+        /// <summary>The numbers of <see cref="WorkedOut"/> with no condition holding and no shield counted, under the same names, plus the armor class under its key
+        /// (<c>link('x', 'plain.saves.con')</c>); null as <see cref="WorkedOut"/> is.</summary>
+        public IReadOnlyDictionary<string, double>? WorkedOutPlain()
+        {
+            if (_triedPlain) return _plain;
+            _triedPlain = true;
+            if (!SheetRuleEngine.AppliesTo(owner._system, Model.Kind)) return null;
+            var outer = _current;
+            try
+            {
+                // The sheet with no condition holding, worked out as it stands. The armor class is the rules' total less the shields worn (the sheet adds a
+                // shield's bonus whenever it is equipped); a sheet that keeps its own armor class keeps that.
+                var bare = new Dictionary<string, object>(sheet) { [ConditionsKey] = new List<object>() };
+                foreach (var (_, key, _) in SheetConditions.Valued(owner._system)) bare[key] = 0L;
+                var evaluation = new SheetRuleEngine(owner._system, owner._resolver) { Options = false }.Evaluate(bare);
+                var values = new Dictionary<string, double>(evaluation.WorkedOut(), StringComparer.Ordinal);
+                if (owner._system.SheetRules?.ArmorClass is { } armor)
+                {
+                    if (evaluation.ArmorClass is { Active: true } summary)
+                    {
+                        var shields = summary.Parts.Where(p => p.Kind == "bonus" && p.Entry != null && SheetRuleEngine.IsShield(p.Entry, armor)).Sum(p => p.Value);
+                        values[armor.Key] = summary.Total - shields;
+                    }
+                    else if (YamlValues.ToNumber(sheet.GetValueOrDefault(armor.Key)) is { } stored)
+                    {
+                        values[armor.Key] = stored;
+                    }
+                }
+
+                return _plain = values;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
+            {
+                Failed = true;
+                return null;
+            }
+            finally
+            {
+                _current = outer;
+            }
+        }
+    }
+
+    /// <summary>The linked sheets a pass has worked out, by link key. One <c>Recompute</c> builds several models of the same sheet (<see cref="SheetRuleEngine"/>'s
+    /// model, its track maxima, the prerequisite checks), and they share one, so a linked sheet's rules run once for all of them. Only for models of a sheet whose
+    /// links do not change between them.</summary>
+    internal sealed class LinkCache
+    {
+        internal Dictionary<string, LinkedSheet?> Models { get; } = new(StringComparer.Ordinal);
+    }
+
+    private LinkedSheet? LinkModel(string linkKey)
     {
         if (_linkModels.TryGetValue(linkKey, out var known)) return known;
-        var sheet = SheetLinks.Linked(Kind, _sheet, linkKey, _linked);
-        return _linkModels[linkKey] = sheet == null ? null : new SheetModel(_system, _resolver, sheet);
+        var sheet = SheetLinks.Linked(_system, Kind, _sheet, linkKey, _linked);
+        return _linkModels[linkKey] = sheet == null ? null : new LinkedSheet(this, sheet, new SheetModel(_system, _resolver, sheet));
     }
 
     internal bool Has(string? condition) => Conditions().Any(c => string.Equals(c, condition, StringComparison.OrdinalIgnoreCase));

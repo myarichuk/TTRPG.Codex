@@ -31,6 +31,10 @@ public static class SheetLayout
         ["level-up"] = "fieldRoles.level"
     };
 
+    /// <summary>The <c>key</c> of the members widget the generic layout adds. It marks that widget as the host's: the sheet gives it its own heading and shows
+    /// nothing at all while nothing links to the sheet. A members widget a system declares has no key and is drawn as it always was.</summary>
+    public const string GeneratedMembers = "linked";
+
     /// <summary>The section a generic layout is in.</summary>
     public const string GenericSection = "sheet";
 
@@ -40,6 +44,11 @@ public static class SheetLayout
         var kind = YamlValues.GetString(sheet, SheetModel.KindKey);
         return system.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, kind, StringComparison.OrdinalIgnoreCase)) ?? system.SheetKinds.FirstOrDefault();
     }
+
+    /// <summary>Whether an actor with this sheet is one of the party: its kind is not <c>partyMember: false</c> (a companion or familiar a player owns). Every
+    /// place that counts the party, or gives every player character something (a session's hero points), asks this; who may edit or see the actor does not.</summary>
+    public static bool IsPartyMember(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet) =>
+        system == null || system.SheetKinds.Count == 0 || KindOf(system, sheet)?.PartyMember != false;
 
     /// <summary>The kinds a new actor of a host role may be: those whose <c>role</c> is it, then those with none.</summary>
     public static IReadOnlyList<SheetKindDefinition> KindsFor(SystemDefinition system, string role) =>
@@ -56,7 +65,7 @@ public static class SheetLayout
     {
         var declared = Declared(system, sheet);
         if (declared.Count > 0) return declared;
-        return system.SheetKinds.Count > 0 ? Generic(KindOf(system, sheet)!) : Builtin;
+        return system.SheetKinds.Count > 0 ? Generic(KindOf(system, sheet)!, system) : Builtin;
     }
 
     /// <summary>Today's sheet as a layout of built-in widgets: what srd5e's <c>layout:</c> says, and what a system without one gets.</summary>
@@ -76,8 +85,9 @@ public static class SheetLayout
         Widgets = widgets.Select(w => new LayoutWidget { Widget = w }).ToList()
     };
 
-    /// <summary>A kind's every value, then its tracks, lists and keyed lists, in one section.</summary>
-    public static IReadOnlyList<LayoutSection> Generic(SheetKindDefinition kind)
+    /// <summary>A kind's every value, then its tracks, lists and keyed lists, in one section. With the system given, a kind that other sheet
+    /// kinds link to (a character with companions) ends with a <c>members</c> widget, so its sheet lists the actors that link to it.</summary>
+    public static IReadOnlyList<LayoutSection> Generic(SheetKindDefinition kind, SystemDefinition? system = null)
     {
         var widgets = new List<LayoutWidget>();
         if (kind.Values.Count > 0) widgets.Add(new LayoutWidget { Widget = "values", Keys = kind.Values.Select(v => v.Key).ToList() });
@@ -99,6 +109,11 @@ public static class SheetLayout
                 Key = list.Key,
                 Columns = list.ItemFields.Select(f => f.Key).Concat(list.Derive.Keys.Where(k => k == "value")).ToList()
             });
+        }
+
+        if (system != null && system.SheetKinds.Any(k => k.Links.Any(l => string.Equals(l.Kind, kind.Kind, StringComparison.OrdinalIgnoreCase))))
+        {
+            widgets.Add(new LayoutWidget { Widget = "members", Key = GeneratedMembers });
         }
 
         return widgets.Count == 0 ? new List<LayoutSection>() : new List<LayoutSection> { new() { Section = GenericSection, Icon = "file-text", Widgets = widgets } };

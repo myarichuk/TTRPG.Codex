@@ -74,11 +74,12 @@ public static partial class SheetConditions
     /// <summary>The targets <see cref="SheetModel"/> reads on a system with sheet kinds, so the ones a condition's modifier would reach through it: a
     /// kind's value, track or keyed entry (<c>skills.balance</c>, its <c>@group</c>s), and each name a named roll's <c>modifiers('...')</c> reads.
     /// The loader sets them against what <c>sheetRules</c> claims (<see cref="SheetRuleEngine"/>): a target in both would count a condition twice.</summary>
-    public static IReadOnlySet<string> KindTargets(SystemDefinition system)
+    public static IReadOnlySet<string> KindTargets(SystemDefinition system, Func<SheetKindDefinition, bool>? kinds = null)
     {
         var targets = new HashSet<string>(StringComparer.Ordinal);
         foreach (var kind in system.SheetKinds)
         {
+            if (kinds != null && !kinds(kind)) continue;
             foreach (var value in kind.Values) targets.Add(value.Key);
             foreach (var track in kind.Tracks) targets.Add(track.Key);
             foreach (var list in kind.KeyedLists)
@@ -125,7 +126,8 @@ public static partial class SheetConditions
         }
 
         if (ruleTypes.Contains(entry.Type) || !entry.Properties.TryGetValue("modifiers", out var raw) || YamlValues.Normalize(raw) is not IEnumerable<object> modifiers) yield break;
-        var kindTargets = KindTargets(system);
+        // Only the kinds the rules apply to: a companion's own `ac` is no reason to think a character-kind feature's `ac` reaches something (the same filter as the both-claim rule).
+        var kindTargets = KindTargets(system, kind => SheetRuleEngine.AppliesTo(system, kind));
         var index = 0;
         foreach (var modifier in modifiers)
         {

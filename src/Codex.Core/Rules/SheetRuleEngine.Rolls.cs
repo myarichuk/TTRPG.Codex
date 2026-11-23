@@ -112,7 +112,7 @@ public sealed partial class SheetRuleEngine
     /// <summary>What the sheet's features and the conditions that hold add to <paramref name="site"/> that always counts: the number, who gave it, and
     /// the dice that wait for the roll. Opt-ins are never in it (<see cref="OptIns"/>).</summary>
     public RollSiteBonus Bonuses(IReadOnlyDictionary<string, object> sheet, RollSite site, ILinkedSheets? linked = null) =>
-        SiteBonus(ActiveFeatures(sheet, linked).Concat(ConditionModifiers(sheet).Select(c => c.Feature)), site, DerivedNumbers(WorkedOutDerived(sheet)), null);
+        Apart(sheet) is { } apart ? apart.Bonuses(sheet, site, linked) : SiteBonus(ActiveFeatures(sheet, linked).Concat(ConditionModifiers(sheet).Select(c => c.Feature)), site, DerivedNumbers(WorkedOutDerived(sheet)), null);
 
     /// <summary>The tick boxes <paramref name="site"/> offers on <paramref name="sheet"/>: each opt-in modifier of the sheet's features whose target the
     /// site reads and whose <c>when</c> holds, with the id <see cref="OptInIds"/> gives it (the index counts every modifier of the source entry, across
@@ -129,6 +129,7 @@ public sealed partial class SheetRuleEngine
 
     private IReadOnlyList<RollOptIn> OptInsReaching(IReadOnlyDictionary<string, object> sheet, Func<FeatureModifier, bool> reaches, ILinkedSheets? linked = null)
     {
+        if (Apart(sheet) is { } apart) return apart.OptInsReaching(sheet, reaches, linked);
         var offered = new List<RollOptIn>();
         var features = ActiveFeatures(sheet, linked).Where(f => !f.OnKind).ToList();
         var conditions = ConditionModifiers(sheet).Where(c => c.Modifier.OptIn != null && reaches(c.Modifier)).ToList();

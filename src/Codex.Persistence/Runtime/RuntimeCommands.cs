@@ -1365,8 +1365,9 @@ public sealed record MomentCommand(string ActorId, string Moment) : IUndoableCom
             if (slotKeys.Count > 0) _happened.AddRange(TableRules.RefillSlots(runtime, e, slotKeys));
         }
 
-        // Then the system's own handler for it, when it has one (a sheet kind's system: armor boxes reset at "loadChosen").
-        if (TableEvents.Handles(runtime, Moment))
+        // Then the system's own handler for it, when it has one (a sheet kind's system: armor boxes reset at "loadChosen"). The handlers are the party's, so a
+        // companion or familiar (partyMember: false) gets none of them, only the recoveries above.
+        if (TableEvents.Handles(runtime, Moment) && (runtime.GetActorDocument(ActorId)?.Sheet is not { } sheet || Codex.Core.Rules.SystemMoments.RunsHandler(runtime.System, sheet)))
         {
             _happened.AddRange(TableEvents.Raise(runtime, ActorId, new Codex.Core.Rules.SheetEvent(Moment, new Dictionary<string, object?>(StringComparer.Ordinal))).Messages);
         }

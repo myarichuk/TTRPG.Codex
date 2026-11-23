@@ -227,6 +227,9 @@
     /// <summary>The actors this viewer may see; a player's list already leaves Hidden ones out.</summary>
     [Parameter] public IEnumerable<ActorDocument> Actors { get; set; } = Enumerable.Empty<ActorDocument>();
     [Parameter] public CampaignAccess Access { get; set; } = null!;
+
+    /// <summary>The campaign's system, to tell a party member from a companion (<c>partyMember</c> on a sheet kind); none: every player character is.</summary>
+    [Parameter] public Codex.Plugin.Abstractions.SystemDefinition? Definition { get; set; }
     [Parameter] public string CurrentUserId { get; set; } = string.Empty;
     [Parameter] public string CampaignId { get; set; } = string.Empty;
 
@@ -459,10 +462,14 @@
         return new()
         {
             (L["Combat.Notes.InTheFight"], fight),
-            (L["Combat.Notes.TheParty"], rest.Where(a => a.Kind == ActorKind.PlayerCharacter).ToList()),
-            (L["Combat.Notes.EveryoneElse"], rest.Where(a => a.Kind != ActorKind.PlayerCharacter).ToList())
+            (L["Combat.Notes.TheParty"], rest.Where(InTheParty).ToList()),
+            (L["Combat.Notes.EveryoneElse"], rest.Where(a => !InTheParty(a)).ToList())
         };
     }
+
+    // A player character whose kind is a party member: a companion or familiar a player owns is listed with everyone else.
+    private bool InTheParty(ActorDocument actor) =>
+        actor.Kind == ActorKind.PlayerCharacter && Codex.Core.Rules.SheetLayout.IsPartyMember(Definition, actor.Sheet);
 
     // ---- Mentions ----
 

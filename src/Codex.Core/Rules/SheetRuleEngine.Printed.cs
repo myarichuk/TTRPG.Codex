@@ -11,7 +11,7 @@ public sealed partial class SheetRuleEngine
 {
     /// <summary>Whether the sheet is a printed creature's: its <c>attrMethod</c> is <see cref="PrintedMethod"/>.</summary>
     public bool IsPrinted(IReadOnlyDictionary<string, object> sheet) =>
-        (YamlValues.GetString(sheet, MethodKey) ?? Rules?.Attributes?.Default)?.Equals(PrintedMethod, StringComparison.OrdinalIgnoreCase) == true;
+        Apart(sheet) == null && (YamlValues.GetString(sheet, MethodKey) ?? Rules?.Attributes?.Default)?.Equals(PrintedMethod, StringComparison.OrdinalIgnoreCase) == true;
 
     /// <summary>
     /// The numbers a printed creature carries, each with the conditions that hold applied (docs/CONDITION_IMPLIES_DESIGN.md, part b). Empty unless the
@@ -22,6 +22,7 @@ public sealed partial class SheetRuleEngine
     /// </summary>
     public IReadOnlyList<PrintedNumber> Printed(IReadOnlyDictionary<string, object> live)
     {
+        if (Apart(live) != null) return Array.Empty<PrintedNumber>();
         if (Rules is not { Printed.Count: > 0 } rules || !IsPrinted(live)) return Array.Empty<PrintedNumber>();
         var features = ConditionModifiers(live).Select(c => c.Feature).ToList();
         var derived = features.Count == 0 ? new Dictionary<string, double>() : DerivedNumbers(WorkedOutDerived(live));
@@ -55,6 +56,7 @@ public sealed partial class SheetRuleEngine
     /// shown with the stored number and never written to the sheet. Only condition modifiers count.</summary>
     public RollSiteBonus ConditionBonus(IReadOnlyDictionary<string, object> live, string target)
     {
+        if (Apart(live) != null) return RollSiteBonus.None;
         var features = ConditionModifiers(live).Select(c => c.Feature).ToList();
         return features.Count == 0 ? RollSiteBonus.None : SiteBonus(features, new RollSite(RollKind.Check, new[] { target }), DerivedNumbers(WorkedOutDerived(live)), null);
     }
