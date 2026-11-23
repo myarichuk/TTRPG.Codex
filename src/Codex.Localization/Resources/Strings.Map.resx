@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Map.Open" xml:space="preserve"><value>Map</value></data>
+  <data name="Map.OpenLabel" xml:space="preserve"><value>Open the map of {0}</value></data>
+  <data name="Map.OpenMap" xml:space="preserve"><value>Open map</value></data>
+  <data name="Map.Add" xml:space="preserve"><value>Add map</value></data>
+  <data name="Map.AddLabel" xml:space="preserve"><value>Add a map of {0}</value></data>
+  <data name="Map.AddFailed" xml:space="preserve"><value>The map couldn't be added. The place may have been deleted; reload the page and try again.</value></data>
+  <data name="Map.Region.Open" xml:space="preserve"><value>Region map</value></data>
+  <data name="Map.Region.OpenLabel" xml:space="preserve"><value>Open the map of the region {0}</value></data>
+  <data name="Map.Region.AddLabel" xml:space="preserve"><value>Add a map of the region {0}</value></data>
+  <data name="Map.NotFound.Title" xml:space="preserve"><value>This map isn't here</value></data>
+  <data name="Map.NotFound.Body" xml:space="preserve"><value>It was deleted, or it isn't shown to players yet.</value></data>
+  <data name="Map.NotFound.Body.Gm" xml:space="preserve"><value>It may have been deleted.</value></data>
+  <data name="Map.Subtitle.WaitsForPlace" xml:space="preserve"><value>Players will see this map once they know {0}.</value></data>
+  <data name="Map.Subtitle.WaitsForRegion" xml:space="preserve"><value>Players will see this map once they know a place in {0}.</value></data>
+  <data name="Map.BackToPlaces" xml:space="preserve"><value>Back to Places</value></data>
+  <data name="Map.Breadcrumb" xml:space="preserve"><value>Where this map is</value></data>
+  <data name="Map.Places" xml:space="preserve"><value>Places</value></data>
+  <data name="Map.Subtitle.Shown" xml:space="preserve"><value>Players see the whole picture, and the places they know on it.</value></data>
+  <data name="Map.Subtitle.HiddenFromPlayers" xml:space="preserve"><value>This version is hidden from players. Once you show it, they see the whole picture.</value></data>
+  <data name="Map.ViewAs" xml:space="preserve"><value>Show the map as</value></data>
+  <data name="Map.View.Gm" xml:space="preserve"><value>GM</value></data>
+  <data name="Map.View.Party" xml:space="preserve"><value>Players</value></data>
+  <data name="Map.Party.Hidden" xml:space="preserve"><value>Players can't see this yet: it has no picture, it's hidden from them, or they don't know {0} yet.</value></data>
+  <data name="Map.Alt" xml:space="preserve"><value>Map: {0}, of {1}</value></data>
+  <data name="Map.AltRegion" xml:space="preserve"><value>Map: {0}, of the region {1}</value></data>
+  <data name="Map.Toolbar" xml:space="preserve"><value>Map tools</value></data>
+  <data name="Map.ZoomIn" xml:space="preserve"><value>Zoom in</value></data>
+  <data name="Map.ZoomOut" xml:space="preserve"><value>Zoom out</value></data>
+  <data name="Map.Fit" xml:space="preserve"><value>Fit to the screen</value></data>
+  <data name="Map.KeysHint" xml:space="preserve"><value>Zoom with + and − or Ctrl and the mouse wheel, move with the arrow keys, and press 0 to fit the picture to the screen.</value></data>
+  <data name="Map.Markers" xml:space="preserve"><value>Places on the map</value></data>
+  <data name="Map.Marker.Hidden" xml:space="preserve"><value>{0}, hidden</value></data>
+  <data name="Map.Picture.None.Gm" xml:space="preserve"><value>This map has no picture yet. Choose one to put the places on.</value></data>
+  <data name="Map.Picture.None.Player" xml:space="preserve"><value>There's no picture on this map yet.</value></data>
+  <data name="Map.Picture.Choose" xml:space="preserve"><value>Picture</value></data>
+  <data name="Map.Picture.Replace" xml:space="preserve"><value>Replace the picture</value></data>
+  <data name="Map.Picture.Hint" xml:space="preserve"><value>A JPEG, PNG or WebP, up to 25 MB. Once the map is shown, players see the whole picture, so leave secrets off it.</value></data>
+  <data name="Map.Picture.Uploading" xml:space="preserve"><value>Uploading the picture…</value></data>
+  <data name="Map.Picture.Saved" xml:space="preserve"><value>Picture saved.</value></data>
+  <data name="Map.Picture.Problem.TooManyBytes" xml:space="preserve"><value>This picture is over 25 MB. Save it smaller, or as a JPEG or WebP, and try again.</value></data>
+  <data name="Map.Picture.Problem.TooManyPixels" xml:space="preserve"><value>This picture has more than 67 million pixels. Make it smaller and try again.</value></data>
+  <data name="Map.Picture.Problem.Unsupported" xml:space="preserve"><value>This file isn't a JPEG, PNG or WebP picture.</value></data>
+  <data name="Map.Picture.Problem.Malformed" xml:space="preserve"><value>This picture looks damaged and can't be read. Try saving it again.</value></data>
+  <data name="Map.Picture.Problem.NotAllowed" xml:space="preserve"><value>Only the GM can change this map's picture.</value></data>
+  <data name="Map.Picture.Problem.Failed" xml:space="preserve"><value>The picture couldn't be uploaded: {0}</value></data>
+  <data name="Map.Panel" xml:space="preserve"><value>Places of this map</value></data>
+  <data name="Map.Panel.OnMap" xml:space="preserve"><value>On this map</value></data>
+  <data name="Map.Panel.NotOnMap" xml:space="preserve"><value>Not on the map yet</value></data>
+  <data name="Map.Panel.NoneOnMap.Gm" xml:space="preserve"><value>No places are on this map yet. Pick one below and press Place on map.</value></data>
+  <data name="Map.Panel.NoneOnMap.Player" xml:space="preserve"><value>You haven't found any places on this map yet.</value></data>
+  <data name="Map.Panel.AllPlaced" xml:space="preserve"><value>Every place here is on the map.</value></data>
+  <data name="Map.Panel.NoPlacesUnder" xml:space="preserve"><value>Nothing is inside {0} yet. Add places on the Places page.</value></data>
+  <data name="Map.PlaceOnMap" xml:space="preserve"><value>Place on map</value></data>
+  <data name="Map.PlaceOnMapLabel" xml:space="preserve"><value>Place {0} on the map</value></data>
+  <data name="Map.Move" xml:space="preserve"><value>Move on the map</value></data>
+  <data name="Map.MoveLabel" xml:space="preserve"><value>Move {0} on the map</value></data>
+  <data name="Map.Remove" xml:space="preserve"><value>Remove from map</value></data>
+  <data name="Map.RemoveLabel" xml:space="preserve"><value>Remove {0} from the map</value></data>
+  <data name="Map.Removed" xml:space="preserve"><value>{0} is off the map. The place itself is still there.</value></data>
+  <data name="Map.Placed" xml:space="preserve"><value>{0} is on the map.</value></data>
+  <data name="Map.PlaceFailed" xml:space="preserve"><value>That couldn't be put on the map. Reload the page and try again.</value></data>
+  <data name="Map.Failed" xml:space="preserve"><value>That didn't work. Reload the page and try again.</value></data>
+  <data name="Map.Placing.Title" xml:space="preserve"><value>Placing {0}</value></data>
+  <data name="Map.Placing.Shape" xml:space="preserve"><value>Shape</value></data>
+  <data name="Map.Placing.Pin" xml:space="preserve"><value>Pin</value></data>
+  <data name="Map.Placing.Area" xml:space="preserve"><value>Area</value></data>
+  <data name="Map.Placing.PinHelp" xml:space="preserve"><value>Click the map. Or move the cross-hair with the arrow keys (hold Shift to go further) and press Enter. Escape stops.</value></data>
+  <data name="Map.Placing.AreaHelp" xml:space="preserve"><value>Click each corner, then double-click or click the first corner to finish. Or move the cross-hair with the arrow keys, press Space for each corner and Enter to finish. Backspace takes a corner back. Escape stops.</value></data>
+  <data name="Map.Placing.Finish" xml:space="preserve"><value>Finish area</value></data>
+  <data name="Map.Placing.Corners" xml:space="preserve"><value>{0, plural, one{# corner} other{# corners}}</value></data>
+  <data name="Map.Placing.NeedCorners" xml:space="preserve"><value>An area needs at least 3 corners.</value></data>
+  <data name="Map.Placing.Cancelled" xml:space="preserve"><value>Stopped placing.</value></data>
+  <data name="Map.Placing.Cross" xml:space="preserve"><value>Cross-hair {0}% across, {1}% down</value></data>
+  <data name="Map.Versions" xml:space="preserve"><value>Versions</value></data>
+  <data name="Map.Version.Numbered" xml:space="preserve"><value>Version {0}</value></data>
+  <data name="Map.Version.Current" xml:space="preserve"><value>current</value></data>
+  <data name="Map.Version.HiddenFromPlayers" xml:space="preserve"><value>hidden from players</value></data>
+  <data name="Map.Version.ThisOne" xml:space="preserve"><value>This version</value></data>
+  <data name="Map.Version.MakeCurrent" xml:space="preserve"><value>Make current</value></data>
+  <data name="Map.Version.MadeCurrent" xml:space="preserve"><value>This is now the version that opens first.</value></data>
+  <data name="Map.Version.Show" xml:space="preserve"><value>Show to players</value></data>
+  <data name="Map.Version.Hide" xml:space="preserve"><value>Hide from players</value></data>
+  <data name="Map.Version.Shown" xml:space="preserve"><value>Players can see this version now.</value></data>
+  <data name="Map.Version.Hidden" xml:space="preserve"><value>This version is hidden from players now.</value></data>
+  <data name="Map.Version.Rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="Map.Version.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Map.Version.Label" xml:space="preserve"><value>Version label</value></data>
+  <data name="Map.Version.LabelHint" xml:space="preserve"><value>Which version this is, such as Summer. Leave it empty for a place's only map.</value></data>
+  <data name="Map.Version.Saved" xml:space="preserve"><value>Map saved.</value></data>
+  <data name="Map.Version.Copy" xml:space="preserve"><value>Copy as new version</value></data>
+  <data name="Map.Version.CopyLabel" xml:space="preserve"><value>Label for the new version</value></data>
+  <data name="Map.Version.CopyHint" xml:space="preserve"><value>Such as Winter, After the fire or Second floor. The copy keeps the picture and the places on it, and starts hidden from players.</value></data>
+  <data name="Map.Version.Copied" xml:space="preserve"><value>Copied as {0}. It's hidden from players until you show it.</value></data>
+  <data name="Map.Version.Delete" xml:space="preserve"><value>Delete version</value></data>
+  <data name="Map.Version.DeleteTitle" xml:space="preserve"><value>Delete {0}?</value></data>
+  <data name="Map.Version.DeleteBody" xml:space="preserve"><value>Its picture and where the places are on it go too. The places themselves stay. This can't be undone.</value></data>
+  <data name="Map.Version.Deleted" xml:space="preserve"><value>{0} deleted.</value></data>
+  <data name="Map.Viewport" xml:space="preserve"><value>Map view</value></data>
+  <data name="Map.Selected" xml:space="preserve"><value>{0} selected.</value></data>
+  <data name="Map.Selected.Hidden" xml:space="preserve"><value>{0} selected. It's hidden from players.</value></data>
+  <data name="Map.Subtitle.NoPicture" xml:space="preserve"><value>Players will see this map once it has a picture.</value></data>
+  <data name="Map.Single.ThisOne" xml:space="preserve"><value>This map</value></data>
+  <data name="Map.Single.Delete" xml:space="preserve"><value>Delete map</value></data>
+  <data name="Map.Single.HiddenFromPlayers" xml:space="preserve"><value>This map is hidden from players. Once you show it, they see the whole picture.</value></data>
+  <data name="Map.Single.Shown" xml:space="preserve"><value>Players can see this map now.</value></data>
+  <data name="Map.Single.Hidden" xml:space="preserve"><value>This map is hidden from players now.</value></data>
+</root>

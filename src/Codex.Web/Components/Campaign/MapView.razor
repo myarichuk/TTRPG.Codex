@@ -1,0 +1,1247 @@
+@using Codex.Persistence
+@inject IMapRepository MapRepo
+@inject IRegionRepository RegionRepo
+@inject IWikiRepository WikiRepo
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@implements IAsyncDisposable
+
+@* A map of a place or of a region (MAPS_DESIGN.md 9.5): the picture with its markers, and beside it (below it on a phone) the panel
+   that is the map's text version. Everything it shows comes from IMapRepository and the places list as the caller may see them: a
+   player's map carries only the markers of places they know, and a marker is drawn only when its place is in the region this page
+   loaded through the same access. *@
+
+@if (loading)
+{
+    <LoadingSkeleton Rows="4" />
+}
+else if (gm == null || GmRegion == null)
+{
+    <div class="empty" data-testid="map-not-found">
+        <div class="empty-icon"><LucideIcon IconName="map" Size="28" /></div>
+        <h2 class="h4">@L["Map.NotFound.Title"]</h2>
+        <p>@(Ctx.IsDm ? L["Map.NotFound.Body.Gm"] : L["Map.NotFound.Body"])</p>
+        <a href="@PlacesHref" class="cx-btn cx-plaque">@L["Map.BackToPlaces"]</a>
+    </div>
+}
+else
+{
+    var scene = Scene;
+    <nav aria-label="@L["Map.Breadcrumb"]" class="breadcrumb-nav map-breadcrumb" data-testid="map-breadcrumb">
+        <a href="@PlacesHref">@L["Map.Places"]</a>
+        @foreach (var crumb in Crumbs(scene))
+        {
+            <span class="map-crumb-sep" aria-hidden="true"><LucideIcon IconName="chevron-right" Size="12" /></span>
+            @if (crumb.Current)
+            {
+                <span aria-current="page">@crumb.Name</span>
+            }
+            else if (crumb.Href != null)
+            {
+                <a href="@crumb.Href">@crumb.Name</a>
+            }
+            else
+            {
+                <span>@crumb.Name</span>
+            }
+        }
+    </nav>
+
+    <div class="page-header mb-3">
+        <div>
+            <h2 class="mb-0" data-testid="map-title">@gm.Name
+                @if (!string.IsNullOrWhiteSpace(gm.Label))
+                {
+                    <span class="pill ms-2">@gm.Label</span>
+                }
+            </h2>
+            @if (GmView)
+            {
+                <p class="page-subtitle" data-testid="map-subtitle">@Subtitle(GmRegion, gm)</p>
+            }
+        </div>
+        @if (Ctx.IsDm)
+        {
+            <div class="md-tabs" role="group" aria-label="@L["Map.ViewAs"]" data-testid="map-view-as">
+                <button type="button" class="md-tab" aria-pressed="@(asParty ? "false" : "true")" @onclick="() => ViewAsPartyAsync(false)">@L["Map.View.Gm"]</button>
+                <button type="button" class="md-tab" aria-pressed="@(asParty ? "true" : "false")" @onclick="() => ViewAsPartyAsync(true)" data-testid="map-view-as-party"><LucideIcon IconName="users" Size="14" /> @L["Map.View.Party"]</button>
+            </div>
+        }
+    </div>
+
+    @if (!(asParty && party == null) && ShownVersions(scene) is { Count: > 1 } versions)
+    {
+        <nav class="map-versions" aria-label="@L["Map.Versions"]" data-testid="map-versions">
+            <ul class="list-unstyled">
+                @foreach (var version in versions)
+                {
+                    <li>
+                        <a href="@MapHref(version.Id)" class="map-version @(version.Id == gm.Id ? "is-open" : "")" aria-current="@(version.Id == gm.Id ? "page" : null)" data-testid="map-version">
+                            <span>@VersionName(version, versions)</span>
+                            @if (version.Current)
+                            {
+                                <span class="pill pill-success">@L["Map.Version.Current"]</span>
+                            }
+                            @if (GmView && !version.ShownToPlayers)
+                            {
+                                <span class="pill pill-warning">@L["Map.Version.HiddenFromPlayers"]</span>
+                            }
+                        </a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+
+    @if (GmView)
+    {
+        <section class="map-version-tools" aria-labelledby="map-version-tools-heading" data-testid="map-version-tools">
+            <h3 id="map-version-tools-heading" class="label-caps">@(SingleMap ? L["Map.Single.ThisOne"] : L["Map.Version.ThisOne"])</h3>
+            @if (versionForm == VersionForm.Rename)
+            {
+                <form class="map-inline-form" @onsubmit="SaveNameAsync" @onsubmit:preventDefault="true">
+                    <div>
+                        <label for="map-name" class="field-label">@L["Map.Version.Name"]</label>
+                        <input id="map-name" class="field-input field-sm" @bind="formName" maxlength="@MapDocument.MaxName" required data-testid="map-name" />
+                    </div>
+                    <div>
+                        <label for="map-label" class="field-label">@L["Map.Version.Label"]</label>
+                        <input id="map-label" class="field-input field-sm" @bind="formLabel" maxlength="@MapDocument.MaxLabel" aria-describedby="map-label-hint" data-testid="map-label" />
+                        <p id="map-label-hint" class="field-hint">@L["Map.Version.LabelHint"]</p>
+                    </div>
+                    <div class="map-inline-actions">
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" Busy="saving" data-testid="map-name-save">@L["Common.Save"]</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="CloseVersionForm" data-testid="map-name-cancel">@L["Common.Cancel"]</CodexButton>
+                    </div>
+                </form>
+            }
+            else if (versionForm == VersionForm.Copy)
+            {
+                <form class="map-inline-form" @onsubmit="CopyAsync" @onsubmit:preventDefault="true">
+                    <div>
+                        <label for="map-copy-label" class="field-label">@L["Map.Version.CopyLabel"]</label>
+                        <input id="map-copy-label" class="field-input field-sm" @bind="formLabel" maxlength="@MapDocument.MaxLabel" required aria-describedby="map-copy-hint" data-testid="map-copy-label" />
+                        <p id="map-copy-hint" class="field-hint">@L["Map.Version.CopyHint"]</p>
+                        @if (copyError != null)
+                        {
+                            <p class="text-danger mb-0" role="alert" data-testid="map-copy-error">@copyError</p>
+                        }
+                    </div>
+                    <div class="map-inline-actions">
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" Busy="saving" data-testid="map-copy-save">@L["Map.Version.Copy"]</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="CloseVersionForm" data-testid="map-copy-cancel">@L["Common.Cancel"]</CodexButton>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <div class="map-tool-row">
+                    @if (!gm.Current)
+                    {
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="star" OnClick="MakeCurrentAsync" data-testid="map-make-current">@L["Map.Version.MakeCurrent"]</CodexButton>
+                    }
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="@(gm.ShownToPlayers ? "eye-off" : "eye")" OnClick="ToggleShownAsync" data-testid="map-toggle-shown">@(gm.ShownToPlayers ? L["Map.Version.Hide"] : L["Map.Version.Show"])</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="StartRename" id="map-rename-button" data-testid="map-rename">@L["Map.Version.Rename"]</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="copy" OnClick="StartCopy" id="map-copy-button" data-testid="map-copy">@L["Map.Version.Copy"]</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-blood" Icon="trash-2" OnClick="DeleteAsync" data-testid="map-delete">@(SingleMap ? L["Map.Single.Delete"] : L["Map.Version.Delete"])</CodexButton>
+                </div>
+            }
+        </section>
+    }
+
+    <div class="map-layout">
+        <div class="map-main">
+            @if (asParty && party == null)
+            {
+                <div class="empty" data-testid="map-party-none">
+                    <div class="empty-icon"><LucideIcon IconName="eye-off" Size="28" /></div>
+                    <p>@L["Map.Party.Hidden", OwnerName(GmRegion, gm)]</p>
+                </div>
+            }
+            else if (scene.Map.Image is not { } image)
+            {
+                <div class="map-empty panel" data-testid="map-no-picture">
+                    <p>@(GmView ? L["Map.Picture.None.Gm"] : L["Map.Picture.None.Player"])</p>
+                    @if (GmView)
+                    {
+                        @PictureField(L["Map.Picture.Choose"])
+                    }
+                    @if (uploadError != null)
+                    {
+                        <p class="text-danger mb-0 mt-2" role="alert" data-testid="map-upload-error">@uploadError</p>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="map-toolbar" role="toolbar" aria-label="@L["Map.Toolbar"]">
+                    <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="zoom-in" Label="@L["Map.ZoomIn"]" title="@L["Map.ZoomIn"]" OnClick="@(() => CallAsync("zoomIn"))" />
+                    <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="zoom-out" Label="@L["Map.ZoomOut"]" title="@L["Map.ZoomOut"]" OnClick="@(() => CallAsync("zoomOut"))" />
+                    <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="maximize-2" Label="@L["Map.Fit"]" title="@L["Map.Fit"]" OnClick="@(() => CallAsync("fit"))" />
+                    <span id="map-keys-hint" class="small-muted map-keys-hint">@L["Map.KeysHint"]</span>
+                </div>
+
+                @if (placing != null && GmView && Place(scene, placing) is { } placingPlace)
+                {
+                    <div class="map-placing" data-testid="map-placing">
+                        <p class="mb-1"><strong>@L["Map.Placing.Title", placingPlace.Name]</strong></p>
+                        <div class="map-tool-row">
+                            <div class="md-tabs" role="group" aria-label="@L["Map.Placing.Shape"]">
+                                <button type="button" class="md-tab" aria-pressed="@(placingKind == MapMarkerKind.Pin ? "true" : "false")" @onclick="() => SetPlacingKind(MapMarkerKind.Pin)" data-testid="map-placing-pin"><LucideIcon IconName="map-pin" Size="14" /> @L["Map.Placing.Pin"]</button>
+                                <button type="button" class="md-tab" aria-pressed="@(placingKind == MapMarkerKind.Area ? "true" : "false")" @onclick="() => SetPlacingKind(MapMarkerKind.Area)" data-testid="map-placing-area"><LucideIcon IconName="pentagon" Size="14" /> @L["Map.Placing.Area"]</button>
+                            </div>
+                            @if (placingKind == MapMarkerKind.Area)
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="check" Disabled="@(corners.Count < 3)" OnClick="FinishAreaAsync" data-testid="map-placing-finish">@L["Map.Placing.Finish"]</CodexButton>
+                            }
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="CancelPlacing" data-testid="map-placing-cancel">@L["Common.Cancel"]</CodexButton>
+                        </div>
+                        <p class="small-muted mb-0 mt-1" id="map-placing-help">@(placingKind == MapMarkerKind.Pin ? L["Map.Placing.PinHelp"] : L["Map.Placing.AreaHelp"])</p>
+                    </div>
+                }
+
+                @* The keys are map-view.js's: it calls PlacingKey only while placing, so other keys never reach the server. The picture's
+                   alt text names the map; the viewport is named for what it is, so the name isn't read twice. *@
+                <div @key="@($"{scene.Map.Id}:{image.Version}")" @ref="viewport" id="map-viewport" class="map-viewport @(placing != null ? "is-placing" : "")" dir="ltr" tabindex="0"
+                     role="group" aria-label="@L["Map.Viewport"]" aria-describedby="@(placing != null ? "map-placing-help" : "map-keys-hint")"
+                     data-placing="@(placing != null ? "true" : "false")" data-testid="map-viewport">
+                    <div class="map-stage" @ref="stage">
+                        <div class="map-canvas" style="width: @(image.Width)px; height: @(image.Height)px">
+                            <img src="@MapImageUrl(scene)" alt="@AltText(scene)" width="@image.Width" height="@image.Height" draggable="false" data-testid="map-image" />
+                            <svg class="map-overlay" viewBox="0 0 @image.Width @image.Height" width="@image.Width" height="@image.Height" role="group" aria-label="@L["Map.Markers"]" data-testid="map-markers">
+                                @foreach (var (marker, place) in Drawn(scene))
+                                {
+                                    var hidden = IsHidden(place);
+                                    var selectedCss = selectedId == place.Id ? " is-selected" : "";
+                                    var hiddenCss = hidden ? " is-hidden" : "";
+                                    var label = MarkerLabel(place);
+                                    @if (marker.Kind == MapMarkerKind.Area && marker.Points.Count >= 3)
+                                    {
+                                        var middle = Middle(marker);
+                                        <g class="@("map-marker map-area" + hiddenCss + selectedCss)" data-marker="@place.Id" role="img" aria-label="@label" data-testid="map-marker">
+                                            <title>@label</title>
+                                            <polygon points="@Points(marker.Points)" />
+                                            <g transform="translate(@N(middle.X) @N(middle.Y))">
+                                                <g class="map-marker-shape">
+                                                    @SvgText("map-label", "middle", 0, 4, place.Name)
+                                                    @if (hidden)
+                                                    {
+                                                        @SvgText("map-label map-label-sub", "middle", 0, 19, L["Campaign.World.Hidden"])
+                                                    }
+                                                </g>
+                                            </g>
+                                        </g>
+                                    }
+                                    else if (marker.Points.Count > 0)
+                                    {
+                                        var at = marker.Points[0];
+                                        <g class="@("map-marker map-pin" + hiddenCss + selectedCss)" data-marker="@place.Id" transform="translate(@N(at.X) @N(at.Y))" role="img" aria-label="@label" data-testid="map-marker">
+                                            <title>@label</title>
+                                            <g class="map-marker-shape">
+                                                <path class="map-pin-body" d="M0 0 C -2 -6 -9 -10 -9 -17 A 9 9 0 1 1 9 -17 C 9 -10 2 -6 0 0 Z" />
+                                                <circle class="map-pin-dot" cx="0" cy="-17" r="3" />
+                                                @if (MapOf(scene, place.Id) != null)
+                                                {
+                                                    @* The place has a map of its own: a small folded-map sign beside the pin. *@
+                                                    <path class="map-pin-sign" d="M-16 -30 l4 -2 l4 2 l4 -2 v8 l-4 2 l-4 -2 l-4 2 Z" />
+                                                }
+                                                @SvgText("map-label", "start", 13, -12, place.Name)
+                                                @if (hidden)
+                                                {
+                                                    @SvgText("map-label map-label-sub", "start", 13, 3, L["Campaign.World.Hidden"])
+                                                }
+                                            </g>
+                                        </g>
+                                    }
+                                }
+                                @if (placing != null && GmView)
+                                {
+                                    @if (corners.Count > 0)
+                                    {
+                                        <polyline class="map-draft" points="@Points(corners.Append(cross))" />
+                                        @foreach (var corner in corners)
+                                        {
+                                            <g transform="translate(@N(corner.X) @N(corner.Y))"><g class="map-marker-shape"><circle class="map-corner" r="4" /></g></g>
+                                        }
+                                    }
+                                    <g class="map-cross" transform="translate(@N(cross.X) @N(cross.Y))" data-testid="map-cross">
+                                        <g class="map-marker-shape">
+                                            <circle r="11" />
+                                            <line x1="-18" x2="-5" y1="0" y2="0" /><line x1="5" x2="18" y1="0" y2="0" />
+                                            <line x1="0" x2="0" y1="-18" y2="-5" /><line x1="0" x2="0" y1="5" y2="18" />
+                                        </g>
+                                    </g>
+                                }
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                @if (GmView)
+                {
+                    <div class="map-replace">
+                        @PictureField(L["Map.Picture.Replace"])
+                        @if (uploadError != null)
+                        {
+                            <p class="text-danger mb-0 mt-2" role="alert" data-testid="map-upload-error">@uploadError</p>
+                        }
+                    </div>
+                }
+            }
+            <p class="visually-hidden" role="status" aria-live="polite" data-testid="map-status">@status</p>
+        </div>
+
+        @* With nothing for players to see, the preview lists nothing either. *@
+        <aside class="map-panel" aria-label="@L["Map.Panel"]" data-testid="map-panel" hidden="@(asParty && party == null)">
+            @if (!(asParty && party == null))
+            {
+            @if (selectedId != null && Place(scene, selectedId) is { } selected)
+            {
+                <section class="panel map-details" id="map-details" aria-labelledby="map-details-title" data-testid="map-details">
+                    <h3 id="map-details-title" class="h5 mb-1">@selected.Name</h3>
+                    <p class="mb-2">
+                        <span class="pill">@L[$"Campaign.Places.Kind.{selected.Kind}"]</span>
+                        @if (IsHidden(selected))
+                        {
+                            <span class="pill pill-warning ms-1">@L["Campaign.World.Hidden"]</span>
+                        }
+                    </p>
+                    @if (!string.IsNullOrWhiteSpace(selected.Description))
+                    {
+                        <div class="rules-text" data-testid="map-details-description">@((MarkupString)DescriptionHtml(scene, selected))</div>
+                    }
+                    else if (GmView)
+                    {
+                        <p class="small-muted">@L["Campaign.World.NoDescription"]</p>
+                    }
+                    @if (GmView && FeatureNotes != null && selected.Feature is { IsEmpty: false })
+                    {
+                        @FeatureNotes(selected)
+                    }
+                    <div class="map-tool-row mt-2">
+                        @if (PageOf(scene, selected) is { } wikiPage)
+                        {
+                            <a class="cx-btn cx-etched cx-sm" href="@Ctx.BasePath/wiki/@wikiPage.Slug" aria-label="@L["Campaign.World.OpenPageLabel", selected.Name]" data-testid="map-details-page"><LucideIcon IconName="book-open" Size="14" /> @L["Campaign.World.OpenPage"]</a>
+                        }
+                        @if (MapOf(scene, selected.Id) is { } nested && nested.Id != scene.Map.Id)
+                        {
+                            <a class="cx-btn cx-etched cx-sm" href="@MapHref(nested.Id)" aria-label="@L["Map.OpenLabel", selected.Name]" data-testid="map-details-open-map"><LucideIcon IconName="map" Size="14" /> @L["Map.OpenMap"]</a>
+                        }
+                        else if (GmView && selected.Id != scene.Map.LocationId)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="plus" Busy="addingMap" OnClick="() => AddMapAsync(selected)" aria-label="@L["Map.AddLabel", selected.Name]">@L["Map.Add"]</CodexButton>
+                        }
+                    </div>
+                </section>
+            }
+
+            <section class="panel" aria-labelledby="map-on-heading">
+                <div class="panel-title"><h3 id="map-on-heading">@L["Map.Panel.OnMap"]</h3></div>
+                @{ var drawn = Drawn(scene).ToList(); }
+                @if (drawn.Count == 0)
+                {
+                    <p class="small-muted mb-0" data-testid="map-on-empty">@(GmView ? L["Map.Panel.NoneOnMap.Gm"] : L["Map.Panel.NoneOnMap.Player"])</p>
+                }
+                <ul class="list-unstyled mb-0">
+                    @foreach (var (marker, place) in drawn)
+                    {
+                        <li class="list-row map-row @(selectedId == place.Id ? "is-selected" : "")" id="map-row-@place.Id" data-testid="map-on-row">
+                            <div class="row-main">
+                                <button type="button" class="map-row-name" id="@RowNameId(place.Id)" aria-expanded="@(selectedId == place.Id ? "true" : "false")" aria-controls="map-details" @onclick="() => Select(place.Id)">
+                                    <LucideIcon IconName="@(marker.Kind == MapMarkerKind.Area ? "pentagon" : "map-pin")" Size="14" /> @place.Name
+                                </button>
+                                @if (IsHidden(place))
+                                {
+                                    <span class="pill pill-warning ms-1">@L["Campaign.World.Hidden"]</span>
+                                }
+                            </div>
+                            <div class="row-actions">
+                                @if (GmView)
+                                {
+                                    @if (IsHidden(place))
+                                    {
+                                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="eye" Label="@L["Campaign.World.RevealLabel", place.Name]" title="@L["Campaign.World.Reveal"]" OnClick="() => RevealAsync(place)" data-testid="map-reveal" />
+                                    }
+                                    <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="edit-3" Label="@L["Campaign.World.EditLabel", place.Name]" title="@L["Campaign.World.Edit"]" OnClick="() => OnEdit.InvokeAsync(place)" data-testid="map-edit" />
+                                    <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="crosshair" Label="@L["Map.MoveLabel", place.Name]" title="@L["Map.Move"]" OnClick="() => StartPlacing(place.Id)" data-testid="map-move" />
+                                    <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Class="cx-blood" Icon="x" Label="@L["Map.RemoveLabel", place.Name]" title="@L["Map.Remove"]" OnClick="() => RemoveAsync(marker, place)" data-testid="map-remove" />
+                                }
+                                @if (PageOf(scene, place) is { } wikiPage)
+                                {
+                                    <a class="cx-btn cx-rune cx-sm" href="@Ctx.BasePath/wiki/@wikiPage.Slug" aria-label="@L["Campaign.World.OpenPageLabel", place.Name]" title="@L["Campaign.World.OpenPage"]"><LucideIcon IconName="book-open" Size="14" /></a>
+                                }
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </section>
+
+            @if (GmView)
+            {
+                <section class="panel" aria-labelledby="map-off-heading">
+                    <div class="panel-title"><h3 id="map-off-heading">@L["Map.Panel.NotOnMap"]</h3></div>
+                    @{ var under = NotOnMap(scene).ToList(); }
+                    @if (under.Count == 0)
+                    {
+                        <p class="small-muted mb-0">@(Under(scene).Any() ? L["Map.Panel.AllPlaced"] : L["Map.Panel.NoPlacesUnder", OwnerName(scene.Region, scene.Map)])</p>
+                    }
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var (place, depth) in under)
+                        {
+                            <li class="list-row map-row @(selectedId == place.Id ? "is-selected" : "")" id="map-row-@place.Id" style="--depth: @depth" data-testid="map-off-row">
+                                <div class="row-main">
+                                    <button type="button" class="map-row-name" id="@RowNameId(place.Id)" aria-expanded="@(selectedId == place.Id ? "true" : "false")" aria-controls="map-details" @onclick="() => Select(place.Id)">@place.Name</button>
+                                    @if (IsHidden(place))
+                                    {
+                                        <span class="pill pill-warning ms-1">@L["Campaign.World.Hidden"]</span>
+                                    }
+                                </div>
+                                <div class="row-actions">
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="map-pin" Disabled="@(scene.Map.Image == null)" OnClick="() => StartPlacing(place.Id)" aria-label="@L["Map.PlaceOnMapLabel", place.Name]" data-testid="map-place">@L["Map.PlaceOnMap"]</CodexButton>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+            }
+        </aside>
+    </div>
+
+    @if (Ctx.IsDm)
+    {
+        <ConfirmDialog @ref="confirm" />
+    }
+}
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    [Parameter, EditorRequired] public string MapId { get; set; } = string.Empty;
+
+    /// <summary>The regions as the caller may see them (WorldSection's list): a player's hold only the places they know.</summary>
+    [Parameter] public IReadOnlyList<RegionDocument> Regions { get; set; } = Array.Empty<RegionDocument>();
+
+    /// <summary>The wiki pages the caller may open, for <i>Open page</i> and links in descriptions.</summary>
+    [Parameter] public IReadOnlyCollection<WikiPageDocument> Pages { get; set; } = Array.Empty<WikiPageDocument>();
+
+    [Parameter] public MentionDirectory Mentions { get; set; } = MentionDirectory.Empty;
+
+    /// <summary>Opens the usual place editor (GM).</summary>
+    [Parameter] public EventCallback<LocationDocument> OnEdit { get; set; }
+
+    /// <summary>A place changed here (revealed): the list reloads, which hands this page the new <see cref="Regions"/>.</summary>
+    [Parameter] public EventCallback OnPlacesChanged { get; set; }
+
+    /// <summary>A feature's GM notes, drawn as the list draws them.</summary>
+    [Parameter] public RenderFragment<LocationDocument>? FeatureNotes { get; set; }
+
+    /// <summary>What one view of the map shows: the map, its region and the region's other maps, the pages and mentions to link.</summary>
+    private sealed record MapScene(MapDocument Map, RegionDocument Region, IReadOnlyList<MapDocument> RegionMaps, IReadOnlyCollection<WikiPageDocument> Pages,
+        MentionDirectory Mentions);
+
+    private enum VersionForm { None, Rename, Copy }
+
+    private bool loading = true;
+    private string? loadedMapId;
+
+    // The caller's own view.
+    private MapDocument? gm;
+    private IReadOnlyList<MapDocument> regionMaps = Array.Empty<MapDocument>();
+
+    // The GM's "show as a player": the same map through a party preview access, or null when players can't see it.
+    private bool asParty;
+    private MapScene? party;
+
+    private string? selectedId;
+    private string? status;
+    private string? uploadError;
+    private bool uploading;
+    private VersionForm versionForm;
+    private string formName = string.Empty;
+    private string formLabel = string.Empty;
+    private ConfirmDialog? confirm;
+
+    // Placing (9.6): the place, the shape, the corners so far and the cross-hair, in the picture's pixels.
+    private string? placing;
+    private MapMarkerKind placingKind = MapMarkerKind.Pin;
+    private readonly List<MapPoint> corners = new();
+    private MapPoint cross;
+
+    private RegionDocument? GmRegion => gm == null ? null : Regions.FirstOrDefault(r => r.Id == gm.RegionId);
+
+    /// <summary>The GM's own view, not the preview: the only one with hidden places, notes and tools.</summary>
+    private bool GmView => Ctx.IsDm && !asParty;
+
+    private MapScene Scene => asParty && party != null ? party : new MapScene(gm!, GmRegion!, regionMaps, Pages, Mentions);
+
+    private string PlacesHref => $"{Ctx.BasePath}/world";
+    private string MapHref(string mapId) => $"{Ctx.BasePath}/world/map/{Uri.EscapeDataString(mapId)}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loadedMapId == MapId) return;
+        loading = gm == null || gm.Id != MapId;
+        loadedMapId = MapId;
+        asParty = false;
+        party = null;
+        selectedId = null;
+        placing = null;
+        corners.Clear();
+        versionForm = VersionForm.None;
+        uploadError = null;
+        await ReloadAsync();
+        loading = false;
+        justLoaded = true;
+    }
+
+    private async Task ReloadAsync()
+    {
+        gm = await MapRepo.GetAsync(MapId, Ctx.Access);
+        regionMaps = gm == null ? Array.Empty<MapDocument>() : await MapRepo.ListForRegionAsync(gm.RegionId, Ctx.Access);
+        if (asParty) await LoadPartyAsync();
+    }
+
+    private async Task ViewAsPartyAsync(bool on)
+    {
+        asParty = on && Ctx.IsDm;
+        placing = null;
+        corners.Clear();
+        versionForm = VersionForm.None;
+        if (asParty) await LoadPartyAsync();
+        if (selectedId != null && Place(Scene, selectedId) == null) selectedId = null;
+    }
+
+    private async Task LoadPartyAsync()
+    {
+        party = null;
+        if (Ctx.Access.PartyPreview() is not { } preview) return;
+        var map = await MapRepo.GetAsync(MapId, preview);
+        var region = map == null ? null : await RegionRepo.GetAsync(map.RegionId, preview);
+        if (map == null || region == null) return;
+        var maps = await MapRepo.ListForRegionAsync(map.RegionId, preview);
+        var pages = (await WikiRepo.GetVisibleForCampaignAsync(preview)).ToList();
+        party = new MapScene(map, region, maps, pages, MentionDirectory.Empty);
+    }
+
+    // ---- What is drawn ----
+
+    private static LocationDocument? Place(MapScene scene, string id) => scene.Region.Locations.FirstOrDefault(l => l.Id == id);
+
+    /// <summary>The markers to draw and list, each with its place: only those whose place is in the region as this view loaded it, so a
+    /// player is never drawn a marker for a place they don't know, whatever the map holds.</summary>
+    private static IEnumerable<(MapMarker Marker, LocationDocument Place)> Drawn(MapScene scene)
+    {
+        var places = scene.Region.Locations.ToDictionary(l => l.Id);
+        foreach (var marker in scene.Map.Markers)
+        {
+            if (places.TryGetValue(marker.LocationId, out var place)) yield return (marker, place);
+        }
+    }
+
+    /// <summary>The places this map is of: the tree under its place, or every place of the region for the region's own map.</summary>
+    private static IEnumerable<(LocationDocument Place, int Depth)> Under(MapScene scene)
+    {
+        var owner = scene.Map.LocationId;
+        if (owner == null)
+        {
+            foreach (var item in PlaceTree.Ordered(scene.Region.Locations)) yield return item;
+            yield break;
+        }
+
+        var ownerDepth = -1;
+        foreach (var (place, depth) in PlaceTree.Ordered(scene.Region.Locations))
+        {
+            if (place.Id == owner)
+            {
+                ownerDepth = depth;
+                continue;
+            }
+
+            if (ownerDepth < 0) continue;
+            if (depth <= ownerDepth) yield break;
+            yield return (place, depth - ownerDepth - 1);
+        }
+    }
+
+    private static IEnumerable<(LocationDocument Place, int Depth)> NotOnMap(MapScene scene)
+    {
+        var placed = scene.Map.Markers.Select(m => m.LocationId).ToHashSet();
+        return Under(scene).Where(p => !placed.Contains(p.Place.Id));
+    }
+
+    private bool IsHidden(LocationDocument place) => GmView && !RegionRepository.KnownToPlayers(place);
+
+    /// <summary>The place has only this one map: the tools say "this map", and nothing speaks of versions or of which is current.</summary>
+    private bool SingleMap => gm == null || ShownVersions(Scene).Count <= 1;
+
+    private static string RowNameId(string locationId) => $"map-row-name-{locationId}";
+
+    private string MarkerLabel(LocationDocument place) => IsHidden(place) ? L["Map.Marker.Hidden", place.Name] : place.Name;
+
+    /// <summary>A place's own map as this view may open it: its current version, the first the repository lists.</summary>
+    private static MapDocument? MapOf(MapScene scene, string? locationId) =>
+        scene.RegionMaps.FirstOrDefault(m => m.LocationId == locationId);
+
+    private static string OwnerName(RegionDocument region, MapDocument map) =>
+        map.LocationId == null ? region.Name : region.Locations.FirstOrDefault(l => l.Id == map.LocationId)?.Name ?? region.Name;
+
+    /// <summary>Whether players get this map, as the repository decides it (9.3): shown to them, with a picture, and its place known, or for
+    /// a region's map, any place of the region known. Once they get it, they get the whole picture.</summary>
+    private string Subtitle(RegionDocument region, MapDocument map)
+    {
+        if (!map.ShownToPlayers) return SingleMap ? L["Map.Single.HiddenFromPlayers"] : L["Map.Subtitle.HiddenFromPlayers"];
+        if (map.Image == null) return L["Map.Subtitle.NoPicture"];
+        if (map.LocationId == null)
+        {
+            return region.Locations.Any(RegionRepository.KnownToPlayers) ? L["Map.Subtitle.Shown"] : L["Map.Subtitle.WaitsForRegion", region.Name];
+        }
+
+        return region.Locations.FirstOrDefault(l => l.Id == map.LocationId) is { } place && !RegionRepository.KnownToPlayers(place)
+            ? L["Map.Subtitle.WaitsForPlace", place.Name]
+            : L["Map.Subtitle.Shown"];
+    }
+
+    private string AltText(MapScene scene) => scene.Map.LocationId == null
+        ? L["Map.AltRegion", scene.Map.Name, scene.Region.Name]
+        : L["Map.Alt", scene.Map.Name, OwnerName(scene.Region, scene.Map)];
+
+    private static string? MapImageUrl(MapScene scene) => MediaEndpoints.MapImageUrl(scene.Map);
+
+    private static WikiPageDocument? PageOf(MapScene scene, LocationDocument place) =>
+        string.IsNullOrEmpty(place.WikiPageId) ? null : scene.Pages.FirstOrDefault(p => p.Id == place.WikiPageId);
+
+    private string DescriptionHtml(MapScene scene, LocationDocument place) =>
+        WikiRender.ToHtml(place.Description, scene.Pages, scene.Mentions, Ctx.Campaign.Id, false, GmView ? DmView.From(L, scene.Mentions) : null);
+
+    /// <summary>The versions of this map's place the view may see, oldest first, so their numbers stay put when one is made current.</summary>
+    private static IReadOnlyList<MapDocument> ShownVersions(MapScene scene) =>
+        scene.RegionMaps.Where(m => m.LocationId == scene.Map.LocationId).OrderBy(m => m.CreatedAt).ThenBy(m => m.Id, StringComparer.Ordinal).ToList();
+
+    private string VersionName(MapDocument version, IReadOnlyList<MapDocument> versions) =>
+        string.IsNullOrWhiteSpace(version.Label) ? L["Map.Version.Numbered", versions.ToList().IndexOf(version) + 1] : version.Label!;
+
+    private sealed record Crumb(string Name, string? Href, bool Current);
+
+    /// <summary>Region › area › city › this place: each with a link to its own map when it has one.</summary>
+    private List<Crumb> Crumbs(MapScene scene)
+    {
+        var crumbs = new List<Crumb>();
+        var regionMap = MapOf(scene, null);
+        crumbs.Add(new Crumb(scene.Region.Name, scene.Map.LocationId == null ? null : regionMap != null ? MapHref(regionMap.Id) : null, scene.Map.LocationId == null));
+        if (scene.Map.LocationId == null) return crumbs;
+
+        var chain = new List<LocationDocument>();
+        var seen = new HashSet<string>();
+        var at = Place(scene, scene.Map.LocationId);
+        while (at != null && seen.Add(at.Id))
+        {
+            chain.Insert(0, at);
+            at = at.ParentId == null ? null : Place(scene, at.ParentId);
+        }
+
+        foreach (var place in chain)
+        {
+            var current = place.Id == scene.Map.LocationId;
+            crumbs.Add(new Crumb(place.Name, current ? null : MapOf(scene, place.Id) is { } map ? MapHref(map.Id) : null, current));
+        }
+
+        return crumbs;
+    }
+
+    // An SVG <text>: Razor reads a literal <text> tag as its own, so it is written out, its words encoded.
+    private static MarkupString SvgText(string css, string anchor, double x, double y, string words) =>
+        new($"<text class=\"{css}\" text-anchor=\"{anchor}\" x=\"{N(x)}\" y=\"{N(y)}\">{System.Net.WebUtility.HtmlEncode(words)}</text>");
+
+    private static string N(double value) => value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    private static string Points(IEnumerable<MapPoint> points) => string.Join(' ', points.Select(p => $"{N(p.X)},{N(p.Y)}"));
+
+    private static MapPoint Middle(MapMarker marker) =>
+        marker.LabelAt ?? new MapPoint(marker.Points.Average(p => p.X), marker.Points.Average(p => p.Y));
+
+    // ---- Selecting ----
+
+    private void Select(string locationId)
+    {
+        selectedId = selectedId == locationId ? null : locationId;
+        if (selectedId != null) scrollToRow = selectedId;
+        AnnounceSelected();
+    }
+
+    // The details open beside the map without moving focus, so the live region says which place they are of.
+    private void AnnounceSelected()
+    {
+        if (selectedId == null || Place(Scene, selectedId) is not { } place) return;
+        status = IsHidden(place) ? L["Map.Selected.Hidden", place.Name] : L["Map.Selected", place.Name];
+    }
+
+    [JSInvokable]
+    public Task MarkerClicked(string locationId) => InvokeAsync(() =>
+    {
+        if (placing != null) return;
+        selectedId = locationId;
+        scrollToRow = locationId;
+        AnnounceSelected();
+        StateHasChanged();
+    });
+
+    /// <summary>A click on the picture, in its own pixels. <paramref name="slop"/> is how near (in the same pixels, a few on screen
+    /// whatever the zoom) counts as the same spot: a click on an area's first corner finishes it, and a second click on the corner just
+    /// added (a double-click's) adds nothing.</summary>
+    [JSInvokable]
+    public Task MapClicked(double x, double y, double slop = 0) => InvokeAsync(async () =>
+    {
+        if (placing == null || gm?.Image == null || !GmView)
+        {
+            if (selectedId != null)
+            {
+                selectedId = null;
+                StateHasChanged();
+            }
+
+            return;
+        }
+
+        var point = Clamp(new MapPoint(x, y), gm.Image);
+        slop = double.IsFinite(slop) ? Math.Clamp(slop, 0, Math.Max(gm.Image.Width, gm.Image.Height) / 20.0) : 0;
+        if (placingKind == MapMarkerKind.Pin)
+        {
+            cross = point;
+            await SaveMarkerAsync(MapMarkerKind.Pin, [cross]);
+        }
+        else if (corners.Count >= 3 && Near(point, corners[0], slop))
+        {
+            await FinishAreaAsync();
+        }
+        else if (corners.Count == 0 || !Near(point, corners[^1], slop))
+        {
+            cross = point;
+            corners.Add(cross);
+            status = L["Map.Placing.Corners", corners.Count];
+        }
+
+        StateHasChanged();
+    });
+
+    private static bool Near(MapPoint a, MapPoint b, double slop) => Math.Abs(a.X - b.X) <= slop && Math.Abs(a.Y - b.Y) <= slop;
+
+    // ---- Placing (mouse and keyboard, 9.6) ----
+
+    private void StartPlacing(string locationId)
+    {
+        if (gm?.Image is not { } image) return;
+        placing = locationId;
+        selectedId = locationId;
+        corners.Clear();
+        var existing = gm.Markers.FirstOrDefault(m => m.LocationId == locationId);
+        placingKind = existing?.Kind ?? MapMarkerKind.Pin;
+        // The cross-hair starts on the place's marker when it has one, else in the middle of the picture.
+        cross = existing is { Points.Count: > 0 } ? Clamp(existing.Kind == MapMarkerKind.Area ? Middle(existing) : existing.Points[0], image) : new MapPoint(Math.Round(image.Width / 2.0), Math.Round(image.Height / 2.0));
+        status = Place(Scene, locationId) is { } place ? L["Map.Placing.Title", place.Name] : null;
+        focusViewport = true;
+        revealCross = true;
+    }
+
+    private void SetPlacingKind(MapMarkerKind kind)
+    {
+        placingKind = kind;
+        corners.Clear();
+        focusViewport = true;
+    }
+
+    private void CancelPlacing()
+    {
+        if (placing == null) return;
+        // Cancel goes with the placing panel: focus returns to the place's own row.
+        focusField = RowNameId(placing);
+        placing = null;
+        corners.Clear();
+        status = L["Map.Placing.Cancelled"];
+    }
+
+    private async Task FinishAreaAsync()
+    {
+        if (corners.Count < 3)
+        {
+            status = L["Map.Placing.NeedCorners"];
+            return;
+        }
+
+        await SaveMarkerAsync(MapMarkerKind.Area, corners.ToList());
+    }
+
+    /// <summary>A double-click on the picture finishes an area (its click has already added the last corner).</summary>
+    [JSInvokable]
+    public Task FinishAreaByDoubleClick() => InvokeAsync(async () =>
+    {
+        if (placing == null || !GmView || placingKind != MapMarkerKind.Area) return;
+        await FinishAreaAsync();
+        StateHasChanged();
+    });
+
+    /// <summary>The keys the server acts on while placing, sent by map-view.js only then: arrows move the cross-hair (one grid cell, else
+    /// 1% of the picture; Shift ten times as far), Enter drops a pin or finishes an area, Space adds a corner, Backspace takes the last one
+    /// off, Escape stops (from anywhere on the page). Zoom and pan keys never leave the browser.</summary>
+    [JSInvokable]
+    public Task PlacingKey(string key, bool shift) => InvokeAsync(async () =>
+    {
+        // Anything can call this: it acts only while the GM's own view is placing.
+        if (placing == null || gm?.Image is not { } image || !GmView) return;
+        var times = shift ? 10 : 1;
+        var (stepX, stepY) = gm.Grid.Kind != MapGridKind.None ? (gm.Grid.CellSize, gm.Grid.CellSize) : (image.Width / 100.0, image.Height / 100.0);
+        switch (key)
+        {
+            case "ArrowLeft":
+                MoveCross(-stepX * times, 0, image);
+                break;
+            case "ArrowRight":
+                MoveCross(stepX * times, 0, image);
+                break;
+            case "ArrowUp":
+                MoveCross(0, -stepY * times, image);
+                break;
+            case "ArrowDown":
+                MoveCross(0, stepY * times, image);
+                break;
+            case " ":
+            case "Spacebar":
+                if (placingKind == MapMarkerKind.Area)
+                {
+                    corners.Add(cross);
+                    status = L["Map.Placing.Corners", corners.Count];
+                }
+
+                break;
+            case "Backspace":
+                if (corners.Count > 0)
+                {
+                    corners.RemoveAt(corners.Count - 1);
+                    status = L["Map.Placing.Corners", corners.Count];
+                }
+
+                break;
+            case "Enter":
+                if (placingKind == MapMarkerKind.Pin) await SaveMarkerAsync(MapMarkerKind.Pin, [cross]);
+                else await FinishAreaAsync();
+                break;
+            case "Escape":
+                CancelPlacing();
+                break;
+            default:
+                return;
+        }
+
+        StateHasChanged();
+    });
+
+    private void MoveCross(double dx, double dy, MapImage image)
+    {
+        cross = Clamp(new MapPoint(cross.X + dx, cross.Y + dy), image);
+        status = L["Map.Placing.Cross", Math.Round(cross.X * 100 / image.Width), Math.Round(cross.Y * 100 / image.Height)];
+        revealCross = true;
+    }
+
+    private static MapPoint Clamp(MapPoint point, MapImage image) =>
+        new(Math.Round(Math.Clamp(point.X, 0, image.Width), 2), Math.Round(Math.Clamp(point.Y, 0, image.Height), 2));
+
+    private bool savingMarker;
+
+    private async Task SaveMarkerAsync(MapMarkerKind kind, List<MapPoint> points)
+    {
+        // A double-click is two clicks: the second one, while the first is saving, saves nothing.
+        if (gm == null || placing == null || savingMarker) return;
+        var locationId = placing;
+        var name = Place(Scene, locationId)?.Name ?? string.Empty;
+        savingMarker = true;
+        MapMarker? stored;
+        try
+        {
+            stored = await MapRepo.PlaceMarkerAsync(gm.Id, new MapMarker { LocationId = locationId, Kind = kind, Points = points }, Ctx.Access);
+        }
+        finally
+        {
+            savingMarker = false;
+        }
+
+        if (stored == null)
+        {
+            status = L["Map.PlaceFailed"];
+            Ctx.Notify(Flash.Error(L["Map.PlaceFailed"]));
+            return;
+        }
+
+        placing = null;
+        corners.Clear();
+        selectedId = locationId;
+        status = L["Map.Placed", name];
+        Ctx.Notify(Flash.Success(L["Map.Placed", name]));
+        await ReloadAsync();
+        // Finish goes with the placing panel: focus moves to the place's row, now in the list of what is on the map (asked for only
+        // after the reload, so a render in between can't focus the row in the list it is leaving).
+        focusField = RowNameId(locationId);
+    }
+
+    private async Task RemoveAsync(MapMarker marker, LocationDocument place)
+    {
+        if (gm == null) return;
+        if (await MapRepo.RemoveMarkerAsync(gm.Id, marker.Id, Ctx.Access))
+        {
+            if (selectedId == place.Id) selectedId = null;
+            Ctx.Notify(Flash.Success(L["Map.Removed", place.Name]));
+            await ReloadAsync();
+            // The row moves to "Not on the map yet", where its name keeps the focus; a place not listed there leaves it on the picture.
+            focusField = NotOnMap(Scene).Any(p => p.Place.Id == place.Id) ? RowNameId(place.Id) : gm?.Image != null ? "map-viewport" : null;
+        }
+        else
+        {
+            Ctx.Notify(Flash.Error(L["Map.Failed"]));
+        }
+    }
+
+    private async Task RevealAsync(LocationDocument place)
+    {
+        if (gm == null) return;
+        if (await RegionRepo.SetLocationVisibilityAsync(gm.RegionId, place.Id, ActorVisibility.Known, Ctx.Access))
+        {
+            // The Reveal button goes; its row's name keeps the focus.
+            focusField = RowNameId(place.Id);
+            Ctx.Notify(Flash.Success(L["Campaign.World.RevealedToParty"]));
+            await OnPlacesChanged.InvokeAsync();
+        }
+        else
+        {
+            Ctx.Notify(Flash.Error(L["Map.Failed"]));
+        }
+    }
+
+    private bool addingMap;
+
+    private async Task AddMapAsync(LocationDocument place)
+    {
+        if (gm == null || addingMap) return;
+        addingMap = true;
+        try
+        {
+            if (await MapRepo.CreateAsync(gm.RegionId, place.Id, null, null, Ctx.Access) is { } map) Nav.NavigateTo(MapHref(map.Id));
+            else Ctx.Notify(Flash.Error(L["Map.AddFailed"]));
+        }
+        finally
+        {
+            addingMap = false;
+        }
+    }
+
+    // ---- The picture ----
+
+    private async Task UploadAsync(InputFileChangeEventArgs e)
+    {
+        if (gm == null) return;
+        uploadError = null;
+        var file = e.File;
+        // Refused before a byte is read: OpenReadStream would throw past its limit anyway.
+        if (file.Size > MapImages.MaxBytes)
+        {
+            uploadError = ProblemText(MapImageProblem.TooManyBytes);
+            return;
+        }
+
+        uploading = true;
+        try
+        {
+            MapImageProblem problem;
+            await using (var stream = file.OpenReadStream(MapImages.MaxBytes))
+            {
+                problem = await MapRepo.PutImageAsync(gm.Id, stream, Ctx.Access);
+            }
+
+            if (problem == MapImageProblem.None)
+            {
+                Ctx.Notify(Flash.Success(L["Map.Picture.Saved"]));
+                await ReloadAsync();
+            }
+            else
+            {
+                uploadError = ProblemText(problem);
+            }
+        }
+        catch (LocalizedException ex)
+        {
+            // The owner's storage is full (Service.Storage.Full), said in its own words.
+            uploadError = L.Describe(ex);
+        }
+        catch (IOException ex)
+        {
+            uploadError = L["Map.Picture.Problem.Failed", ex.Message];
+        }
+        finally
+        {
+            uploading = false;
+        }
+    }
+
+    // The picture field: a plain file input with its label, so it is reachable and named for a keyboard and a screen reader.
+    private RenderFragment PictureField(string label) => @<div class="map-file">
+        <label for="map-file" class="field-label">@label</label>
+        <InputFile id="map-file" class="field-input" accept="image/jpeg,image/png,image/webp" OnChange="UploadAsync" disabled="@uploading" aria-describedby="map-file-hint" data-testid="map-file" />
+        <p id="map-file-hint" class="field-hint mb-0">@L["Map.Picture.Hint"]</p>
+        @if (uploading)
+        {
+            <p class="small-muted mb-0" role="status"><span class="cx-spinner" aria-hidden="true"></span> @L["Map.Picture.Uploading"]</p>
+        }
+    </div>;
+
+    private string ProblemText(MapImageProblem problem) => problem switch
+    {
+        MapImageProblem.TooManyBytes => L["Map.Picture.Problem.TooManyBytes"],
+        MapImageProblem.TooManyPixels => L["Map.Picture.Problem.TooManyPixels"],
+        MapImageProblem.Unsupported => L["Map.Picture.Problem.Unsupported"],
+        MapImageProblem.Malformed => L["Map.Picture.Problem.Malformed"],
+        _ => L["Map.Picture.Problem.NotAllowed"]
+    };
+
+    // ---- Versions ----
+
+    private void StartRename()
+    {
+        if (gm == null) return;
+        formName = gm.Name;
+        formLabel = gm.Label ?? string.Empty;
+        versionForm = VersionForm.Rename;
+        focusField = "map-name";
+    }
+
+    private void StartCopy()
+    {
+        formLabel = string.Empty;
+        copyError = null;
+        versionForm = VersionForm.Copy;
+        focusField = "map-copy-label";
+    }
+
+    // The form goes with its Save and Cancel: focus returns to the button that opened it.
+    private void CloseVersionForm()
+    {
+        focusField = versionForm == VersionForm.Copy ? "map-copy-button" : "map-rename-button";
+        versionForm = VersionForm.None;
+        copyError = null;
+    }
+
+    private bool saving;
+    private string? copyError;
+
+    private async Task SaveNameAsync()
+    {
+        if (gm == null || saving || string.IsNullOrWhiteSpace(formName)) return;
+        saving = true;
+        try
+        {
+            if (await MapRepo.RenameAsync(gm.Id, formName.Trim(), string.IsNullOrWhiteSpace(formLabel) ? null : formLabel.Trim(), Ctx.Access))
+            {
+                CloseVersionForm();
+                Ctx.Notify(Flash.Success(L["Map.Version.Saved"]));
+                await ReloadAsync();
+            }
+            else
+            {
+                Ctx.Notify(Flash.Error(L["Map.Failed"]));
+            }
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task CopyAsync()
+    {
+        if (gm == null || saving || string.IsNullOrWhiteSpace(formLabel)) return;
+        var label = formLabel.Trim();
+        saving = true;
+        copyError = null;
+        try
+        {
+            if (await MapRepo.CopyAsNewVersionAsync(gm.Id, label, Ctx.Access) is { } copy)
+            {
+                versionForm = VersionForm.None;
+                Ctx.Notify(Flash.Success(L["Map.Version.Copied", label]));
+                Nav.NavigateTo(MapHref(copy.Id));
+            }
+            else
+            {
+                Ctx.Notify(Flash.Error(L["Map.Failed"]));
+            }
+        }
+        catch (LocalizedException ex)
+        {
+            // The owner's storage is full (Service.Storage.Full): the copy would need room for a second picture.
+            copyError = L.Describe(ex);
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task MakeCurrentAsync()
+    {
+        if (gm == null) return;
+        if (await MapRepo.SetCurrentAsync(gm.Id, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success(L["Map.Version.MadeCurrent"]));
+            await ReloadAsync();
+        }
+        else
+        {
+            Ctx.Notify(Flash.Error(L["Map.Failed"]));
+        }
+    }
+
+    private async Task ToggleShownAsync()
+    {
+        if (gm == null) return;
+        var show = !gm.ShownToPlayers;
+        if (await MapRepo.SetShownToPlayersAsync(gm.Id, show, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success(SingleMap ? (show ? L["Map.Single.Shown"] : L["Map.Single.Hidden"]) : show ? L["Map.Version.Shown"] : L["Map.Version.Hidden"]));
+            await ReloadAsync();
+        }
+        else
+        {
+            Ctx.Notify(Flash.Error(L["Map.Failed"]));
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (gm == null || confirm == null) return;
+        var name = string.IsNullOrWhiteSpace(gm.Label) ? gm.Name : $"{gm.Name} ({gm.Label})";
+        if (!await confirm.ShowAsync(L["Map.Version.DeleteTitle", name], L["Map.Version.DeleteBody"], L["Common.Delete"], isDestructive: true)) return;
+        var (regionId, locationId) = (gm.RegionId, gm.LocationId);
+        if (!await MapRepo.DeleteAsync(gm.Id, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Error(L["Map.Failed"]));
+            return;
+        }
+
+        Ctx.Notify(Flash.Success(L["Map.Version.Deleted", name]));
+        // To the version that is current now, or back to the list when that was the last one.
+        var next = await MapRepo.GetCurrentAsync(regionId, locationId, Ctx.Access);
+        Nav.NavigateTo(next != null ? MapHref(next.Id) : locationId == null ? PlacesHref : $"{PlacesHref}#place-{locationId}");
+    }
+
+    // ---- The browser half: map-view.js ----
+
+    private ElementReference viewport;
+    private ElementReference stage;
+    private IJSObjectReference? module;
+    private IJSObjectReference? handle;
+    private DotNetObjectReference<MapView>? self;
+    private string? attachedFor;
+    private bool focusViewport;
+    private bool revealCross;
+    private string? focusField;
+    private string? scrollToRow;
+    private bool disposed;
+
+    private async Task CallAsync(string method)
+    {
+        try
+        {
+            if (handle != null) await handle.InvokeVoidAsync(method);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            var image = loading || gm == null || GmRegion == null || (asParty && party == null) ? null : Scene.Map.Image;
+            var key = image == null ? null : $"{Scene.Map.Id}:{image.Version}";
+            if (key != attachedFor)
+            {
+                await DetachAsync();
+                if (key != null && image != null)
+                {
+                    module ??= await JS.InvokeAsync<IJSObjectReference>("import", "/" + Assets["lib/map/map-view.js"]);
+                    if (disposed || module == null) return;
+                    self ??= DotNetObjectReference.Create(this);
+                    handle = await module.InvokeAsync<IJSObjectReference>("attach", viewport, stage, self, image.Width, image.Height);
+                }
+
+                attachedFor = key;
+            }
+
+            if (handle != null && revealCross && placing != null)
+            {
+                revealCross = false;
+                await handle.InvokeVoidAsync("reveal", cross.X, cross.Y);
+            }
+
+            if (focusViewport && image != null)
+            {
+                focusViewport = false;
+                await JS.InvokeVoidAsync("codex.focus", "map-viewport");
+            }
+
+            if (focusField != null)
+            {
+                var id = focusField;
+                focusField = null;
+                await JS.InvokeVoidAsync("codex.focus", id);
+            }
+
+            if (scrollToRow != null)
+            {
+                var id = scrollToRow;
+                scrollToRow = null;
+                await JS.InvokeVoidAsync("codex.revealPanel", $"map-row-{id}");
+            }
+
+            // A GM's new map has no picture yet: the page asks for one.
+            if (firstRender || justLoaded)
+            {
+                justLoaded = false;
+                if (GmView && gm != null && gm.Image == null) await JS.InvokeVoidAsync("codex.focus", "map-file");
+            }
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
+        {
+            // The circuit went away, or the script would not load: the panel still lists every place and works by keyboard.
+        }
+    }
+
+    private bool justLoaded;
+
+    private async Task DetachAsync()
+    {
+        if (handle == null) return;
+        var old = handle;
+        handle = null;
+        try
+        {
+            await old.InvokeVoidAsync("dispose");
+            await old.DisposeAsync();
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        disposed = true;
+        await DetachAsync();
+        try
+        {
+            if (module != null) await module.DisposeAsync();
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+        }
+
+        self?.Dispose();
+    }
+}

@@ -165,7 +165,8 @@ else
                                 <CastSection />
                                 break;
                             case "world":
-                                <WorldSection />
+                                @* world/map/{mapId}: a map of a place, inside the Places page (MAPS_DESIGN.md 9.5). *@
+                                <WorldSection MapId="@(Arg1 == "map" ? Arg2 : null)" />
                                 break;
                             case "lore":
                                 <LoreSection />

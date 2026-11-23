@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Map.Open" xml:space="preserve"><value>מפה</value></data>
+  <data name="Map.OpenLabel" xml:space="preserve"><value>פתיחת המפה של {0}</value></data>
+  <data name="Map.OpenMap" xml:space="preserve"><value>פתיחת המפה</value></data>
+  <data name="Map.Add" xml:space="preserve"><value>הוספת מפה</value></data>
+  <data name="Map.AddLabel" xml:space="preserve"><value>הוספת מפה של {0}</value></data>
+  <data name="Map.AddFailed" xml:space="preserve"><value>לא ניתן היה להוסיף את המפה. ייתכן שהמקום נמחק; טענו את הדף מחדש ונסו שוב.</value></data>
+  <data name="Map.Region.Open" xml:space="preserve"><value>מפת האזור</value></data>
+  <data name="Map.Region.OpenLabel" xml:space="preserve"><value>פתיחת המפה של האזור {0}</value></data>
+  <data name="Map.Region.AddLabel" xml:space="preserve"><value>הוספת מפה של האזור {0}</value></data>
+  <data name="Map.NotFound.Title" xml:space="preserve"><value>המפה הזו לא כאן</value></data>
+  <data name="Map.NotFound.Body" xml:space="preserve"><value>היא נמחקה, או שהיא עדיין לא מוצגת לשחקנים.</value></data>
+  <data name="Map.NotFound.Body.Gm" xml:space="preserve"><value>ייתכן שהיא נמחקה.</value></data>
+  <data name="Map.Subtitle.WaitsForPlace" xml:space="preserve"><value>השחקנים יראו את המפה הזו כשיכירו את {0}.</value></data>
+  <data name="Map.Subtitle.WaitsForRegion" xml:space="preserve"><value>השחקנים יראו את המפה הזו כשיכירו מקום כלשהו באזור {0}.</value></data>
+  <data name="Map.BackToPlaces" xml:space="preserve"><value>חזרה למקומות</value></data>
+  <data name="Map.Breadcrumb" xml:space="preserve"><value>איפה המפה הזו</value></data>
+  <data name="Map.Places" xml:space="preserve"><value>מקומות</value></data>
+  <data name="Map.Subtitle.Shown" xml:space="preserve"><value>השחקנים רואים את כל התמונה ואת המקומות שהם מכירים עליה.</value></data>
+  <data name="Map.Subtitle.HiddenFromPlayers" xml:space="preserve"><value>הגרסה הזו מוסתרת מהשחקנים. כשתציגו אותה, הם יראו את כל התמונה.</value></data>
+  <data name="Map.ViewAs" xml:space="preserve"><value>הצגת המפה בעיני</value></data>
+  <data name="Map.View.Gm" xml:space="preserve"><value>שליט המבוך</value></data>
+  <data name="Map.View.Party" xml:space="preserve"><value>שחקנים</value></data>
+  <data name="Map.Party.Hidden" xml:space="preserve"><value>השחקנים עדיין לא רואים את זה: אין למפה תמונה, היא מוסתרת מהם, או שהם עדיין לא מכירים את {0}.</value></data>
+  <data name="Map.Alt" xml:space="preserve"><value>מפה: {0}, של {1}</value></data>
+  <data name="Map.AltRegion" xml:space="preserve"><value>מפה: {0}, של האזור {1}</value></data>
+  <data name="Map.Toolbar" xml:space="preserve"><value>כלי המפה</value></data>
+  <data name="Map.ZoomIn" xml:space="preserve"><value>התקרבות</value></data>
+  <data name="Map.ZoomOut" xml:space="preserve"><value>התרחקות</value></data>
+  <data name="Map.Fit" xml:space="preserve"><value>התאמה למסך</value></data>
+  <data name="Map.KeysHint" xml:space="preserve"><value>זום במקשים + ו־− או ב־Ctrl וגלגלת העכבר, הזזה במקשי החצים, ו־0 מתאים את התמונה למסך.</value></data>
+  <data name="Map.Markers" xml:space="preserve"><value>מקומות על המפה</value></data>
+  <data name="Map.Marker.Hidden" xml:space="preserve"><value>{0}, מוסתר</value></data>
+  <data name="Map.Picture.None.Gm" xml:space="preserve"><value>למפה הזו אין עדיין תמונה. בחרו תמונה כדי לסמן עליה את המקומות.</value></data>
+  <data name="Map.Picture.None.Player" xml:space="preserve"><value>למפה הזו אין עדיין תמונה.</value></data>
+  <data name="Map.Picture.Choose" xml:space="preserve"><value>תמונה</value></data>
+  <data name="Map.Picture.Replace" xml:space="preserve"><value>החלפת התמונה</value></data>
+  <data name="Map.Picture.Hint" xml:space="preserve"><value>JPEG,‏ PNG או WebP, עד 25MB. כשהמפה מוצגת, השחקנים רואים את כל התמונה, אז אל תשאירו עליה סודות.</value></data>
+  <data name="Map.Picture.Uploading" xml:space="preserve"><value>מעלים את התמונה…</value></data>
+  <data name="Map.Picture.Saved" xml:space="preserve"><value>התמונה נשמרה.</value></data>
+  <data name="Map.Picture.Problem.TooManyBytes" xml:space="preserve"><value>התמונה גדולה מ־25MB. שמרו אותה קטנה יותר, או כ־JPEG או WebP, ונסו שוב.</value></data>
+  <data name="Map.Picture.Problem.TooManyPixels" xml:space="preserve"><value>בתמונה יותר מ־67 מיליון פיקסלים. הקטינו אותה ונסו שוב.</value></data>
+  <data name="Map.Picture.Problem.Unsupported" xml:space="preserve"><value>הקובץ הזה אינו תמונת JPEG,‏ PNG או WebP.</value></data>
+  <data name="Map.Picture.Problem.Malformed" xml:space="preserve"><value>התמונה נראית פגומה ולא ניתן לקרוא אותה. נסו לשמור אותה שוב.</value></data>
+  <data name="Map.Picture.Problem.NotAllowed" xml:space="preserve"><value>רק שליט המבוך יכול לשנות את תמונת המפה.</value></data>
+  <data name="Map.Picture.Problem.Failed" xml:space="preserve"><value>לא ניתן היה להעלות את התמונה: {0}</value></data>
+  <data name="Map.Panel" xml:space="preserve"><value>המקומות של המפה הזו</value></data>
+  <data name="Map.Panel.OnMap" xml:space="preserve"><value>על המפה</value></data>
+  <data name="Map.Panel.NotOnMap" xml:space="preserve"><value>עדיין לא על המפה</value></data>
+  <data name="Map.Panel.NoneOnMap.Gm" xml:space="preserve"><value>אין עדיין מקומות על המפה הזו. בחרו מקום למטה ולחצו ״הצבה על המפה״.</value></data>
+  <data name="Map.Panel.NoneOnMap.Player" xml:space="preserve"><value>עדיין לא מצאתם מקומות על המפה הזו.</value></data>
+  <data name="Map.Panel.AllPlaced" xml:space="preserve"><value>כל המקומות כאן כבר על המפה.</value></data>
+  <data name="Map.Panel.NoPlacesUnder" xml:space="preserve"><value>עדיין אין דבר בתוך {0}. הוסיפו מקומות בדף המקומות.</value></data>
+  <data name="Map.PlaceOnMap" xml:space="preserve"><value>הצבה על המפה</value></data>
+  <data name="Map.PlaceOnMapLabel" xml:space="preserve"><value>הצבת {0} על המפה</value></data>
+  <data name="Map.Move" xml:space="preserve"><value>הזזה על המפה</value></data>
+  <data name="Map.MoveLabel" xml:space="preserve"><value>הזזת {0} על המפה</value></data>
+  <data name="Map.Remove" xml:space="preserve"><value>הסרה מהמפה</value></data>
+  <data name="Map.RemoveLabel" xml:space="preserve"><value>הסרת {0} מהמפה</value></data>
+  <data name="Map.Removed" xml:space="preserve"><value>{0} הוסר מהמפה. המקום עצמו נשאר.</value></data>
+  <data name="Map.Placed" xml:space="preserve"><value>{0} על המפה.</value></data>
+  <data name="Map.PlaceFailed" xml:space="preserve"><value>לא ניתן היה להציב על המפה. טענו את הדף מחדש ונסו שוב.</value></data>
+  <data name="Map.Failed" xml:space="preserve"><value>זה לא הצליח. טענו את הדף מחדש ונסו שוב.</value></data>
+  <data name="Map.Placing.Title" xml:space="preserve"><value>מציבים את {0}</value></data>
+  <data name="Map.Placing.Shape" xml:space="preserve"><value>צורה</value></data>
+  <data name="Map.Placing.Pin" xml:space="preserve"><value>נעץ</value></data>
+  <data name="Map.Placing.Area" xml:space="preserve"><value>שטח</value></data>
+  <data name="Map.Placing.PinHelp" xml:space="preserve"><value>לחצו על המפה. או הזיזו את הכוונת במקשי החצים (עם Shift רחוק יותר) ולחצו Enter. ‏Escape מפסיק.</value></data>
+  <data name="Map.Placing.AreaHelp" xml:space="preserve"><value>לחצו על כל פינה, ובסוף לחצו לחיצה כפולה או לחצו על הפינה הראשונה. או הזיזו את הכוונת במקשי החצים, לחצו רווח בכל פינה ו־Enter כדי לסיים. ‏Backspace מבטל פינה, ‏Escape מפסיק.</value></data>
+  <data name="Map.Placing.Finish" xml:space="preserve"><value>סיום השטח</value></data>
+  <data name="Map.Placing.Corners" xml:space="preserve"><value>{0, plural, one{פינה אחת} two{שתי פינות} other{# פינות}}</value></data>
+  <data name="Map.Placing.NeedCorners" xml:space="preserve"><value>לשטח צריכות להיות לפחות 3 פינות.</value></data>
+  <data name="Map.Placing.Cancelled" xml:space="preserve"><value>ההצבה הופסקה.</value></data>
+  <data name="Map.Placing.Cross" xml:space="preserve"><value>הכוונת: {0}% לרוחב, {1}% לגובה</value></data>
+  <data name="Map.Versions" xml:space="preserve"><value>גרסאות</value></data>
+  <data name="Map.Version.Numbered" xml:space="preserve"><value>גרסה {0}</value></data>
+  <data name="Map.Version.Current" xml:space="preserve"><value>נוכחית</value></data>
+  <data name="Map.Version.HiddenFromPlayers" xml:space="preserve"><value>מוסתרת מהשחקנים</value></data>
+  <data name="Map.Version.ThisOne" xml:space="preserve"><value>הגרסה הזו</value></data>
+  <data name="Map.Version.MakeCurrent" xml:space="preserve"><value>הפיכה לנוכחית</value></data>
+  <data name="Map.Version.MadeCurrent" xml:space="preserve"><value>הגרסה הזו נפתחת עכשיו ראשונה.</value></data>
+  <data name="Map.Version.Show" xml:space="preserve"><value>הצגה לשחקנים</value></data>
+  <data name="Map.Version.Hide" xml:space="preserve"><value>הסתרה מהשחקנים</value></data>
+  <data name="Map.Version.Shown" xml:space="preserve"><value>השחקנים רואים עכשיו את הגרסה הזו.</value></data>
+  <data name="Map.Version.Hidden" xml:space="preserve"><value>הגרסה הזו מוסתרת עכשיו מהשחקנים.</value></data>
+  <data name="Map.Version.Rename" xml:space="preserve"><value>שינוי שם</value></data>
+  <data name="Map.Version.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Map.Version.Label" xml:space="preserve"><value>תווית הגרסה</value></data>
+  <data name="Map.Version.LabelHint" xml:space="preserve"><value>איזו גרסה זו, למשל ״קיץ״. השאירו ריק אם יש למקום מפה אחת בלבד.</value></data>
+  <data name="Map.Version.Saved" xml:space="preserve"><value>המפה נשמרה.</value></data>
+  <data name="Map.Version.Copy" xml:space="preserve"><value>העתקה כגרסה חדשה</value></data>
+  <data name="Map.Version.CopyLabel" xml:space="preserve"><value>תווית לגרסה החדשה</value></data>
+  <data name="Map.Version.CopyHint" xml:space="preserve"><value>למשל ״חורף״, ״אחרי השריפה״ או ״קומה שנייה״. העותק שומר את התמונה ואת המקומות שעליה, ומתחיל מוסתר מהשחקנים.</value></data>
+  <data name="Map.Version.Copied" xml:space="preserve"><value>הועתק בתור {0}. העותק מוסתר מהשחקנים עד שתציגו אותו.</value></data>
+  <data name="Map.Version.Delete" xml:space="preserve"><value>מחיקת הגרסה</value></data>
+  <data name="Map.Version.DeleteTitle" xml:space="preserve"><value>למחוק את {0}?</value></data>
+  <data name="Map.Version.DeleteBody" xml:space="preserve"><value>התמונה שלה ומיקומי המקומות עליה יימחקו גם הם. המקומות עצמם נשארים. אי אפשר לבטל את זה.</value></data>
+  <data name="Map.Version.Deleted" xml:space="preserve"><value>{0} נמחקה.</value></data>
+  <data name="Map.Viewport" xml:space="preserve"><value>תצוגת המפה</value></data>
+  <data name="Map.Selected" xml:space="preserve"><value>נבחר: {0}.</value></data>
+  <data name="Map.Selected.Hidden" xml:space="preserve"><value>נבחר: {0}. המקום מוסתר מהשחקנים.</value></data>
+  <data name="Map.Subtitle.NoPicture" xml:space="preserve"><value>השחקנים יראו את המפה הזו כשתהיה לה תמונה.</value></data>
+  <data name="Map.Single.ThisOne" xml:space="preserve"><value>המפה הזו</value></data>
+  <data name="Map.Single.Delete" xml:space="preserve"><value>מחיקת המפה</value></data>
+  <data name="Map.Single.HiddenFromPlayers" xml:space="preserve"><value>המפה הזו מוסתרת מהשחקנים. כשתציגו אותה, הם יראו את כל התמונה.</value></data>
+  <data name="Map.Single.Shown" xml:space="preserve"><value>השחקנים רואים עכשיו את המפה הזו.</value></data>
+  <data name="Map.Single.Hidden" xml:space="preserve"><value>המפה הזו מוסתרת עכשיו מהשחקנים.</value></data>
+</root>

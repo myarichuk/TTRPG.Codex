@@ -16,6 +16,9 @@ public static class MediaEndpoints
     public static string CoverUrl(CampaignDocument campaign) => $"/media/campaigns/{campaign.Id}/cover?v={campaign.CoverVersion}";
     public static string PortraitUrl(ActorDocument actor) => $"/media/actors/{actor.Id}/portrait?v={actor.PortraitVersion}";
 
+    /// <summary>A map's picture; null until it has one. The version changes with every new picture.</summary>
+    public static string? MapImageUrl(MapDocument map) => map.Image is { } image ? $"/media/maps/{Uri.EscapeDataString(map.Id)}/image?v={image.Version}" : null;
+
     public static void MapMedia(this WebApplication app)
     {
         app.MapGet("/media/campaigns/{campaignId}/cover", async (string campaignId, ClaimsPrincipal user, ICampaignAccessResolver resolver, IMediaStore media, HttpResponse response) =>
@@ -107,6 +110,36 @@ public static class MediaEndpoints
 
             var file = await media.GetAsync(regionId, RavenMediaStore.LocationArtName(locationId));
             return file == null ? Results.NotFound() : Image(response, file);
+        });
+
+        // A map's picture, only for whoever IMapRepository gives the map: a version hidden from players, or a map of a place they
+        // haven't found, is a 404 like a map that isn't there (MAPS_DESIGN.md 9.3).
+        app.MapGet("/media/maps/{mapId}/image", async (string mapId, ClaimsPrincipal user, ICampaignAccessResolver resolver, IMapRepository maps, RavenDbService db, HttpResponse response) =>
+        {
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Results.NotFound();
+            }
+
+            string? campaignId;
+            using (var session = db.Store.OpenAsyncSession())
+            {
+                campaignId = (await session.LoadAsync<MapDocument>(mapId))?.CampaignId;
+            }
+
+            var access = campaignId == null ? null : await resolver.ResolveAsync(campaignId, userId);
+            // Up to 25 MB: streamed from the attachment, never held whole. The file owns its database session, closed with the response.
+            var file = access == null ? null : await maps.OpenImageAsync(mapId, access);
+            if (file == null)
+            {
+                return Results.NotFound();
+            }
+
+            response.RegisterForDispose(file);
+            response.Headers.CacheControl = "private, max-age=31536000, immutable";
+            response.ContentLength = file.Size;
+            return Results.Stream(file.Content, file.ContentType);
         });
 
         // A wiki page's illustration, for whoever may read the page: a DM-only page's picture stays the DM's.

@@ -410,6 +410,39 @@ They follow the older exhaustion lines ("{0}: דרגת תשישות {1}", "לל�
 
 The Sonnet agents coined or transliterated many of these (for example גלימן, בולט, דארקמנטל, אוג׳ר, וויברן). The full English | Hebrew list is in [i18n-he-names.md](i18n-he-names.md) (generated from `srd-5.2.1-he`). Corrections go in `content/systems/srd5e/packs/srd-5.2.1-he/{monster,magic-item,equipment}/`.
 
+## Map pages (`Strings.Map` he and ru; MAPS_DESIGN.md 9.5)
+
+All 106 `Map.*` keys in `Strings.Map.he.resx` and `Strings.Map.ru.resx` are machine-drafted and need a native read in both languages (there is no
+separate Russian list). They show on the map page of a place or region and on the Places list's Map buttons.
+
+Added or reworded in the review pass (2026-11-22), so read these first: `Map.Viewport`, `Map.Selected`, `Map.Selected.Hidden`,
+`Map.Subtitle.NoPicture`, `Map.Single.ThisOne`, `Map.Single.Delete`, `Map.Single.HiddenFromPlayers`, `Map.Single.Shown`, `Map.Single.Hidden`
+(new); `Map.Subtitle.Shown`, `Map.Subtitle.HiddenFromPlayers`, `Map.Picture.Hint`, `Map.Party.Hidden`, `Map.Placing.AreaHelp`, `Map.KeysHint`
+(reworded). The point to keep in each: once a map is shown, players see the whole picture.
+
+| English | Hebrew | Russian |
+|---|---|---|
+| Map view (the zoomable picture's name) | תצוגת המפה | Просмотр карты |
+| {0} selected. | נבחר: {0}. | Выбрано: {0}. |
+| This map / Delete map (a place with one map) | המפה הזו / מחיקת המפה | Эта карта / Удалить карту |
+| Once you show it, they see the whole picture. | כשתציגו אותה, הם יראו את כל התמונה. | Когда вы её покажете, они увидят всю картинку. |
+| so leave secrets off it | אז אל תשאירו עליה סודות | поэтому не оставляйте на ней секретов |
+| double-click or click the first corner to finish | לחיצה כפולה או לחיצה על הפינה הראשונה | щёлкните дважды или щёлкните по первому углу |
+
+The words chosen:
+
+| English | Hebrew | Russian |
+|---|---|---|
+| map | מפה | карта |
+| pin (a point marker) | נעץ | точка |
+| area (a marked shape) | שטח | область |
+| cross-hair | כוונת | перекрестье |
+| version (of a map) | גרסה | версия |
+| current (version) | נוכחית | текущая |
+| hidden from players | מוסתרת מהשחקנים | скрыта от игроков |
+| Place on map | הצבה על המפה | На карту |
+| Show the map as GM / Players | הצגת המפה בעיני שליט המבוך / שחקנים | Показать карту как Мастер / Игроки |
+
 ## Hazards (`Strings.Wizard`, `Strings.Combat`, `Strings.Event`, `Strings.Campaign`, `Strings.WorldChat` he and ru; H1-H8)
 
 Every key the hazards track added is in the five areas below, in `.he.resx` and `.ru.resx`. Both languages need a native read; the repo has no separate Russian review list, so this section stands for both:

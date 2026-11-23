@@ -2070,6 +2070,71 @@ html:has(.md-full) { overflow: hidden; }
 .feature-summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .feature-summary .pill { margin: 0; }
 .place-row:not([data-depth="0"]) { border-inline-start: 2px solid var(--border); padding-inline-start: var(--space-5); }
+/* A map of a place (MapView.razor, MAPS_DESIGN.md 9.5): the picture, and the panel that is its text version beside it, below it on a
+   phone. The picture sits in a left-to-right box that is never mirrored; map-view.js moves .map-stage, which the page never styles. */
+.map-breadcrumb { margin-bottom: var(--space-4); }
+.map-crumb-sep { color: var(--text-3); }
+.map-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); gap: var(--space-8); align-items: start; }
+@media (max-width: 960px) { .map-layout { grid-template-columns: minmax(0, 1fr); } }
+.map-main { min-width: 0; }
+.map-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+.map-keys-hint { margin-inline-start: var(--space-3); }
+.map-tool-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.map-version-tools { margin-bottom: var(--space-6); }
+.map-version-tools h3 { margin-bottom: var(--space-3); }
+.map-inline-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-4) var(--space-6); }
+.map-inline-form > div:not(.map-inline-actions) { flex: 1 1 14rem; }
+.map-inline-actions { display: flex; gap: var(--space-3); }
+.map-versions ul { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: 0 0 var(--space-6); }
+.map-version { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-5); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-2); text-decoration: none; font-weight: 600; }
+.map-version .pill { margin: 0; }
+.map-version:hover { border-color: var(--border-strong); color: var(--text); }
+/* The open version is told apart by a heavier border and an underline, not by colour alone. */
+.map-version.is-open { border: 2px solid var(--accent); padding: calc(var(--space-2) - 1px) calc(var(--space-5) - 1px); color: var(--text); background: var(--surface-3); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.map-placing { border: 1px solid var(--accent); border-radius: var(--radius-md); padding: var(--space-4) var(--space-6); margin-bottom: var(--space-3); background: var(--surface-2); }
+.map-viewport {
+    position: relative; overflow: hidden; height: min(70vh, 48rem); touch-action: none; user-select: none; cursor: grab;
+    border: 1px solid var(--border-strong); border-radius: var(--radius-lg); background: var(--surface-3); box-shadow: var(--frame);
+}
+.map-viewport:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.map-viewport.is-placing { cursor: crosshair; }
+.map-stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+.map-canvas { position: relative; }
+.map-canvas img { display: block; max-width: none; pointer-events: none; }
+.map-overlay { position: absolute; inset: 0; overflow: visible; }
+/* Markers are drawn in the picture's pixels; their shapes and labels keep one size on screen whatever the zoom. */
+.map-marker-shape { transform: scale(var(--map-inv, 1)); }
+.map-marker { cursor: pointer; }
+.map-pin-body { fill: var(--accent); stroke: var(--bg); stroke-width: 1.5; }
+.map-pin-dot { fill: var(--bg); }
+.map-pin-sign { fill: var(--surface); stroke: var(--accent); stroke-width: 1.5; }
+.map-area polygon { fill: color-mix(in srgb, var(--accent) 18%, transparent); stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.map-label { font: 600 13px var(--font-body); fill: var(--text); paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+.map-label-sub { font-size: 11px; font-style: italic; fill: var(--warning); }
+/* Hidden from players: a dashed outline and the word Hidden, not only a colour. */
+.map-marker.is-hidden .map-pin-body { fill: color-mix(in srgb, var(--warning) 35%, var(--surface)); stroke: var(--warning); stroke-dasharray: 3 2; }
+.map-marker.is-hidden polygon { fill: color-mix(in srgb, var(--warning) 10%, transparent); stroke: var(--warning); stroke-dasharray: 6 4; }
+.map-marker.is-selected .map-pin-body { stroke: var(--text); stroke-width: 2.5; }
+.map-marker.is-selected polygon { stroke-width: 4; }
+.map-cross circle, .map-cross line { fill: none; stroke: var(--text); stroke-width: 2; }
+.map-cross circle { stroke: var(--accent); }
+.map-draft { fill: color-mix(in srgb, var(--accent) 12%, transparent); stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
+.map-corner { fill: var(--accent); stroke: var(--bg); stroke-width: 1.5; }
+.map-empty { display: grid; gap: var(--space-4); }
+.map-file { display: grid; gap: var(--space-2); max-width: 32rem; }
+.map-replace { margin-top: var(--space-4); }
+.map-panel .panel + .panel { margin-top: var(--space-6); }
+.map-row { margin-inline-start: calc(min(var(--depth, 0), 4) * var(--space-6)); flex-wrap: nowrap; align-items: center; }
+.map-row .row-main { flex: 1 1 0; min-width: 0; }
+.map-row > .row-actions { flex: none; flex-wrap: nowrap; gap: var(--space-2); }
+/* The selected row is told apart by a bar on its start side, not by colour alone. */
+.map-row.is-selected { background: var(--surface-3); border-radius: var(--radius-sm); box-shadow: inset 4px 0 0 var(--accent); padding-inline-start: var(--space-3); }
+[dir="rtl"] .map-row.is-selected { box-shadow: inset -4px 0 0 var(--accent); }
+.map-row-name { border: 0; background: none; padding: 0; color: var(--text); font-weight: 600; text-align: start; display: inline-flex; align-items: center; gap: var(--space-2); }
+.map-row-name:hover { text-decoration: underline; }
+.map-row-name[aria-expanded="true"] { color: var(--accent); text-decoration: underline; text-decoration-thickness: 2px; }
+@media (max-width: 640px) { .map-viewport { height: 60vh; } .map-keys-hint { flex-basis: 100%; margin-inline-start: 0; } }
+
 /* The place a link (#place-ID) was followed to, marked for a moment (U2). */
 .place-target { animation: place-flash 2.4s var(--ease-out); }
 /* The character sheet (U4): a rule problem beside its field, counted on its tab, and the place the summary's Show brings up. */
