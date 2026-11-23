@@ -517,3 +517,79 @@ Bootstrap's `.form-check`, which pads and floats on the left and breaks in right
 - Deleting a place or a cast member leaves the plan with a warning, as designed; nothing reports it outside the plan's own page and the list's "place was deleted".
 - Russian and Hebrew need native review, as all the others do. Hebrew "encounter" is «מפגש קרב», as in the Combat strings (the start button there says «עימות»; worth settling).
 - The list has no paging, as the repository has none.
+
+## 15. B3 as built (2026-11-23)
+
+B3 starts a prepared encounter at the table: from the console's menu, or from the plan's editor. It does not cover complex hazards joining initiative (B7) or the difficulty
+readout (B4).
+
+**Files**
+- `Codex.Persistence/Runtime/TableInitiative.cs` (new): the die, the bonus, the tie-break and the expression, moved out of `CombatConsole` so the console and the start work a roll out
+  in one place. Pure; the numbers are the console's old ones (`TableInitiativeTests` keeps the old bodies as an oracle and breaking the helper fails it).
+- `Codex.Persistence/Runtime/PreparedEncounterCommands.cs` (new): `StartPreparedEncounterCommand` and `PreparedStartRefusal`.
+- `IRuntimeCommand.cs`: the internal `IFollowedByEvents`. `CampaignRuntime.cs`: `AppendSessionEventAsync` writes those events after the command's own, in the same session write;
+  `PublishSnapshot` carries the plan. `RuntimeSnapshot.cs`: `EncounterSnapshot.PreparedEncounterId` (optional, trailing).
+- `PreparedEncounterModels.cs`, `RavenPreparedEncounterRepository.cs`, `IPreparedEncounterRepository.cs`: `LastRunAt`, stamped by `MarkRunAsync` and by nothing else.
+- `Codex.Web/Services/CastService.cs`: `AddToCastAsync(..., visibility, numberFrom)`, both optional and trailing.
+- `Codex.Web/Services/PreparedEncounterService.cs`: `StartAsync`, `StartChoicesAsync`, `GetAsync`, `CombatantsOf`, `EncounterStart`, `EncounterStartProblem`.
+- Components: `PreparedEncounterPicker` and `EncounterNotesPanel` (new, `Components/Shared`); `CombatConsole`, `HazardsTable`, `EncounterEditor`, `EncounterList` changed.
+- Strings: `Combat.Prepared.*`, `Event.Encounter.*`, `Encounters.Start*` and `Encounters.RanOn`, in en, ru and he.
+
+**The wiring**
+- The console's *Start a prepared encounter* opens the picker beside *Start encounter* (one of the two is open at a time). It lists Ready and Ran plans, those at the place last used
+  first (the live encounter's place, else the place of the plan started most recently), then by name. A click asks first ("N creatures join the fight and roll initiative").
+- `StartAsync` runs on the page's circuit; the command runs on the loop. The service refuses early and cheaply (not a GM, no table, no plan, an invalid plan, an encounter
+  running), then takes one gate per campaign (a second start is `Busy` at once), makes the creatures with `CastService` (Unknown, or Hidden for a line that starts hidden; cast-member
+  lines reuse the actor and keep its visibility), and enqueues the command with the actor ids. The command sets the encounter's place and plan and rolls each actor through
+  `RollInitiativeCommand`, so the roll log, the counter refill and every initiative rule are what a roll at the console does. Then `MarkRunAsync` records the run.
+- Player characters are not rolled: the order opens with the existing add panel, which lists who is not in it (decision 12.3).
+- The console shows the plan's notes (`EncounterNotesPanel`, folded, first in the right column) from the snapshot's plan id, GM only. The Hazards panel follows the encounter's place:
+  a new encounter with a place, or a plan started in the empty one, moves it; one with no place keeps what the GM picked.
+- The editor's *Start at the table* shows while a table runs (it listens to `RuntimeChanged`), is off while the form has unsaved changes (the start reads the stored plan), and says
+  why beside the button. With no table it links to the table. Any status may be started from there, a Draft too.
+
+**Decisions, and where the code differed from the design**
+- *One event per creature.* The design said the start applies one `RollInitiativeCommand` per creature, so the log is today's. The loop calls `Describe` once per queued command,
+  so an inner command's own line would never be written, and one bundled event would carry every creature's id and be dropped for a player who cannot see any one of them (one
+  Hidden ambusher would hide everyone's roll). `IFollowedByEvents` lets the command add each inner roll's own "Initiative" event after its own, with that creature's actor ids.
+- *No ordering race.* `TryCreateActorAsync` awaits the hydrate, so creatures are on the table before the command. The real gap is that it swallows a closed table or a full
+  queue, leaving a saved actor that is not on the table. The command skips an actor the table does not hold, and the service names it as not joined.
+- *`RegionId` is not on the command.* The encounter stores a place id only, as `SetEncounterPlaceCommand` does.
+- *Ready and Ran in the menu.* Nothing sets `Ran` back, and a plan that ran can be run again (decision 12.1), so a Ready-only menu would hide every plan after its first run.
+  Drafts are left out of the menu; `StartAsync` itself does not filter by status.
+- *The panel follows a plan, not only an encounter id.* A live encounter with no participants is reused, so its id does not change when a plan starts in it. The snapshot carries
+  `PreparedEncounterId`, and the Hazards panel follows `Encounter.Id + "|" + PreparedEncounterId`, checked before its early return.
+- *`StartAsync` takes no runtime.* It looks the table up twice (before it makes anything, and just before it enqueues), since the table can end during any await.
+- *Numbers give nothing away.* A visible copy's number is its public name, so the numbering is per creature and counts the visible copies first, and only when there is more than one
+  of them: a lone visible Bandit next to a hidden Bandit line stays "Bandit", and two visible ones are "Bandit 1" and "Bandit 2" whatever order the lines are in. The hidden
+  copies take the numbers after (their names are the GM's alone).
+- *Failure handling.* The loop reports any failure after a command (a persist, the session write) as a failed enqueue, though the table has changed. So once the command has started
+  the encounter (`EncounterId` is set) the start is treated as done: the creatures stay, the plan is marked, a warning is logged. Only when nothing started are this start's creatures
+  removed, and then a closed table (`InvalidOperationException`) is `TableClosed` and anything else is `Failed`. A plan that cannot be marked (a database fault) still starts, and the page
+  says the run was not recorded. `AddToCastAsync` returns the copies it made even when one fails midway (a copy that was saved before the failure counts), so cleanup finds them.
+  A command whose follow-up lines cannot be worked out loses only those lines: its own line is written once with the rest.
+- *Rolls.* The sheet and linked sheets are built inside the helper's guard, as the console always did, so a sheet that throws gives no bonus instead of ending the circuit. An actor
+  whose numbers or roll fail is skipped and named; if nobody rolled, the start is refused (`NobodyAtTable`) and no plan, place or encounter is set.
+- *Focus and notes.* When the order opens, focus moves to the order's heading (the picker it was in is gone). The notes panel's heading stands outside its fold, and the plan is read
+  again each time the fold is opened or closed. The picker and the editor draw their busy state at once (the dialog's answer arrives outside the click).
+- *Creatures of a start that fails are removed.* After a start that is refused or whose table closed, the actors this start made are deleted; reused cast members are never touched.
+  After a start that worked they stay on the cast, as Quick Add's do.
+- *A run date.* `LastRunAt` is the minimum (one field, one writer): the list says "Ran on 20 Nov 2026" or "Ran 3 times, last on 20 Nov 2026", and a plan run before B3 keeps "Ran once".
+- *Systems.* Four-degrees declares no initiative bonus and fitd-srd has no `dice:` block, so both roll the bare `1d20` with no bonus and tie-break 0, as their consoles do. Perception-based
+  initiative for four-degrees would be data (`initiativeBonus: <a derived field>`), not B3. fitd-srd has no creature type, so its plans hold only cast members.
+- *A small fix on the way.* The expression is built with the invariant culture. Under ICU the Hebrew culture's minus sign carries a direction mark, so a negative bonus used to give
+  `1d20‎-1` there. En and ru are byte for byte what they were.
+- *Strings.* Russian keeps «столкновение» and uses «мастер» only for the GM; Hebrew follows the Encounters strings («מפגש קרב»; the Combat strings' start button still says «עימות», so the
+  word is worth settling). The ru and he texts are drafts for native review, like the others.
+
+**Known limits**
+- Duplicate numbers across runs: running "Bandits" twice makes a second "Bandit 1" on the cast, as the Bestiary's *Add to cast* does today.
+- After a start that is refused on the loop, or whose table closes, players have already seen each Unknown creature's "joined" line, and the clean-up then writes "left". They read
+  "a bandit joined... left". Recorded, not redesigned.
+- A creature whose roll fails (a die expression the system wrote badly) is named as not joined and stays on the cast.
+- `PreparedStartUiTests` runs the picker and the editor's button against a real table (embedded database), so the messages, the busy buttons and the button's follow-the-table
+  behaviour are covered at component level.
+
+**Left for later**
+- B4: the readout in the editor and the list, and in the picker. B5: *Build with AI* and the proposal kind. B6: the in-app tools. B7: hazard lines and the "joins initiative" tick, which
+  will add a region id to the command if the hazards need one.

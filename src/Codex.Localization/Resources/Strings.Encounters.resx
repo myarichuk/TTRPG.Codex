@@ -95,4 +95,8 @@
   <data name="Encounters.Hazards.None" xml:space="preserve"><value>No hazards are placed here. Place one on the place's page.</value></data>
   <data name="Encounters.Hazards.OpenPlace" xml:space="preserve"><value>Open the place</value></data>
   <data name="Encounters.Hazards.At" xml:space="preserve"><value>At {0}</value></data>
+  <data name="Encounters.Start" xml:space="preserve"><value>Start at the table</value></data>
+  <data name="Encounters.Start.NoTable" xml:space="preserve"><value>Start the table to run this encounter</value></data>
+  <data name="Encounters.Start.SaveFirst" xml:space="preserve"><value>Save your changes to start it.</value></data>
+  <data name="Encounters.RanOn" xml:space="preserve"><value>{0, plural, one{Ran on {1}} other{Ran # times, last on {1}}}</value></data>
 </root>

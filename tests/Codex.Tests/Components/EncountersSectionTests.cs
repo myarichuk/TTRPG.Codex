@@ -25,6 +25,11 @@ public class EncountersSectionTests : ComponentTestBase
         Services.AddSingleton(_w.Service);
         Services.AddSingleton<ILogger<EncounterList>>(NullLogger<EncounterList>.Instance);
         Services.AddSingleton<ILogger<EncounterEditor>>(NullLogger<EncounterEditor>.Instance);
+        Services.AddSingleton(ViewerClock.ForZone("UTC"));
+        // The editor offers "Start at the table" only while a table runs, so it asks the manager. This one has no table running.
+        var components = new Codex.Plugin.Abstractions.ComponentRegistry();
+        Services.AddSingleton(new Codex.Persistence.Runtime.CampaignRuntimeManager(_w.ActorRepo, Substitute.For<ISessionRepository>(), Substitute.For<ICampaignRepository>(),
+            Substitute.For<IEncounterRepository>(), components, new Codex.Core.PluginLoader(NullLogger<Codex.Core.PluginLoader>.Instance, components, Substitute.For<Codex.Plugin.Abstractions.IContentPackLoader>()), NullLoggerFactory.Instance));
     }
 
     private IRenderedComponent<CascadingValue<CampaignContext>> Draw(string? route = null, bool dm = true, string culture = "en", params BestiaryEntry[] shortlist)
@@ -162,7 +167,44 @@ public class EncountersSectionTests : ComponentTestBase
     private static string[] Names(IRenderedComponent<CascadingValue<CampaignContext>> cut) =>
         cut.FindAll(Id("encounter-open")).Select(a => a.TextContent).ToArray();
 
+    [Fact]
+    public async Task ARanPlanWithADate_SaysWhenItLastRan_AndOneWithoutStillSaysHowManyTimes()
+    {
+        var dated = await StoredAsync("Dated", "hall");
+        _w.Plans.Held[dated.Id].Status = PreparedStatus.Ran;
+        _w.Plans.Held[dated.Id].RunEncounterIds = ["enc-1", "enc-2"];
+        _w.Plans.Held[dated.Id].LastRunAt = new DateTime(2026, 11, 20, 18, 0, 0, DateTimeKind.Utc);
+        var once = await StoredAsync("Once", "hall");
+        _w.Plans.Held[once.Id].Status = PreparedStatus.Ran;
+        _w.Plans.Held[once.Id].RunEncounterIds = ["enc-1"];
+        _w.Plans.Held[once.Id].LastRunAt = new DateTime(2026, 11, 21, 18, 0, 0, DateTimeKind.Utc);
+        var old = await StoredAsync("Old", "hall");
+        _w.Plans.Held[old.Id].Status = PreparedStatus.Ran;
+        _w.Plans.Held[old.Id].RunEncounterIds = ["enc-1"];
+
+        var cut = Draw();
+
+        cut.WaitForState(() => cut.FindAll(Id("encounter-row")).Count == 3, Patience);
+        var rows = cut.FindAll(Id("encounter-row")).ToDictionary(r => r.QuerySelector(Id("encounter-open"))!.TextContent);
+        Assert.Equal("Ran 2 times, last on 20 Nov 2026", rows["Dated"].QuerySelector(Id("encounter-status"))!.TextContent);
+        Assert.Equal("Ran on 21 Nov 2026", rows["Once"].QuerySelector(Id("encounter-status"))!.TextContent);
+        Assert.Equal("Ran once", rows["Old"].QuerySelector(Id("encounter-status"))!.TextContent);
+    }
+
     // ---- The editor ----
+
+    [Fact]
+    public async Task TheEditor_WithNoTableRunning_LinksToTheTable_AndOffersNoStartButton()
+    {
+        var plan = await StoredAsync("Ambush", "cellar", PreparedStatus.Ready, EncounterWorld.Bandits(3));
+
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+
+        cut.WaitForState(() => cut.FindAll(Id("encounter-line")).Count == 1, Patience);
+        Assert.Equal("/campaigns/c1/table", cut.Find(Id("encounter-start-table")).GetAttribute("href"));
+        Assert.Equal("Start the table to run this encounter", cut.Find(Id("encounter-start-table")).TextContent.Trim());
+        Assert.Empty(cut.FindAll(Id("encounter-start")));
+    }
 
     [Fact]
     public async Task TheEditor_LabelsEachLineWithItsCreature_AndShowsTheHazardsAtThePlaceAsText()
@@ -187,7 +229,7 @@ public class EncountersSectionTests : ComponentTestBase
         Assert.Contains("Hidden", hazards[1].TextContent);
         Assert.Equal("/campaigns/c1/world#place-vault", hazards[1].QuerySelector("a")!.GetAttribute("href"));
 
-        // Starting it and rating it are later steps.
+        // No table runs here, so there is no start button (the link to the table is its own test); rating it is a later step.
         Assert.DoesNotContain("Start at the table", cut.Markup);
         Assert.DoesNotContain("Difficulty", cut.Markup);
     }

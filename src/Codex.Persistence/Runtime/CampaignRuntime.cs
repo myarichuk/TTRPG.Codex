@@ -1163,8 +1163,28 @@ public sealed class CampaignRuntime : IAsyncDisposable
         }
 
         var logged = command.Describe(this);
+        // The extra lines are worked out before anything is added, and a command that cannot say them loses only them: the command has already changed the table,
+        // so its own line is still written, once, with the rest of the pending rows.
+        IReadOnlyList<SessionEvent> followUps = Array.Empty<SessionEvent>();
+        if (command is IFollowedByEvents more)
+        {
+            try
+            {
+                followUps = more.EventsAfter(this);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "A command's follow-up log lines could not be written");
+            }
+        }
+
         _activeSession.Events.Add(logged);
         _pendingEvents.Add(logged);
+        foreach (var after in followUps)
+        {
+            _activeSession.Events.Add(after);
+            _pendingEvents.Add(after);
+        }
 
         // Append-only: the stored session gets these rows added to whatever it holds now, so a
         // recap or title the DM saved from the session page in the meantime survives (F3).
@@ -1214,7 +1234,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
                 live.Round,
                 live.TurnIndex,
                 live.Participants.Select(p => new ParticipantSnapshot(p.ActorId, p.InitiativeRoll, p.TieBreak, p.State, p.HasActed)).ToArray(),
-                live.LocationId);
+                live.LocationId,
+                live.PreparedEncounterId);
         }
 
         var actors = new Dictionary<string, ActorStateSnapshot>(_actorEntities.Count);

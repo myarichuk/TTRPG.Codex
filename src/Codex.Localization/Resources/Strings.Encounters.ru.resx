@@ -95,4 +95,8 @@
   <data name="Encounters.Hazards.None" xml:space="preserve"><value>Здесь нет опасностей. Поставьте их на странице места.</value></data>
   <data name="Encounters.Hazards.OpenPlace" xml:space="preserve"><value>Открыть место</value></data>
   <data name="Encounters.Hazards.At" xml:space="preserve"><value>Место: {0}</value></data>
+  <data name="Encounters.Start" xml:space="preserve"><value>Начать за столом</value></data>
+  <data name="Encounters.Start.NoTable" xml:space="preserve"><value>Запустите стол, чтобы провести это столкновение</value></data>
+  <data name="Encounters.Start.SaveFirst" xml:space="preserve"><value>Сохраните изменения, чтобы начать.</value></data>
+  <data name="Encounters.RanOn" xml:space="preserve"><value>{0, plural, one{Проведено {1}} few{Проведено # раза, последний раз {1}} many{Проведено # раз, последний раз {1}} other{Проведено # раза, последний раз {1}}}</value></data>
 </root>

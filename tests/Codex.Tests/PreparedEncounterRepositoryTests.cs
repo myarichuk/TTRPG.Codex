@@ -234,6 +234,31 @@ public class PreparedEncounterRepositoryTests : IClassFixture<RavenDbFixture>, I
     }
 
     [Fact]
+    public async Task MarkRun_StampsTheTime_ASaveOfAStaleCopyKeepsIt_AndANewPlanStartsWithNone()
+    {
+        var t = NewTable();
+        var plan = await SavedAsync(t);
+        var stale = (await _plans.GetAsync(plan.Id, t.Gm))!;
+        Assert.Null(stale.LastRunAt);
+
+        var before = DateTime.UtcNow.AddSeconds(-1);
+        Assert.True(await _plans.MarkRunAsync(plan.Id, "enc-1", t.Gm));
+        var ran = (await _plans.GetAsync(plan.Id, t.Gm))!.LastRunAt;
+        Assert.NotNull(ran);
+        Assert.True(ran >= before);
+
+        stale.Notes = "edited on a copy read before the run";
+        Assert.True(await _plans.SaveAsync(stale, t.Gm));
+        Assert.Equal(ran, (await _plans.GetAsync(plan.Id, t.Gm))!.LastRunAt);
+        Assert.Equal(ran, stale.LastRunAt);
+
+        var fresh = Plan(t.CampaignId, "Pretends");
+        fresh.LastRunAt = DateTime.UtcNow;
+        Assert.True(await _plans.SaveAsync(fresh, t.Gm));
+        Assert.Null((await _plans.GetAsync(fresh.Id, t.Gm))!.LastRunAt);
+    }
+
+    [Fact]
     public async Task MarkRun_AppendsNewestLast_OnceForEachFight()
     {
         var t = NewTable();

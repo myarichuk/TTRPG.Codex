@@ -199,4 +199,93 @@ public class HazardsTableTests : ComponentTestBase
         Assert.Contains("no longer in the Library", cut.Find("[data-testid=hazard-0]").TextContent);
         Assert.Empty(cut.FindAll("[data-testid=hazard-0-notice]"));
     }
+
+    // ---- The panel follows the encounter's place (B3: a plan's start sets it) ----
+
+    private static readonly TimeSpan Patience = TimeSpan.FromSeconds(10);
+
+    private static RuntimeSnapshot With(string id, string? place, string? plan) => RuntimeSnapshot.Empty with
+    {
+        Encounter = new EncounterSnapshot(id, 1, 0, Array.Empty<ParticipantSnapshot>(), place, plan)
+    };
+
+    private IRenderedComponent<HazardsTable> DrawFollowing(RuntimeSnapshot snapshot, CampaignRuntime? runtime = null)
+    {
+        _regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(new[]
+        {
+            new RegionDocument
+            {
+                Id = "r", CampaignId = "c", Name = "Dungeon",
+                Locations =
+                {
+                    new LocationDocument { Id = "p1", Name = "Pit room", Feature = new PlaceFeature { Hazard = new PlacedHazard { Entry = "hazard/old-trap" } } },
+                    new LocationDocument { Id = "p2", Name = "Gallery", Feature = new PlaceFeature { Hazard = new PlacedHazard { Entry = "hazard/old-trap" } } }
+                }
+            }
+        });
+        Services.AddSingleton(_regions);
+        Services.AddSingleton(new CampaignLibrary(Substitute.For<IContentRegistry>(), Substitute.For<IHomebrewRepository>(), Substitute.For<ISystemCatalog>()));
+        Services.AddSingleton<ILogger<HazardsTable>>(NullLogger<HazardsTable>.Instance);
+        var cut = Render<HazardsTable>(p => p
+            .Add(x => x.Campaign, new CampaignDocument { Id = "c", SystemId = "srd5e" })
+            .Add(x => x.Access, new CampaignAccess("c", "user-1", CampaignRole.DM))
+            .Add(x => x.Definition, SystemWith(true))
+            .Add(x => x.Snapshot, snapshot)
+            .Add(x => x.Runtime, runtime!));
+        cut.WaitForState(() => cut.FindAll("#hazard-place").Count > 0, Patience);
+        return cut;
+    }
+
+    private static string Picked(IRenderedComponent<HazardsTable> cut) => cut.Find("#hazard-place").GetAttribute("value") ?? string.Empty;
+
+    [Fact]
+    public void ANewEncountersPlace_MovesThePanel_WhenItWasAlreadyLoaded()
+    {
+        var cut = DrawFollowing(RuntimeSnapshot.Empty);
+        Assert.Equal(string.Empty, Picked(cut));
+
+        cut.Render(p => p.Add(x => x.Snapshot, With("e2", "p1", null)));
+
+        cut.WaitForAssertion(() => Assert.Equal("p1", Picked(cut)), Patience);
+    }
+
+    [Fact]
+    public void APlanStartedInTheEmptyEncounter_MovesThePanel()
+    {
+        var cut = DrawFollowing(With("e1", null, null));
+        Assert.Equal(string.Empty, Picked(cut));
+
+        // The same encounter (it was empty and is reused), now with a plan and its place.
+        cut.Render(p => p.Add(x => x.Snapshot, With("e1", "p1", "plan-1")));
+
+        cut.WaitForAssertion(() => Assert.Equal("p1", Picked(cut)), Patience);
+    }
+
+    [Fact]
+    public void AConsoleEncounterWithNoPlace_KeepsThePickedPlace()
+    {
+        var cut = DrawFollowing(RuntimeSnapshot.Empty);
+        cut.Find("#hazard-place").Change("p1");
+        Assert.Equal("p1", Picked(cut));
+
+        cut.Render(p => p.Add(x => x.Snapshot, With("e2", null, null)));
+
+        cut.WaitForAssertion(() => Assert.Equal("p1", Picked(cut)), Patience);
+    }
+
+    [Fact]
+    public async Task ThePickerStillOverrides_AfterThePanelFollowed()
+    {
+        await using var runtime = new CampaignRuntime("c", Substitute.For<IActorRepository>(), new ComponentRegistry(), NullLogger.Instance,
+            activeEncounter: new EncounterDocument { Id = "e1", CampaignId = "c", LocationId = "p1", PreparedEncounterId = "plan-1" });
+        var cut = DrawFollowing(With("e1", "p1", "plan-1"), runtime);
+        Assert.Equal("p1", Picked(cut));
+
+        cut.Find("#hazard-place").Change("p2");
+
+        cut.WaitForAssertion(() => Assert.Equal("p2", runtime.ActiveEncounter!.LocationId), Patience);
+        // The same encounter and plan, still carrying the place it started at: the pick is not undone.
+        cut.Render(p => p.Add(x => x.Snapshot, With("e1", "p1", "plan-1")));
+        cut.WaitForAssertion(() => Assert.Equal("p2", Picked(cut)), Patience);
+    }
 }

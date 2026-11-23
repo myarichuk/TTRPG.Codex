@@ -30,7 +30,7 @@ public interface IPreparedEncounterRepository
 
     /// <summary>
     /// Records that the plan was started as the live encounter <paramref name="encounterId"/>: appends it to the run list (once) and sets <see cref="PreparedStatus.Ran"/>,
-    /// changing nothing else but <c>UpdatedAt</c>, in one load-and-save under optimistic concurrency, so a GM editing the plan meanwhile is not overwritten.
+    /// stamps <see cref="PreparedEncounterDocument.LastRunAt"/>, changing nothing else but <c>UpdatedAt</c>, in one load-and-save under optimistic concurrency, so a GM editing the plan meanwhile is not overwritten.
     /// A write like the others: false when refused (not a GM, a party preview, the system missing) or when there is no such plan in the access's campaign.
     /// </summary>
     Task<bool> MarkRunAsync(string id, string encounterId, CampaignAccess access);

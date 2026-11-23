@@ -69,11 +69,14 @@ else
             }
             <section class="panel @(inEncounter ? null : "encounter-bar")" aria-labelledby="initiative-heading" data-testid="@(inEncounter ? "initiative-panel" : "encounter-bar")">
                 <div class="panel-title">
-                    <h3 id="initiative-heading" class="mb-0" data-testid="initiative-header">@(encounter != null ? L["Combat.InitiativeRound", encounter.Round] : L["Combat.Initiative"])</h3>
+                    <h3 id="initiative-heading" class="mb-0" data-testid="initiative-header" tabindex="-1" @ref="orderHeading">@(encounter != null ? L["Combat.InitiativeRound", encounter.Round] : L["Combat.Initiative"])</h3>
                     @if (Access.IsDm && !inEncounter)
                     {
                         <CodexButton Variant="@(startingEncounter ? CodexButtonVariant.Etched : CodexButtonVariant.Plaque)" Small="true" data-testid="start-encounter" aria-expanded="@(startingEncounter ? "true" : "false")"
-                                     OnClick="() => startingEncounter = !startingEncounter">@(startingEncounter ? L["Common.Cancel"] : L["Combat.StartEncounter"])</CodexButton>
+                                     OnClick="ToggleStartingEncounter">@(startingEncounter ? L["Common.Cancel"] : L["Combat.StartEncounter"])</CodexButton>
+                        <CodexButton Variant="@(choosingPrepared ? CodexButtonVariant.Etched : CodexButtonVariant.Plaque)" Small="true" data-testid="start-prepared"
+                                     aria-expanded="@(choosingPrepared ? "true" : "false")" aria-controls="prepared-encounters"
+                                     OnClick="TogglePrepared">@(choosingPrepared ? L["Common.Cancel"] : L["Combat.Prepared.Open"])</CodexButton>
                     }
                     @if (Access.IsDm && encounter is { Participants.Count: > 0 })
                     {
@@ -84,6 +87,11 @@ else
                         </div>
                     }
                 </div>
+
+                @if (Access.IsDm && !inEncounter && choosingPrepared)
+                {
+                    <PreparedEncounterPicker Campaign="Campaign" Access="Access" PlaceId="@encounter?.LocationId" OnMessage="OnMessage" OnStarted="PreparedStarted" />
+                }
 
                 @if (encounter is { Participants.Count: > 0 } && CurrentTurnName(encounter) is { } turnName)
                 {
@@ -171,6 +179,8 @@ else
 
             @if (Access.IsDm)
             {
+                <EncounterNotesPanel Campaign="Campaign" Access="Access" PreparedEncounterId="@snapshot.Encounter?.PreparedEncounterId" />
+
                 <QuickAddPanel SystemId="@Campaign.SystemId" Campaign="Campaign" CreatureType="@(Definition?.EntityTypes.FirstOrDefault(t => t.ActorBlueprint)?.Type ?? "monster")" OnAdd="QuickAddMonsterAsync" OnAddHazard="QuickAddHazardAsync" HazardType="HazardType" PlaceHazards="placeHazards" PlaceName="@placeHazardsName" />
 
                 <HazardsTable Campaign="Campaign" Access="Access" CurrentUserId="@CurrentUserId" Runtime="runtime" Snapshot="snapshot" Actors="Actors" Definition="Definition" />
@@ -255,7 +265,7 @@ else
     /// <summary>A rest as the table reads it ("Long Rest"); the rules still get the system's own name.</summary>
     private string RestLabel(string rest) => Definition?.DisplayValue(rest) ?? rest;
 
-    private string InitiativeDice => Definition?.Dice.Initiative ?? "1d20";
+    private string InitiativeDice => TableInitiative.Die(Definition);
     private static readonly DownRules NoDownRules = new();
     private DownRules Down => Vitals?.Down ?? NoDownRules;
     private string StableCondition => Down.StableCondition;
@@ -454,6 +464,43 @@ else
     // ---- Cards ----
 
     private bool startingEncounter;
+    private bool choosingPrepared;
+    private ElementReference orderHeading;
+    private bool focusOrder;
+
+    // The picker goes when the order opens, and the focus it held would drop to the page: it moves to the order's heading once the order is drawn.
+    private void PreparedStarted()
+    {
+        choosingPrepared = false;
+        focusOrder = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!focusOrder || snapshot.Encounter is not { Participants.Count: > 0 }) return;
+        focusOrder = false;
+        try
+        {
+            await orderHeading.FocusAsync();
+        }
+        catch (Exception)
+        {
+            // Focus is a courtesy; the circuit may be going away.
+        }
+    }
+
+    // Only one of the two ways to start is open at a time.
+    private void ToggleStartingEncounter()
+    {
+        startingEncounter = !startingEncounter;
+        if (startingEncounter) choosingPrepared = false;
+    }
+
+    private void TogglePrepared()
+    {
+        choosingPrepared = !choosingPrepared;
+        if (choosingPrepared) startingEncounter = false;
+    }
     // Cards the viewer opened or closed against their default: a character's card is open, a creature's closed.
     private readonly HashSet<string> toggledCards = new(StringComparer.Ordinal);
     // What the rules make of each sheet, worked out once per load of the actors: a card reads it on every render.
@@ -542,39 +589,18 @@ else
 
     /// <summary>The system's initiative bonus for an actor: the named derived field (DEX modifier in
     /// the SRD), evaluated from their sheet. Zero when the system has none or the rules are not loaded.</summary>
-    private int InitiativeBonus(string actorId)
-    {
-        if (engine == null || Definition?.Dice.InitiativeBonus is not { } key || ActorsById.GetValueOrDefault(actorId) is not { } actor) return 0;
-        try
-        {
-            var evaluation = engine.EvaluateLive(LiveSheetOf(actor), Linked());
-            return evaluation.Derived.TryGetValue(key, out var value) ? Convert.ToInt32(value) : 0;
-        }
-        catch (Exception)
-        {
-            return 0;
-        }
-    }
+    private int InitiativeBonus(string actorId) =>
+        engine != null && Definition?.Dice.InitiativeBonus != null && ActorsById.GetValueOrDefault(actorId) is { } actor
+            ? TableInitiative.Bonus(Definition, engine, () => LiveSheetOf(actor), Linked) : 0;
 
-    private string InitiativeBonusText(string actorId)
-    {
-        if (string.IsNullOrEmpty(actorId)) return "";
-        var bonus = InitiativeBonus(actorId);
-        return bonus == 0 ? "" : bonus > 0 ? $" + {bonus}" : $" - {-bonus}";
-    }
+    private string InitiativeBonusText(string actorId) => string.IsNullOrEmpty(actorId) ? "" : TableInitiative.BonusText(InitiativeBonus(actorId));
 
     /// <summary>The tie-break score: the attribute the system names (DEX), read off the sheet.</summary>
-    private int TieBreak(string actorId)
-    {
-        if (Definition?.Dice.InitiativeTieBreak is not { } key || ActorsById.GetValueOrDefault(actorId) is not { } actor) return 0;
-        return YamlValues.GetInt(actor.Sheet, key) ?? Definition.Attributes.FirstOrDefault(a => a.Key == key)?.Default ?? 0;
-    }
+    private int TieBreak(string actorId) =>
+        ActorsById.GetValueOrDefault(actorId) is { } actor ? TableInitiative.TieBreak(Definition, actor.Sheet) : 0;
 
-    private Task RollInitiativeAsync((string ActorId, string Expression) roll)
-    {
-        var bonus = InitiativeBonus(roll.ActorId);
-        return SendAsync(new RollInitiativeCommand(roll.ActorId, roll.Expression + (bonus == 0 ? "" : bonus > 0 ? $"+{bonus}" : bonus.ToString()), CurrentUserId, TieBreak(roll.ActorId)));
-    }
+    private Task RollInitiativeAsync((string ActorId, string Expression) roll) =>
+        SendAsync(new RollInitiativeCommand(roll.ActorId, TableInitiative.Expression(roll.Expression, InitiativeBonus(roll.ActorId)), CurrentUserId, TieBreak(roll.ActorId)));
 
     private Task SetInitiativeAsync((string ActorId, int Total) set) => SendAsync(new SetInitiativeCommand(set.ActorId, set.Total, TieBreak(set.ActorId)));
 
@@ -841,8 +867,7 @@ else
             return false;
         }
 
-        var bonus = offer.Initiative;
-        await SendAsync(new JoinInitiativeCommand(actor.Id, InitiativeDice + (bonus == 0 ? "" : bonus > 0 ? $"+{bonus}" : bonus.ToString()), CurrentUserId));
+        await SendAsync(new JoinInitiativeCommand(actor.Id, TableInitiative.Expression(InitiativeDice, offer.Initiative), CurrentUserId));
         await OnMessage.InvokeAsync(Flash.Success(L["Combat.HazardAdded", actor.Name]));
         if (OnActorAdded.HasDelegate) await OnActorAdded.InvokeAsync();
         return true;

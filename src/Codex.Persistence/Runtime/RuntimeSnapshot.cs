@@ -40,7 +40,7 @@ public sealed record RuntimeSnapshot(
     public ActorStateSnapshot? Actor(string actorId) => Actors.GetValueOrDefault(actorId);
 }
 
-public sealed record EncounterSnapshot(string Id, int Round, int TurnIndex, IReadOnlyList<ParticipantSnapshot> Participants, string? LocationId = null)
+public sealed record EncounterSnapshot(string Id, int Round, int TurnIndex, IReadOnlyList<ParticipantSnapshot> Participants, string? LocationId = null, string? PreparedEncounterId = null)
 {
     public ParticipantSnapshot? Current => Participants.Count > 0 && TurnIndex >= 0 && TurnIndex < Participants.Count ? Participants[TurnIndex] : null;
 }
