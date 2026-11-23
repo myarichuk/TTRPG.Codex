@@ -25,7 +25,8 @@ public class CampaignRepository(
     IBookDraftRepository? bookDraftRepository = null,
     IVaultRepository? vaultRepository = null,
     ICampaignObjectsRepository? campaignObjectsRepository = null,
-    IConsistencyDismissalRepository? consistencyDismissalRepository = null) : ICampaignRepository
+    IConsistencyDismissalRepository? consistencyDismissalRepository = null,
+    IPreparedEncounterRepository? preparedEncounterRepository = null) : ICampaignRepository
 {
     public async Task<IEnumerable<CampaignDocument>> GetAllAsync()
     {
@@ -197,6 +198,7 @@ public class CampaignRepository(
         await factRepository.DeleteAllForCampaignAsync(campaignId);
         await homebrewRepository.DeleteAllForCampaignAsync(campaignId);
         await encounterRepository.DeleteAllForCampaignAsync(campaignId);
+        if (preparedEncounterRepository != null) await preparedEncounterRepository.DeleteAllForCampaignAsync(campaignId);
         if (wikiRepository != null) await wikiRepository.DeleteAllForCampaignAsync(campaignId);
         if (journalRepository != null) await journalRepository.DeleteAllForCampaignAsync(campaignId);
         if (worldChatRepository != null) await worldChatRepository.DeleteAllForCampaignAsync(campaignId);

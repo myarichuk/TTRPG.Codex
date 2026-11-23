@@ -637,6 +637,11 @@ public class EncounterDocument
     public string CampaignId { get; set; } = string.Empty;
     public string SessionId { get; set; } = string.Empty;
     public string? LocationId { get; set; }
+
+    /// <summary>The prepared encounter this fight was started from (<see cref="PreparedEncounterDocument"/>), or null for one put together at the table.
+    /// GM only: the table shows the plan's notes to the GM, never to players.</summary>
+    public string? PreparedEncounterId { get; set; }
+
     public List<EncounterParticipant> Participants { get; set; } = new();
     public int Round { get; set; } = 1;
     public int TurnIndex { get; set; }

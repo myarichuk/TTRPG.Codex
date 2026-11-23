@@ -91,6 +91,21 @@ public class EncountersByCampaignIndex : AbstractIndexCreationTask<EncounterDocu
     }
 }
 
+public class PreparedEncountersByCampaignIndex : AbstractIndexCreationTask<PreparedEncounterDocument>
+{
+    public PreparedEncountersByCampaignIndex()
+    {
+        Map = plans => from plan in plans
+                       select new
+                       {
+                           plan.CampaignId,
+                           plan.Status,
+                           plan.PlaceId,
+                           plan.UpdatedAt
+                       };
+    }
+}
+
 public class HomebrewByCampaignIndex : AbstractIndexCreationTask<HomebrewEntryDocument>
 {
     public HomebrewByCampaignIndex()

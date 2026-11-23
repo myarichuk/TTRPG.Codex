@@ -1,0 +1,459 @@
+# Encounter builder: design
+
+Status: designed 2026-11-15, open questions decided the same day (the recommendations; see section 12). Building from 2026-11-23,
+step by step (section 10). What it depended on is on main: the hazards PR (`SetEncounterPlaceCommand`, `HazardsTable`, `PlacedHazard`),
+H5 (complex hazards in initiative, `ActorDocument.Hazard`) and H6 (world builder hazards), so the "after H5" parts can be built in their
+steps rather than waited for. It reuses the world builder chat (WORLD_BUILDER.md) for its AI part. An MCP server is a later phase of this
+design (section 8).
+
+**The party** (the readout's characters, and any count of them) is the campaign's player characters whose sheet kind is a party member:
+`SheetLayout.IsPartyMember(system, sheet)`, since P11 (COMPANIONS_DESIGN.md) a companion or familiar is a player-character actor whose
+kind says `partyMember: false`, and it does not count.
+
+## What it is
+
+Today a fight is put together at the table: the GM finds creatures in Quick Add (`QuickAddPanel`), each one becomes a cast member
+(`CombatConsole.QuickAddMonsterAsync`), and the first initiative roll creates the live `EncounterDocument`
+(`CampaignRuntime.GetOrCreateEncounter`). Nothing sets `EncounterDocument.LocationId`, so the Hazards panel's place picker starts on
+"All places". The Bestiary has a shortlist "planned for upcoming encounters" with counts and notes, but nothing turns it into a fight.
+
+The encounter builder lets the GM prepare encounters before the session:
+
+- **Prepare** one by hand: a name, a place, the creatures (Library, homebrew or existing cast members) with counts, notes, and a
+  difficulty readout when the system declares how to work one out.
+- **Prepare** one with AI, in the world builder chat: the model reads the place, its hazards and the Library, proposes an encounter,
+  and the GM reviews it before it is saved.
+- **See** the prepared encounters of the campaign, by place and by status.
+- **Start** one at the table. Its creatures join the cast and roll initiative, and the encounter's place is set, so the Hazards panel
+  shows that place's hazards straight away. The picker stays as the manual override (the user's decision in HAZARDS_DESIGN.md 11, H4b).
+
+Everything about a prepared encounter is GM only. Players see nothing of it until it starts, and then only what the table shows them
+today (creatures by what they are, as Quick Add does).
+
+## 1. Principles
+
+1. **A prepared encounter is a plan, not a fight.** It is its own document. The live `EncounterDocument` stays what it is: the state of
+   one fight in one session.
+2. **Hazards are not copied.** A hazard's state belongs to its placement (`PlaceFeature.Hazard`). A prepared encounter names a place,
+   and reads that place's hazards live. Placing a hazard is done on the place (the Places form, or the world builder per H6).
+3. **No game numbers in C#.** The difficulty readout is data in `system.yaml`. A system that declares nothing gets no readout.
+4. **The model proposes, the GM applies.** The AI writes through the world builder's one review and save path.
+5. **Plain, accessible copy; en, ru, he.** No trademark names.
+
+## 2. Data
+
+```csharp
+namespace Codex.Persistence;
+
+/// <summary>An encounter the GM prepared ahead of the session. GM only. Starting it at the table makes the live EncounterDocument.</summary>
+public class PreparedEncounterDocument
+{
+    public string Id { get; set; } = string.Empty;              // preparedencounters/<guid>
+    public string CampaignId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;            // "Ambush in the cellar"; can spoil a secret, so GM only everywhere
+    public string? RegionId { get; set; }                       // the place, as the hazard keys name it (hazard:{regionId}/{locationId})
+    public string? PlaceId { get; set; }                        // a LocationDocument id; null: no place (the panel shows "All places")
+    public List<PreparedLine> Lines { get; set; } = new();
+    public string? Notes { get; set; }                          // markdown, GM only: tactics, terrain, what sets it off, the way out
+    public List<string> Tags { get; set; } = new();
+    public PreparedStatus Status { get; set; }                  // Draft, Ready, Ran
+    public List<string> RunEncounterIds { get; set; } = new();  // the live encounters started from it, newest last
+    public string CreatedBy { get; set; } = string.Empty;
+    public DateTime UpdatedAt { get; set; }
+    public string? FromChatId { get; set; }                     // the world builder chat that proposed it, if any
+}
+
+/// <summary>One line of the lineup: a Library or homebrew creature with a count (the BestiaryEntry key shape), or one cast member.</summary>
+public class PreparedLine
+{
+    public PreparedLineKind Kind { get; set; }                  // Creature, CastMember, Hazard (after H5: the initiative tick of a complex hazard placed at the place)
+    public string EntryType { get; set; } = "monster";          // Creature, Hazard: the Library type
+    public string EntryId { get; set; } = string.Empty;
+    public bool IsHomebrew { get; set; }
+    public string? ActorId { get; set; }                        // CastMember: an existing actor (a named villain already on the cast)
+    public string Name { get; set; } = string.Empty;            // as it was when added, for a line whose entry is gone
+    public int Count { get; set; } = 1;                         // Creature: 1 to 20, as the Bestiary clamps it; CastMember and Hazard: 1
+    public string? Note { get; set; }                           // "waits behind the door"
+    public bool StartsHidden { get; set; }                      // true: Hidden (players do not see it in the order); false: Unknown (seen by what it is)
+}
+```
+
+- A creature line uses the same key as `BestiaryEntry.Key` (`pack|homebrew : type : id`), so the builder can take lines from the
+  Bestiary shortlist in one click, and a pack and a homebrew entry with the same id stay two different choices.
+- A **hazard line** would be a complex hazard picked from the search's Hazards group. A hazard's state has one home, its placement
+  (HAZARDS_DESIGN 4.1, H4b: live state under `hazard:{regionId}/{locationId}`), so a line with no place would get no Notice, no Disable
+  and no write-back. **Recommended:** choosing a complex hazard in the editor places it on the encounter's place (a feature of that
+  place, made when the plan is saved), and the line is then only the "joins initiative" tick of that placement; with no place chosen,
+  the Hazards group is disabled with "Choose a place first". Open question 10. Before H5 the Hazards group is not offered.
+- **What the encounter shows of its place**: the place's hazards and those of its child places, read live through the same walk the
+  Hazards panel uses (`HazardsTable.Chain`, moved to a shared helper), with their state and, after H5, whether each joins initiative.
+  A disabled or triggered hazard is shown but does not join.
+- **The live encounter** gains one field: `EncounterDocument.PreparedEncounterId` (string?), so the table can show the plan's notes to
+  the GM and the prepared encounter can say when it ran.
+
+### 2.1 The difficulty readout (optional, data only)
+
+A system may declare how hard a lineup is for the party. Two shapes cover the systems in view, and the block says which it uses:
+
+```yaml
+# system.yaml
+encounters:
+  difficulty:
+    # Shape 1, "sum": each creature is worth a field of its entry; the party's budget is a per-character row by level.
+    shape: sum
+    creatureValue: xp                 # a Number field of every actorBlueprint type that takes part
+    partyLevel: level                 # the sheet field the budget reads, per player character
+    bands: [low, moderate, high]      # band keys, in order; labels in system.<locale>.yaml like other values
+    budget:                           # one row per character level, one number per band (per character)
+      - { level: 1, low: ..., moderate: ..., high: ... }
+    # Shape 2, "byLevel": each creature is worth a value looked up by (its level - the party's level); the budget is per party size.
+    # shape: byLevel
+    # creatureLevel: level
+    # values: [ { delta: -4, value: ... }, ... ]
+    # budget: { perCharacter: true, bands: [ { key: trivial, value: ... }, ... ] }
+```
+
+- The readout says the party (the campaign's player characters and their levels), the lineup's total, and the band it falls in, in
+  words ("Moderate for 4 characters of level 3"), never only a colour. A line whose entry has no value says so; the readout does not
+  guess.
+- The numbers are written in their own build step from the system's licensed text, as the SRD traps were (a reviewed data file, a test
+  that compares it). **None are written from memory**: the first hazard draft from memory was wrong almost everywhere (HAZARDS_DESIGN 11,
+  H2). srd5e takes them from the SRD 5.2.1 document (CC BY 4.0): it has "Combat Encounter Difficulty" with an "XP Budget per Character" table (Gameplay Toolbox, "Combat Encounters", printed p. 202; checked 2026-11-15), which is shape 1 (sum of creature XP against a budget per character and difficulty). The degrees system declares shape 2 when its pack exists (track P).
+  Forged in the Dark declares none: a fight there is a clock and a consequence, not a budget.
+- `SystemDefinitionLoader` checks the block: a known shape, fields that exist with the right kind, whole numbers, rows in level order,
+  no repeated level. Schema and `SYSTEM_YAML_REFERENCE.md` regenerated.
+- Complex hazards count only when the system says how (a `hazardValue` field); otherwise the readout lists them apart as "not counted".
+
+## 3. Storage
+
+- `IPreparedEncounterRepository` / `RavenPreparedEncounterRepository`, with an index `PreparedEncountersByCampaignIndex`.
+  Methods: `GetAsync(id, access)`, `ListAsync(access)`, `SaveAsync(doc, access)` (returns false when refused), `DeleteAsync(id, access)`,
+  `DeleteAllForCampaignAsync(campaignId)`, and `MarkRunAsync(id, encounterId)` (one patch: adds the run and sets `Ran`, so a GM editing the
+  plan at the same time is not overwritten; `RavenUpdate.RunAsync` as the place patch does).
+- **Every read and write takes `CampaignAccess` and refuses a non-GM at the repository**, not only in the UI. Writes also refuse a party
+  preview and `SystemMissing`, as other repositories do. A co-GM reads and edits them like the GM (unlike world chats, which are private
+  to the GM who started them): a prepared fight is shared table prep.
+- **Separate from `EncounterDocument` on purpose.** `IEncounterRepository.GetAllForCampaignAsync` is read by the campaign export and by
+  `BookSourceReader` (the GM edition's fights), and `CampaignRuntimeManager.FindOpenEncounterAsync` restores any encounter with no end. A
+  plan stored there would show up as a fight in the book and could be "restored" at the table.
+- Joins the cascade delete in `CampaignRepository` beside `encounterRepository.DeleteAllForCampaignAsync`.
+- **Export**: included in the campaign export, which is GM only (`CampaignExportService.ExportAsync` refuses a non-GM), as prep like the Bestiary shortlist, restored on import with new ids and its place
+  and actor ids mapped as the export maps the others. Never in the book, either edition.
+- Deleting a place leaves the prepared encounter with no place (the page says "its place was deleted"); deleting a cast member drops
+  that line, shown once as "no longer in the cast". Neither deletes the plan.
+
+## 4. Services and the engine
+
+### 4.1 `PreparedEncounterService` (Codex.Web/Services)
+
+The one place prepared encounters are read, checked, saved and started. The pages, the world builder and later the MCP server all
+call it.
+
+| Method | What it does |
+|---|---|
+| `ListAsync(campaign, access)` | Prepared encounters with their place's name and path, line count, status, last run |
+| `ViewAsync(campaign, access, id)` | One in full: lines resolved against the Library (entry gone: kept with its stored name and a warning), the place's hazards read live, the readout |
+| `RateAsync(campaign, access, lines)` | The difficulty readout (2.1) for a lineup and the campaign's party, or null when the system has none |
+| `CheckAsync(...)` | Errors and warnings for a draft: unknown entry, a cast-member line naming a player character (an NPC such as one the world builder cast is fine), count out of range, a place that does not exist, a complex hazard line before H5 |
+| `SaveAsync(campaign, access, doc)` | Through the repository; stamps `UpdatedAt` |
+| `StartAsync(campaign, access, id, runtime)` | Starts it at the table (4.2) |
+
+### 4.2 Starting a prepared encounter
+
+Two halves, because saving actors happens off the runtime loop and the initiative order changes only on it.
+
+1. **Off the loop** (`PreparedEncounterService.StartAsync`):
+   - Refuses unless the table is running for the campaign (`CampaignRuntimeManager.TryGet`) and the caller is a GM.
+   - Refuses when an encounter is already running with participants ("End the current encounter first", see Open question 2).
+   - Creates the creatures through `CastService.AddToCastAsync` (the Bestiary's path: seeded from the blueprint, sheet kind applied,
+     numbered "Bandit 1, Bandit 2" when the count is more than one). `AddToCastAsync` gains a `visibility` argument that **defaults to
+     `Hidden`**, so the Bestiary's *Add to cast* is unchanged; the start passes `Unknown`, as Quick Add does (players see "a bandit joins
+     the fight"), or `Hidden` for a line ticked `StartsHidden`. Cast-member lines reuse their actor and keep its visibility. `TryCreateActorAsync` enqueues `HydrateActorCommand` for each, and the loop is first in, first out, so they are
+     on the table before step 2 runs.
+   - Today `InitiativeBonus` and `TieBreak` live in `CombatConsole.razor`. They move to a shared pure helper (`TableInitiative`) that
+     the console calls, and the command calls on the loop (below), so a creature rolls the same either way.
+2. **On the loop**: one `StartPreparedEncounterCommand(PreparedId, Name, RegionId?, PlaceId?, PlaceLabel, ActorIds, RollerUserId)`,
+   with the GM's user id as the roller. **Recommended shape:** the command works out each creature's initiative expression and tie-break
+   itself, from `runtime.LiveSheetOf(actor)` through `SheetRuleEngine.EvaluateLive`, as H4a's check service does on the loop. The
+   service then needs neither the page's engine nor a snapshot of actors that were only just hydrated. (Opus settles this in B3.) It:
+   - Refuses (no change) if an encounter with participants is running by the time it runs.
+   - `GetOrCreateEncounter()`, then sets `LocationId` and `PreparedEncounterId`. This is needed because `SetEncounterPlaceCommand`
+     does nothing without an active encounter.
+   - Applies one `RollInitiativeCommand` per creature, so the roll log, the refill of counters on entering the order and the redaction of
+     a Hidden actor's roll are exactly today's.
+   - Writes one event: "Encounter started: {name} at {place}", both names `EventTerm.GmOnly`, plus the initiative lines as today.
+   - Then the service calls `MarkRunAsync` with the new encounter id.
+   - **Player characters** are not rolled: the order opens with the existing `InitiativeAddPanel` listing the party, and players roll their
+     own as today (Open question 3).
+   - Undo: the start is not one undoable step. The GM ends the encounter or removes a participant, as today. The creatures stay on the
+     cast, as Quick Add's do.
+
+**The Hazards panel.** `HazardsTable` reads `Snapshot.Encounter?.LocationId` only on its first load. It must also take it again when
+the running encounter's id changes (it already reloads then, through `Under()`), so a panel that was open before the start moves to the
+new place. That is the one change to the panel. The picker still overrides it, through `SetEncounterPlaceCommand`.
+
+**After H5.** A complex hazard placed at the place or under it, and not disabled or triggered, joins initiative: the service makes its
+actor through H5's `ToActorBlueprint` overload, and its roll uses the hazard's own initiative field (the system's hazard block names it).
+(A complex hazard added in the editor was placed on the place when the plan was saved, so it is one of these.) Each placed complex hazard has a tick on the prepared encounter, "Joins the
+initiative order", on by default; the GM can untick one (a rolling stone that has not been set off yet).
+
+## 5. UI
+
+### 5.1 The Encounters section
+
+A new GM-only section, **Encounters** (`/campaigns/{id}/encounters`, key `encounters`, icon `swords`), in the World group after
+Bestiary. Hidden from players the way `build` and `book` are in `CampaignPage`'s section filter.
+
+**The list.** Each prepared encounter as a row: name, place (with its region), creatures in one line ("3 bandits, Wendel Tarr"),
+the readout's band in words, status (Draft, Ready, Ran on {date}). Filter by place and by status, search by name. Buttons: *New
+encounter*, *Build with AI* (opens the world builder with a starter, as the wiki's *Build with AI* menu does). An empty state says what
+an encounter is for in one sentence and offers both buttons.
+
+**The editor** (`/encounters/{id}`, and `?new=1`):
+- *Name*, *Place* (a picker of the campaign's places as a tree, with "No place"), *Notes* (the markdown editor the wiki uses).
+- *Creatures*: the lineup, one row per line with a count field (1 to 20), a note, a "Starts hidden" check box and a remove button.
+  Under it an add search over the Library's creature types and homebrew (`CampaignLibrary`, as the Bestiary searches), a second tab for
+  the cast, and *Add from the Bestiary shortlist*.
+- *Hazards at this place* (read only): each hazard at the place and under it, with its state in words and a link to the place. After
+  H5, complex ones carry the "Joins the initiative order" tick. When the place has none: "No hazards are placed here. Place one on the
+  place's page." with a link.
+- *Difficulty* (only when the system declares it): the readout as a sentence in a polite live region, updated as lines change.
+- *Start at the table*: enabled only while the table is running; otherwise its text says "Start the table to run this encounter" and
+  links to the table. Starting goes to the table.
+- *Save* and *Delete* (delete asks first; it cannot be undone).
+
+**The search for creatures is a new reader of the actor registry** (when it lists pack creatures through `ContentRegistry`), so it splits
+by the `hazard` tag as HAZARDS_DESIGN 3.3 requires: creatures in one group, complex hazards in their own "Hazards" group, never mixed
+(HAZARDS_DESIGN section 7 already reserves this row for the encounter builder). A test pins it.
+
+### 5.2 At the table
+
+- In the encounter bar beside *Start encounter*: *Start a prepared encounter*, a menu of the Ready ones, those at the place last used
+  first. Choosing one asks once: "Start {name}? {n} creatures join the cast and roll initiative." It calls the same `StartAsync`.
+- While an encounter started from a plan runs, the GM column shows its notes in a folded panel, *Encounter notes*, with a link to the
+  plan. Never drawn for a player.
+
+### 5.3 Accessibility and strings
+
+- Every count field, check box and remove button has a label naming the creature ("How many bandits", "Remove Bandit"). The lineup is a
+  list; the add search announces how many results it has in a polite region. Everything works by keyboard. The readout and every
+  warning are text. Check RTL in Hebrew (the count field and the remove button change sides).
+- Strings in a new prefix `Encounters.` with its own `Strings.Encounters{,.ru,.he}.resx` (a new prefix needs its own files, or the keys
+  fall back to `Strings.resx`). Table strings under `Combat.Prepared.*` in `Strings.Combat`, the log line under `Event.Encounter.Started`
+  in `Strings.Event`. Section label `Page.Campaign.Section.Encounters`. Russian and Hebrew need native review, as all the others do.
+
+## 6. AI tools (in-app, the world builder chat)
+
+The encounter tools join the **existing** world builder chat. It is the same chat, the same access, the same fenced results and the same
+review panel. The chat does not get a second write tool: an encounter is a new **proposal kind** in `propose_changes`, so one proposal
+can make a cellar, place a homebrew trap on its strongbox (H6), make a homebrew creature and the encounter that uses all three, linked by
+refs, and the GM reviews it once.
+
+### 6.1 Read tools (added to `WorldChat.Tools`)
+
+All are GM only (`DmOnly(access)` in `WorldBuilderService`), return short capped text, and are fenced as campaign data.
+
+| Tool | Returns |
+|---|---|
+| `list_encounters(place?)` | Prepared encounters, one line each with key `existing:encounter:<id>`, place, lineup in short, status |
+| `get_encounter(encounter)` | One in full: lines with their `type/id` or `existing:actor:<id>`, notes, the place's hazards, the readout |
+| `place_hazards(place)` | The hazards at a place (`existing:place:<id>`) and under it: entry `type/id`, name, state, the place it is on, complex or not. Feature notes that name a creature ("a mimic") are listed too |
+| `rate_encounter(creatures)` | The readout (2.1) for a draft lineup, or "this system declares no difficulty", so the model can try before it proposes |
+
+`search_library(query, type)` already searches any type, so `type: "hazard"` finds hazards with no change. The system prompt gains the
+party (count and levels, which the readout needs anyway) and two lines on encounters: build on what the place already has (its hazards,
+its feature creatures), say in the notes what the creatures want and how the fight can end other than by killing.
+
+### 6.2 The proposal kind
+
+```json
+{"ref": "f", "kind": "encounter", "name": "Ambush in the cellar", "place": "c | existing:place:<id>",
+ "creatures": [ {"entry": "monster/bandit", "count": 3, "note": "behind the casks"},
+                {"entry": "h"},
+                {"entry": "existing:actor:<id>", "hidden": true} ],
+ "text": "notes, markdown", "tags": ["grey-coast"]}
+
+{"ref": "g", "kind": "edit", "target": "existing:encounter:<id>", "rename": "...", "place": "...", "creatures": [...], "text": "..."}
+```
+
+- `WorldBundleParser` gains `DraftKinds.Encounter`: `place` resolves like a place's parent (a place ref in this proposal, or an existing
+  place); a creature `entry` is a Library `type/id` (as Bestiary picks are found), a homebrew ref in this proposal whose type is a creature
+  type, or an existing cast member. A hazard in `creatures` is refused with a pointer: "place it on the place's feature (`feature.hazard`)",
+  (after H5, a complex one is placed through the place too and then ticked to join). Counts 1 to 20.
+- An edit of `existing:encounter:<id>` replaces what it names (lines in full when `creatures` is given), with the review's stamp check
+  as other edits have: refused at saving if the plan changed since the review.
+- `CheckAsync` adds the readout to "ready for review" when the system has one, as information, never an error.
+- The review panel shows an encounter entry as its place, its lineup (count and name, each linked), its notes and the readout. Leaving out
+  a place leaves out an encounter set in it (as leaving out a place leaves out what is inside it).
+- `SaveAsync` saves encounters **last** among new things (after places, homebrew, the Bestiary and the cast, before edits), so every ref
+  is settled. Status `Draft`, `FromChatId` set. Saved as GM only, like everything the builder saves; starting is never done by the AI.
+- The encounters page's *Build with AI* starter: "Prepare an encounter at {place}" when opened from a place, else a numbered starter in
+  the chat ("An encounter for the next session").
+
+### 6.3 Secrecy
+
+- Nothing in this design reaches a player: the repository refuses them; the section, the table's menu and notes panel are drawn for GMs
+  only; the start's log line has its names as `GmOnly`; creatures join as `Unknown` or `Hidden`, which the table already redacts.
+- Tool results are campaign text, so they are fenced with the per-result tag as all world builder reads are; a plan's notes that say
+  "ignore your instructions" are read as notes.
+- The model never starts an encounter, never reveals anything, and never applies its own proposal.
+
+## 7. How it meets H5 and H6
+
+| Step | What this design needs from it | What it gives it |
+|---|---|---|
+| **H5** (complex hazards in initiative) | The per-entry actor registration and the `ToActorBlueprint` overload, so a complex hazard can be made an actor at start. A link from the hazard's actor back to its placement (Open question 5), so the Hazards panel and the initiative row are one hazard | The "Hazards" group in the builder's search (HAZARDS_DESIGN 7), the "Joins the initiative order" tick, the start step rolling the hazard's initiative. The builder's search is a second reader of `GetActorsBySystem`, covered by the same split-by-tag test H5 writes for `QuickAddPanel` |
+| **H6** (world builder hazards) | `ProposalFeature.hazard` and homebrew hazards, so a proposal can place a hazard on a place it also makes | The `encounter` proposal kind, which links to that place by ref; `place_hazards` to read what is already placed. Hazards stay on places: the encounter kind never carries one; after H5 it only ticks a placed complex one to join initiative |
+
+Order: this design's B1 to B4 need neither. B5 (AI) works before H6 (it reads placed hazards; it cannot place one). B7 is after H5.
+
+## 8. Phase 2: MCP server (later)
+
+**What it exposes.** The same read tools (6.1) plus the world builder's (WORLD_BUILDER 3), and `propose_changes` / `add_entries`
+with the encounter kind. They are plain methods on `WorldBuilderService` and `PreparedEncounterService`, so the MCP server
+(`ModelContextProtocol.AspNetCore`, not yet in the solution) wraps them; no logic of its own. A proposal from an outside client lands in a
+world builder chat of the campaign, titled with the token's own name and the date, where the GM reviews and applies it in the app as in WORLD_BUILDER 2.
+An outside client can **build** (propose) and **view** (list, get, rate) encounters. It cannot save or start one.
+
+**Sign-in and permission.**
+- One auth model for the whole MCP endpoint, the one WORLD_BUILDER 7 sets out: a per-user token the GM creates on their settings page,
+  scoped to **one campaign**, GM only (checked at every call through `CampaignAccessResolver`, so a GM demoted to player loses it at once),
+  revocable, with an expiry, shown once, stored hashed. Off by default for the server; the admin turns it on.
+- While the server is open to the internet (`ExposurePolicy`), the endpoint is refused unless the admin allows it there separately.
+- Each call is logged (token name, tool, time) where the GM can see it, beside the token.
+
+**Never exposed.** Table commands of any kind (start, initiative, damage, hazard actions, reveals); applying a proposal or any direct
+write; visibility changes; players' journals and private notes; other GMs' chats; other campaigns; AI provider keys and settings; the
+vault; accounts and the admin log; the raw database.
+
+**Why it waits.**
+1. The world builder's own MCP phase is not built, and there should be one endpoint and one token model, not one per feature.
+2. Tokens, the settings page and the exposure rule are security work that deserves its own review.
+3. The in-app chat proves the tools and the proposal kind first; the MCP layer then adds no new behaviour.
+
+## 9. Tests
+
+| Test | File |
+|---|---|
+| A prepared encounter round-trips; a player's access is refused on read, list, save and delete; party preview and `SystemMissing` refused on write; cascade delete removes them; export and import keep them with ids mapped; the book reader never sees them | `PersistenceTest`, `CampaignExportTests`, `BookSourceReaderTests` |
+| `MarkRunAsync` patches only the run fields while another save of the plan is in between | `PersistenceTest` |
+| Start: creatures created with the right count, names and visibility (`Unknown`, `Hidden` when ticked); a cast-member line reuses its actor; each rolls with the same expression and tie-break the console would give; `LocationId` and `PreparedEncounterId` set; the log line's names are GM only in the players' view | new `PreparedEncounterStartTests` (runtime with a scripted `IDiceRoller`) |
+| Start refused with no table, with a running encounter (both in the service and in the command), for a player | same |
+| `TableInitiative` gives the console's old numbers (moved code, same result) | `TableInitiativeTests` |
+| `HazardsTable` follows a new encounter's `LocationId` when it was already loaded; the picker still overrides | `HazardsTableTests` (bUnit) |
+| Readout: loader checks (unknown shape, missing field, rows out of order); sum and byLevel worked out on a fixture system with invented numbers; no block, no readout; a line with no value is named | `SystemDefinitionLoaderTests`, new `EncounterDifficultyTests` |
+| The srd5e budget data matches its reviewed data file | srd5e content test |
+| The builder's creature search never lists a complex hazard among creatures | bUnit, beside H5's `QuickAddPanel` test |
+| World builder: an `encounter` entry with a new place, a new homebrew creature and a Library creature parses and saves in order; a hazard in `creatures` is refused with the pointer; an edit of an existing plan is refused when it changed since the review; leaving out its place leaves it out; the tool loop with a scripted model reads `place_hazards` then proposes | `WorldBundleParserTests`, `WorldBuilderTests` |
+| Strings: key parity en/ru/he; every `L["..."]` exists | `LocalizationTests` |
+
+## 10. Build order
+
+One writer at a time across worktrees (the Serena canary failed, PF2E_HAZARDS_IMPLEMENTATION_PLAN 2). B1 and B2 touch no hazard code
+and can start at once; B3 waits for the hazards PR (`SetEncounterPlaceCommand`, `HazardsTable`) to be merged.
+
+| # | Step | Files (main ones) | Who |
+|---|---|---|---|
+| B0 | Review this design; settle the open questions | this doc | Opus with the user |
+| B1 | `PreparedEncounterDocument`, repository, index, cascade, export; `EncounterDocument.PreparedEncounterId` | `Codex.Persistence` | Sonnet; Opus reviews the access checks |
+| B2 | `PreparedEncounterService` (list, view, check, save); the Encounters section, list and editor (no readout, no start) | `Codex.Web/Services`, `Components/Campaign` | Sonnet |
+| B3 | Starting: `TableInitiative` helper moved out of the console, `AddToCastAsync` visibility, `StartPreparedEncounterCommand`, `StartAsync`, the table's menu and notes panel, `HazardsTable` following `LocationId` | `RuntimeCommands.cs` (or a new `PreparedEncounterCommands.cs`), `CastService.cs`, `CombatConsole.razor`, `HazardsTable.razor` | **Opus designs the command and the helper's signature**, Sonnet builds, Opus reviews |
+| B4 | Difficulty: the `encounters:` block, loader checks, schema docs, the readout in the editor and `RateAsync`; tested on a fixture system with invented numbers | `SystemDefinition.cs`, `SystemDefinitionLoader.cs`, schema | Sonnet; Opus reviews the block's shape |
+| B4b | srd5e's budget, shape 1, from the SRD 5.2.1 "XP Budget per Character" table (Gameplay Toolbox, "Combat Encounters", printed p. 202; confirmed present 2026-11-15), read from the SRD text, never from memory: a reviewed data file and its test | `content/systems/srd5e`, a data file | Sonnet (rules judgment, not Haiku); Opus checks the numbers against the source |
+| B5 | AI: the four read tools, `DraftKinds.Encounter` in the parser, check, review panel and save; prompt lines; *Build with AI* starter | `WorldChat.Tools.cs`, `WorldBundle.cs`, `WorldBuilderService*.cs`, `WorldProposalPanel`, `AiPrompts.cs` | Sonnet; Opus reviews the parser and the save order |
+| B6 | Strings en/ru/he; accessibility pass (labels, live regions, RTL) | `Strings.Encounters*.resx`, `Strings.Combat*`, `Strings.Event*` | Haiku for the strings only; Sonnet for accessibility |
+| B7 | After H5: complex hazards join on start, the "Joins the initiative order" tick, hazard lines, the search's Hazards group | the service, the editor, B3's command | Sonnet; Opus reviews |
+| B8 | Later: the MCP server (section 8), together with the world builder's MCP phase | new endpoint, settings page | **Opus designs auth**, Sonnet builds, Opus reviews; security review before merge |
+
+B1 to B3 give a working feature on any system. B4 can come before or after B5.
+
+## 11. Not in this design
+
+- Random or wandering encounter tables (roll on a table to pick a plan). The campaign's tables could hold plan names later.
+- Encounter rewards and treasure: the place feature's `contents` and the Items section already carry them.
+- A map or token positions.
+- Adding a plan's creatures to a fight already running (Open question 2 recommends it as a follow-up).
+- The AI starting, revealing or running anything at the table.
+- Automatic re-arming of hazards between runs (HAZARDS_DESIGN 10.3).
+- Sharing a world builder chat between co-GMs (WORLD_BUILDER 8); prepared encounters themselves are shared.
+
+## 12. Decisions (2026-11-15)
+
+The user agreed with every recommendation below. Two are settled by what H5 built:
+
+- Question 5: H5 links a complex hazard's actor to its placement with `ActorDocument.Hazard` (on `feat/hazards-h5`); this design reads that link.
+- Question 10: H5 lets a hazard taken from the Library with no place keep its state in the encounter only. In a prepared encounter, adding a complex hazard still places it on the encounter's place, so a plan never holds an unplaced hazard line.
+
+
+1. **Status values.** Draft, Ready, Ran, or only Ready and Ran? **Recommended:** all three. The AI saves Draft; the table's menu lists
+   Ready only, so a half-made plan never shows up mid-session. A plan that ran can be run again ("Ran 2 times").
+2. **Starting while an encounter runs.** Refuse, or add the plan's creatures to it? **Recommended:** refuse in the first version with a
+   plain message; add "Add to the current fight" as a follow-up that adds and rolls but keeps the running place.
+3. **Player characters on start.** Roll for them too, or leave them to the existing panel? **Recommended:** leave them, so players keep
+   rolling their own; a "Roll for the party too" check box later if GMs ask.
+4. **Visibility on start.** **Recommended:** `Unknown` by default (as Quick Add), `Hidden` per line for ambushers; the GM reveals from
+   the row as today.
+5. **How a complex hazard's actor links to its placement (H5).** **Recommended:** H5 stores the placement key
+   (`{regionId}/{locationId}`) on the actor's metadata, so the panel shows its turn and the actor's damage reaches the placement's live
+   state; this design only reads it. Decide in H5's design, not here.
+6. **Creatures made at start, or at prep time?** **Recommended:** at start. Making them early fills the cast with creatures that may
+   never fight; cast-member lines cover the named ones.
+7. **Export.** **Recommended:** include prepared encounters in the campaign export (GM prep, like the Bestiary), never in the book.
+8. **One chat or a separate encounter chat.** **Recommended:** the same world builder chat with a new proposal kind, so one proposal can
+   make the place, its hazard, a creature and the fight together.
+9. **Difficulty for systems with no rule.** **Recommended:** no readout at all, and no "unknown" badge; the section reads the same without it.
+10. **Where a complex hazard added to a plan keeps its state.** **Recommended:** adding one from the Hazards group places it on the
+    encounter's place, so its state has the one home H4b gives it; no unplaced hazard lines. Settle with H5's design.
+
+## 13. B1 as built (2026-11-23)
+
+Storage only: no service, no UI, no start.
+
+**Files** (`Codex.Persistence`): `PreparedEncounterModels.cs` (document, line, the two enums), `IPreparedEncounterRepository.cs`,
+`RavenPreparedEncounterRepository.cs`, `PreparedEncountersByCampaignIndex` in `CampaignScopedIndexes.cs`. `EncounterDocument.PreparedEncounterId`
+is added. Tests: `PreparedEncounterRepositoryTests.cs` (26).
+
+**Wired in**
+- `RavenDbService`: the index is created with the others.
+- `Program.cs`: `IPreparedEncounterRepository` as a singleton.
+- `CampaignRepository`: optional `preparedEncounterRepository`; the cascade delete calls it beside the encounters. Optional, like the newer
+  repositories, so no test or caller had to change.
+- `CampaignExportService`: optional `preparedEncounters`; `CampaignBundle.PreparedEncounters` (GM only, as the whole export is). Import
+  restores them under their stored ids. Import as a copy adds their ids to the ids it renames, so the plan ids, and the region and actor ids
+  inside the lines, follow. A place keeps its id in the copy (as `EncounterDocument.LocationId` does), so `PlaceId` still points at it.
+  `FromChatId` is cleared in a copy (the chat is not in the bundle). **Copied plans have bare-GUID ids, not the `preparedencounters/` prefix**,
+  so no route or check may rely on the prefix.
+- JSON backups use the same bundle, so they carry the plans with no extra code.
+- Not wired, on purpose: the book (`BookSourceReader` never reads the repository), `IEncounterRepository` and the table's restore (a plan
+  is in no session's `EncounterIds`), account deletion (a plan belongs to the campaign, which the hand-over keeps), place and cast-member
+  deletion (B2's page reports it), `DocumentVersions` (see below).
+
+**Access, at the repository**
+- Reads (`GetAsync`, `ListAsync`) need a GM access whose role the campaign still stores as GM, read again on each call, so a demoted co-GM
+  reads nothing more. A missing system still reads. A party preview is a player's access, so it reads nothing.
+- Writes (`SaveAsync`, `DeleteAsync`, `MarkRunAsync`) need the same, and also refuse `SystemMissing`. `MarkRunAsync` takes the access like the
+  others, so a start path cannot mark another campaign's plan.
+- Every path checks the plan's `CampaignId` against the access's campaign, so a GM of campaign A cannot read, save over, delete or mark B's
+  plan by id.
+- A plan is looked up in its own collection only (a query on the id), so another kind of document's id (a session's, a world chat's) is never
+  deserialized as a plan: Get, Delete, MarkRun and Save answer null or false for it.
+- A co-GM reads, edits and deletes like the GM.
+- `GetAllForCampaignAsync` and `RestoreAsync` take no access: the export service has already required a GM. `RestoreAsync` writes over a
+  stored plan of the same campaign, or at an id nothing is stored at that a plan can have (the prefix, or a bare GUID). It writes nothing for
+  an id stored as anything else, or for a per-campaign id such as `ConsistencyDismissals/{id}` or `CampaignObjects/{id}` (a plan there would
+  break that campaign's later saves). The import has no pre-check stage, so a crafted plan is skipped silently while the rest of the file is
+  imported; nothing is written for it and nothing throws.
+
+**Decisions**
+- Counts are not clamped or normalised in the repository. It stores what it is given; B2's `CheckAsync` checks 1 to 20 and 1.
+- One rule for `Ran`: only `MarkRunAsync` sets it. `SaveAsync` keeps the stored run list and creator whatever the copy carries. A stored plan
+  with runs stays `Ran` whatever the copy says; one with none is never `Ran` (a copy saying `Ran` is saved as `Ready`). It is based on the
+  stored runs only, so the editor need not carry `RunEncounterIds`. The plan's other fields are last-writer-wins, as the design says;
+  `SaveAsync` returns a bool, not a `SaveOutcome`, so it does not tell the editor that the plan changed under it.
+- `MarkRunAsync` loads, adds the run id once, sets `Ran` and saves under optimistic concurrency, retrying up to eight times (the
+  `RavenUpdate.RunAsync` pattern, written out because it also looks the plan up in its own collection).
+- The repository gives a new plan its id (`preparedencounters/<guid>`), always takes `CreatedBy` from the access's user, and stamps
+  `UpdatedAt` on every `SaveAsync` and `MarkRunAsync`. `RestoreAsync` keeps the file's `UpdatedAt`.
+
+**For B2:** a plan whose `Id` is set but not stored is refused by `SaveAsync` (create with an empty id); use `DocumentVersions` and a
+`SaveOutcome` if the editor must warn about a plan changed in another tab; list is by `UpdatedAt` newest first, with no paging.

@@ -67,6 +67,7 @@ public class RavenDbService : IDisposable
             new MapsByRegionIndex().Execute(store);
             new FactsByCampaignIndex().Execute(store);
             new EncountersByCampaignIndex().Execute(store);
+            new PreparedEncountersByCampaignIndex().Execute(store);
             new HomebrewByCampaignIndex().Execute(store);
             new WikiByCampaignIndex().Execute(store);
             new JournalByCampaignIndex().Execute(store);

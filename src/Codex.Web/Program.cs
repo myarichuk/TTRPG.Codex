@@ -168,6 +168,7 @@ builder.Services.AddSingleton<IRegionRepository, RegionRepository>();
 builder.Services.AddSingleton<IMapRepository>(sp => new RavenMapRepository(sp.GetRequiredService<RavenDbService>(), sp.GetRequiredService<StorageQuota>()));
 builder.Services.AddSingleton<IFactRepository, FactRepository>();
 builder.Services.AddSingleton<IEncounterRepository, RavenEncounterRepository>();
+builder.Services.AddSingleton<IPreparedEncounterRepository, RavenPreparedEncounterRepository>();
 builder.Services.AddSingleton<IHomebrewRepository, RavenHomebrewRepository>();
 builder.Services.AddSingleton<IWikiRepository, RavenWikiRepository>();
 builder.Services.AddSingleton<ITemplateRepository, RavenTemplateRepository>();
