@@ -79,6 +79,12 @@ public class RavenMapRepository(RavenDbService dbService, StorageQuota? quota = 
             var place = locationId == null ? null : region.Locations.FirstOrDefault(l => l.Id == locationId);
             if (locationId != null && place == null) return null;
 
+            // Two creates at once both save the owner's guard; the second save fails, and its retry finds the first one's map. The guard
+            // is loaded before the maps are looked up: a create that saves after our lookup then always fails our save. Loaded after the
+            // lookup, it could already carry the other create's save, and a second map would be stored.
+            var guardId = MapOwnerGuard.IdFor(gm.CampaignId, regionId, locationId);
+            var guard = await session.LoadAsync<MapOwnerGuard>(guardId) ?? new MapOwnerGuard { Id = guardId, CampaignId = gm.CampaignId };
+
             var siblings = await OfOwnerAsync(session, regionId, locationId);
             // A map with no picture yet is what a second Add map would make again: that one is opened instead.
             if (siblings.Where(m => m.Image == null).OrderBy(m => m.CreatedAt).ThenBy(m => m.Id, StringComparer.Ordinal).FirstOrDefault() is { } empty)
@@ -86,9 +92,6 @@ public class RavenMapRepository(RavenDbService dbService, StorageQuota? quota = 
                 return empty;
             }
 
-            // Two creates at once both save the owner's guard; the second save fails, and its retry finds the first one's map.
-            var guardId = MapOwnerGuard.IdFor(gm.CampaignId, regionId, locationId);
-            var guard = await session.LoadAsync<MapOwnerGuard>(guardId) ?? new MapOwnerGuard { Id = guardId, CampaignId = gm.CampaignId };
             guard.Creates++;
             await session.StoreAsync(guard);
 
