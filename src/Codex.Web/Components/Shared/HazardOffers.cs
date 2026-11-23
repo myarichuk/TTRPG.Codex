@@ -34,7 +34,7 @@ public static class HazardOffers
             foreach (var place in region.Locations.Where(l => l.Feature?.Hazard != null))
             {
                 var stored = place.Feature!.Hazard!;
-                if (stored.State == HazardState.Disabled || taken.Contains((region.Id, place.Id)) || !Chain(region, place).Any(c => c.Id == placeId)) continue;
+                if (stored.State == HazardState.Disabled || taken.Contains((region.Id, place.Id)) || !PlaceTree.Chain(region, place).Any(c => c.Id == placeId)) continue;
                 var entry = await read(stored);
                 if (entry == null || !HazardNumbers.IsComplex(entry, type)) continue;
                 var numbers = HazardNumbers.For(entry, type, stored.Levels);
@@ -45,14 +45,5 @@ public static class HazardOffers
         }
 
         return offers;
-    }
-
-    private static IEnumerable<LocationDocument> Chain(RegionDocument region, LocationDocument place)
-    {
-        var seen = new HashSet<string>();
-        for (var at = place; at != null && seen.Add(at.Id); at = string.IsNullOrEmpty(at.ParentId) ? null : region.Locations.FirstOrDefault(l => l.Id == at.ParentId))
-        {
-            yield return at;
-        }
     }
 }

@@ -1,0 +1,26 @@
+@* The Encounters section (ENCOUNTER_BUILDER_DESIGN.md 5.1): the game master's prepared encounters, as a list, and one plan in an editor
+   (/encounters/new for a new one, /encounters/{id} for a stored one). The game master's alone: anyone else who reaches the address is told there is nothing here,
+   and neither the list nor the editor is drawn or asked for anything. The service and the repository refuse them besides. *@
+
+@if (!Ctx.IsDm)
+{
+    <div class="empty" data-testid="encounters-dm-only">
+        <div class="empty-icon"><LucideIcon IconName="compass" Size="28" /></div>
+        <p>@L["Encounters.DmOnly"]</p>
+    </div>
+}
+else if (string.IsNullOrEmpty(Route))
+{
+    <EncounterList />
+}
+else
+{
+    <EncounterEditor @key="Route" Route="@Route" />
+}
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    /// <summary>What follows <c>encounters/</c> in the address: <c>new</c>, or the plan's id without its prefix.</summary>
+    [Parameter] public string? Route { get; set; }
+}

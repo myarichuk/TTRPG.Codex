@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Encounters.DmOnly" xml:space="preserve"><value>Столкновения готовит только мастер.</value></data>
+  <data name="Encounters.Title" xml:space="preserve"><value>Столкновения</value></data>
+  <data name="Encounters.Subtitle" xml:space="preserve"><value>Бои, которые вы готовите до сессии.</value></data>
+  <data name="Encounters.New" xml:space="preserve"><value>Новое столкновение</value></data>
+  <data name="Encounters.Error.Load" xml:space="preserve"><value>Не удалось загрузить столкновения. Попробуйте ещё раз.</value></data>
+  <data name="Encounters.Empty.Title" xml:space="preserve"><value>Столкновений пока нет</value></data>
+  <data name="Encounters.Empty.Body" xml:space="preserve"><value>Столкновение — это бой, который вы готовите до сессии: где он происходит, какие существа в нём участвуют и что не забыть в его начале.</value></data>
+  <data name="Encounters.Search" xml:space="preserve"><value>Поиск столкновений по названию</value></data>
+  <data name="Encounters.SearchPlaceholder" xml:space="preserve"><value>Поиск по названию</value></data>
+  <data name="Encounters.FilterPlace" xml:space="preserve"><value>Фильтр по месту</value></data>
+  <data name="Encounters.AllPlaces" xml:space="preserve"><value>Все места</value></data>
+  <data name="Encounters.NoPlace" xml:space="preserve"><value>Без места</value></data>
+  <data name="Encounters.FilterStatus" xml:space="preserve"><value>Фильтр по статусу</value></data>
+  <data name="Encounters.AllStatuses" xml:space="preserve"><value>Все статусы</value></data>
+  <data name="Encounters.Status.Draft" xml:space="preserve"><value>Черновик</value></data>
+  <data name="Encounters.Status.Ready" xml:space="preserve"><value>Готово</value></data>
+  <data name="Encounters.Status.Ran" xml:space="preserve"><value>Проведено</value></data>
+  <data name="Encounters.Status.RanReadOnly" xml:space="preserve"><value>Проведено. Этот статус ставится, когда столкновение начинают за столом, поэтому здесь его не изменить.</value></data>
+  <data name="Encounters.RanTimes" xml:space="preserve"><value>{0, plural, one{Проведено # раз} few{Проведено # раза} many{Проведено # раз} other{Проведено # раза}}</value></data>
+  <data name="Encounters.AddedCount" xml:space="preserve"><value>Добавлено: {0} ({1})</value></data>
+  <data name="Encounters.Add.Capped" xml:space="preserve"><value>Показаны первые результаты: {0}.</value></data>
+  <data name="Encounters.StartsHiddenFor" xml:space="preserve"><value>Скрыт в начале: {0}</value></data>
+  <data name="Encounters.Count" xml:space="preserve"><value>{0, plural, one{# столкновение} few{# столкновения} many{# столкновений} other{# столкновения}}</value></data>
+  <data name="Encounters.NoMatch" xml:space="preserve"><value>Ни одно столкновение не подходит.</value></data>
+  <data name="Encounters.NoCreatures" xml:space="preserve"><value>Существ пока нет</value></data>
+  <data name="Encounters.PlaceGone" xml:space="preserve"><value>Его место удалено</value></data>
+  <data name="Encounters.Breadcrumb" xml:space="preserve"><value>Путь по разделам</value></data>
+  <data name="Encounters.NewTitle" xml:space="preserve"><value>Новое столкновение</value></data>
+  <data name="Encounters.EditTitle" xml:space="preserve"><value>Изменить: {0}</value></data>
+  <data name="Encounters.Missing.Title" xml:space="preserve"><value>Столкновение не найдено</value></data>
+  <data name="Encounters.Missing.Body" xml:space="preserve"><value>Возможно, его удалили.</value></data>
+  <data name="Encounters.BackToList" xml:space="preserve"><value>К столкновениям</value></data>
+  <data name="Encounters.Details" xml:space="preserve"><value>Основное</value></data>
+  <data name="Encounters.Field.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Encounters.Required" xml:space="preserve"><value>(обязательно)</value></data>
+  <data name="Encounters.Field.Place" xml:space="preserve"><value>Место</value></data>
+  <data name="Encounters.Field.Status" xml:space="preserve"><value>Статус</value></data>
+  <data name="Encounters.Field.Notes" xml:space="preserve"><value>Заметки</value></data>
+  <data name="Encounters.NotesHint" xml:space="preserve"><value>Видны только вам. Тактика, местность, что запускает бой и чем он может закончиться.</value></data>
+  <data name="Encounters.Creatures" xml:space="preserve"><value>Существа</value></data>
+  <data name="Encounters.Creatures.Empty" xml:space="preserve"><value>Существ пока нет. Добавьте их через поиск.</value></data>
+  <data name="Encounters.Homebrew" xml:space="preserve"><value>Собственный</value></data>
+  <data name="Encounters.CastMember" xml:space="preserve"><value>Из персонажей</value></data>
+  <data name="Encounters.Gone.Cast" xml:space="preserve"><value>Его больше нет среди персонажей</value></data>
+  <data name="Encounters.Gone.Entry" xml:space="preserve"><value>Нет в библиотеке</value></data>
+  <data name="Encounters.NoteFor" xml:space="preserve"><value>Заметка: {0}</value></data>
+  <data name="Encounters.NotePlaceholder" xml:space="preserve"><value>Ждёт за дверью</value></data>
+  <data name="Encounters.HowMany" xml:space="preserve"><value>Сколько: {0}</value></data>
+  <data name="Encounters.StartsHidden" xml:space="preserve"><value>Скрыт в начале</value></data>
+  <data name="Encounters.Remove" xml:space="preserve"><value>Убрать: {0}</value></data>
+  <data name="Encounters.Removed" xml:space="preserve"><value>Убрано: {0}</value></data>
+  <data name="Encounters.Added" xml:space="preserve"><value>Добавлено: {0}</value></data>
+  <data name="Encounters.AlreadyThere" xml:space="preserve"><value>{0} уже в этом столкновении</value></data>
+  <data name="Encounters.AddedShortlist" xml:space="preserve"><value>{0, plural, one{Добавлено # существо из списка} few{Добавлено # существа из списка} many{Добавлено # существ из списка} other{Добавлено # существа из списка}}</value></data>
+  <data name="Encounters.Check.Errors" xml:space="preserve"><value>Исправьте это перед сохранением</value></data>
+  <data name="Encounters.Check.Warnings" xml:space="preserve"><value>Стоит обратить внимание</value></data>
+  <data name="Encounters.Check.NoName" xml:space="preserve"><value>Дайте столкновению название.</value></data>
+  <data name="Encounters.Check.CountRange" xml:space="preserve"><value>{0}: число должно быть от 1 до {1}.</value></data>
+  <data name="Encounters.Check.CastCount" xml:space="preserve"><value>{0} — один персонаж, поэтому число должно быть 1.</value></data>
+  <data name="Encounters.Check.CastIsPlayer" xml:space="preserve"><value>{0}: персонаж игрока или его спутник. В столкновении могут быть только персонажи, которыми управляет мастер.</value></data>
+  <data name="Encounters.Check.HazardLine" xml:space="preserve"><value>{0}: опасности добавляются на месте, а не здесь. Поставьте её на странице места.</value></data>
+  <data name="Encounters.Warn.EntryGone" xml:space="preserve"><value>{0} больше нет в библиотеке.</value></data>
+  <data name="Encounters.Warn.CastGone" xml:space="preserve"><value>{0} больше нет среди персонажей.</value></data>
+  <data name="Encounters.Warn.PlaceGone" xml:space="preserve"><value>Место удалено.</value></data>
+  <data name="Encounters.Error.NotAllowed" xml:space="preserve"><value>Это может делать только мастер.</value></data>
+  <data name="Encounters.Error.NotSaved" xml:space="preserve"><value>Не удалось сохранить столкновение. Обновите страницу и попробуйте ещё раз.</value></data>
+  <data name="Encounters.Save" xml:space="preserve"><value>Сохранить столкновение</value></data>
+  <data name="Encounters.Cancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="Encounters.NotSaved" xml:space="preserve"><value>Столкновение не сохранено.</value></data>
+  <data name="Encounters.Saved" xml:space="preserve"><value>Сохранено: {0}</value></data>
+  <data name="Encounters.Delete" xml:space="preserve"><value>Удалить столкновение</value></data>
+  <data name="Encounters.Delete.Title" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Encounters.Delete.Body" xml:space="preserve"><value>Столкновение будет удалено, вернуть его нельзя.</value></data>
+  <data name="Encounters.Deleted" xml:space="preserve"><value>Удалено: {0}</value></data>
+  <data name="Encounters.NotDeleted" xml:space="preserve"><value>Не удалось удалить столкновение.</value></data>
+  <data name="Encounters.Add" xml:space="preserve"><value>Добавить существ</value></data>
+  <data name="Encounters.Add.Source" xml:space="preserve"><value>Откуда добавить</value></data>
+  <data name="Encounters.Add.Library" xml:space="preserve"><value>Библиотека</value></data>
+  <data name="Encounters.Add.Cast" xml:space="preserve"><value>Персонажи</value></data>
+  <data name="Encounters.Add.SearchCreatures" xml:space="preserve"><value>Поиск среди существ библиотеки и ваших собственных</value></data>
+  <data name="Encounters.Add.SearchCast" xml:space="preserve"><value>Поиск среди персонажей</value></data>
+  <data name="Encounters.Add.Placeholder" xml:space="preserve"><value>Поиск по названию</value></data>
+  <data name="Encounters.Add.Count" xml:space="preserve"><value>{0, plural, one{# результат} few{# результата} many{# результатов} other{# результата}}</value></data>
+  <data name="Encounters.Add.Creature" xml:space="preserve"><value>Добавить: {0}</value></data>
+  <data name="Encounters.Add.Button" xml:space="preserve"><value>Добавить</value></data>
+  <data name="Encounters.Add.Shortlist" xml:space="preserve"><value>Добавить из списка бестиария</value></data>
+  <data name="Encounters.Hazards" xml:space="preserve"><value>Опасности в этом месте</value></data>
+  <data name="Encounters.Hazards.ChoosePlace" xml:space="preserve"><value>Выберите место, чтобы увидеть его опасности.</value></data>
+  <data name="Encounters.Hazards.None" xml:space="preserve"><value>Здесь нет опасностей. Поставьте их на странице места.</value></data>
+  <data name="Encounters.Hazards.OpenPlace" xml:space="preserve"><value>Открыть место</value></data>
+  <data name="Encounters.Hazards.At" xml:space="preserve"><value>Место: {0}</value></data>
+</root>

@@ -133,11 +133,11 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
 
     /// <summary>One entry from the source the caller recorded: a homebrew entry and a pack entry may share a type and id, and
     /// <see cref="GetAsync"/> would return the pack's.</summary>
-    public async Task<LibraryItem?> GetAsync(CampaignDocument campaign, CampaignAccess access, string type, string id, bool isHomebrew)
+    public async Task<LibraryItem?> GetAsync(CampaignDocument campaign, CampaignAccess access, string type, string id, bool isHomebrew, string? culture = null)
     {
         if (!isHomebrew)
         {
-            var item = await GetAsync(campaign, access, type, id);
+            var item = await GetAsync(campaign, access, type, id, culture);
             return item?.IsHomebrew == false ? item : null;
         }
 
@@ -149,6 +149,25 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
         var brew = (await homebrew.GetVisibleForCampaignAsync(access))
             .FirstOrDefault(h => string.Equals(h.Type, type, StringComparison.OrdinalIgnoreCase) && h.EntryId == id);
         return brew == null ? null : new LibraryItem(ToEntry(brew), null, brew);
+    }
+
+    /// <summary>A lookup that reads the homebrew once, for a caller that resolves many entries (a plan's lines): the same answers as
+    /// <see cref="GetAsync(CampaignDocument, CampaignAccess, string, string, bool, string?)"/>, one entry at a time, with no further read of the store.</summary>
+    public async Task<Func<string, string, bool, LibraryItem?>> LookupAsync(CampaignDocument campaign, CampaignAccess access, string? culture = null)
+    {
+        var brews = (await homebrew.GetVisibleForCampaignAsync(access)).ToList();
+        return (type, id, isHomebrew) =>
+        {
+            if (!CanRead(campaign, access, type)) return null;
+            if (!isHomebrew)
+            {
+                var entry = registry.GetEntry(campaign.SystemId, type, id);
+                return entry == null ? null : new LibraryItem(registry.Localize(entry, culture), registry.GetPack(entry.PackId), null);
+            }
+
+            var brew = brews.FirstOrDefault(h => string.Equals(h.Type, type, StringComparison.OrdinalIgnoreCase) && h.EntryId == id);
+            return brew == null ? null : new LibraryItem(ToEntry(brew), null, brew);
+        };
     }
 
     /// <summary>Options for an EntityReference picker: every entry of the target type, homebrew included.</summary>

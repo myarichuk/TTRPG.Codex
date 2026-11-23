@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Encounters.DmOnly" xml:space="preserve"><value>רק מנחה המשחק מכין מפגשי קרב.</value></data>
+  <data name="Encounters.Title" xml:space="preserve"><value>מפגשי קרב</value></data>
+  <data name="Encounters.Subtitle" xml:space="preserve"><value>קרבות שמכינים לפני המפגש.</value></data>
+  <data name="Encounters.New" xml:space="preserve"><value>מפגש קרב חדש</value></data>
+  <data name="Encounters.Error.Load" xml:space="preserve"><value>לא ניתן היה לטעון את מפגשי הקרב. נסו שוב.</value></data>
+  <data name="Encounters.Empty.Title" xml:space="preserve"><value>אין עדיין מפגשי קרב</value></data>
+  <data name="Encounters.Empty.Body" xml:space="preserve"><value>מפגש קרב הוא קרב שמכינים לפני המפגש: איפה הוא מתרחש, אילו יצורים משתתפים בו ומה כדאי לזכור כשהוא מתחיל.</value></data>
+  <data name="Encounters.Search" xml:space="preserve"><value>חיפוש מפגשי קרב לפי שם</value></data>
+  <data name="Encounters.SearchPlaceholder" xml:space="preserve"><value>חיפוש לפי שם</value></data>
+  <data name="Encounters.FilterPlace" xml:space="preserve"><value>סינון לפי מקום</value></data>
+  <data name="Encounters.AllPlaces" xml:space="preserve"><value>כל המקומות</value></data>
+  <data name="Encounters.NoPlace" xml:space="preserve"><value>ללא מקום</value></data>
+  <data name="Encounters.FilterStatus" xml:space="preserve"><value>סינון לפי מצב</value></data>
+  <data name="Encounters.AllStatuses" xml:space="preserve"><value>כל המצבים</value></data>
+  <data name="Encounters.Status.Draft" xml:space="preserve"><value>טיוטה</value></data>
+  <data name="Encounters.Status.Ready" xml:space="preserve"><value>מוכן</value></data>
+  <data name="Encounters.Status.Ran" xml:space="preserve"><value>התקיים</value></data>
+  <data name="Encounters.Status.RanReadOnly" xml:space="preserve"><value>התקיים. המצב הזה נקבע כשמתחילים את מפגש הקרב ליד השולחן, ולכן אי אפשר לשנות אותו כאן.</value></data>
+  <data name="Encounters.RanTimes" xml:space="preserve"><value>{0, plural, one{התקיים פעם אחת} two{התקיים פעמיים} other{התקיים # פעמים}}</value></data>
+  <data name="Encounters.AddedCount" xml:space="preserve"><value>{0} נוסף ({1})</value></data>
+  <data name="Encounters.Add.Capped" xml:space="preserve"><value>מוצגות {0} התוצאות הראשונות.</value></data>
+  <data name="Encounters.StartsHiddenFor" xml:space="preserve"><value>מתחיל מוסתר: {0}</value></data>
+  <data name="Encounters.Count" xml:space="preserve"><value>{0, plural, one{מפגש קרב אחד} two{שני מפגשי קרב} other{# מפגשי קרב}}</value></data>
+  <data name="Encounters.NoMatch" xml:space="preserve"><value>אין מפגש קרב מתאים.</value></data>
+  <data name="Encounters.NoCreatures" xml:space="preserve"><value>אין עדיין יצורים</value></data>
+  <data name="Encounters.PlaceGone" xml:space="preserve"><value>המקום שלו נמחק</value></data>
+  <data name="Encounters.Breadcrumb" xml:space="preserve"><value>נתיב ניווט</value></data>
+  <data name="Encounters.NewTitle" xml:space="preserve"><value>מפגש קרב חדש</value></data>
+  <data name="Encounters.EditTitle" xml:space="preserve"><value>עריכת {0}</value></data>
+  <data name="Encounters.Missing.Title" xml:space="preserve"><value>מפגש הקרב לא נמצא</value></data>
+  <data name="Encounters.Missing.Body" xml:space="preserve"><value>ייתכן שהוא נמחק.</value></data>
+  <data name="Encounters.BackToList" xml:space="preserve"><value>חזרה למפגשי הקרב</value></data>
+  <data name="Encounters.Details" xml:space="preserve"><value>פרטים</value></data>
+  <data name="Encounters.Field.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Encounters.Required" xml:space="preserve"><value>(חובה)</value></data>
+  <data name="Encounters.Field.Place" xml:space="preserve"><value>מקום</value></data>
+  <data name="Encounters.Field.Status" xml:space="preserve"><value>מצב</value></data>
+  <data name="Encounters.Field.Notes" xml:space="preserve"><value>הערות</value></data>
+  <data name="Encounters.NotesHint" xml:space="preserve"><value>רק אתם רואים אותן. טקטיקה, שטח, מה מפעיל את הקרב ואיך הוא יכול להסתיים.</value></data>
+  <data name="Encounters.Creatures" xml:space="preserve"><value>יצורים</value></data>
+  <data name="Encounters.Creatures.Empty" xml:space="preserve"><value>אין עדיין יצורים. הוסיפו אותם בעזרת החיפוש.</value></data>
+  <data name="Encounters.Homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
+  <data name="Encounters.CastMember" xml:space="preserve"><value>מהדמויות</value></data>
+  <data name="Encounters.Gone.Cast" xml:space="preserve"><value>כבר לא בין הדמויות</value></data>
+  <data name="Encounters.Gone.Entry" xml:space="preserve"><value>לא בספרייה</value></data>
+  <data name="Encounters.NoteFor" xml:space="preserve"><value>הערה עבור {0}</value></data>
+  <data name="Encounters.NotePlaceholder" xml:space="preserve"><value>מחכה מאחורי הדלת</value></data>
+  <data name="Encounters.HowMany" xml:space="preserve"><value>כמה {0}</value></data>
+  <data name="Encounters.StartsHidden" xml:space="preserve"><value>מתחיל מוסתר</value></data>
+  <data name="Encounters.Remove" xml:space="preserve"><value>הסרת {0}</value></data>
+  <data name="Encounters.Removed" xml:space="preserve"><value>{0} הוסר</value></data>
+  <data name="Encounters.Added" xml:space="preserve"><value>{0} נוסף</value></data>
+  <data name="Encounters.AlreadyThere" xml:space="preserve"><value>{0} כבר במפגש הקרב הזה</value></data>
+  <data name="Encounters.AddedShortlist" xml:space="preserve"><value>{0, plural, one{נוסף יצור אחד מהרשימה הקצרה} two{נוספו שני יצורים מהרשימה הקצרה} other{נוספו # יצורים מהרשימה הקצרה}}</value></data>
+  <data name="Encounters.Check.Errors" xml:space="preserve"><value>יש לתקן לפני השמירה</value></data>
+  <data name="Encounters.Check.Warnings" xml:space="preserve"><value>כדאי לשים לב</value></data>
+  <data name="Encounters.Check.NoName" xml:space="preserve"><value>תנו שם למפגש הקרב.</value></data>
+  <data name="Encounters.Check.CountRange" xml:space="preserve"><value>{0}: הכמות צריכה להיות בין 1 ל-{1}.</value></data>
+  <data name="Encounters.Check.CastCount" xml:space="preserve"><value>{0} הוא דמות אחת, ולכן הכמות חייבת להיות 1.</value></data>
+  <data name="Encounters.Check.CastIsPlayer" xml:space="preserve"><value>{0}: דמות של שחקן או בן לוויה שלה. רק דמויות שמנחה המשחק מנהל יכולות להיות במפגש קרב.</value></data>
+  <data name="Encounters.Check.HazardLine" xml:space="preserve"><value>{0}: סכנות מוסיפים על המקום ולא כאן. הציבו אותה בדף המקום.</value></data>
+  <data name="Encounters.Warn.EntryGone" xml:space="preserve"><value>{0} כבר לא בספרייה.</value></data>
+  <data name="Encounters.Warn.CastGone" xml:space="preserve"><value>{0} כבר לא בין הדמויות.</value></data>
+  <data name="Encounters.Warn.PlaceGone" xml:space="preserve"><value>המקום נמחק.</value></data>
+  <data name="Encounters.Error.NotAllowed" xml:space="preserve"><value>רק מנחה המשחק יכול לעשות זאת.</value></data>
+  <data name="Encounters.Error.NotSaved" xml:space="preserve"><value>לא ניתן היה לשמור את מפגש הקרב. טענו את הדף מחדש ונסו שוב.</value></data>
+  <data name="Encounters.Save" xml:space="preserve"><value>שמירת מפגש הקרב</value></data>
+  <data name="Encounters.Cancel" xml:space="preserve"><value>ביטול</value></data>
+  <data name="Encounters.NotSaved" xml:space="preserve"><value>מפגש הקרב לא נשמר.</value></data>
+  <data name="Encounters.Saved" xml:space="preserve"><value>{0} נשמר</value></data>
+  <data name="Encounters.Delete" xml:space="preserve"><value>מחיקת מפגש הקרב</value></data>
+  <data name="Encounters.Delete.Title" xml:space="preserve"><value>למחוק את {0}?</value></data>
+  <data name="Encounters.Delete.Body" xml:space="preserve"><value>מפגש הקרב יימחק ולא יהיה אפשר להחזיר אותו.</value></data>
+  <data name="Encounters.Deleted" xml:space="preserve"><value>{0} נמחק</value></data>
+  <data name="Encounters.NotDeleted" xml:space="preserve"><value>לא ניתן היה למחוק את מפגש הקרב.</value></data>
+  <data name="Encounters.Add" xml:space="preserve"><value>הוספת יצורים</value></data>
+  <data name="Encounters.Add.Source" xml:space="preserve"><value>מאיפה להוסיף</value></data>
+  <data name="Encounters.Add.Library" xml:space="preserve"><value>ספרייה</value></data>
+  <data name="Encounters.Add.Cast" xml:space="preserve"><value>דמויות</value></data>
+  <data name="Encounters.Add.SearchCreatures" xml:space="preserve"><value>חיפוש ביצורי הספרייה ובתוכן הביתי שלכם</value></data>
+  <data name="Encounters.Add.SearchCast" xml:space="preserve"><value>חיפוש בין הדמויות</value></data>
+  <data name="Encounters.Add.Placeholder" xml:space="preserve"><value>חיפוש לפי שם</value></data>
+  <data name="Encounters.Add.Count" xml:space="preserve"><value>{0, plural, one{תוצאה אחת} two{שתי תוצאות} other{# תוצאות}}</value></data>
+  <data name="Encounters.Add.Creature" xml:space="preserve"><value>הוספת {0}</value></data>
+  <data name="Encounters.Add.Button" xml:space="preserve"><value>הוספה</value></data>
+  <data name="Encounters.Add.Shortlist" xml:space="preserve"><value>הוספה מהרשימה הקצרה של ספר המפלצות</value></data>
+  <data name="Encounters.Hazards" xml:space="preserve"><value>סכנות במקום הזה</value></data>
+  <data name="Encounters.Hazards.ChoosePlace" xml:space="preserve"><value>בחרו מקום כדי לראות את הסכנות שבו.</value></data>
+  <data name="Encounters.Hazards.None" xml:space="preserve"><value>אין כאן סכנות. הציבו אותן בדף המקום.</value></data>
+  <data name="Encounters.Hazards.OpenPlace" xml:space="preserve"><value>פתיחת המקום</value></data>
+  <data name="Encounters.Hazards.At" xml:space="preserve"><value>ב{0}</value></data>
+</root>

@@ -140,6 +140,7 @@
   <data name="Page.Campaign.Section.Journal" xml:space="preserve"><value>היומן שלי</value></data>
   <data name="Page.Campaign.Section.Cast" xml:space="preserve"><value>דמויות</value></data>
   <data name="Page.Campaign.Section.Bestiary" xml:space="preserve"><value>ספר המפלצות</value></data>
+  <data name="Page.Campaign.Section.Encounters" xml:space="preserve"><value>מפגשי קרב</value></data>
   <data name="Page.Campaign.Section.Creatures" xml:space="preserve"><value>יצורים</value></data>
   <data name="Page.Campaign.Section.Places" xml:space="preserve"><value>מקומות</value></data>
   <data name="Page.Campaign.Section.Wiki" xml:space="preserve"><value>ויקי</value></data>

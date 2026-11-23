@@ -32,6 +32,18 @@ public static class PlaceTree
         return ordered;
     }
 
+    /// <summary>The place and the places it is inside, up to the top of its region, nearest first. The one walk the Hazards panel, the hazard offers and the encounter
+    /// builder share: a hazard at a place belongs to the place itself and to every place around it. A parent that is gone ends the walk, and a loop of parents is
+    /// walked once.</summary>
+    public static IEnumerable<LocationDocument> Chain(RegionDocument region, LocationDocument place)
+    {
+        var seen = new HashSet<string>();
+        for (var at = place; at != null && seen.Add(at.Id); at = string.IsNullOrEmpty(at.ParentId) ? null : region.Locations.FirstOrDefault(l => l.Id == at.ParentId))
+        {
+            yield return at;
+        }
+    }
+
     /// <summary>The place with this id and every place inside it, at any depth.</summary>
     public static IReadOnlyList<LocationDocument> Subtree(IReadOnlyCollection<LocationDocument> places, string placeId)
     {

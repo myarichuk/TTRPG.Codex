@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Encounters.DmOnly" xml:space="preserve"><value>Only the GM prepares encounters.</value></data>
+  <data name="Encounters.Title" xml:space="preserve"><value>Encounters</value></data>
+  <data name="Encounters.Subtitle" xml:space="preserve"><value>Fights you prepare before the session.</value></data>
+  <data name="Encounters.New" xml:space="preserve"><value>New encounter</value></data>
+  <data name="Encounters.Error.Load" xml:space="preserve"><value>The encounters could not be loaded. Try again.</value></data>
+  <data name="Encounters.Empty.Title" xml:space="preserve"><value>No encounters yet</value></data>
+  <data name="Encounters.Empty.Body" xml:space="preserve"><value>An encounter is a fight you prepare before the session: where it happens, which creatures are in it, and what to remember when it starts.</value></data>
+  <data name="Encounters.Search" xml:space="preserve"><value>Search encounters by name</value></data>
+  <data name="Encounters.SearchPlaceholder" xml:space="preserve"><value>Search by name</value></data>
+  <data name="Encounters.FilterPlace" xml:space="preserve"><value>Filter by place</value></data>
+  <data name="Encounters.AllPlaces" xml:space="preserve"><value>All places</value></data>
+  <data name="Encounters.NoPlace" xml:space="preserve"><value>No place</value></data>
+  <data name="Encounters.FilterStatus" xml:space="preserve"><value>Filter by status</value></data>
+  <data name="Encounters.AllStatuses" xml:space="preserve"><value>All statuses</value></data>
+  <data name="Encounters.Status.Draft" xml:space="preserve"><value>Draft</value></data>
+  <data name="Encounters.Status.Ready" xml:space="preserve"><value>Ready</value></data>
+  <data name="Encounters.Status.Ran" xml:space="preserve"><value>Ran</value></data>
+  <data name="Encounters.Status.RanReadOnly" xml:space="preserve"><value>Ran. Starting it at the table sets this, so you cannot change it here.</value></data>
+  <data name="Encounters.RanTimes" xml:space="preserve"><value>{0, plural, one{Ran once} other{Ran # times}}</value></data>
+  <data name="Encounters.AddedCount" xml:space="preserve"><value>Added {0} ({1})</value></data>
+  <data name="Encounters.Add.Capped" xml:space="preserve"><value>Showing the first {0} results.</value></data>
+  <data name="Encounters.StartsHiddenFor" xml:space="preserve"><value>Starts hidden: {0}</value></data>
+  <data name="Encounters.Count" xml:space="preserve"><value>{0, plural, one{# encounter} other{# encounters}}</value></data>
+  <data name="Encounters.NoMatch" xml:space="preserve"><value>No encounter matches.</value></data>
+  <data name="Encounters.NoCreatures" xml:space="preserve"><value>No creatures yet</value></data>
+  <data name="Encounters.PlaceGone" xml:space="preserve"><value>Its place was deleted</value></data>
+  <data name="Encounters.Breadcrumb" xml:space="preserve"><value>Breadcrumb</value></data>
+  <data name="Encounters.NewTitle" xml:space="preserve"><value>New encounter</value></data>
+  <data name="Encounters.EditTitle" xml:space="preserve"><value>Edit {0}</value></data>
+  <data name="Encounters.Missing.Title" xml:space="preserve"><value>Encounter not found</value></data>
+  <data name="Encounters.Missing.Body" xml:space="preserve"><value>It may have been deleted.</value></data>
+  <data name="Encounters.BackToList" xml:space="preserve"><value>Back to encounters</value></data>
+  <data name="Encounters.Details" xml:space="preserve"><value>Details</value></data>
+  <data name="Encounters.Field.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Encounters.Required" xml:space="preserve"><value>(required)</value></data>
+  <data name="Encounters.Field.Place" xml:space="preserve"><value>Place</value></data>
+  <data name="Encounters.Field.Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Encounters.Field.Notes" xml:space="preserve"><value>Notes</value></data>
+  <data name="Encounters.NotesHint" xml:space="preserve"><value>Only you see these. Tactics, terrain, what sets it off, and how it can end.</value></data>
+  <data name="Encounters.Creatures" xml:space="preserve"><value>Creatures</value></data>
+  <data name="Encounters.Creatures.Empty" xml:space="preserve"><value>No creatures yet. Add some with the search.</value></data>
+  <data name="Encounters.Homebrew" xml:space="preserve"><value>Homebrew</value></data>
+  <data name="Encounters.CastMember" xml:space="preserve"><value>Cast member</value></data>
+  <data name="Encounters.Gone.Cast" xml:space="preserve"><value>No longer in the cast</value></data>
+  <data name="Encounters.Gone.Entry" xml:space="preserve"><value>Not in the Library</value></data>
+  <data name="Encounters.NoteFor" xml:space="preserve"><value>Note for {0}</value></data>
+  <data name="Encounters.NotePlaceholder" xml:space="preserve"><value>Waits behind the door</value></data>
+  <data name="Encounters.HowMany" xml:space="preserve"><value>How many {0}</value></data>
+  <data name="Encounters.StartsHidden" xml:space="preserve"><value>Starts hidden</value></data>
+  <data name="Encounters.Remove" xml:space="preserve"><value>Remove {0}</value></data>
+  <data name="Encounters.Removed" xml:space="preserve"><value>Removed {0}</value></data>
+  <data name="Encounters.Added" xml:space="preserve"><value>Added {0}</value></data>
+  <data name="Encounters.AlreadyThere" xml:space="preserve"><value>{0} is already in this encounter</value></data>
+  <data name="Encounters.AddedShortlist" xml:space="preserve"><value>{0, plural, one{# creature added from the shortlist} other{# creatures added from the shortlist}}</value></data>
+  <data name="Encounters.Check.Errors" xml:space="preserve"><value>Fix these before saving</value></data>
+  <data name="Encounters.Check.Warnings" xml:space="preserve"><value>Worth a look</value></data>
+  <data name="Encounters.Check.NoName" xml:space="preserve"><value>Give the encounter a name.</value></data>
+  <data name="Encounters.Check.CountRange" xml:space="preserve"><value>{0}: the count must be from 1 to {1}.</value></data>
+  <data name="Encounters.Check.CastCount" xml:space="preserve"><value>{0} is one person, so the count must be 1.</value></data>
+  <data name="Encounters.Check.CastIsPlayer" xml:space="preserve"><value>{0} is a player character or a companion. Only characters the GM runs can be in an encounter.</value></data>
+  <data name="Encounters.Check.HazardLine" xml:space="preserve"><value>{0}: hazards are added on the place, not here. Place it on the place's page.</value></data>
+  <data name="Encounters.Warn.EntryGone" xml:space="preserve"><value>{0} is no longer in the Library.</value></data>
+  <data name="Encounters.Warn.CastGone" xml:space="preserve"><value>{0} is no longer in the cast.</value></data>
+  <data name="Encounters.Warn.PlaceGone" xml:space="preserve"><value>The place was deleted.</value></data>
+  <data name="Encounters.Error.NotAllowed" xml:space="preserve"><value>Only the GM can do this.</value></data>
+  <data name="Encounters.Error.NotSaved" xml:space="preserve"><value>The encounter could not be saved. Reload the page and try again.</value></data>
+  <data name="Encounters.Save" xml:space="preserve"><value>Save encounter</value></data>
+  <data name="Encounters.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Encounters.NotSaved" xml:space="preserve"><value>The encounter was not saved.</value></data>
+  <data name="Encounters.Saved" xml:space="preserve"><value>Saved {0}</value></data>
+  <data name="Encounters.Delete" xml:space="preserve"><value>Delete encounter</value></data>
+  <data name="Encounters.Delete.Title" xml:space="preserve"><value>Delete {0}?</value></data>
+  <data name="Encounters.Delete.Body" xml:space="preserve"><value>This deletes the encounter and cannot be undone.</value></data>
+  <data name="Encounters.Deleted" xml:space="preserve"><value>Deleted {0}</value></data>
+  <data name="Encounters.NotDeleted" xml:space="preserve"><value>The encounter could not be deleted.</value></data>
+  <data name="Encounters.Add" xml:space="preserve"><value>Add creatures</value></data>
+  <data name="Encounters.Add.Source" xml:space="preserve"><value>Where to add from</value></data>
+  <data name="Encounters.Add.Library" xml:space="preserve"><value>Library</value></data>
+  <data name="Encounters.Add.Cast" xml:space="preserve"><value>Cast</value></data>
+  <data name="Encounters.Add.SearchCreatures" xml:space="preserve"><value>Search the Library's creatures and your homebrew</value></data>
+  <data name="Encounters.Add.SearchCast" xml:space="preserve"><value>Search the cast</value></data>
+  <data name="Encounters.Add.Placeholder" xml:space="preserve"><value>Search by name</value></data>
+  <data name="Encounters.Add.Count" xml:space="preserve"><value>{0, plural, one{# result} other{# results}}</value></data>
+  <data name="Encounters.Add.Creature" xml:space="preserve"><value>Add {0}</value></data>
+  <data name="Encounters.Add.Button" xml:space="preserve"><value>Add</value></data>
+  <data name="Encounters.Add.Shortlist" xml:space="preserve"><value>Add from the Bestiary shortlist</value></data>
+  <data name="Encounters.Hazards" xml:space="preserve"><value>Hazards at this place</value></data>
+  <data name="Encounters.Hazards.ChoosePlace" xml:space="preserve"><value>Choose a place to see the hazards placed there.</value></data>
+  <data name="Encounters.Hazards.None" xml:space="preserve"><value>No hazards are placed here. Place one on the place's page.</value></data>
+  <data name="Encounters.Hazards.OpenPlace" xml:space="preserve"><value>Open the place</value></data>
+  <data name="Encounters.Hazards.At" xml:space="preserve"><value>At {0}</value></data>
+</root>

@@ -140,6 +140,7 @@
   <data name="Page.Campaign.Section.Journal" xml:space="preserve"><value>My journal</value></data>
   <data name="Page.Campaign.Section.Cast" xml:space="preserve"><value>Cast</value></data>
   <data name="Page.Campaign.Section.Bestiary" xml:space="preserve"><value>Bestiary</value></data>
+  <data name="Page.Campaign.Section.Encounters" xml:space="preserve"><value>Encounters</value></data>
   <data name="Page.Campaign.Section.Creatures" xml:space="preserve"><value>Creatures</value></data>
   <data name="Page.Campaign.Section.Places" xml:space="preserve"><value>Places</value></data>
   <data name="Page.Campaign.Section.Wiki" xml:space="preserve"><value>Wiki</value></data>

@@ -426,6 +426,23 @@ public class PreparedEncounterRepositoryTests : IClassFixture<RavenDbFixture>, I
         Assert.Equal(2, (await _plans.ListAsync(a.Gm)).Count);
     }
 
+    [Theory]
+    [InlineData("preparedencounters/new")]
+    [InlineData("preparedencounters/")]
+    [InlineData("preparedencounters/not-a-guid")]
+    public async Task Restore_RefusesAPrefixedIdWhoseSuffixIsNotAGuid(string id)
+    {
+        var t = NewTable();
+        var crafted = Plan(t.CampaignId, "Crafted");
+        crafted.Id = id;
+
+        await _plans.RestoreAsync(crafted);
+
+        using var session = _db.Store.OpenAsyncSession();
+        Assert.False(await session.Advanced.ExistsAsync(id));
+        Assert.Empty(await _plans.ListAsync(t.Gm));
+    }
+
     [Fact]
     public async Task RestoreOverAStoredPlanOfTheSameCampaign_ReplacesIt_AndOverAnotherCampaignsPlan_DoesNot()
     {
