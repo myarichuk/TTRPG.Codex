@@ -1,0 +1,564 @@
+@implements IDisposable
+@using System.Text.Json
+@using Codex.Persistence
+@inject PreparedEncounterService Encounters
+@inject NavigationManager Nav
+@inject ILogger<EncounterEditor> Logger
+
+@* One prepared encounter, or a new one (ENCOUNTER_BUILDER_DESIGN.md 5.1): its name, place, notes and status, the lineup of creatures with counts, the hazards at the place
+   (read only: they are placed on the place's page), and the check's errors and warnings as text. The page edits a copy, which Save hands to the service. Starting it at the
+   table and the difficulty readout come in later steps. *@
+<ConfirmDialog @ref="confirm" />
+<UnsavedChangesGuard IsDirty="IsDirty" />
+
+<div class="page-header mb-3">
+    <div>
+        <nav aria-label="@L["Encounters.Breadcrumb"]" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/encounters">@L["Encounters.Title"]</a></nav>
+        <h2 class="mb-0">@(draft == null ? L["Encounters.Title"] : IsNew ? L["Encounters.NewTitle"] : L["Encounters.EditTitle", draft.Name])</h2>
+    </div>
+</div>
+
+@if (loading)
+{
+    <LoadingSkeleton Rows="4" />
+}
+else if (draft == null)
+{
+    <div class="empty" role="alert" data-testid="encounter-missing">
+        <div class="empty-icon"><LucideIcon IconName="swords" Size="28" /></div>
+        <h3>@L["Encounters.Missing.Title"]</h3>
+        <p>@L["Encounters.Missing.Body"]</p>
+        <a href="@Ctx.BasePath/encounters" class="cx-btn cx-etched">@L["Encounters.BackToList"]</a>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <section class="panel" aria-labelledby="encounter-details-heading">
+                <div class="panel-title"><h3 id="encounter-details-heading" class="h6"><LucideIcon IconName="swords" Size="18" Class="title-icon" /> @L["Encounters.Details"]</h3></div>
+                <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true" data-testid="encounter-editor">
+                    <div class="field-grid mb-3">
+                        <div class="field-wide">
+                            <label for="encounter-name" class="field-label">@L["Encounters.Field.Name"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Encounters.Required"]</span></label>
+                            <input id="encounter-name" class="field-input field-lg" @bind="draft.Name" @bind:event="oninput" required maxlength="160" data-testid="encounter-name" />
+                        </div>
+                        <div>
+                            <label for="encounter-place" class="field-label">@L["Encounters.Field.Place"]</label>
+                            <select id="encounter-place" class="field-select" value="@PlaceValue" @onchange="PlaceChangedAsync" data-testid="encounter-place-select">
+                                <option value="">@L["Encounters.NoPlace"]</option>
+                                @if (placeGone)
+                                {
+                                    <option value="@PlaceValue" disabled>@L["Encounters.PlaceGone"]</option>
+                                }
+                                @if (places.Select(p => p.RegionId).Distinct().Count() > 1)
+                                {
+                                    @foreach (var region in places.GroupBy(p => p.RegionId))
+                                    {
+                                        <optgroup label="@region.First().RegionName">
+                                            @foreach (var place in region)
+                                            {
+                                                <option value="@place.Value">@Indent(place)@place.PlaceName</option>
+                                            }
+                                        </optgroup>
+                                    }
+                                }
+                                else
+                                {
+                                    @foreach (var place in places)
+                                    {
+                                        <option value="@place.Value">@Indent(place)@place.PlaceName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            @if (draft.Status == PreparedStatus.Ran)
+                            {
+                                <span class="field-label" id="encounter-status-label">@L["Encounters.Field.Status"]</span>
+                                <p class="mb-0" aria-labelledby="encounter-status-label" data-testid="encounter-status-ran">@L["Encounters.Status.RanReadOnly"]</p>
+                            }
+                            else
+                            {
+                                <label for="encounter-status" class="field-label">@L["Encounters.Field.Status"]</label>
+                                <select id="encounter-status" class="field-select" @bind="draft.Status" data-testid="encounter-status-select">
+                                    <option value="@PreparedStatus.Draft">@L["Encounters.Status.Draft"]</option>
+                                    <option value="@PreparedStatus.Ready">@L["Encounters.Status.Ready"]</option>
+                                </select>
+                            }
+                        </div>
+                    </div>
+
+                    <label for="encounter-notes" class="field-label">@L["Encounters.Field.Notes"]</label>
+                    <MarkdownEditor Id="encounter-notes" Title="@L["Encounters.Field.Notes"]" Rows="8" @bind-Value="draft.Notes" DescribedBy="encounter-notes-hint" TestId="encounter-notes" />
+                    <p id="encounter-notes-hint" class="field-hint mb-3">@L["Encounters.NotesHint"]</p>
+
+                    <h4 id="encounter-lineup-heading" class="h6">@L["Encounters.Creatures"]</h4>
+                    @if (draft.Lines.Count == 0)
+                    {
+                        <p class="small-muted" data-testid="encounter-lineup-empty">@L["Encounters.Creatures.Empty"]</p>
+                    }
+                    else
+                    {
+                        <ul class="list-unstyled mb-3" aria-labelledby="encounter-lineup-heading" data-testid="encounter-lineup">
+                            @for (var i = 0; i < draft.Lines.Count; i++)
+                            {
+                                var line = draft.Lines[i];
+                                var at = i;
+                                var resolved = Resolved(line);
+                                <li class="list-row align-items-start" @key="line" data-testid="encounter-line">
+                                    <div class="row-main">
+                                        <div class="row-title">
+                                            @if (resolved?.Href is { } href)
+                                            {
+                                                <a href="@href">@resolved.Name</a>
+                                            }
+                                            else
+                                            {
+                                                @LineName(line)
+                                            }
+                                            @if (line.IsHomebrew)
+                                            {
+                                                <span class="pill pill-accent ms-2">@L["Encounters.Homebrew"]</span>
+                                            }
+                                            @if (line.Kind == PreparedLineKind.CastMember)
+                                            {
+                                                <span class="pill ms-2">@L["Encounters.CastMember"]</span>
+                                            }
+                                            @if (resolved is { Found: false })
+                                            {
+                                                <span class="pill pill-warning ms-2" data-testid="encounter-line-gone">@(line.Kind == PreparedLineKind.CastMember ? L["Encounters.Gone.Cast"] : L["Encounters.Gone.Entry"])</span>
+                                            }
+                                        </div>
+                                        <div class="row-sub">
+                                            <label for="encounter-line-@at-note" class="visually-hidden">@L["Encounters.NoteFor", LineName(line)]</label>
+                                            <input id="encounter-line-@at-note" class="field-input field-sm inline-input" placeholder="@L["Encounters.NotePlaceholder"]" maxlength="200" value="@line.Note"
+                                                   @onchange="e => line.Note = e.Value?.ToString()" data-testid="encounter-line-note" />
+                                        </div>
+                                    </div>
+                                    <div class="row-actions flex-wrap">
+                                        @if (line.Kind == PreparedLineKind.Creature)
+                                        {
+                                            <label for="encounter-line-@at-count" class="visually-hidden">@L["Encounters.HowMany", LineName(line)]</label>
+                                            <input @key="CountKey(line)" id="encounter-line-@at-count" type="number" min="1" max="@PreparedEncounterService.MaxCount" class="field-input field-sm count-input" value="@line.Count"
+                                                   @onchange="e => SetCount(line, e.Value?.ToString())" data-testid="encounter-line-count" />
+                                        }
+                                        <span class="line-check">
+                                            <input id="encounter-line-@at-hidden" type="checkbox" class="form-check-input" checked="@line.StartsHidden" aria-label="@L["Encounters.StartsHiddenFor", LineName(line)]"
+                                                   @onchange="e => line.StartsHidden = e.Value is true" data-testid="encounter-line-hidden" />
+                                            <label for="encounter-line-@at-hidden" class="form-check-label" aria-hidden="true">@L["Encounters.StartsHidden"]</label>
+                                        </span>
+                                        <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Encounters.Remove", LineName(line)]" OnClick="() => Remove(line)" data-testid="encounter-line-remove" />
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    <p class="visually-hidden" role="status" aria-live="polite" data-testid="encounter-announce">@announce</p>
+
+                    @if (check is { } found && (found.Errors.Count > 0 || found.Warnings.Count > 0))
+                    {
+                        <div class="mb-3" data-testid="encounter-check">
+                            @if (found.Errors.Count > 0)
+                            {
+                                <div role="alert" data-testid="encounter-errors">
+                                    <h4 class="h6">@L["Encounters.Check.Errors"]</h4>
+                                    <ul>
+                                        @foreach (var issue in found.Errors)
+                                        {
+                                            <li>@L[issue.Key, issue.Args]</li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                            @if (found.Warnings.Count > 0)
+                            {
+                                <div data-testid="encounter-warnings">
+                                    <h4 class="h6">@L["Encounters.Check.Warnings"]</h4>
+                                    <ul>
+                                        @foreach (var issue in found.Warnings)
+                                        {
+                                            <li>@L[issue.Key, issue.Args]</li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <SaveBar Dirty="IsDirty()" TestId="encounter-save-bar">
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Busy="saving" data-testid="encounter-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]"><LucideIcon IconName="check" Size="18" /> @L["Encounters.Save"]</CodexButton>
+                        <a href="@Ctx.BasePath/encounters" class="cx-btn cx-etched">@L["Encounters.Cancel"]</a>
+                        @if (!IsNew)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Blood" Class="ms-auto" OnClick="DeleteAsync" data-testid="encounter-delete">@L["Encounters.Delete"]</CodexButton>
+                        }
+                    </SaveBar>
+                </form>
+            </section>
+        </div>
+
+        <div class="col-lg-5">
+            <section class="panel" aria-labelledby="encounter-add-heading">
+                <div class="panel-title"><h3 id="encounter-add-heading" class="h6"><LucideIcon IconName="user-plus" Size="18" Class="title-icon" /> @L["Encounters.Add"]</h3></div>
+                <div class="md-tabs mb-2" role="group" aria-label="@L["Encounters.Add.Source"]">
+                    <button type="button" class="md-tab" aria-pressed="@(tab == "library" ? "true" : "false")" @onclick='() => SwitchTabAsync("library")' data-testid="encounter-tab-library">@L["Encounters.Add.Library"]</button>
+                    <button type="button" class="md-tab" aria-pressed="@(tab == "cast" ? "true" : "false")" @onclick='() => SwitchTabAsync("cast")' data-testid="encounter-tab-cast">@L["Encounters.Add.Cast"]</button>
+                </div>
+                <div class="search mb-2">
+                    <LucideIcon IconName="search" Size="18" Class="search-icon" />
+                    <label for="encounter-add-search" class="visually-hidden">@(tab == "library" ? L["Encounters.Add.SearchCreatures"] : L["Encounters.Add.SearchCast"])</label>
+                    <input id="encounter-add-search" type="search" class="field-input" placeholder="@L["Encounters.Add.Placeholder"]" value="@query" @oninput="OnQueryChanged" aria-describedby="encounter-add-count" data-testid="encounter-add-search" />
+                </div>
+                <p id="encounter-add-count" class="small-muted" role="status" aria-live="polite" data-testid="encounter-add-count">@ResultCountText()</p>
+
+                @if (tab == "library")
+                {
+                    <ul class="list-unstyled mb-2" aria-label="@L["Encounters.Add.Library"]" data-testid="encounter-add-results">
+                        @foreach (var item in (results ?? new List<LibraryItem>()).Take(ResultCap))
+                        {
+                            <li class="list-row">
+                                <div class="row-main">
+                                    <div class="row-title">@item.Entry.Name
+                                        @if (item.IsHomebrew)
+                                        {
+                                            <span class="pill pill-accent ms-2">@L["Encounters.Homebrew"]</span>
+                                        }
+                                    </div>
+                                </div>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddCreature(item)" aria-label="@L["Encounters.Add.Creature", item.Entry.Name]" data-testid="encounter-add-creature"><LucideIcon IconName="plus" Size="14" /> @L["Encounters.Add.Button"]</CodexButton>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-2" aria-label="@L["Encounters.Add.Cast"]" data-testid="encounter-add-results">
+                        @foreach (var actor in (castResults ?? new List<ActorDocument>()).Take(ResultCap))
+                        {
+                            <li class="list-row">
+                                <div class="row-main"><div class="row-title">@actor.Name</div></div>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddCast(actor)" aria-label="@L["Encounters.Add.Creature", actor.Name]" data-testid="encounter-add-cast"><LucideIcon IconName="plus" Size="14" /> @L["Encounters.Add.Button"]</CodexButton>
+                            </li>
+                        }
+                    </ul>
+                }
+
+                @if (Ctx.Campaign.Bestiary.Count > 0)
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="AddShortlist" data-testid="encounter-add-shortlist"><LucideIcon IconName="bookmark" Size="16" /> @L["Encounters.Add.Shortlist"]</CodexButton>
+                }
+            </section>
+
+            <section class="panel" aria-labelledby="encounter-hazards-heading" data-testid="encounter-hazards">
+                <div class="panel-title"><h3 id="encounter-hazards-heading" class="h6"><LucideIcon IconName="alert-triangle" Size="18" Class="title-icon" /> @L["Encounters.Hazards"]</h3></div>
+                @if (string.IsNullOrEmpty(draft.PlaceId))
+                {
+                    <p class="small-muted mb-0" data-testid="encounter-hazards-noplace">@L["Encounters.Hazards.ChoosePlace"]</p>
+                }
+                else if (placeGone)
+                {
+                    <p class="small-muted mb-0">@L["Encounters.PlaceGone"]</p>
+                }
+                else if (hazards.Count == 0)
+                {
+                    <p class="small-muted mb-0" data-testid="encounter-hazards-none">@L["Encounters.Hazards.None"] <a href="@Ctx.BasePath/world#place-@draft.PlaceId">@L["Encounters.Hazards.OpenPlace"]</a></p>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var hazard in hazards)
+                        {
+                            <li class="list-row" data-testid="encounter-hazard">
+                                <div class="row-main">
+                                    <div class="row-title">@hazard.Name <span class="pill ms-2">@L[$"Combat.Hazard.State.{hazard.State}"]</span></div>
+                                    <div class="row-sub"><a href="@Ctx.BasePath/world#place-@hazard.PlaceId">@L["Encounters.Hazards.At", hazard.PlaceName]</a></div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+        </div>
+    </div>
+}
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    /// <summary><c>new</c>, or the plan's id as the address carries it.</summary>
+    [Parameter, EditorRequired] public string Route { get; set; } = string.Empty;
+
+    private ConfirmDialog confirm = null!;
+    private bool loading = true;
+    private bool saving;
+    private PreparedEncounterDocument? draft;
+    private string savedJson = string.Empty;
+    private bool placeGone;
+    private IReadOnlyList<EncounterPlaceChoice> places = Array.Empty<EncounterPlaceChoice>();
+    private IReadOnlyList<EncounterHazard> hazards = Array.Empty<EncounterHazard>();
+    private EncounterCheck? check;
+    private string announce = string.Empty;
+    private string tab = "library";
+    private string query = string.Empty;
+    private List<LibraryItem>? results;
+    private List<ActorDocument>? castResults;
+    private bool capped;
+    private CancellationTokenSource? debounce;
+    private readonly Dictionary<PreparedLine, EncounterLineView> resolved = new(ReferenceEqualityComparer.Instance);
+    // Bumped when a count box shows something other than the line's count (clamped or unreadable text), so the box is drawn again with the stored value.
+    private readonly Dictionary<PreparedLine, int> countRedraws = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>The most results the add panel lists; one more is asked for, to know there were more.</summary>
+    private const int ResultCap = 30;
+
+    public void Dispose()
+    {
+        debounce?.Cancel();
+        debounce?.Dispose();
+    }
+
+    private object CountKey(PreparedLine line) => (line, countRedraws.GetValueOrDefault(line));
+
+    private bool IsNew => draft != null && string.IsNullOrEmpty(draft.Id);
+
+    private string PlaceValue => string.IsNullOrEmpty(draft?.PlaceId) ? string.Empty : $"{draft!.RegionId}|{draft.PlaceId}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            places = await Encounters.PlacesAsync(Ctx.Access);
+            if (Route == "new")
+            {
+                draft = new PreparedEncounterDocument { CampaignId = Ctx.Campaign.Id, Status = PreparedStatus.Draft };
+            }
+            else if (await Encounters.ViewAsync(Ctx.Campaign, Ctx.Access, Route, L.Culture.Name) is { } view)
+            {
+                Adopt(view);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "A prepared encounter of campaign {CampaignId} could not be opened", Ctx.Campaign.Id);
+            draft = null;
+        }
+
+        savedJson = Snapshot();
+        loading = false;
+        await SearchAsync(BeginSearch());
+    }
+
+    /// <summary>Takes the stored plan as the copy to edit, with what its lines and place resolved to.</summary>
+    private void Adopt(EncounterView view)
+    {
+        draft = JsonSerializer.Deserialize<PreparedEncounterDocument>(JsonSerializer.Serialize(view.Plan))!;
+        resolved.Clear();
+        for (var i = 0; i < draft.Lines.Count && i < view.Lines.Count; i++) resolved[draft.Lines[i]] = view.Lines[i];
+        placeGone = view.PlaceGone;
+        hazards = view.Hazards;
+        check = view.Check;
+        savedJson = Snapshot();
+    }
+
+    private string Snapshot() => draft == null ? string.Empty : JsonSerializer.Serialize(draft);
+
+    private bool IsDirty() => draft != null && Snapshot() != savedJson;
+
+    private EncounterLineView? Resolved(PreparedLine line) => resolved.GetValueOrDefault(line);
+
+    private string LineName(PreparedLine line) => Resolved(line)?.Name is { Length: > 0 } name ? name : line.Name.Length > 0 ? line.Name : line.EntryId;
+
+    private static string Indent(EncounterPlaceChoice place) => new(' ', place.Depth * 2);
+
+    private async Task PlaceChangedAsync(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString() ?? string.Empty;
+        var bar = value.IndexOf('|');
+        if (bar < 0)
+        {
+            draft!.RegionId = draft.PlaceId = null;
+        }
+        else
+        {
+            draft!.RegionId = value[..bar];
+            draft.PlaceId = value[(bar + 1)..];
+        }
+
+        placeGone = false;
+        hazards = await Encounters.HazardsAtAsync(Ctx.Campaign, Ctx.Access, draft.RegionId, draft.PlaceId, L.Culture.Name);
+    }
+
+    private void SetCount(PreparedLine line, string? raw)
+    {
+        var parsed = int.TryParse(raw, out var count);
+        if (parsed) line.Count = Math.Clamp(count, 1, PreparedEncounterService.MaxCount);
+        // The box shows what was typed; when that is not the line's count, draw it again with the count.
+        if (!parsed || count != line.Count) countRedraws[line] = countRedraws.GetValueOrDefault(line) + 1;
+    }
+
+    private void Remove(PreparedLine line)
+    {
+        var name = LineName(line);
+        draft!.Lines.Remove(line);
+        announce = L["Encounters.Removed", name];
+    }
+
+    private void AddCreature(LibraryItem item)
+    {
+        var line = new PreparedLine { Kind = PreparedLineKind.Creature, EntryType = item.Entry.Type, EntryId = item.Entry.Id, IsHomebrew = item.IsHomebrew, Name = item.Entry.Name };
+        var now = Merge(line);
+        announce = L["Encounters.AddedCount", item.Entry.Name, now];
+    }
+
+    private void AddCast(ActorDocument actor)
+    {
+        if (draft!.Lines.Any(l => l.Kind == PreparedLineKind.CastMember && l.ActorId == actor.Id))
+        {
+            announce = L["Encounters.AlreadyThere", actor.Name];
+            return;
+        }
+
+        draft.Lines.Add(new PreparedLine { Kind = PreparedLineKind.CastMember, ActorId = actor.Id, Name = actor.Name });
+        announce = L["Encounters.Added", actor.Name];
+    }
+
+    private void AddShortlist()
+    {
+        var added = 0;
+        foreach (var entry in Ctx.Campaign.Bestiary)
+        {
+            if (draft!.Lines.Any(l => l.Kind == PreparedLineKind.Creature && PreparedEncounterService.KeyOf(l) == entry.Key)) continue;
+            draft.Lines.Add(PreparedEncounterService.LineFrom(entry));
+            added++;
+        }
+
+        announce = L["Encounters.AddedShortlist", added];
+    }
+
+    /// <summary>A creature already in the lineup comes once more (up to the most a line holds); a new one is a new line.</summary>
+    private int Merge(PreparedLine line)
+    {
+        var key = PreparedEncounterService.KeyOf(line);
+        if (draft!.Lines.FirstOrDefault(l => l.Kind == PreparedLineKind.Creature && PreparedEncounterService.KeyOf(l) == key) is { } existing)
+        {
+            existing.Count = Math.Min(PreparedEncounterService.MaxCount, existing.Count + 1);
+            return existing.Count;
+        }
+
+        draft.Lines.Add(line);
+        return line.Count;
+    }
+
+    private async Task SwitchTabAsync(string next)
+    {
+        tab = next;
+        await SearchAsync(BeginSearch());
+    }
+
+    private async Task OnQueryChanged(ChangeEventArgs e)
+    {
+        query = e.Value?.ToString() ?? string.Empty;
+        var token = BeginSearch();
+        try { await Task.Delay(150, token); } catch (TaskCanceledException) { return; }
+        await SearchAsync(token);
+    }
+
+    /// <summary>Starts a search and cancels the one before it, so a slow answer to an older query never replaces a newer one.</summary>
+    private CancellationToken BeginSearch()
+    {
+        debounce?.Cancel();
+        debounce?.Dispose();
+        debounce = new CancellationTokenSource();
+        return debounce.Token;
+    }
+
+    private async Task SearchAsync(CancellationToken token)
+    {
+        if (draft == null) return;
+        if (tab == "library")
+        {
+            var found = (await Encounters.SearchCreaturesAsync(Ctx.Campaign, Ctx.Access, query, L.Culture.Name, ResultCap + 1)).ToList();
+            if (token.IsCancellationRequested) return;
+            results = found;
+            capped = found.Count > ResultCap;
+        }
+        else
+        {
+            var found = (await Encounters.CastChoicesAsync(Ctx.Access, query)).ToList();
+            if (token.IsCancellationRequested) return;
+            castResults = found;
+            capped = found.Count > ResultCap;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private string ResultCountText()
+    {
+        var shown = Math.Min(ResultCap, tab == "library" ? results?.Count ?? 0 : castResults?.Count ?? 0);
+        var count = L["Encounters.Add.Count", shown];
+        return capped ? count + " " + L["Encounters.Add.Capped", ResultCap] : count;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (draft == null || saving) return;
+        saving = true;
+        try
+        {
+            var wasNew = IsNew;
+            // The service tidies and stores a copy, so the draft on the page is never the object that was stored; the new id is taken only once it is stored.
+            var copy = JsonSerializer.Deserialize<PreparedEncounterDocument>(Snapshot())!;
+            var result = await Encounters.SaveAsync(Ctx.Campaign, Ctx.Access, copy);
+            check = result.Check;
+            if (!result.Saved)
+            {
+                Ctx.Notify(Flash.Error(L["Encounters.NotSaved"]));
+                return;
+            }
+
+            draft.Id = copy.Id;
+            Ctx.Notify(Flash.Success(L["Encounters.Saved", copy.Name]));
+            savedJson = Snapshot();
+            if (wasNew)
+            {
+                // The repository wrote the new id back; the address carries it without the prefix.
+                Nav.NavigateTo($"{Ctx.BasePath}/encounters/{Uri.EscapeDataString(PreparedEncounterService.RouteOf(result.Id!))}");
+                return;
+            }
+
+            if (await Encounters.ViewAsync(Ctx.Campaign, Ctx.Access, PreparedEncounterService.RouteOf(draft.Id), L.Culture.Name) is { } view)
+            {
+                var warnings = result.Check;
+                Adopt(view);
+                check = warnings;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "A prepared encounter of campaign {CampaignId} could not be saved", Ctx.Campaign.Id);
+            Ctx.Notify(Flash.Error(L["Encounters.NotSaved"]));
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (draft == null || IsNew) return;
+        if (!await confirm.ShowAsync(L["Encounters.Delete.Title", draft.Name], L["Encounters.Delete.Body"], L["Encounters.Delete"], isDestructive: true)) return;
+        if (await Encounters.DeleteAsync(Ctx.Campaign, Ctx.Access, PreparedEncounterService.RouteOf(draft.Id)))
+        {
+            Ctx.Notify(Flash.Success(L["Encounters.Deleted", draft.Name]));
+            savedJson = Snapshot();
+            Nav.NavigateTo($"{Ctx.BasePath}/encounters");
+        }
+        else
+        {
+            Ctx.Notify(Flash.Error(L["Encounters.NotDeleted"]));
+        }
+    }
+}

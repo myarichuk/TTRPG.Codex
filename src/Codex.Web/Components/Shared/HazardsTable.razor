@@ -123,7 +123,7 @@
         var shown = new Dictionary<string, HazardPlace>();
         foreach (var placement in found)
         {
-            foreach (var place in Chain(placement.Region, placement.Place))
+            foreach (var place in PlaceTree.Chain(placement.Region, placement.Place))
             {
                 shown[place.Id] = new HazardPlace(place.Id, regions.Count > 1 ? $"{placement.Region.Name} / {place.Name}" : place.Name);
             }
@@ -131,16 +131,6 @@
 
         places = shown.Values.OrderBy(p => p.Label, StringComparer.CurrentCultureIgnoreCase).ToList();
         if (placeId.Length > 0 && !shown.ContainsKey(placeId)) placeId = string.Empty;
-    }
-
-    /// <summary>The place and the places it is inside, up to the top of its region.</summary>
-    private static IEnumerable<LocationDocument> Chain(RegionDocument region, LocationDocument place)
-    {
-        var seen = new HashSet<string>();
-        for (var at = place; at != null && seen.Add(at.Id); at = string.IsNullOrEmpty(at.ParentId) ? null : region.Locations.FirstOrDefault(l => l.Id == at.ParentId))
-        {
-            yield return at;
-        }
     }
 
     private IReadOnlyList<HazardWho> Who()
@@ -155,7 +145,7 @@
     {
         var names = Actors.ToDictionary(a => a.Id, a => a.Name);
         var views = new List<HazardView>();
-        foreach (var placement in placements.Where(p => p.Region.Id.Length == 0 || placeId.Length == 0 || Chain(p.Region, p.Place).Any(c => c.Id == placeId)))
+        foreach (var placement in placements.Where(p => p.Region.Id.Length == 0 || placeId.Length == 0 || PlaceTree.Chain(p.Region, p.Place).Any(c => c.Id == placeId)))
         {
             // The encounter's live copy, when it holds one, over what is stored.
             var key = HazardLedger.KeyOf(placement.Region.Id, placement.Place.Id);

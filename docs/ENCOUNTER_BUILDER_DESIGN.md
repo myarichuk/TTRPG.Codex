@@ -457,3 +457,63 @@ is added. Tests: `PreparedEncounterRepositoryTests.cs` (26).
 
 **For B2:** a plan whose `Id` is set but not stored is refused by `SaveAsync` (create with an empty id); use `DocumentVersions` and a
 `SaveOutcome` if the editor must warn about a plan changed in another tab; list is by `UpdatedAt` newest first, with no paging.
+
+## 14. B2 as built (2026-11-23)
+
+The service, the Encounters section, the list and the editor. No start, no readout, no AI.
+
+**Files**
+- `Codex.Web/Services/PreparedEncounterService.cs` (the service and its result records), registered as a singleton in `Program.cs`.
+- `Codex.Web/Components/Campaign/EncountersSection.razor` (the GM gate and the switch between list and editor), `EncounterList.razor`, `EncounterEditor.razor`.
+- `Codex.Persistence/PlaceTree.cs` gains `Chain(region, place)`, the one walk from a place up through the places it is inside. `HazardsTable` and `HazardOffers`
+  call it and their private copies are gone; behaviour is unchanged (their tests pass untouched).
+- `Strings.Encounters{,.ru,.he}.resx` (the area is found by file name; no registration), and `Page.Campaign.Section.Encounters` in `Strings.Page*.resx`.
+- Tests: `PreparedEncounterServiceTests` (23), `PreparedEncounterServiceRavenTests` (7), `EncounterCreatureSearchTests` (2), `PlaceChainTests` (2),
+  `EncountersSectionTests` (component, 25 with its theory rows), helpers in `EncounterTestKit.cs` (an in-memory plans repository and a small campaign).
+
+**Wired in** (`CampaignPage.razor`): a Groups entry after bestiary (`encounters`, icon `swords`), `IsDmOnly` includes it (the rail and the phone More menu both filter by it,
+and `IssuesSectionTests` still pins that), a `SectionLabel` case, and a section case passing `Arg1`. Nothing else enumerates sections: the phone tab bar is a fixed list,
+and `WorldChatView`'s section links name the sections a chat result points at (an encounter kind comes with B5).
+
+**Route.** `/campaigns/{id}/encounters/new` for a new plan and `/campaigns/{id}/encounters/{guid}` for a stored one, both through the router's existing
+`{Section}/{Arg1}` page, so no `?new=1` and no new `@page`. A plan id can never be `new`. The URL carries the part of the id after `preparedencounters/`
+(`PreparedEncounterService.RouteOf`). Looking a plan up from a URL tries `preparedencounters/{arg}` and then `{arg}`: a copied campaign's plans have bare GUIDs. This is
+safe because the repository looks an id up in the plans' collection only; a test passes the campaign's own id and gets nothing.
+
+**Service.** `ListAsync`, `ViewAsync`, `CheckAsync`, `SaveAsync`, `DeleteAsync`, and the editor's helpers: `PlacesAsync` (the picker's tree), `HazardsAtAsync`,
+`SearchCreaturesAsync`, `CastChoicesAsync`, and `LineFrom`/`KeyOf` (the Bestiary key shape). Every method answers nothing to a player, and the repository refuses them besides.
+- Issues are structured (`EncounterIssue(Key, Args)`), so the page words them in the reader's language and a test names them. Errors: no name, a creature count outside 1 to 20,
+  a cast-member count other than 1, a cast member who is a player-character actor (a companion or familiar is one too; an NPC is fine), any hazard line (the text says hazards are
+  added on the place). Warnings: an entry gone from the Library, a cast member gone, a place gone.
+- A line whose entry, actor or place is gone is kept with its stored name and a warning, never dropped.
+- `SaveAsync` trims, clears the region with no place, checks, refuses on errors, then calls the repository, which writes the new id back on the document;
+  `EncounterSave.Id` says it so the editor can open the plan. A refusal from the repository is reported as "not saved", not hidden. There is no "edited in another tab" warning,
+  because `SaveAsync` answers a bool. Only Draft and Ready are offered; a Ran plan's status is read-only text, and the repository keeps `Ran` as B1 decided.
+- The list shows how many times a plan ran (`EncounterRow.RunCount`, the length of `RunEncounterIds`): "Ran once", "Ran 3 times", or a plain "Ran" for a `Ran` plan with no recorded run.
+  There is no run date: the plan's `UpdatedAt` moves with every edit, and the live encounter carries no start time (B3 may add one).
+- **The check keeps hazards out of lines.** A creature line is an error unless its type is one of the system's creature types (`ActorBlueprint`, no `Hazard` block) and its entry is not
+  tagged `hazard` or held by the registry as a hazard actor; a missing entry is only a warning. A cast line naming an actor with a hazard link is an error too (both use `Encounters.Check.HazardLine`).
+  Any actor that is not a player character (a companion or familiar is one) and not a hazard may be a cast line: NPCs, and the monster actors that casting a Library creature makes.
+  The cast tab lists them, NPCs first.
+- **One read per call.** `CheckAsync` and `ViewAsync` read the regions, the cast and the homebrew once (`CampaignLibrary.LookupAsync`), not once per line. Names are looked up in the
+  reader's language (`culture` on `ViewAsync`, `HazardsAtAsync` and `CampaignLibrary.GetAsync(..., isHomebrew, culture)`).
+- B1's restore now takes a prefixed id only when the suffix is a GUID (`preparedencounters/new` is refused).
+- The one-line summary is "Bandit ×3, Wendel Tarr" (the entry's name and a count), not a pluralised name: a name cannot be pluralised in three languages.
+
+**Creature search.** It reads the system's `actorBlueprint` types through `CampaignLibrary.SearchAsync`, as the Bestiary does, and drops anything that is a complex hazard:
+an entry tagged `hazard`, or one the registry holds as a `hazard`-tagged actor of that id and entry type. A hazard type is not an `actorBlueprint` type, so this is a second line of defence
+against a hazard filed under a creature type; `EncounterCreatureSearchTests` pins it (and breaking the filter fails it). The cast tab is described above.
+
+**Editor.** Name, place (a select; regions as groups when there is more than one, the tree indented), status, notes (`MarkdownEditor`), the lineup as a list (count labelled "How many Bandit",
+a note, "Starts hidden", "Remove Bandit"), the add panel (Library tab, Cast tab, *Add from the Bestiary shortlist*, a polite live region for the result count, a second one for
+what was added or removed), the hazards at the place (read live, state in words, link to the place), the check's errors and warnings as text, Save and Delete (asks first, says it cannot be undone).
+A creature added twice raises its count; the shortlist adds each entry once. The page edits a copy and guards unsaved changes. There is no *Start at the table*, no difficulty readout and no *Build with AI*.
+Layout uses the app's logical classes. The one new rule, `.line-check` in `app.css`, lays out "Starts hidden" with flex and `gap` instead of
+Bootstrap's `.form-check`, which pads and floats on the left and breaks in right-to-left.
+
+**Left for later**
+- B3: start, `MarkRunAsync` caller, the table's menu and notes; a real run date.
+- B4: the readout in the editor and the list. B5: *Build with AI* and the proposal kind. B7: hazard lines and the "joins initiative" tick (the check refuses hazard lines until then).
+- Deleting a place or a cast member leaves the plan with a warning, as designed; nothing reports it outside the plan's own page and the list's "place was deleted".
+- Russian and Hebrew need native review, as all the others do. Hebrew "encounter" is «מפגש קרב», as in the Combat strings (the start button there says «עימות»; worth settling).
+- The list has no paging, as the repository has none.

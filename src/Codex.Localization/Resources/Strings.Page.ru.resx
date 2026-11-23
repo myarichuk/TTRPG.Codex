@@ -140,6 +140,7 @@
   <data name="Page.Campaign.Section.Journal" xml:space="preserve"><value>Мой журнал</value></data>
   <data name="Page.Campaign.Section.Cast" xml:space="preserve"><value>Персонажи</value></data>
   <data name="Page.Campaign.Section.Bestiary" xml:space="preserve"><value>Бестиарий</value></data>
+  <data name="Page.Campaign.Section.Encounters" xml:space="preserve"><value>Столкновения</value></data>
   <data name="Page.Campaign.Section.Creatures" xml:space="preserve"><value>Существа</value></data>
   <data name="Page.Campaign.Section.Places" xml:space="preserve"><value>Места</value></data>
   <data name="Page.Campaign.Section.Wiki" xml:space="preserve"><value>Вики</value></data>

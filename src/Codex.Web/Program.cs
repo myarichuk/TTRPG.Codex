@@ -280,6 +280,7 @@ builder.Services.AddScoped<HomebrewImportService>();
 builder.Services.AddSingleton<ArtService>();
 builder.Services.AddSingleton<PlaceWikiSync>();
 builder.Services.AddSingleton<CastService>();
+builder.Services.AddSingleton<PreparedEncounterService>();
 
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();

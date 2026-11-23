@@ -2825,6 +2825,10 @@ a.hover-card-title:hover { text-decoration: underline; }
 .book-draft-theme select { width: auto; }
 .book-draft-homebrewery { display: inline-flex; align-items: center; gap: .35rem; margin: 0; font-size: .85rem; cursor: pointer; }
 .book-draft-homebrewery .form-check-input { margin: 0; }
+
+/* A check box and its label side by side, in the reading direction (Bootstrap's .form-check pads and floats on the left, which breaks in right-to-left). */
+.line-check { display: inline-flex; align-items: center; gap: 0.4rem; }
+.line-check .form-check-input { margin: 0; flex: none; }
 .book-draft-more { position: relative; }
 .book-draft-menu { position: absolute; inset-inline-end: 0; top: calc(100% + 4px); z-index: 5; min-width: 12rem; padding: .25rem; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
 .book-draft-menu-item { display: flex; gap: .5rem; align-items: center; width: 100%; padding: .4rem .6rem; background: none; border: 0; border-radius: 3px; color: var(--text); text-align: start; font-size: .875rem; }

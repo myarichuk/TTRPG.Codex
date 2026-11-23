@@ -171,7 +171,7 @@ public sealed class RavenPreparedEncounterRepository(RavenDbService dbService) :
     }
 
     private static bool IsPlanId(string id) =>
-        id.StartsWith(PreparedEncounterDocument.IdPrefix, StringComparison.Ordinal) || Guid.TryParseExact(id, "D", out _);
+        Guid.TryParseExact(id.StartsWith(PreparedEncounterDocument.IdPrefix, StringComparison.Ordinal) ? id[PreparedEncounterDocument.IdPrefix.Length..] : id, "D", out _);
 
     /// <summary>The access as the campaign stores it now, when it is a GM's: the role is read again, so a co-GM demoted after their page resolved reads nothing more.
     /// A game system that is missing still reads.</summary>

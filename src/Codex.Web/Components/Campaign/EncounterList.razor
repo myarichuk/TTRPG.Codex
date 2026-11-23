@@ -1,0 +1,137 @@
+@using Codex.Persistence
+@inject PreparedEncounterService Encounters
+@inject ILogger<EncounterList> Logger
+
+@* The list of prepared encounters (ENCOUNTER_BUILDER_DESIGN.md 5.1): one row each with its name, place, creatures and status, filtered by place and status and
+   searched by name. Game master only; the section does not draw this for anyone else. *@
+
+<div class="page-header mb-3">
+    <div>
+        <h2 class="mb-0">@L["Encounters.Title"]</h2>
+        <p class="page-subtitle">@L["Encounters.Subtitle"]</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="@Ctx.BasePath/encounters/new" class="cx-btn cx-plaque" data-testid="encounter-new"><LucideIcon IconName="plus" Size="18" /> @L["Encounters.New"]</a>
+    </div>
+</div>
+
+@if (failed)
+{
+    <div class="empty" role="alert" data-testid="encounters-error"><p>@L["Encounters.Error.Load"]</p></div>
+}
+else if (rows == null)
+{
+    <LoadingSkeleton Rows="3" />
+}
+else if (rows.Count == 0)
+{
+    <div class="empty" data-testid="encounters-empty">
+        <div class="empty-icon"><LucideIcon IconName="swords" Size="28" /></div>
+        <h3>@L["Encounters.Empty.Title"]</h3>
+        <p>@L["Encounters.Empty.Body"]</p>
+        <a href="@Ctx.BasePath/encounters/new" class="cx-btn cx-plaque"><LucideIcon IconName="plus" Size="18" /> @L["Encounters.New"]</a>
+    </div>
+}
+else
+{
+    var shown = Shown();
+    <div class="toolbar">
+        <div class="search">
+            <LucideIcon IconName="search" Size="18" Class="search-icon" />
+            <label for="encounter-search" class="visually-hidden">@L["Encounters.Search"]</label>
+            <input id="encounter-search" type="search" class="field-input" placeholder="@L["Encounters.SearchPlaceholder"]" @bind="search" @bind:event="oninput" data-testid="encounter-search" />
+        </div>
+        <div>
+            <label for="encounter-place-filter" class="visually-hidden">@L["Encounters.FilterPlace"]</label>
+            <select id="encounter-place-filter" class="field-select" @bind="placeFilter" data-testid="encounter-place-filter">
+                <option value="">@L["Encounters.AllPlaces"]</option>
+                <option value="@NoPlace">@L["Encounters.NoPlace"]</option>
+                @foreach (var (key, label) in PlaceOptions())
+                {
+                    <option value="@key">@label</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label for="encounter-status-filter" class="visually-hidden">@L["Encounters.FilterStatus"]</label>
+            <select id="encounter-status-filter" class="field-select" @bind="statusFilter" data-testid="encounter-status-filter">
+                <option value="">@L["Encounters.AllStatuses"]</option>
+                @foreach (var status in Enum.GetValues<PreparedStatus>())
+                {
+                    <option value="@status">@L[$"Encounters.Status.{status}"]</option>
+                }
+            </select>
+        </div>
+    </div>
+    <p class="small-muted" role="status" data-testid="encounter-count">@L["Encounters.Count", shown.Count]</p>
+
+    @if (shown.Count == 0)
+    {
+        <p class="small-muted" data-testid="encounters-no-match">@L["Encounters.NoMatch"]</p>
+    }
+    else
+    {
+        <ul class="list-unstyled mb-0" data-testid="encounter-list">
+            @foreach (var row in shown)
+            {
+                <li class="list-row align-items-start" data-testid="encounter-row">
+                    <span class="avatar avatar-md avatar-flat" aria-hidden="true"><LucideIcon IconName="swords" Size="18" /></span>
+                    <div class="row-main">
+                        <div class="row-title"><a href="@Ctx.BasePath/encounters/@Uri.EscapeDataString(row.Route)" data-testid="encounter-open">@row.Plan.Name</a></div>
+                        <div class="row-sub" data-testid="encounter-place">@PlaceText(row)</div>
+                        <div class="row-sub" data-testid="encounter-summary">@(row.Summary.Length > 0 ? row.Summary : L["Encounters.NoCreatures"])</div>
+                    </div>
+                    <div class="row-actions">
+                        <span class="pill @(row.Status == PreparedStatus.Ready ? "pill-success" : "")" data-testid="encounter-status">@StatusText(row)</span>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+}
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private const string NoPlace = "none";
+
+    private IReadOnlyList<EncounterRow>? rows;
+    private bool failed;
+    private string search = string.Empty;
+    private string placeFilter = string.Empty;
+    private string statusFilter = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            rows = await Encounters.ListAsync(Ctx.Campaign, Ctx.Access);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "The prepared encounters of campaign {CampaignId} could not be listed", Ctx.Campaign.Id);
+            failed = true;
+        }
+    }
+
+    /// <summary>The places the plans stand in, once each, by their path.</summary>
+    private IEnumerable<(string Key, string Label)> PlaceOptions() => rows!
+        .Where(r => !string.IsNullOrEmpty(r.Plan.PlaceId))
+        .GroupBy(r => r.Plan.PlaceId!)
+        .Select(g => (Key: g.Key, Label: g.First().PlacePath ?? L["Encounters.PlaceGone"]))
+        .OrderBy(p => p.Label, StringComparer.CurrentCultureIgnoreCase);
+
+    private List<EncounterRow> Shown() => rows!
+        .Where(r => placeFilter.Length == 0 || (placeFilter == NoPlace ? string.IsNullOrEmpty(r.Plan.PlaceId) : r.Plan.PlaceId == placeFilter))
+        .Where(r => statusFilter.Length == 0 || r.Status.ToString() == statusFilter)
+        .Where(r => string.IsNullOrWhiteSpace(search) || r.Plan.Name.Contains(search.Trim(), StringComparison.CurrentCultureIgnoreCase))
+        .ToList();
+
+    private string PlaceText(EncounterRow row) =>
+        row.PlaceGone ? L["Encounters.PlaceGone"] : row.PlacePath ?? L["Encounters.NoPlace"];
+
+    private string StatusText(EncounterRow row) =>
+        row.Status == PreparedStatus.Ran && row.RunCount > 0
+            ? L["Encounters.RanTimes", row.RunCount]
+            : L[$"Encounters.Status.{row.Status}"];
+}

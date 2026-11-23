@@ -201,6 +201,10 @@ else
                             case "bestiary":
                                 <BestiarySection />
                                 break;
+                            case "encounters":
+                                @* The section draws nothing for anyone but the game master (see EncountersSection). *@
+                                <EncountersSection Route="@Arg1" />
+                                break;
                             case "sessions":
                                 <SessionsSection />
                                 break;
@@ -252,6 +256,7 @@ else
         {
             ("cast", "Cast", "users"),
             ("bestiary", "Bestiary", "paw-print"),
+            ("encounters", "Encounters", "swords"),
             ("world", "Places", "map"),
             ("wiki", "Wiki", "globe"),
             ("build", "World builder", "sparkles"),
@@ -268,9 +273,9 @@ else
 
     private static readonly (string Key, string Label, string Icon)[] Sections = Groups.SelectMany(g => g.Sections).ToArray();
 
-    /// <summary>The sections only the game master is offered: the world builder, the book and the Issues panel. A player is not shown them in the
+    /// <summary>The sections only the game master is offered: the world builder, the book, the Issues panel and the prepared encounters. A player is not shown them in the
     /// rail or the menu, and reaching one by its address shows an empty page.</summary>
-    public static bool IsDmOnly(string section) => section is "build" or "book" or "issues";
+    public static bool IsDmOnly(string section) => section is "build" or "book" or "issues" or "encounters";
 
     // The phone tab bar (U7): what each role reaches for at the table; everything else is under More. A player reads their
     // journal and the places the party knows; the DM runs the table with the cast and the wiki at hand.
@@ -305,6 +310,7 @@ else
         "journal" => L["Page.Campaign.Section.Journal"],
         "cast" => L["Page.Campaign.Section.Cast"],
         "bestiary" => L["Page.Campaign.Section.Bestiary"],
+        "encounters" => L["Page.Campaign.Section.Encounters"],
         "world" => L["Page.Campaign.Section.Places"],
         "wiki" => L["Page.Campaign.Section.Wiki"],
         "build" => L["Page.Campaign.Section.Build"],
