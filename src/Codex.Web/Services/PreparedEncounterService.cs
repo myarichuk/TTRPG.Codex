@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Codex.Core;
+using Codex.Core.Rules;
 using Codex.Persistence;
 using Codex.Persistence.Runtime;
 using Codex.Plugin.Abstractions;
@@ -19,7 +20,8 @@ public sealed record EncounterCheck(IReadOnlyList<EncounterIssue> Errors, IReadO
 }
 
 /// <summary>A plan on the list: its place's name and path, a one-line lineup, and how many times it has been run.</summary>
-public sealed record EncounterRow(PreparedEncounterDocument Plan, string? PlaceName, string? PlacePath, bool PlaceGone, string Summary, int LineCount, PreparedStatus Status, int RunCount)
+public sealed record EncounterRow(PreparedEncounterDocument Plan, string? PlaceName, string? PlacePath, bool PlaceGone, string Summary, int LineCount, PreparedStatus Status, int RunCount,
+    DifficultyRating? Rating = null)
 {
     /// <summary>What a URL carries for this plan.</summary>
     public string Route => PreparedEncounterService.RouteOf(Plan.Id);
@@ -70,14 +72,27 @@ public sealed record EncounterStart(bool Started, EncounterStartProblem? Problem
     public static EncounterStart Refused(EncounterStartProblem problem, EncounterCheck? check = null) => new(false, problem, null, 0, Array.Empty<string>(), false, check);
 }
 
+/// <summary>A party to rate for in place of the campaign's: a number of characters, all of one level. The readout's "Rate for a different party"; never stored.</summary>
+public sealed record PartyOverride(int Size, int Level);
+
+/// <summary>Whose party a rating is for: the campaign's characters, a <see cref="PartyOverride"/>, or a stand-in because the campaign has no characters yet.</summary>
+public enum PartySource { Campaign, Override, Default }
+
+/// <summary>A plan rated (ENCOUNTER_BUILDER_DESIGN.md 16): the rating, whose party it is for, the characters whose level is not known, the levels the "different party" form may take, and
+/// what the form is filled with when it opens (a stand-in party when the campaign has no characters).</summary>
+public sealed record EncounterRating(DifficultyRating Rating, PartySource Source, IReadOnlyList<string> UnknownLevels, int LevelFrom, int LevelTo, int DefaultSize, int DefaultLevel);
+
 /// <summary>
 /// The one place prepared encounters are read, checked, saved, deleted and started (ENCOUNTER_BUILDER_DESIGN.md 4.1, 4.2). GM only: every method answers nothing to anyone else, and the repository
-/// refuses them besides. The difficulty readout comes in a later step.
+/// refuses them besides. It also rates a lineup for the party (the difficulty readout, <see cref="RateAsync"/>).
 /// </summary>
 public sealed class PreparedEncounterService(IPreparedEncounterRepository plans, IRegionRepository regions, IActorRepository actors, CampaignLibrary library,
     IContentRegistry registry, CastService? cast = null, CampaignRuntimeManager? runtimes = null, ILogger<PreparedEncounterService>? logger = null)
 {
     public const int MaxCount = 20;
+
+    /// <summary>The most characters the readout rates for.</summary>
+    public const int MaxParty = 20;
 
     // One start per campaign at a time: a double click, or two GMs, must not make two sets of creatures. A second start is refused at once, not queued.
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _starting = new(StringComparer.Ordinal);
@@ -102,16 +117,39 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
             (await actors.GetVisibleForCampaignAsync(access)).GroupBy(a => a.Id).ToDictionary(g => g.Key, g => g.First()),
             await library.LookupAsync(campaign, access, culture));
 
-    public async Task<IReadOnlyList<EncounterRow>> ListAsync(CampaignDocument campaign, CampaignAccess access)
+    /// <summary>Every plan with its place and summary. When the system has a difficulty readout, each row also carries the rating for the campaign's party (read once for the whole list,
+    /// not once per plan); with no readout, or no characters in the campaign, the rating is null.</summary>
+    public async Task<IReadOnlyList<EncounterRow>> ListAsync(CampaignDocument campaign, CampaignAccess access, string? culture = null)
     {
         if (!access.IsDm) return Array.Empty<EncounterRow>();
         var all = await plans.ListAsync(access);
         var places = (await regions.GetVisibleForCampaignAsync(access)).ToList();
+        // A fault while rating must not hide the list: the rows come without a rating.
+        RateKit? kit = null;
+        try
+        {
+            kit = all.Count == 0 ? null : await KitAsync(campaign, access, culture);
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex, "Reading the party to rate the prepared encounters of campaign {CampaignId} failed", access.CampaignId);
+        }
+
         var rows = new List<EncounterRow>();
         foreach (var plan in all)
         {
             var (_, _, name, path, gone) = FindPlace(places, plan);
-            rows.Add(new EncounterRow(plan, name, path, gone, Summary(plan), plan.Lines.Count, plan.Status, plan.RunEncounterIds.Count));
+            EncounterRating? rating = null;
+            try
+            {
+                rating = kit == null ? null : RateWith(kit, plan, null);
+            }
+            catch (Exception ex)
+            {
+                logger?.LogWarning(ex, "Rating prepared encounter {Plan} failed", plan.Id);
+            }
+
+            rows.Add(new EncounterRow(plan, name, path, gone, Summary(plan), plan.Lines.Count, plan.Status, plan.RunEncounterIds.Count, rating is { Source: PartySource.Campaign } ? rating.Rating : null));
         }
 
         return rows;
@@ -245,9 +283,9 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
     /// <summary>The plans the table's menu offers (ENCOUNTER_BUILDER_DESIGN.md 5.2): Ready and Ran, never Draft. Those at the place last used come first; within each
     /// group, by name. The place last used is <paramref name="currentPlaceId"/> (the live encounter's place) when there is one, else the place of the plan started
     /// most recently (<see cref="PreparedEncounterDocument.LastRunAt"/>). Empty for anyone but a GM.</summary>
-    public async Task<IReadOnlyList<EncounterRow>> StartChoicesAsync(CampaignDocument campaign, CampaignAccess access, string? currentPlaceId)
+    public async Task<IReadOnlyList<EncounterRow>> StartChoicesAsync(CampaignDocument campaign, CampaignAccess access, string? currentPlaceId, string? culture = null)
     {
-        var rows = (await ListAsync(campaign, access)).Where(r => r.Status != PreparedStatus.Draft).ToList();
+        var rows = (await ListAsync(campaign, access, culture)).Where(r => r.Status != PreparedStatus.Draft).ToList();
         var last = !string.IsNullOrEmpty(currentPlaceId)
             ? currentPlaceId
             : rows.Where(r => r.Plan.LastRunAt != null).OrderByDescending(r => r.Plan.LastRunAt).FirstOrDefault()?.Plan.PlaceId;
@@ -422,6 +460,125 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
         finally
         {
             gate.Release();
+        }
+    }
+
+    // ---- The difficulty readout (ENCOUNTER_BUILDER_DESIGN.md 2.1 and 16) ----
+
+    /// <summary>What a rating reads once, however many plans it rates: the system's rules (their labels in the reader's language), the cast, the Library and the party's characters.</summary>
+    private sealed record RateKit(SystemDefinition System, DifficultyRules Rules, IReadOnlyDictionary<string, ActorDocument> Cast, Func<string, string, bool, LibraryItem?> Lookup,
+        IReadOnlyList<ActorDocument> Party, string ValueKey, string LevelKey, string ValueLabel);
+
+    /// <summary>Rates a plan (the saved one, or the page's unsaved copy) against the campaign's party, or against <paramref name="party"/> when given. Null when the system declares no
+    /// difficulty block, and for anyone but a GM. The rules' labels (bands, unit) are worded in <paramref name="culture"/>.</summary>
+    public async Task<EncounterRating?> RateAsync(CampaignDocument campaign, CampaignAccess access, PreparedEncounterDocument plan, PartyOverride? party = null, string? culture = null)
+    {
+        var kit = await KitAsync(campaign, access, culture);
+        return kit == null ? null : RateWith(kit, plan, party);
+    }
+
+    private async Task<RateKit?> KitAsync(CampaignDocument campaign, CampaignAccess access, string? culture)
+    {
+        if (!access.IsDm || library.Definition(campaign) is not { Encounters.Difficulty: not null } system) return null;
+        var shown = system.Localize(culture);
+        var rules = shown.Encounters!.Difficulty!;
+        var all = (await actors.GetVisibleForCampaignAsync(access)).GroupBy(a => a.Id).Select(g => g.First()).ToList();
+        // A companion or familiar is a player-character actor too, but not one of the party; a retired character is out of play.
+        var party = all.Where(a => a.Kind == ActorKind.PlayerCharacter && !a.Retired && Codex.Core.Rules.SheetLayout.IsPartyMember(system, a.Sheet)).ToList();
+        var valueKey = (rules.Shape == DifficultyRules.ShapeSum ? rules.CreatureValue : rules.CreatureLevel) ?? string.Empty;
+        var label = shown.EntityTypes.Where(t => t.ActorBlueprint).SelectMany(t => t.Fields).FirstOrDefault(f => f.Key == valueKey)?.Label;
+        return new RateKit(system, rules, all.ToDictionary(a => a.Id), await library.LookupAsync(campaign, access, culture), party, valueKey,
+            (string.IsNullOrWhiteSpace(rules.PartyLevel) ? system.FieldRoles.Level : rules.PartyLevel) ?? string.Empty, string.IsNullOrWhiteSpace(label) ? valueKey : label);
+    }
+
+    private EncounterRating RateWith(RateKit kit, PreparedEncounterDocument plan, PartyOverride? party)
+    {
+        var rules = kit.Rules;
+        var (from, to) = LevelRange(kit);
+        var byLevel = rules.Shape == DifficultyRules.ShapeByLevel;
+        var defaultSize = Math.Clamp(byLevel ? rules.PartySize ?? 4 : 4, 1, MaxParty);
+        var unknown = new List<string>();
+        List<int> levels;
+        PartySource source;
+        if (party != null)
+        {
+            levels = Enumerable.Repeat(party.Level, Math.Clamp(party.Size, 1, MaxParty)).ToList();
+            source = PartySource.Override;
+        }
+        else if (kit.Party.Count == 0)
+        {
+            levels = Enumerable.Repeat(from, defaultSize).ToList();
+            source = PartySource.Default;
+        }
+        else
+        {
+            levels = new List<int>();
+            foreach (var character in kit.Party)
+            {
+                if (LevelOf(character, kit.LevelKey) is { } level) levels.Add(level);
+                else unknown.Add(character.Name);
+            }
+
+            source = PartySource.Campaign;
+            if (unknown.Count > 0)
+            {
+                return new EncounterRating(DifficultyRating.None(new DifficultyIssue("Encounters.Difficulty.LevelUnknown", string.Join(", ", unknown), unknown.Count)), source, unknown, from, to, defaultSize, from);
+            }
+        }
+
+        var lines = plan.Lines.Select(l => RatedLineOf(kit, l)).ToList();
+        return new EncounterRating(EncounterDifficulty.Rate(rules, levels, lines), source, unknown, from, to, defaultSize, from);
+    }
+
+    /// <summary>The levels the "different party" form offers: a <c>sum</c> block's first and last budget row; for <c>byLevel</c>, which has no rows, the level field's own bounds (1 to 20 when it has none).</summary>
+    private static (int From, int To) LevelRange(RateKit kit)
+    {
+        if (kit.Rules.Shape == DifficultyRules.ShapeSum)
+        {
+            var levels = kit.Rules.Budget.Select(r => int.TryParse(r.GetValueOrDefault("level"), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var l) ? l : (int?)null)
+                .OfType<int>().ToList();
+            if (levels.Count > 0) return (levels.Min(), levels.Max());
+        }
+
+        var field = kit.System.ActorFields.FirstOrDefault(f => f.Key == kit.LevelKey);
+        return ((int)(field?.Min ?? 1), (int)(field?.Max ?? 20));
+    }
+
+    /// <summary>A character's level from their sheet: a whole number, or null (missing, or not a number).</summary>
+    private static int? LevelOf(ActorDocument character, string key) =>
+        character.Sheet.TryGetValue(key, out var raw) && YamlValues.ToNumber(raw) is { } number && number == Math.Floor(number) && Math.Abs(number) < int.MaxValue ? (int)number : null;
+
+    private RatedLine RatedLineOf(RateKit kit, PreparedLine line)
+    {
+        var key = kit.ValueKey;
+        var name = string.IsNullOrWhiteSpace(line.Name) ? line.EntryId : line.Name;
+        switch (line.Kind)
+        {
+            case PreparedLineKind.Hazard:
+                return new RatedLine(name, 1, null, Hazard: true);
+            case PreparedLineKind.CastMember:
+            {
+                if (string.IsNullOrEmpty(line.ActorId) || !kit.Cast.TryGetValue(line.ActorId, out var actor))
+                {
+                    return new RatedLine(name, 1, null, new DifficultyIssue("Encounters.Difficulty.NoActor", name));
+                }
+
+                // The sheet first (a creature made from a stat block has its properties on it); else the Library entry it was made from, when it was made from a pack's.
+                var value = actor.Sheet.TryGetValue(key, out var onSheet) ? YamlValues.ToNumber(onSheet) : null;
+                if (value == null && !string.IsNullOrEmpty(actor.BlueprintId) && registry.GetActor(actor.BlueprintId) is { } blueprint)
+                {
+                    value = blueprint.Properties.TryGetValue(key, out var onBlueprint) ? YamlValues.ToNumber(onBlueprint) : null;
+                }
+
+                return new RatedLine(actor.Name, 1, value, value == null ? new DifficultyIssue("Encounters.Difficulty.NoValue", actor.Name, kit.ValueLabel) : null);
+            }
+            default:
+            {
+                var item = kit.Lookup(line.EntryType, line.EntryId, line.IsHomebrew);
+                if (item == null) return new RatedLine(name, Math.Max(0, line.Count), null, new DifficultyIssue("Encounters.Difficulty.NoEntry", name));
+                var value = item.Entry.Properties.TryGetValue(key, out var raw) ? YamlValues.ToNumber(raw) : null;
+                return new RatedLine(item.Entry.Name, Math.Max(0, line.Count), value, value == null ? new DifficultyIssue("Encounters.Difficulty.NoValue", item.Entry.Name, kit.ValueLabel) : null);
+            }
         }
     }
 

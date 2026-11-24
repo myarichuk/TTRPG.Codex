@@ -31,6 +31,9 @@ public class SystemTranslation
     /// <summary>Labels of the sheet rules (derived stats, pick lists, skills, slot pools...).</summary>
     public SheetRulesTranslation SheetRules { get; set; } = new();
 
+    /// <summary>The words of the encounter difficulty readout (band labels, the unit after the total).</summary>
+    public EncounterTranslation Encounters { get; set; } = new();
+
     /// <summary>The word in "Hit Points (max)": what a resource's maximum field is called after its label. Default "max".</summary>
     public string? MaxSuffix { get; set; }
 

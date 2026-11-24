@@ -83,6 +83,10 @@ else
                         <div class="row-sub" data-testid="encounter-summary">@(row.Summary.Length > 0 ? row.Summary : L["Encounters.NoCreatures"])</div>
                     </div>
                     <div class="row-actions">
+                        @if (DifficultyText.Word(row.Rating, L) is { } band)
+                        {
+                            <span class="pill" data-testid="encounter-difficulty"><span class="visually-hidden">@L["Encounters.Difficulty.Title"]: </span>@band</span>
+                        }
                         <span class="pill @(row.Status == PreparedStatus.Ready ? "pill-success" : "")" data-testid="encounter-status">@StatusText(row)</span>
                     </div>
                 </li>
@@ -106,7 +110,7 @@ else
     {
         try
         {
-            rows = await Encounters.ListAsync(Ctx.Campaign, Ctx.Access);
+            rows = await Encounters.ListAsync(Ctx.Campaign, Ctx.Access, L.Culture.Name);
         }
         catch (Exception ex)
         {

@@ -188,6 +188,10 @@
       "$ref": "#/$defs/HazardRules",
       "description": "What the system says about hazards beyond the type's own fields: how hard a hazard of each level is. Absent on a system with no hazard type."
     },
+    "encounters": {
+      "$ref": "#/$defs/EncounterRules",
+      "description": "What the system says about encounters: how hard a lineup is for the party. Absent: the encounter builder shows no difficulty readout."
+    },
     "rolls": {
       "type": "array",
       "items": {
@@ -5168,6 +5172,150 @@
             }
           },
           "description": "Rows by level, and by severity where the system has one: each is `{ level: 5, severity: Deadly, saveDc: 13-15, damage: 14-24 }`. `level` (a whole number) and `severity` (the system's own word, matched against the field the hazard type's `severity` names, ignoring case) are row keys; every other key names a field of the hazard type, and its value is a whole number, dice, or a range `low-high` (whole numbers for a Number field, averages for the damage field). A hazard reads the rows of its own severity, or the rows with no severity when it has none or a word no row uses; the row with the highest level not above the hazard's applies. The homebrew wizard fills a new hazard's numbers from it, and the world builder warns the game master when a proposed hazard's numbers are more than one row away from its level (`HazardNumbers.ScalingProblems`). Guidance only; nothing is refused."
+        }
+      },
+      "additionalProperties": false
+    },
+    "EncounterRules": {
+      "description": "What the system says about encounters (`encounters:` in system.yaml): for now, how hard a lineup is for the party. Absent: the encounter builder shows no difficulty at all.",
+      "type": "object",
+      "properties": {
+        "difficulty": {
+          "$ref": "#/$defs/DifficultyRules",
+          "description": "How hard a lineup is for the party: a total of the creatures' values compared with budgets for the party, which names a band (Low, Moderate, High). Absent: no readout. Every number is the system's own; the app ships none."
+        }
+      },
+      "additionalProperties": false
+    },
+    "DifficultyRules": {
+      "description": "The difficulty readout of a prepared encounter. Two shapes. `sum`: each creature is worth a number from its entry (`creatureValue`), and the party's budget for a band is the sum, over the characters, of that band's number in the `budget` row of the character's level. `byLevel`: each creature is worth a number by how far its level is from the party's (`creatureLevel` and `values`), and each band has one budget for a party of `partySize`, with a number added or taken for each character more or fewer. A creature a line cannot value is named and left out; the band is given from the rest. Fields of the other shape are an error.",
+      "type": "object",
+      "properties": {
+        "shape": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Required: `sum` or `byLevel`."
+        },
+        "partyLevel": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The actor field (a Number) holding a player character's level. Default: the `fieldRoles.level` field. Neither: the system is refused."
+        },
+        "bands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DifficultyBand"
+          },
+          "description": "The bands, easiest first: `{ key: low, label: Low }`. At least one. Keys start with a lower-case letter and carry letters and digits (under `sum` the key `level` is reserved, since a budget row has it too); labels are translated in `system.<locale>.yaml` (`encounters.difficulty.bands`), keys never are. Under `byLevel` each band also carries its budget, `{ key: low, label: Low, value: 40, perCharacter: 10 }`."
+        },
+        "pick": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "How a total names a band. `atMost` (the default): a band's budget is the most it allows, and the total is in the first band whose budget it does not pass; a total above the last budget is \"above\" the last band. `atLeast`: a band's budget is what it starts at, and the total is in the last band whose budget it reaches; a total below the first is \"below\" the first band."
+        },
+        "creatureValue": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "`sum` only: the Number field of a creature type (one marked `actorBlueprint`) that says what a creature is worth, such as `xp`. It must be a Number wherever a creature type has it."
+        },
+        "unit": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "`sum` only: a short word shown after the total (\"250 XP\"). Translated. None: the bare number."
+        },
+        "creatureLevel": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "`byLevel` only: the Number field of a creature type that says the creature's level. Same rule as CreatureValue."
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DifficultyValue"
+          },
+          "description": "`byLevel` only: what a creature is worth by its level minus the party's level: `{ delta: 0, value: 10 }`. The deltas go up by exactly one, with no gap. A creature whose delta is not listed is named as one the table cannot value."
+        },
+        "partySize": {
+          "type": "integer",
+          "description": "`byLevel` only: the number of characters the Budget values are written for (1 or more)."
+        },
+        "budget": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            }
+          },
+          "description": "`sum` only: the budgets, one row per character level in increasing level order, each `{ level: 3, low: 20, moderate: 40, high: 60 }`: a whole number per band key, per character, never smaller than the band before it. (Under `byLevel` each band carries its own budget.)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DifficultyBand": {
+      "description": "One band of the readout: a key the rules use and a label the page shows.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The band's key: a lower-case letter, then letters and digits. Never translated."
+        },
+        "label": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The word shown for the band. Translated."
+        },
+        "value": {
+          "type": "integer",
+          "description": "`byLevel` only (required there): the band's budget for `partySize` characters, a whole number of zero or more."
+        },
+        "perCharacter": {
+          "type": "integer",
+          "description": "`byLevel` only (required there): what is added to Value for each character above `partySize`, and taken for each below it; a whole number of zero or more. A budget is never below zero, and bands may not cross for any party of 1 to 20."
+        }
+      },
+      "additionalProperties": false
+    },
+    "DifficultyValue": {
+      "description": "What a creature is worth at one distance from the party's level.",
+      "type": "object",
+      "properties": {
+        "delta": {
+          "type": "integer",
+          "description": "Required: the creature's level minus the party's level."
+        },
+        "value": {
+          "type": "integer",
+          "description": "Required: what the creature is worth, a whole number of zero or more."
         }
       },
       "additionalProperties": false

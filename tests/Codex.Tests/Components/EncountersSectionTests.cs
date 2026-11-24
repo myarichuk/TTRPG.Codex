@@ -229,7 +229,7 @@ public class EncountersSectionTests : ComponentTestBase
         Assert.Contains("Hidden", hazards[1].TextContent);
         Assert.Equal("/campaigns/c1/world#place-vault", hazards[1].QuerySelector("a")!.GetAttribute("href"));
 
-        // No table runs here, so there is no start button (the link to the table is its own test); rating it is a later step.
+        // No table runs here, so there is no start button (the link to the table is its own test). This system declares no difficulty block, so there is no readout either.
         Assert.DoesNotContain("Start at the table", cut.Markup);
         Assert.DoesNotContain("Difficulty", cut.Markup);
     }
