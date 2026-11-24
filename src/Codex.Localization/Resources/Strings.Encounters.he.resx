@@ -130,4 +130,5 @@
   <data name="Encounters.Difficulty.Level" xml:space="preserve"><value>רמה</value></data>
   <data name="Encounters.Difficulty.DifferentHint" xml:space="preserve"><value>זה משנה רק את מה שמוצג כאן. הוא לא נשמר.</value></data>
   <data name="Encounters.Difficulty.UseCampaign" xml:space="preserve"><value>שימוש בקבוצת הקמפיין</value></data>
+  <data name="Encounters.BuildWithAi" xml:space="preserve"><value>בנייה באמצעות AI</value></data>
 </root>

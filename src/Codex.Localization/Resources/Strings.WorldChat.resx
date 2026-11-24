@@ -188,4 +188,27 @@
   <data name="WorldChat.Proposal.SheetNow" xml:space="preserve"><value>Now</value></data>
   <data name="WorldChat.Proposal.SheetThen" xml:space="preserve"><value>After</value></data>
   <data name="WorldChat.Proposal.SheetCleared" xml:space="preserve"><value>cleared</value></data>
+  <data name="WorldChat.Kind.encounter" xml:space="preserve"><value>Encounters</value></data>
+  <data name="WorldChat.Edit.Encounter" xml:space="preserve"><value>changes the encounter</value></data>
+  <data name="WorldChat.Proposal.DeletesEncounter" xml:space="preserve"><value>Deletes the encounter “{0}”. This cannot be undone.</value></data>
+  <data name="WorldChat.Proposal.Encounter.Place" xml:space="preserve"><value>Set in {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.NoPlace" xml:space="preserve"><value>No place</value></data>
+  <data name="WorldChat.Proposal.Encounter.Lineup" xml:space="preserve"><value>Who is in it</value></data>
+  <data name="WorldChat.Proposal.Encounter.Empty" xml:space="preserve"><value>Nobody yet</value></data>
+  <data name="WorldChat.Proposal.Encounter.Hidden" xml:space="preserve"><value>starts hidden</value></data>
+  <data name="WorldChat.Proposal.Encounter.Status" xml:space="preserve"><value>Status: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.Notes" xml:space="preserve"><value>Notes</value></data>
+  <data name="WorldChat.Proposal.Encounter.Readout" xml:space="preserve"><value>Difficulty: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.Hazards" xml:space="preserve"><value>Hazards at the place: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.PlaceChange" xml:space="preserve"><value>Place: changes from {0} to {1}</value></data>
+  <data name="WorldChat.Proposal.Encounter.StatusChange" xml:space="preserve"><value>Status: changes from {0} to {1}</value></data>
+  <data name="WorldChat.Proposal.Encounter.LineupBefore" xml:space="preserve"><value>Now: {0}</value></data>
+  <data name="WorldChat.Tool.Encounters" xml:space="preserve"><value>Looked at the prepared encounters</value></data>
+  <data name="WorldChat.Tool.Encounter" xml:space="preserve"><value>Read the encounter “{0}”</value></data>
+  <data name="WorldChat.Tool.Hazards" xml:space="preserve"><value>Looked at the hazards at “{0}”</value></data>
+  <data name="WorldChat.Tool.Rate" xml:space="preserve"><value>Rated a lineup (lines: {0})</value></data>
+  <data name="WorldChat.Starter.encounter.Label" xml:space="preserve"><value>An encounter</value></data>
+  <data name="WorldChat.Starter.encounter.Text" xml:space="preserve"><value>Prepare an encounter for the next session: where it takes place, who is in it, and how it could end other than by killing everyone. </value></data>
+  <data name="WorldChat.Starter.encounter.TextAt" xml:space="preserve"><value>Prepare an encounter at {0}: build on what is already there, and say in the notes what the creatures want. </value></data>
+  <data name="WorldChat.Can.Encounters" xml:space="preserve"><value>Prepared encounters: a place, a lineup and notes, ready for you to start at the table.</value></data>
 </root>

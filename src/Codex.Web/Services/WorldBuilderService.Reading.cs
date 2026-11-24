@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Codex.Core;
 using Codex.Core.AI;
+using Codex.Core.Rules;
 using Codex.Core.Systems;
 using Codex.Core.WorldBuilder;
 using Codex.Localization;
@@ -28,7 +29,29 @@ public sealed partial class WorldBuilderService
             system?.Canonical.Ai.Creature ?? "creature",
             system?.Canonical.Ai.CreatureExamples,
             await OutlinesAsync(access),
-            HazardsOf(system));
+            HazardsOf(system),
+            await PartyOfAsync(system, access));
+    }
+
+    // The party as the prompt tells it: how many characters, and their levels where the sheets give a whole one. Null with no party members, so a campaign with none says nothing.
+    private async Task<WorldChatParty?> PartyOfAsync(SystemDefinition? system, CampaignAccess access)
+    {
+        if (system == null) return null;
+        var members = (await actorRepository.GetVisibleForCampaignAsync(access))
+            .Where(a => a.Kind == ActorKind.PlayerCharacter && !a.Retired && SheetLayout.IsPartyMember(system, a.Sheet)).ToList();
+        if (members.Count == 0) return null;
+        var key = system.FieldRoles.Level;
+        var levels = new List<int>();
+        if (!string.IsNullOrWhiteSpace(key))
+        {
+            foreach (var member in members)
+            {
+                var number = member.Sheet.TryGetValue(key, out var raw) ? YamlValues.ToNumber(raw) : null;
+                if (number is { } level && level == Math.Floor(level) && level > 0 && level < 1000) levels.Add((int)level);
+            }
+        }
+
+        return new WorldChatParty(members.Count, levels.Order().ToList());
     }
 
     // The one line the prompt carries about hazards: the type, its level field and the columns of the system's scaling table (names only).
@@ -131,6 +154,7 @@ public sealed partial class WorldBuilderService
                 case EditTarget.Fact: return await FactTextAsync(targetId, access);
                 case EditTarget.Region: return await RegionTextAsync(targetId, access);
                 case EditTarget.Sheet: return await SheetTextAsync(targetId, campaign, access);
+                case EditTarget.Encounter: return campaign == null ? null : await EncounterAsync(campaign, access, key);
             }
 
             key = key[WorldBundle.ExistingPrefix.Length..];

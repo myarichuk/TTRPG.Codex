@@ -64,7 +64,7 @@ public sealed partial class WorldChat
 
             // Each entry is kept in the chat the moment it is stored, so an apply cut short by anything (a failure, a closed tab,
             // a restart) leaves a chat that knows what it made: Apply again only adds the rest.
-            result = await builder.SaveAsync(campaign, access, proposal, ct, SaveAsync);
+            result = await builder.SaveAsync(campaign, access, proposal, ct, SaveAsync, Document.Id);
         }
         catch (Exception ex) when (!IsStale(ex))
         {
@@ -95,13 +95,15 @@ public sealed partial class WorldChat
         made.AddRange(result.Actors.Select(actor => $"cast member \"{actor.Name}\""));
         made.AddRange(result.Entries.Select(entry => $"homebrew existing:{WorldBundle.HomebrewPrefix}{entry.Type}/{entry.EntryId} \"{entry.Name}\""));
         if (result.Facts.Count > 0) made.Add($"{result.Facts.Count} secret(s) in Lore");
+        made.AddRange(result.Plans.Select(plan => $"prepared encounter existing:{WorldBundle.EncounterPrefix}{PreparedEncounterService.RouteOf(plan.Id)} \"{plan.Name}\" ({(plan.Status == PreparedStatus.Ready ? "ready" : "a draft")}, not started)"));
         if (made.Count > 0) note.Append(" New, and hidden from the players until the game master reveals them: " + string.Join("; ", made) + ".");
         foreach (var change in result.Changes)
         {
             var what = change.Target switch
             {
                 EditTarget.Place => "description of the place", EditTarget.Actor => "history of the cast member", EditTarget.Homebrew => "homebrew entry",
-                EditTarget.Region => "region", EditTarget.Fact => "secret in Lore", EditTarget.Sheet => "sheet of the cast member", _ => "text of the page"
+                EditTarget.Region => "region", EditTarget.Fact => "secret in Lore", EditTarget.Sheet => "sheet of the cast member",
+                EditTarget.Encounter => "prepared encounter", _ => "text of the page"
             };
             if (change.Removed)
             {
@@ -112,6 +114,7 @@ public sealed partial class WorldChat
                     EditTarget.Actor => "cast member \"{0}\" was retired: out of play, but their page and mentions remain.",
                     EditTarget.Homebrew => "homebrew entry \"{0}\" is gone.",
                     EditTarget.Fact => "secret \"{0}\" is gone from Lore.",
+                    EditTarget.Encounter => "prepared encounter \"{0}\" is gone; its creatures, its place and any fight already started from it are untouched.",
                     _ => "page \"{0}\" is gone."
                 };
                 note.Append(" Deleted: the " + string.Format(System.Globalization.CultureInfo.InvariantCulture, gone, change.Name));
@@ -171,6 +174,7 @@ public sealed partial class WorldChat
         "actor" => $"cast member \"{link.Name}\"",
         "homebrew" => $"homebrew existing:{WorldBundle.HomebrewPrefix}{link.Id} \"{link.Name}\"",
         "bestiary" => $"\"{link.Name}\" on the Bestiary",
+        "encounter" => $"prepared encounter existing:{WorldBundle.EncounterPrefix}{link.Id} \"{link.Name}\"",
         "lore" => $"{link.Name} secret(s) in Lore",
         "tags" => $"tags changed on {link.Name} page(s) or entries",
         _ => $"the change to \"{link.Name}\""
@@ -186,6 +190,7 @@ public sealed partial class WorldChat
         links.AddRange(result.Places.Where(p => result.Pages.All(page => page.Id != p.WikiPageId)).Select(p => new WorldChatLink { Kind = "place", Id = p.Id, Name = p.Name }));
         links.AddRange(result.Entries.Select(e => new WorldChatLink { Kind = "homebrew", Id = $"{e.Type}/{e.EntryId}", Name = e.Name }));
         links.AddRange(result.Changes.Where(c => !c.Removed).Select(c => new WorldChatLink { Kind = "change-" + c.Target.ToString().ToLowerInvariant(), Id = c.Id, Name = c.Name }));
+        links.AddRange(result.Plans.Select(p => new WorldChatLink { Kind = "encounter", Id = PreparedEncounterService.RouteOf(p.Id), Name = p.Name }));
         links.AddRange(result.Shortlisted.Select(b => new WorldChatLink { Kind = "bestiary", Id = $"{b.EntryType}/{b.EntryId}", Name = b.Name }));
         if (result.Retagged > 0) links.Add(new WorldChatLink { Kind = "tags", Name = result.Retagged.ToString(System.Globalization.CultureInfo.InvariantCulture) });
         if (result.Facts.Count > 0) links.Add(new WorldChatLink { Kind = "lore", Name = result.Facts.Count.ToString(System.Globalization.CultureInfo.InvariantCulture) });

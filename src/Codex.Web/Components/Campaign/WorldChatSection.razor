@@ -325,7 +325,7 @@ else if (chat != null)
     /// "with AI" buttons; it opens a new chat.</summary>
     [Parameter] public string? Starter { get; set; }
 
-    private static readonly string[] StarterKeys = { "settlement", "faction", "quest", "people", "homebrew", "variant", "revise", "tags" };
+    private static readonly string[] StarterKeys = { "settlement", "faction", "quest", "people", "homebrew", "variant", "revise", "tags", "encounter" };
 
     private WorldChat? chat;
     private IReadOnlyList<WorldChatSummary> chats = Array.Empty<WorldChatSummary>();
@@ -413,10 +413,22 @@ else if (chat != null)
 
     protected override async Task OnParametersSetAsync()
     {
-        if (chat == null || Starter == null || Starter == startedWith) return;
-        startedWith = Starter;
+        // The address's own query counts (an encounter at another place is another start).
+        // Leaving the starter's address forgets it, so coming back to the same link fills the box again.
+        if (Starter == null) startedWith = null;
+        var startKey = Starter == null ? null : Starter + new Uri(Nav.Uri).Query;
+        if (chat == null || Starter == null || startKey == startedWith) return;
+        startedWith = startKey;
         if (!StarterKeys.Contains(Starter)) return;
         if (chat.Lines.Count > 0 || chat.IsBusy) await ShowAsync(Sessions.New(Ctx.Campaign, Ctx.Access));
+        if (Starter == "encounter")
+        {
+            var place = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query).TryGetValue("place", out var p) ? p.ToString() : null;
+            var placeName = string.IsNullOrWhiteSpace(place) ? null : await Builder.PlaceNameAsync(Ctx.Access, place);
+            SetDraft(placeName == null ? L["WorldChat.Starter.encounter.Text"] : L["WorldChat.Starter.encounter.TextAt", placeName]);
+            return;
+        }
+
         if (Starter == "homebrew")
         {
             var type = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query).TryGetValue("type", out var t) ? t.ToString() : null;

@@ -98,6 +98,27 @@ public sealed partial class WorldChat
                 "Lists what the app's own checks found wrong or missing in the campaign (broken links, secrets that may leak, empty histories), most severe first, at most 50. " +
                 "The checks are code: you never judge whether something is broken. An edit entry fixes one by naming its id in \"resolves\"."),
             AIFunctionFactory.Create(
+                ([Description("A place as list_places gives it (existing:place:<id>); the encounters at it and under it. Leave it out to list them all.")] string? place = null) =>
+                    Step("list_encounters", new { place }, string.IsNullOrWhiteSpace(place) ? null : place.Trim(), null, () => builder.ListEncountersAsync(campaign, access, place)),
+                "list_encounters",
+                "Lists the prepared encounters, one line each: its key (existing:encounter:<id>), its place, its lineup in short, its status and, where the system rates difficulty, the band. GM only."),
+            AIFunctionFactory.Create(
+                ([Description("An encounter's key, as list_encounters gives it: existing:encounter:<id>.")] string encounter) =>
+                    Step("get_encounter", new { encounter }, encounter, null,
+                        async () => await builder.EncounterAsync(campaign, access, encounter) ?? $"There is no prepared encounter \"{encounter}\". Use list_encounters to find one."),
+                "get_encounter",
+                "Reads one prepared encounter in full: each line with its key, count and note, its notes, the hazards at its place and the difficulty readout. Read it before you change it."),
+            AIFunctionFactory.Create(
+                ([Description("A place's key, as list_places gives it: existing:place:<id>.")] string place) =>
+                    Step("place_hazards", new { place }, place, null, () => builder.PlaceHazardsAsync(campaign, access, place)),
+                "place_hazards",
+                "Lists the hazards at a place and under it (their keys, names, states and whether they take a turn), and the creatures its features say live there. Build an encounter on what the place already has."),
+            AIFunctionFactory.Create(
+                ([Description("The lineup to rate: the same lines an encounter's \"creatures\" take (each \"entry\" and \"count\"), of Library, homebrew or cast entries that exist already.")] List<ProposalCreature> creatures) =>
+                    Step("rate_encounter", new { creatures }, null, creatures?.Count ?? 0, () => builder.RateEncounterAsync(campaign, access, creatures)),
+                "rate_encounter",
+                "Rates a draft lineup for the party, so you can try a lineup before you propose it. Says so when the system declares no difficulty."),
+            AIFunctionFactory.Create(
                 (AdditionInput additions) =>
                     Step("add_entries", additions, null, additions.Entries?.Count ?? 0, () => WithGearAsync(AddEntriesAsync(additions)), data: false),
                 "add_entries",
@@ -243,6 +264,9 @@ public sealed partial class WorldChat
                     draft.BeforeProperties = old.BeforeProperties;
                     draft.BeforeTags = old.BeforeTags;
                     draft.BeforeSheet = old.BeforeSheet;
+                    draft.BeforePlace = old.BeforePlace;
+                    draft.BeforeLineup = old.BeforeLineup;
+                    draft.BeforeStatus = old.BeforeStatus;
                 }
             }
             else
@@ -261,11 +285,16 @@ public sealed partial class WorldChat
             DraftKinds.Edit => string.Equals(old.Target, draft.Target, StringComparison.OrdinalIgnoreCase) && old.Body == draft.Body && old.Remove == draft.Remove
                 && old.Rename == draft.Rename && old.MoveTo == draft.MoveTo && old.Parent == draft.Parent && old.PlaceKind == draft.PlaceKind
                 && old.RegionKind == draft.RegionKind && old.SuggestedStats == draft.SuggestedStats
+                && old.Place == draft.Place && old.PlaceGiven == draft.PlaceGiven && old.LineupGiven == draft.LineupGiven && old.Status == draft.Status && old.Retag == draft.Retag
+                && old.Tags.SequenceEqual(draft.Tags, StringComparer.Ordinal) && SameLineup(old.Lineup, draft.Lineup)
                 && old.SheetSet.OrderBy(p => p.Key, StringComparer.Ordinal).SequenceEqual(draft.SheetSet.OrderBy(p => p.Key, StringComparer.Ordinal)) && old.SheetClear.SequenceEqual(draft.SheetClear),
             DraftKinds.Tags => false, // tagging again changes nothing that is already tagged
             _ => new[] { old.OutlineName, old.Name }.Any(name => string.Equals(name.Trim(), draft.Name.Trim(), StringComparison.OrdinalIgnoreCase))
         };
     }
+
+    private static bool SameLineup(List<DraftLine> a, List<DraftLine> b) =>
+        a.Count == b.Count && a.Zip(b).All(p => string.Equals(p.First.Entry, p.Second.Entry, StringComparison.OrdinalIgnoreCase) && p.First.Count == p.Second.Count && p.First.Note == p.Second.Note && p.First.Hidden == p.Second.Hidden);
 
     private async Task<string> ProposeAsync(ProposalInput input, string tool = "propose_changes", string with = "the whole proposal", bool fresh = true)
     {
@@ -293,8 +322,11 @@ public sealed partial class WorldChat
 
         Proposal = check.Bundle;
         Document.ProposalWarnings = check.Warnings.ToList();
+        // The difficulty of an encounter is information for the model to weigh, never a warning: nothing is wrong with a hard fight.
+        var readouts = check.Bundle.Drafts.Where(d => d.Readout != null).Select(d => $"{d.Name}: {d.Readout}").ToList();
         return $"The proposal ({check.Bundle.Drafts.Count} entries) is ready for the game master to review and apply; nothing is saved yet. Tell them in a sentence or two what it adds." +
-               (check.Warnings.Count > 0 ? "\nWarnings (fix them with a new proposal if they matter):\n" + Fenced("- " + string.Join("\n- ", check.Warnings)) : "");
+               (check.Warnings.Count > 0 ? "\nWarnings (fix them with a new proposal if they matter):\n" + Fenced("- " + string.Join("\n- ", check.Warnings)) : "") +
+               (readouts.Count > 0 ? "\nDifficulty readout for the party (information, not a problem):\n" + Fenced("- " + string.Join("\n- ", readouts)) : "");
     }
 
     private static readonly JsonSerializerOptions ProposalJson = new()

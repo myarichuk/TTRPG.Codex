@@ -188,4 +188,27 @@
   <data name="WorldChat.Proposal.SheetNow" xml:space="preserve"><value>עכשיו</value></data>
   <data name="WorldChat.Proposal.SheetThen" xml:space="preserve"><value>אחרי</value></data>
   <data name="WorldChat.Proposal.SheetCleared" xml:space="preserve"><value>נמחק</value></data>
+  <data name="WorldChat.Kind.encounter" xml:space="preserve"><value>מפגשי קרב</value></data>
+  <data name="WorldChat.Edit.Encounter" xml:space="preserve"><value>משנה את מפגש הקרב</value></data>
+  <data name="WorldChat.Proposal.DeletesEncounter" xml:space="preserve"><value>מוחק את מפגש הקרב „{0}”. אי אפשר לבטל את זה.</value></data>
+  <data name="WorldChat.Proposal.Encounter.Place" xml:space="preserve"><value>מתרחש: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.NoPlace" xml:space="preserve"><value>ללא מקום</value></data>
+  <data name="WorldChat.Proposal.Encounter.Lineup" xml:space="preserve"><value>מי משתתף</value></data>
+  <data name="WorldChat.Proposal.Encounter.Empty" xml:space="preserve"><value>עדיין אף אחד</value></data>
+  <data name="WorldChat.Proposal.Encounter.Hidden" xml:space="preserve"><value>מתחיל מוסתר</value></data>
+  <data name="WorldChat.Proposal.Encounter.Status" xml:space="preserve"><value>מצב: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.Notes" xml:space="preserve"><value>הערות</value></data>
+  <data name="WorldChat.Proposal.Encounter.Readout" xml:space="preserve"><value>קושי: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.Hazards" xml:space="preserve"><value>סכנות במקום: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.PlaceChange" xml:space="preserve"><value>מקום: היה „{0}”, יהיה „{1}”</value></data>
+  <data name="WorldChat.Proposal.Encounter.StatusChange" xml:space="preserve"><value>מצב: היה „{0}”, יהיה „{1}”</value></data>
+  <data name="WorldChat.Proposal.Encounter.LineupBefore" xml:space="preserve"><value>עכשיו: {0}</value></data>
+  <data name="WorldChat.Tool.Encounters" xml:space="preserve"><value>נבדקו מפגשי הקרב המוכנים</value></data>
+  <data name="WorldChat.Tool.Encounter" xml:space="preserve"><value>נקרא מפגש הקרב „{0}”</value></data>
+  <data name="WorldChat.Tool.Hazards" xml:space="preserve"><value>נבדקו הסכנות ב„{0}”</value></data>
+  <data name="WorldChat.Tool.Rate" xml:space="preserve"><value>נבדק הרכב (שורות: {0})</value></data>
+  <data name="WorldChat.Starter.encounter.Label" xml:space="preserve"><value>מפגש קרב</value></data>
+  <data name="WorldChat.Starter.encounter.Text" xml:space="preserve"><value>הכן מפגש קרב לקראת המפגש הבא: איפה הוא מתרחש, מי משתתף בו, ואיך הוא יכול להסתיים בדרך אחרת מהריגת כולם. </value></data>
+  <data name="WorldChat.Starter.encounter.TextAt" xml:space="preserve"><value>הכן מפגש קרב ב„{0}”: בנה על מה שכבר נמצא שם, וכתוב בהערות מה היצורים רוצים. </value></data>
+  <data name="WorldChat.Can.Encounters" xml:space="preserve"><value>מפגשי קרב מוכנים: מקום, הרכב והערות, שאפשר להתחיל ליד השולחן.</value></data>
 </root>

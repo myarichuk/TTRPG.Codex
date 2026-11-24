@@ -282,15 +282,20 @@ its feature creatures), say in the notes what the creatures want and how the fig
                 {"entry": "existing:actor:<id>", "hidden": true} ],
  "text": "notes, markdown", "tags": ["grey-coast"]}
 
-{"ref": "g", "kind": "edit", "target": "existing:encounter:<id>", "rename": "...", "place": "...", "creatures": [...], "text": "..."}
+{"ref": "g", "kind": "edit", "target": "existing:encounter:<id>", "rename": "...", "place": "...", "creatures": [...], "text": "...", "tags": [...], "status": "ready"}
+
+{"ref": "d", "kind": "edit", "target": "existing:encounter:<id>", "delete": true}
 ```
+
+(B5 as built, section 17: `status` is `draft` or `ready`, and an encounter can be deleted by the world builder's existing delete shape.)
 
 - `WorldBundleParser` gains `DraftKinds.Encounter`: `place` resolves like a place's parent (a place ref in this proposal, or an existing
   place); a creature `entry` is a Library `type/id` (as Bestiary picks are found), a homebrew ref in this proposal whose type is a creature
   type, or an existing cast member. A hazard in `creatures` is refused with a pointer: "place it on the place's feature (`feature.hazard`)",
   (after H5, a complex one is placed through the place too and then ticked to join). Counts 1 to 20.
 - An edit of `existing:encounter:<id>` replaces what it names (lines in full when `creatures` is given), with the review's stamp check
-  as other edits have: refused at saving if the plan changed since the review.
+  as other edits have: refused at saving if the plan changed since the review. A delete (`"delete": true`, added to the design at the GM's request) is an edit that
+  stands alone, arrives unticked and is shown with the warning callout, like every other delete; it has the same stamp check and touches nothing but the plan.
 - `CheckAsync` adds the readout to "ready for review" when the system has one, as information, never an error.
 - The review panel shows an encounter entry as its place, its lineup (count and name, each linked), its notes and the readout. Leaving out
   a place leaves out an encounter set in it (as leaving out a place leaves out what is inside it).
@@ -667,3 +672,59 @@ Everything is tested on two fixture systems with invented numbers.
 **Left for later**
 - B4b: srd5e's `sum` budget from the SRD 5.2.1 text, with a test that compares the data to it. The degrees system's `byLevel` block when its pack has the numbers. Hazard values (`hazardValue`)
   with B7.
+
+## 17. B5 as built (2026-11-24)
+
+B5 lets the world builder chat create, edit and delete prepared encounters, and read them. The user asked for **create, edit and delete** (2026-11-24); the design had create and
+edit, so delete follows the world builder's existing delete shape exactly (an edit with `"delete": true`, which stands alone, arrives unticked and shows a warning callout). The chat
+never starts an encounter and never sets `Ran`.
+
+**Files**
+- `Codex.Core/WorldBuilder/WorldBundle.cs`: `DraftKinds.Encounter`, `EditTarget.Encounter` and `existing:encounter:<id>` (`WorldBundle.EncounterPrefix`), `DraftLine` (one line of a
+  lineup), the encounter fields of `WorldDraft` (`Place`, `PlaceGiven`, `PlaceName`, `Lineup`, `LineupGiven`, `Status`, `BeforePlace`, `BeforeLineup`, `BeforeStatus`, `Readout`,
+  `PlaceHazards`), the parser (`ReadEncounter`, `ReadEncounterEdit`, `ReadLines`, `ResolveEncounters`) and two trailing optionals on `ProposalRules` (`ExistingEncounters`, `CreatureTypes`).
+  `WorldBundle.WouldSkip`, `Skip` and `Select` follow an encounter's references.
+- `Codex.Web/Services/WorldBuilderService.Encounters.cs` (new): the four read tools, the check, the save, the edit and the delete. `WorldBuilderService` takes the
+  `PreparedEncounterService` as a trailing optional constructor parameter. `WorldBuilderService.Checking.cs`, `.Saving.cs` and `.Reading.cs` call it.
+- `Codex.Web/Services/ProposalInput.cs` (`ProposalEntry.Place`, `Creatures`, `Status`; `ProposalCreature`), `WorldChat.Tools.cs` (the tools; the readout is told to the model after a proposal as
+  information), `WorldChat.Proposal.cs` (the apply note, the links, the chat's id), `PreparedEncounterService.cs` (`PlansAsync`, `EncounterHazard` carries the entry, whether it is homebrew and
+  whether it is complex, `Summary` is public).
+- `Codex.Core/AI/AiPrompts.cs`: the encounter lines of the prompt (fixed part) and the party (end of the prompt, `WorldChatParty`).
+- `WorldProposalPanel.razor` (`EncounterCard`), `WorldChatView.cs`, `WorldChatSection.razor` (the `encounter` starter, `?place=<id>`), `EncounterList.razor` and `EncounterEditor.razor` (*Build with AI*).
+- Strings: `WorldChat.*` (Kind, Edit, Proposal.Encounter.*, Proposal.DeletesEncounter, Tool.*, Starter.encounter.*, Can.Encounters), `WorldBuilder.Error.Encounter*`, `Encounters.BuildWithAi`, in en, ru, he. No new resx file.
+- Tests: `EncounterProposalParserTests` (the parser: no `WorldBundleParserTests` class exists, the parser's tests are in `WorldBuilderTests` and its neighbours), `WorldBuilderEncounterTests` (check, save,
+  stamp, delete, the read tools, the tool loop with a scripted model), `Components/WorldProposalEncounterTests`, and additions to `EncountersSectionTests` and `EncounterNotesPanelTests`.
+
+**Decisions, and where the code differed from the brief or the design**
+- *Typed tool input.* `propose_changes` serializes `ProposalInput`, so a field it lacks never reaches the parser. `ProposalEntry` gained `place`, `creatures` and `status`; the tool-loop test asserts the saved lines.
+- *Ids.* `existing:encounter:<id>` takes the GUID part of the plan's id (the part after `preparedencounters/`, as the Encounters page's URLs do). The parser accepts only a GUID the campaign's own plans
+  have; `preparedencounters/<guid>` and anything else is refused. The service looks the plan up with `PreparedEncounterService.GetAsync`, which tries the prefixed id then the bare one (a copied
+  campaign's plans have bare ids).
+- *Stamp.* The stamp is the plan's `UpdatedAt` ticks. Starting the plan at the table also moves it (`MarkRunAsync`), so a plan started after the review refuses the edit or the delete as changed. That
+  is the safe side: the GM asks again. Delete compares the stamp as well (the other deletes do not), because a plan someone has just rewritten is not what the GM reviewed.
+- *Empty values.* `text`, `status`, `place` and an empty `creatures` list are "not given" (a model that fills every optional field must not wipe a plan); `"place": "none"` clears the place, as a place's `parent` does; an empty `tags` list clears the tags on an edit, as for a homebrew edit, but a delete that carries an empty `tags` or `place` is still a delete. Notes cannot be cleared by an edit (an empty `text` is "not given").
+- *Deleted things.* An encounter entry or edit whose line names a homebrew creature or cast member that the same proposal deletes (or retires), or whose place the proposal deletes, is an error. A fact's `links` never point at an encounter. `hidden` on a cast line only gets a warning (it has no effect). `get_encounter`, `place_hazards` and `rate_encounter` are capped or checked like the rest (`rate_encounter` refuses hazard lines with the same pointer). The review card hides a status change on a plan that has run.
+- *Stamp edge.* The stamp is `UpdatedAt` ticks; a plan restored by an import with the same ticks would not be noticed as changed.
+- *Lines.* A line of a new homebrew creature is named by its ref and is saved after the homebrew step. A ref of a cast member (`npc`) draft is refused: a person the proposal makes is not a creature; add the creature with `stats` and
+  put the cast member on the plan in a later proposal. Counts out of 1 to 20 are errors, not clamped. A cast member's count must be 1 or left out.
+- *Check.* The parser validates refs and types (a hazard type or a hazard-typed homebrew draft is refused with "place it on the place's feature (feature.hazard)"); the service resolves Library and homebrew lines, runs
+  `PreparedEncounterService.CheckAsync` on the plan as it would be saved (so hazards, counts, player characters and a missing place are the plan's own rules, not copies; its messages go to the model in English, with
+  the pointer added to a hazard line), and rates the lineup. A creature this proposal makes is not in the Library yet, so the readout says one line is not counted. The readout is information on the draft
+  (in the GM's language, for the review card) and is told to the model after a proposal; it is never an error or a warning.
+- *Review.* Leaving out a place leaves out an encounter set in it (and one that is an edit giving that place), as it leaves out what is inside it. Leaving out a homebrew creature leaves out the encounter that uses it, and
+  keeping an encounter brings back its place and creatures. An encounter set in a place the same proposal deletes is an error.
+- *Save.* New encounters are saved after the places (and so after the homebrew, the Bestiary and the cast), before the edit loop; each is a `Draft` (or `Ready` when the entry says so) with `FromChatId` set to the chat's id
+  (`SaveAsync(..., chatId)`) and `CreatedBy` the GM. A ref that was not saved (an unticked place or creature) is an error naming the encounter, not a dangling line. Deletes and edits run in the edit loop, where the other deletes run.
+  `SaveAsync` retries skip what was stored, and report the plan again.
+- *Status.* A status given for a plan that has been run is accepted but the repository keeps it `Ran` (B1); the check says so as a warning.
+- *`CarryOver`.* A revised encounter edit counts as the same edit only when its place, lineup, status, tags and text are the same too, so a revision after a half-done apply is saved, not skipped. (This also compares tags for edits of homebrew entries.)
+- *The notes panel.* `EncounterNotesPanel` copes with a plan that was deleted after the fight started from it: the table keeps the plan's id, the read answers nothing, and the panel draws nothing (a test pins it). No change was needed.
+- *Prompt.* The two lines are in the fixed part, in the neutral words ("creature", no system's terms; `SystemNeutralityTests` still passes). The party (count, and levels where the sheets give whole ones) comes only when the campaign has
+  party members, at the end, so the start of the prompt is the same for every campaign. The four tools come after `list_issues` and before `add_entries`; the order inside the list is otherwise unchanged.
+- *Strings.* Russian «столкновение», «мастер» only for the GM; Hebrew «מפגש קרב». The ru and he texts are drafts for native review.
+
+**Known limits**
+- `WorldChatSection`'s own handling of the `encounter` starter (reading `?place=<id>` and writing the draft) has no bUnit test: there is no harness for that component (it needs the chat sessions, the AI features and a router). Its strings and the *Build with AI* links are tested.
+- The review panel shows an encounter's lineup as plain text, not as links to the Library entries.
+- Hidden on a cast member's line is stored but means nothing at the table (a cast member keeps its own visibility, B3).
+- Two plans with the same name are allowed, as in the editor.

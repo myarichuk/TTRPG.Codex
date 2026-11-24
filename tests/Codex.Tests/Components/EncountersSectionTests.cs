@@ -97,14 +97,15 @@ public class EncountersSectionTests : ComponentTestBase
     // ---- The list ----
 
     [Fact]
-    public void WithNoPlans_TheListSaysInOneSentenceWhatAnEncounterIsFor_AndOffersOnlyNewEncounter()
+    public void WithNoPlans_TheListSaysInOneSentenceWhatAnEncounterIsFor_AndOffersNewEncounterAndBuildWithAi()
     {
         var cut = Draw();
 
         cut.WaitForState(() => cut.FindAll(Id("encounters-empty")).Count > 0, Patience);
         Assert.Contains("An encounter is a fight you prepare before the session", cut.Find(Id("encounters-empty")).TextContent);
         Assert.Equal("/campaigns/c1/encounters/new", cut.Find(Id("encounter-new")).GetAttribute("href"));
-        Assert.DoesNotContain("AI", cut.Markup.Replace("aria", ""), StringComparison.Ordinal);
+        // B5 added Build with AI beside it (a link to the world builder chat); starting at the table is still not offered here.
+        Assert.Equal("/campaigns/c1/build/encounter", cut.Find(Id("encounter-build-ai")).GetAttribute("href"));
         Assert.DoesNotContain("Start at the table", cut.Markup);
     }
 
@@ -468,6 +469,51 @@ public class EncountersSectionTests : ComponentTestBase
 
         cut.WaitForState(() => cut.FindAll(Id("encounter-missing")).Count > 0, Patience);
         Assert.Contains("/campaigns/c1/encounters", cut.Find(Id("encounter-missing")).InnerHtml);
+    }
+
+    // ---- Build with AI ----
+
+    [Fact]
+    public void BuildWithAi_OnTheList_OpensTheWorldChatWithTheNextSessionStarter()
+    {
+        var cut = Draw();
+
+        cut.WaitForState(() => cut.FindAll(Id("encounter-build-ai")).Count > 0, Patience);
+        Assert.Equal("/campaigns/c1/build/encounter", cut.Find(Id("encounter-build-ai")).GetAttribute("href"));
+        Assert.Contains("Build with AI", cut.Find(Id("encounter-build-ai")).TextContent);
+    }
+
+    [Fact]
+    public async Task BuildWithAi_InTheEditorOfAPlanWithNoPlace_HasNoPlaceInTheStarter()
+    {
+        var plan = await StoredAsync("Wolves", null, PreparedStatus.Draft, EncounterWorld.Bandits(1));
+
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+
+        cut.WaitForState(() => cut.FindAll(Id("encounter-build-ai")).Count > 0, Patience);
+        Assert.Equal("/campaigns/c1/build/encounter", cut.Find(Id("encounter-build-ai")).GetAttribute("href"));
+    }
+
+    [Fact]
+    public async Task BuildWithAi_InTheEditorOfAPlanWithAPlace_NamesThePlaceInTheStarter()
+    {
+        var plan = await StoredAsync("Ambush", "cellar", PreparedStatus.Draft, EncounterWorld.Bandits(2));
+
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+
+        cut.WaitForState(() => cut.FindAll(Id("encounter-build-ai")).Count > 0, Patience);
+        Assert.Equal("/campaigns/c1/build/encounter?place=cellar", cut.Find(Id("encounter-build-ai")).GetAttribute("href"));
+    }
+
+    [Theory]
+    [InlineData("ru", "Собрать с помощью ИИ")]
+    [InlineData("he", "בנייה באמצעות AI")]
+    public void BuildWithAi_SpeaksTheReadersLanguage(string culture, string label)
+    {
+        var cut = Draw(culture: culture);
+
+        cut.WaitForState(() => cut.FindAll(Id("encounter-build-ai")).Count > 0, Patience);
+        Assert.Contains(label, cut.Find(Id("encounter-build-ai")).TextContent);
     }
 
     [Theory]

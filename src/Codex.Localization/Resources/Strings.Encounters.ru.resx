@@ -130,4 +130,5 @@
   <data name="Encounters.Difficulty.Level" xml:space="preserve"><value>Уровень</value></data>
   <data name="Encounters.Difficulty.DifferentHint" xml:space="preserve"><value>Это меняет только то, что показано здесь. Оно не сохраняется.</value></data>
   <data name="Encounters.Difficulty.UseCampaign" xml:space="preserve"><value>Взять отряд кампании</value></data>
+  <data name="Encounters.BuildWithAi" xml:space="preserve"><value>Собрать с помощью ИИ</value></data>
 </root>

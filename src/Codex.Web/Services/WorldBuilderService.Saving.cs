@@ -56,7 +56,8 @@ public sealed partial class WorldBuilderService
     /// proposed) and the secrets (DM-only in Lore, related to what they link to). Retrying after a failure skips what was stored.</summary>
     /// <param name="onStored">Called after each entry is stored (its <see cref="WorldDraft.SavedAs"/> set), so the caller can keep that at
     /// once: an apply cut short by a crash or a closed tab then still knows what it made, and a retry does not make it twice.</param>
-    public async Task<WorldBuildResult> SaveAsync(CampaignDocument campaign, CampaignAccess access, WorldBundle bundle, CancellationToken ct = default, Func<Task>? onStored = null)
+    /// <param name="chatId">The chat that proposed the entries, which a prepared encounter records as the chat it came from.</param>
+    public async Task<WorldBuildResult> SaveAsync(CampaignDocument campaign, CampaignAccess access, WorldBundle bundle, CancellationToken ct = default, Func<Task>? onStored = null, string? chatId = null)
     {
         DmOnly(access);
         var l = Localizer.For(Lang);
@@ -176,6 +177,9 @@ public sealed partial class WorldBuilderService
 
         await LinkPagesToPlacesAsync(places.Select(p => p.Place), access);
 
+        // Prepared encounters come last among the new things: every place, homebrew creature and cast member they name is stored by now.
+        var plans = await SaveEncountersAsync(campaign, access, bundle, Pending(EncounterStep).Where(d => d.Kind == DraftKinds.Encounter).ToList(), chatId, (draft, id) => Saved(draft, EncounterStep, id));
+
         var edited = new List<WorldEdit>();
         // A region goes last: whatever else the proposal changed in it is then done with before it is gone.
         foreach (var draft in Pending("edit").Where(d => d.Kind == DraftKinds.Edit && d.Target != null).OrderBy(d => d.Remove && WorldBundle.ParseTarget(d.Target!, out _) == EditTarget.Region ? 1 : 0))
@@ -250,13 +254,21 @@ public sealed partial class WorldBuilderService
                 var all = (await facts.GetVisibleForCampaignAsync(access, new HashSet<string>())).ToDictionary(fact => fact.Id);
                 saved.InsertRange(0, ids["fact"].Where(all.ContainsKey).Select(id => all[id]));
             }
+
+            if (ids.Contains(EncounterStep) && encounters != null)
+            {
+                foreach (var id in ids[EncounterStep].Reverse())
+                {
+                    if (await encounters.GetAsync(access, id) is { } plan) plans.Insert(0, plan);
+                }
+            }
         }
 
         // Edits an earlier attempt made are reported too, first.
         edited.InsertRange(0, earlier.Where(e => e.Step == "edit").Select(e => EditOf(e.Draft)));
         retagged += earlier.Where(e => e.Step == "tags").Sum(e => e.Draft.Targets.Count);
         var picked = Kept(bundle).Count(d => d.Kind == DraftKinds.Bestiary && d.SavedAs.ContainsKey("bestiary"));
-        return new WorldBuildResult(entries, pages, actors, saved, places.Select(p => p.Place).ToList(), shortlisted, edited, retagged, picked);
+        return new WorldBuildResult(entries, pages, actors, saved, places.Select(p => p.Place).ToList(), shortlisted, edited, retagged, picked, Encounters: plans);
     }
 
     /// <summary>What an apply that stopped part way already made of <paramref name="bundle"/>, as links the conversation keeps: the
@@ -302,6 +314,9 @@ public sealed partial class WorldBuilderService
                         break;
                     case "fact":
                         facts++;
+                        break;
+                    case EncounterStep:
+                        links.Add(new WorldChatLink { Kind = "encounter", Id = PreparedEncounterService.RouteOf(id), Name = draft.Name });
                         break;
                     case "tags":
                         retagged += draft.Targets.Count;
@@ -460,6 +475,8 @@ public sealed partial class WorldBuilderService
                     if (!await cast.SaveSheetAsync(actor, current, access, system)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
                     return new WorldEdit(target, id, actor.Name, actor.Visibility == ActorVisibility.Known || actor.Kind == ActorKind.PlayerCharacter, Text: false);
                 }
+            case EditTarget.Encounter:
+                return await ApplyEncounterEditAsync(draft, bundle, campaign, access, id);
             case EditTarget.Region:
                 {
                     var region = (await regions.GetVisibleForCampaignAsync(access)).FirstOrDefault(r => r.Id == id) ?? throw gone;

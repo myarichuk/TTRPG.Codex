@@ -130,4 +130,5 @@
   <data name="Encounters.Difficulty.Level" xml:space="preserve"><value>Level</value></data>
   <data name="Encounters.Difficulty.DifferentHint" xml:space="preserve"><value>This only changes what is shown here. It is not saved.</value></data>
   <data name="Encounters.Difficulty.UseCampaign" xml:space="preserve"><value>Use the campaign's party</value></data>
+  <data name="Encounters.BuildWithAi" xml:space="preserve"><value>Build with AI</value></data>
 </root>

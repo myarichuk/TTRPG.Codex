@@ -29,4 +29,7 @@
   <data name="WorldBuilder.Drafts.Stats.None" xml:space="preserve"><value>The Library has no creatures for this campaign.</value></data>
   <data name="WorldBuilder.Open.Chat" xml:space="preserve"><value>Anything else…</value></data>
   <data name="WorldBuilder.Error.SheetRefused" xml:space="preserve"><value>The change to “{0}” no longer passes the sheet's rules or the Library, so it can't be applied. Untick it and apply the rest.</value></data>
+  <data name="WorldBuilder.Error.EncounterRefMissing" xml:space="preserve"><value>“{0}” points at a place or creature that this apply did not save, so the encounter was not saved. Untick it, or apply the rest and ask for it again.</value></data>
+  <data name="WorldBuilder.Error.EncounterRefused" xml:space="preserve"><value>The encounter “{0}” could not be saved. {1}</value></data>
+  <data name="WorldBuilder.Error.EncountersUnavailable" xml:space="preserve"><value>Prepared encounters are not available here.</value></data>
 </root>
