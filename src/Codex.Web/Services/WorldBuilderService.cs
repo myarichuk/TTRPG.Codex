@@ -20,14 +20,18 @@ public sealed record WorldBuildResult(
     IReadOnlyList<WorldEdit>? Edits = null,
     int Retagged = 0,
     int Picked = 0,
-    ApplyRecheck? Recheck = null)
+    ApplyRecheck? Recheck = null,
+    IReadOnlyList<PreparedEncounterDocument>? Encounters = null)
 {
     /// <summary>The existing entries whose text the proposal replaced.</summary>
     public IReadOnlyList<WorldEdit> Changes => Edits ?? Array.Empty<WorldEdit>();
 
+    /// <summary>The prepared encounters the proposal made (each a Draft unless the entry said ready).</summary>
+    public IReadOnlyList<PreparedEncounterDocument> Plans => Encounters ?? Array.Empty<PreparedEncounterDocument>();
+
     /// <summary>Entries saved: <see cref="Retagged"/> counts the pages and homebrew entries whose tags changed, <see cref="Picked"/>
     /// the Library creatures put on the Bestiary by an entry of their own (a new homebrew creature put there is one entry, not two).</summary>
-    public int Count => Entries.Count + Pages.Count + Actors.Count + Facts.Count + Places.Count + Changes.Count + Retagged + Picked;
+    public int Count => Entries.Count + Pages.Count + Actors.Count + Facts.Count + Places.Count + Changes.Count + Retagged + Picked + Plans.Count;
 }
 
 /// <summary>
@@ -89,7 +93,7 @@ public sealed record WorldEdit(EditTarget Target, string Id, string Name, bool S
 /// </summary>
 public sealed partial class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary library, IHomebrewRepository homebrew, IWikiRepository wiki,
     IFactRepository facts, CastService cast, IRegionRepository regions, ICampaignRepository campaigns, IActorRepository actorRepository, AiFeatures ai,
-    ITemplateRepository? templates = null, ConsistencyService? consistency = null, TimeProvider? clock = null)
+    ITemplateRepository? templates = null, ConsistencyService? consistency = null, TimeProvider? clock = null, PreparedEncounterService? encounters = null)
 {
     /// <summary>The language the model writes in: the one the DM reads the app in.</summary>
     private static string Lang => SupportedCultures.Normalize(CultureInfo.CurrentUICulture.Name);

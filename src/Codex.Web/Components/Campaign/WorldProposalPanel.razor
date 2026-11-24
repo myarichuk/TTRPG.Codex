@@ -182,6 +182,10 @@
                         case DraftKinds.Edit when WorldBundle.ParseTarget(current.Target ?? string.Empty, out _) == EditTarget.Sheet:
                             @SheetChange(current)
                             break;
+                        case DraftKinds.Encounter:
+                        case DraftKinds.Edit when WorldBundle.ParseTarget(current.Target ?? string.Empty, out _) == EditTarget.Encounter:
+                            @EncounterCard(current)
+                            break;
                         case DraftKinds.Edit:
                             @if (!current.Remove && current.Body != null)
                             {
@@ -269,6 +273,7 @@
                     <li><LucideIcon IconName="book-marked" Size="14" /> @L["WorldChat.Can.Homebrew"]</li>
                     <li><LucideIcon IconName="edit-3" Size="14" /> @L["WorldChat.Can.Revise"]</li>
                     <li><LucideIcon IconName="tags" Size="14" /> @L["WorldChat.Can.Tags"]</li>
+                    <li><LucideIcon IconName="swords" Size="14" /> @L["WorldChat.Can.Encounters"]</li>
                 </ul>
             </div>
         </div>
@@ -394,8 +399,13 @@
         DraftKinds.Tags => L["WorldChat.Proposal.Targets", d.Targets.Count],
         DraftKinds.Bestiary => null,
         DraftKinds.Edit => null,
+        DraftKinds.Encounter => d.Lineup.Count == 0 ? null : LineupInShort(d),
         _ => string.IsNullOrWhiteSpace(d.Pitch) ? null : Resolved(proposal, d.Pitch)
     };
+
+    // "Bandit ×3, Wendel Tarr": every line by its name, a count after a creature that comes more than once.
+    private static string LineupInShort(WorldDraft d) =>
+        string.Join(", ", d.Lineup.Select(l => (string.IsNullOrWhiteSpace(l.Name) ? l.Entry : l.Name) + (l.Count > 1 ? $" ×{l.Count}" : string.Empty)));
 
     /// <summary>"Settlement, in Greyharbour": what kind of entry it is and, for a place, where it goes.</summary>
     private string Detail(WorldBundle proposal, WorldDraft d)
@@ -423,6 +433,9 @@
                 break;
             case DraftKinds.Npc when d.Cast:
                 parts.Add(d.Stats is { } stats ? L["WorldChat.Proposal.CastAs", stats.Shown] : L["WorldChat.Proposal.Cast"]);
+                break;
+            case DraftKinds.Encounter:
+                parts.Add(d.PlaceName is { Length: > 0 } where ? L["WorldChat.Proposal.Encounter.Place", where] : L["WorldChat.Proposal.Encounter.NoPlace"]);
                 break;
         }
 
@@ -530,6 +543,7 @@
                 EditTarget.Place => "WorldChat.Proposal.DeletesPlace",
                 EditTarget.Region => "WorldChat.Proposal.DeletesRegion",
                 EditTarget.Actor => "WorldChat.Proposal.Retires",
+                EditTarget.Encounter => "WorldChat.Proposal.DeletesEncounter",
                 _ => "WorldChat.Proposal.Deletes"
             };
             <p class="wb-callout wb-callout-warning" data-testid="world-proposal-delete"><LucideIcon IconName="trash-2" Size="14" /> @L[deleteKey, d.Name]</p>
@@ -573,6 +587,98 @@
         {
             <p data-testid="world-proposal-hazard"><LucideIcon IconName="alert-triangle" Size="14" /> @L["WorldChat.Proposal.Hazard", hazardName]</p>
             <text>@Concerns(d.Feature.HazardRef != null ? proposal.Find(d.Feature.HazardRef)?.Concerns : null)</text>
+        }
+    };
+
+    // A prepared encounter, new or changed: its place, its lineup (count and name), its status, the readout, the hazards at its place, its tags and notes. An edit shows only what it changes.
+    private RenderFragment EncounterCard(WorldDraft d) => __builder =>
+    {
+        var edit = d.Kind == DraftKinds.Edit;
+        if (!edit || d.PlaceGiven)
+        {
+            var where = d.PlaceName is { Length: > 0 } name ? name : null;
+            if (edit)
+            {
+                <p data-testid="world-encounter-place"><LucideIcon IconName="map-pin" Size="14" /> @L["WorldChat.Proposal.Encounter.PlaceChange", d.BeforePlace ?? L["WorldChat.Proposal.Encounter.NoPlace"], where ?? L["WorldChat.Proposal.Encounter.NoPlace"]]</p>
+            }
+            else
+            {
+                <p data-testid="world-encounter-place"><LucideIcon IconName="map-pin" Size="14" /> @(where == null ? L["WorldChat.Proposal.Encounter.NoPlace"] : L["WorldChat.Proposal.Encounter.Place", where])</p>
+            }
+        }
+
+        if (!edit || d.LineupGiven)
+        {
+            <h4 class="label-caps mt-2">@L["WorldChat.Proposal.Encounter.Lineup"]</h4>
+            if (edit && !string.IsNullOrEmpty(d.BeforeLineup))
+            {
+                <p class="small-muted" data-testid="world-encounter-before"><del>@L["WorldChat.Proposal.Encounter.LineupBefore", d.BeforeLineup]</del></p>
+            }
+
+            if (d.Lineup.Count == 0)
+            {
+                <p class="small-muted">@L["WorldChat.Proposal.Encounter.Empty"]</p>
+            }
+            else
+            {
+                <ul class="wb-lineup" data-testid="world-encounter-lineup">
+                    @foreach (var line in d.Lineup)
+                    {
+                        <li>
+                            <strong>@(string.IsNullOrWhiteSpace(line.Name) ? line.Entry : line.Name)</strong>@(line.Count > 1 ? " ×" + line.Count : string.Empty)
+                            @if (line.Hidden)
+                            {
+                                <span class="small-muted"> · @L["WorldChat.Proposal.Encounter.Hidden"]</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(line.Note))
+                            {
+                                <span class="small-muted"> · @line.Note</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        }
+
+        // A plan that has been run stays marked as run whatever status an edit gives, so the card does not show a change that will not happen.
+        if ((!edit || d.Status != null) && d.BeforeStatus != "ran")
+        {
+            var now = d.Status ?? "draft";
+            var nowWord = L["Encounters.Status." + char.ToUpperInvariant(now[0]) + now[1..]];
+            var wasWord = d.BeforeStatus is { Length: > 0 } was ? L["Encounters.Status." + char.ToUpperInvariant(was[0]) + was[1..]] : null;
+            <p data-testid="world-encounter-status">@(edit && wasWord != null ? L["WorldChat.Proposal.Encounter.StatusChange", wasWord, nowWord] : L["WorldChat.Proposal.Encounter.Status", nowWord])</p>
+        }
+
+        if (d.Readout is { Length: > 0 } readout)
+        {
+            <p data-testid="world-encounter-readout"><LucideIcon IconName="scroll-text" Size="14" /> @L["WorldChat.Proposal.Encounter.Readout", readout]</p>
+        }
+
+        if (d.PlaceHazards.Count > 0)
+        {
+            <p class="small" data-testid="world-encounter-hazards"><LucideIcon IconName="alert-triangle" Size="14" /> @L["WorldChat.Proposal.Encounter.Hazards", string.Join("; ", d.PlaceHazards)]</p>
+        }
+
+        if (edit)
+        {
+            if (d.Retag)
+            {
+                <text>@TagDiff(d.BeforeTags ?? new List<string>(), d.Tags)</text>
+            }
+
+            if (d.Body != null)
+            {
+                <text>@TextChange(d, wiki: false)</text>
+            }
+
+            return;
+        }
+
+        <text>@Tags(d.Tags)</text>
+        if (!string.IsNullOrWhiteSpace(d.Body))
+        {
+            <h4 class="label-caps mt-2">@L["WorldChat.Proposal.Encounter.Notes"]</h4>
+            <div class="rules-text wb-reader-body" data-testid="world-review-body">@((MarkupString)SecretRender.Html(WorldBundleParser.ResolveLinks(d.Body, Proposal!, keepLinks: false), TextFormatting.ToHtml, DmView.From(L)))</div>
         }
     };
 

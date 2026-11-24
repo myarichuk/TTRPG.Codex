@@ -48,9 +48,11 @@ public sealed partial class WorldBuilderService
         var sheetIds = json.Contains("\"sheet\"", StringComparison.Ordinal)
             ? (await actorRepository.GetVisibleForCampaignAsync(access)).Where(a => !a.IsVault && !a.Retired && ConsistencySnapshots.RoleOf(a) != Codex.Core.Consistency.ActorRole.Monster).Select(a => a.Id).ToList()
             : new List<string>();
+        // Plans are read only for a proposal that mentions encounters (as a kind or a target).
+        var existingEncounters = json.Contains("encounter", StringComparison.OrdinalIgnoreCase) ? await ExistingEncountersAsync(access) : new Dictionary<string, string>();
         var rules = new ProposalRules(spellings, pages, places, key => fields.GetValueOrDefault(key) ?? Array.Empty<FieldSpec>(),
             system == null ? null : (key, value) => system.CanonicalOption(culture, key, value), castIds, brewKeys,
-            regionNames, factNames, HazardTypeOf(system), pageIds, system, sheetIds);
+            regionNames, factNames, HazardTypeOf(system), pageIds, system, sheetIds, existingEncounters, system == null ? null : CreatureTypes(system));
         var check = WorldBundleParser.ParseProposal(json, rules, open);
 
         await FindStatsAsync(campaign, access, check.Bundle);
@@ -71,10 +73,13 @@ public sealed partial class WorldBuilderService
         var (hazardErrors, hazardWarnings) = await HazardsAsync(campaign, access, system, check.Bundle);
         editErrors.AddRange(hazardErrors);
         editErrors.AddRange(await PicksAsync(campaign, access, check.Bundle));
+        var (encounterErrors, encounterWarnings) = await EncountersAsync(campaign, access, system, check.Bundle);
+        editErrors.AddRange(encounterErrors);
         FillTagged(check.Bundle, (await wiki.GetVisibleForCampaignAsync(access)).ToList(), brews);
         var warnings = check.Warnings.ToList();
         warnings.AddRange(hazardWarnings);
         warnings.AddRange(sheetWarnings);
+        warnings.AddRange(encounterWarnings);
         foreach (var draft in check.Bundle.Drafts.Where(d => d is { Kind: DraftKinds.Npc, Stats: null } && d.SuggestedStats != null))
         {
             warnings.Add($"{draft.Ref} (npc '{draft.Name}'): stats '{draft.SuggestedStats}' are not in the Library, so the sheet starts blank; use a name search_library finds.");
@@ -246,7 +251,7 @@ public sealed partial class WorldBuilderService
             {
                 var addsToIt = other.Kind == DraftKinds.Place && other.Parent == null
                     && (string.IsNullOrWhiteSpace(bundle.Region) ? first == doomed : string.Equals(bundle.Region.Trim(), doomed.Name.Trim(), StringComparison.OrdinalIgnoreCase));
-                var touchesIt = Inside(other.Parent) || (other.Kind == DraftKinds.Edit && other.Target != null && Inside(other.Target));
+                var touchesIt = Inside(other.Parent) || (WorldBundle.IsEncounterPlan(other) && Inside(other.Place)) || (other.Kind == DraftKinds.Edit && other.Target != null && Inside(other.Target));
                 if (addsToIt || touchesIt)
                 {
                     errors.Add($"{other.Ref} ({other.Kind} '{other.Name}'): the region '{doomed.Name}' is deleted by {gone.Ref}, which would wipe this too; " +
@@ -316,6 +321,8 @@ public sealed partial class WorldBuilderService
                     break;
                 case EditTarget.Sheet:
                     break; // named, stamped and checked by SheetsAsync
+                case EditTarget.Encounter:
+                    break; // named, stamped and checked by EncountersAsync
                 case EditTarget.Actor:
                     if (actors.FirstOrDefault(a => a.Id == id) is { } actor)
                     {

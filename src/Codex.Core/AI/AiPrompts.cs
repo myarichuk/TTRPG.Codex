@@ -136,7 +136,11 @@ public sealed record WorldChatRequest(
     string Creature = "creature",
     IReadOnlyList<string>? CreatureExamples = null,
     IReadOnlyDictionary<string, string>? Outlines = null,
-    WorldChatHazards? Hazards = null);
+    WorldChatHazards? Hazards = null,
+    WorldChatParty? Party = null);
+
+/// <summary>The campaign's party as the chat tells the model: how many characters, and the levels the sheets give (empty when they give none).</summary>
+public sealed record WorldChatParty(int Count, IReadOnlyList<int> Levels);
 
 /// <summary>What the chat tells the model about a system's hazards: the homebrew type that is a hazard, its level field, and the fields
 /// <c>hazards.scaling</c> has a column for, and the severity field and the words the table uses for it. Names only: the table's numbers are not in the prompt, and reach the model only as the range in a warning.</summary>
@@ -622,6 +626,11 @@ public static class AiPrompts
             "and \"bestiary\" (\"entry\": a Library creature, as search_library lists it, to put on the campaign's Bestiary shortlist; a new homebrew creature takes \"bestiary\": true instead). " +
             "To change a homebrew entry the campaign has (its key comes from search_library or get_entry), use an \"edit\" with target existing:homebrew:<type>/<id> and any of: \"rename\", \"text\" (the complete new rules text), \"properties\" (only the fields that change) and \"tags\" (its complete new tags). " +
             "Entries from a pack cannot be changed; make a homebrew variant of them instead. " +
+            "An \"encounter\" is a plan for a fight that the game master can start at the table later; you never start one. It has a \"place\" (another entry's ref or existing:place:<id>), \"creatures\" (each line an \"entry\" and a \"count\": a Library creature as search_library lists it, a homebrew one, a creature entry of this proposal, or a cast member who is not a player character), notes in \"text\" and a \"status\" of draft or ready. " +
+            "Build an encounter on what its place already has: read place_hazards, put a hazard on the place's feature and never in the lineup, and use the creatures its features name. " +
+            "In the notes say what the creatures want and how the fight can end other than by killing them. " +
+            "Read list_encounters and get_encounter before you change one, change it with an \"edit\" whose target is existing:encounter:<id> (each field you give replaces that field in full), and delete it only when the game master asks. " +
+            "rate_encounter tries a lineup against the party where the system rates difficulty. " +
             "Give every new page and homebrew entry two to five short lower-case \"tags\" (a region, a faction, a theme), reusing the ones list_tags shows: the game master finds, shares and exports homebrew by tag. " +
             "Every entry has a short \"ref\" (\"p1\") that other entries use as a parent, in \"links\", and in text as [[ref]]; link existing pages as [[existing:slug]]. " +
             "Write each page in markdown with short headings, for the game master to read, run and read aloud from at the table. " +
@@ -652,6 +661,12 @@ public static class AiPrompts
                           ? $"Give it a \"{hazards.SeverityField}\" of {string.Join(", ", words.Take(words.Count - 1))}{(words.Count > 1 ? " or " : string.Empty)}{words[^1]}, and keep its numbers to that severity's guide. "
                           : string.Empty) +
                       "Every row of a detect or disarm list needs a \"name\"; write the trigger and reset as short rules text. A place's text is what players read once it is revealed, so keep the hazard out of it. ");
+        }
+
+        if (r.Party is { Count: > 0 } party)
+        {
+            sb.Append($"The party has {party.Count} {(party.Count == 1 ? "character" : "characters")}" +
+                      (party.Levels.Count > 0 ? $", of {(party.Levels.Count == 1 ? "level" : "levels")} {string.Join(", ", party.Levels)}" : string.Empty) + ". ");
         }
 
         var language = LanguageName(r.Language);

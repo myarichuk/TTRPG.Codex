@@ -19,6 +19,10 @@ public static class WorldChatView
         ["get_entry"] = ("scroll-text", "WorldChat.Tool.Entry"),
         ["homebrew_fields"] = ("list", "WorldChat.Tool.Fields"),
         ["list_tags"] = ("tags", "WorldChat.Tool.Tags"),
+        ["list_encounters"] = ("swords", "WorldChat.Tool.Encounters"),
+        ["get_encounter"] = ("swords", "WorldChat.Tool.Encounter"),
+        ["place_hazards"] = ("alert-triangle", "WorldChat.Tool.Hazards"),
+        ["rate_encounter"] = ("scroll-text", "WorldChat.Tool.Rate"),
         ["add_entries"] = ("plus", "WorldChat.Tool.Add"),
         ["propose_changes"] = ("clipboard-check", "WorldChat.Tool.Propose")
     };
@@ -133,6 +137,7 @@ public static class WorldChatView
         "change-region" => $"{basePath}/world",
         "homebrew" or "change-homebrew" => $"{basePath}/library/{link.Id}",
         "bestiary" => $"{basePath}/bestiary",
+        "encounter" or "change-encounter" => $"{basePath}/encounters/{link.Id}",
         "tags" => $"{basePath}/library",
         _ => $"{basePath}/lore"
     };
@@ -144,6 +149,7 @@ public static class WorldChatView
         "place" => "map-pin",
         "homebrew" => "book-marked",
         "bestiary" => "paw-print",
+        "encounter" or "change-encounter" => "swords",
         "lore" => "key-round",
         "tags" => "tags",
         _ => "edit-3"
@@ -151,7 +157,7 @@ public static class WorldChatView
 
     /// <summary>The kinds in the order a proposal lists them: changes to what exists, then the world from the ground up, then rules.</summary>
     public static readonly string[] KindOrder =
-        { DraftKinds.Edit, DraftKinds.Tags, DraftKinds.Place, DraftKinds.Npc, DraftKinds.Wiki, DraftKinds.Fact, DraftKinds.Homebrew, DraftKinds.Bestiary };
+        { DraftKinds.Edit, DraftKinds.Tags, DraftKinds.Place, DraftKinds.Npc, DraftKinds.Wiki, DraftKinds.Fact, DraftKinds.Homebrew, DraftKinds.Bestiary, DraftKinds.Encounter };
 
     public static string KindIcon(WorldDraft draft) => draft.Kind switch
     {
@@ -163,6 +169,7 @@ public static class WorldChatView
         DraftKinds.Edit => "edit-3",
         DraftKinds.Tags => "tags",
         DraftKinds.Bestiary => "paw-print",
+        DraftKinds.Encounter => "swords",
         _ => "circle"
     };
 }

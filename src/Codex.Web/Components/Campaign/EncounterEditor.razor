@@ -18,6 +18,10 @@
         <nav aria-label="@L["Encounters.Breadcrumb"]" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/encounters">@L["Encounters.Title"]</a></nav>
         <h2 class="mb-0">@(draft == null ? L["Encounters.Title"] : IsNew ? L["Encounters.NewTitle"] : L["Encounters.EditTitle", draft.Name])</h2>
     </div>
+    <div class="d-flex gap-2 flex-wrap">
+        @* The chat starts with "Prepare an encounter at <this place>" when the plan has one, else with a plain starter. *@
+        <a href="@Ctx.BasePath/build/encounter@(string.IsNullOrEmpty(draft?.PlaceId) ? string.Empty : "?place=" + Uri.EscapeDataString(draft!.PlaceId))" class="cx-btn cx-etched cx-arcane" data-testid="encounter-build-ai"><LucideIcon IconName="sparkles" Size="18" /> @L["Encounters.BuildWithAi"]</a>
+    </div>
 </div>
 
 @if (loading)

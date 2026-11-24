@@ -24,6 +24,25 @@ public class EncounterNotesPanelTests : ComponentTestBase
     }
 
     [Fact]
+    public async Task APlanThatWasDeleted_AfterTheFightStartedFromIt_DrawsNothing_AndDoesNotThrow()
+    {
+        // The world builder can delete a plan; the live encounter keeps its id, and the notes panel simply has nothing to show.
+        var world = new EncounterWorld();
+        var plan = world.Plan("Ambush", "cellar", EncounterWorld.Bandits(2));
+        plan.Notes = "Notes.";
+        Assert.True((await world.Service.SaveAsync(world.Campaign, world.Gm, plan)).Saved);
+
+        // The panel is drawn while the plan exists (so the wait below is for something that happens), then the plan is deleted and the panel reads it again as it is opened.
+        var cut = Draw(world, world.Gm, plan.Id);
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll(Id("encounter-notes"))), Patience);
+        Assert.True(await world.Service.DeleteAsync(world.Campaign, world.Gm, PreparedEncounterService.RouteOf(plan.Id)));
+
+        cut.Find(Id("encounter-notes") + " details").Toggle();
+
+        cut.WaitForAssertion(() => Assert.Empty(cut.FindAll(Id("encounter-notes"))), Patience);
+    }
+
+    [Fact]
     public async Task AGameMaster_SeesTheNotesFolded_WithTheLineNotesAndALinkToThePlan()
     {
         var world = new EncounterWorld();

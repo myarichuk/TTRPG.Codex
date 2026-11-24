@@ -31,7 +31,9 @@ public sealed record EncounterRow(PreparedEncounterDocument Plan, string? PlaceN
 public sealed record EncounterLineView(PreparedLine Line, string Name, bool Found, string? Href);
 
 /// <summary>A hazard placed at the plan's place or under it, read live, with the place it stands on.</summary>
-public sealed record EncounterHazard(string Name, HazardState State, string PlaceName, string PlaceId, string RegionId);
+/// <param name="Entry">The Library entry as <c>type/id</c> (a homebrew one too: see <paramref name="IsHomebrew"/>).</param>
+/// <param name="Complex">True for a hazard that is also an actor with a turn in initiative.</param>
+public sealed record EncounterHazard(string Name, HazardState State, string PlaceName, string PlaceId, string RegionId, string Entry = "", bool IsHomebrew = false, bool Complex = false);
 
 /// <summary>A place the picker offers: with its region, and how deep in the region's tree it sits.</summary>
 public sealed record EncounterPlaceChoice(string RegionId, string RegionName, string PlaceId, string PlaceName, int Depth)
@@ -155,6 +157,10 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
         return rows;
     }
 
+    /// <summary>Every plan as stored, the most recently changed first, with nothing resolved or rated: for a caller that only needs ids, names and stamps. Empty for anyone but a GM.</summary>
+    public async Task<IReadOnlyList<PreparedEncounterDocument>> PlansAsync(CampaignAccess access) =>
+        access.IsDm ? await plans.ListAsync(access) : Array.Empty<PreparedEncounterDocument>();
+
     public async Task<EncounterView?> ViewAsync(CampaignDocument campaign, CampaignAccess access, string? route, string? culture = null)
     {
         if (await FindAsync(access, route) is not { } plan) return null;
@@ -163,7 +169,7 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
         var (region, place, placeName, placePath, gone) = FindPlace(reads.Regions, plan);
 
         var lines = plan.Lines.Select(l => Resolve(campaign, l, reads)).ToList();
-        return new EncounterView(plan, lines, placeName, placePath, gone, ReadHazards(region, place, reads.Lookup), check);
+        return new EncounterView(plan, lines, placeName, placePath, gone, ReadHazards(region, place, reads.Lookup, library.Definition(campaign)), check);
     }
 
     /// <summary>The hazards at a place and under it, read live: the same walk the Hazards panel uses. Empty for a place that is not there, and for anyone but a GM.</summary>
@@ -172,17 +178,19 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
         if (!access.IsDm || string.IsNullOrEmpty(placeId)) return Array.Empty<EncounterHazard>();
         var all = (await regions.GetVisibleForCampaignAsync(access)).ToList();
         var (region, place, _, _, _) = FindPlace(all, new PreparedEncounterDocument { RegionId = regionId, PlaceId = placeId });
-        return ReadHazards(region, place, await library.LookupAsync(campaign, access, culture));
+        return ReadHazards(region, place, await library.LookupAsync(campaign, access, culture), library.Definition(campaign));
     }
 
-    private static IReadOnlyList<EncounterHazard> ReadHazards(RegionDocument? region, LocationDocument? place, Func<string, string, bool, LibraryItem?> lookup)
+    private static IReadOnlyList<EncounterHazard> ReadHazards(RegionDocument? region, LocationDocument? place, Func<string, string, bool, LibraryItem?> lookup, SystemDefinition? system = null)
     {
         var hazards = new List<EncounterHazard>();
         if (region == null || place == null) return hazards;
         foreach (var at in region.Locations.Where(l => l.Feature?.Hazard != null && PlaceTree.Chain(region, l).Any(c => c.Id == place.Id)))
         {
             var stored = at.Feature!.Hazard!;
-            hazards.Add(new EncounterHazard(lookup(stored.EntryType, stored.EntryId, stored.IsHomebrew)?.Entry.Name ?? stored.EntryId, stored.State, at.Name, at.Id, region.Id));
+            var item = lookup(stored.EntryType, stored.EntryId, stored.IsHomebrew);
+            var complex = item != null && system?.FindType(item.Entry.Type) is { } type && Codex.Core.Systems.HazardNumbers.IsComplex(item.Entry, type);
+            hazards.Add(new EncounterHazard(item?.Entry.Name ?? stored.EntryId, stored.State, at.Name, at.Id, region.Id, stored.Entry, stored.IsHomebrew, complex));
         }
 
         return hazards;
@@ -661,6 +669,6 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
     }
 
     /// <summary>"Bandit ×3, Wendel Tarr": every line by its stored name, a count after a creature that comes more than once.</summary>
-    private static string Summary(PreparedEncounterDocument plan) =>
+    public static string Summary(PreparedEncounterDocument plan) =>
         string.Join(", ", plan.Lines.Select(l => l.Kind == PreparedLineKind.Creature && l.Count > 1 ? $"{l.Name} ×{l.Count}" : l.Name).Where(n => n.Length > 0));
 }

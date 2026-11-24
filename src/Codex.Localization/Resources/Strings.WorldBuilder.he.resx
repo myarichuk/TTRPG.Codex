@@ -29,4 +29,7 @@
   <data name="WorldBuilder.Drafts.Stats.None" xml:space="preserve"><value>אין בספרייה יצורים לקמפיין הזה.</value></data>
   <data name="WorldBuilder.Open.Chat" xml:space="preserve"><value>משהו אחר…</value></data>
   <data name="WorldBuilder.Error.SheetRefused" xml:space="preserve"><value>השינוי ב„{0}” כבר אינו עומד בכללי הדף או בספרייה, ולכן אי אפשר להחיל אותו. בטלו את הסימון שלו והחילו את השאר.</value></data>
+  <data name="WorldBuilder.Error.EncounterRefMissing" xml:space="preserve"><value>„{0}” מצביע על מקום או יצור שלא נשמרו בהחלה הזו, ולכן מפגש הקרב לא נשמר. הסירו ממנו את הסימון, או החילו את השאר ובקשו אותו שוב.</value></data>
+  <data name="WorldBuilder.Error.EncounterRefused" xml:space="preserve"><value>אי אפשר היה לשמור את מפגש הקרב „{0}”. {1}</value></data>
+  <data name="WorldBuilder.Error.EncountersUnavailable" xml:space="preserve"><value>מפגשי קרב מוכנים אינם זמינים כאן.</value></data>
 </root>

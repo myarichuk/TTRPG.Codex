@@ -35,7 +35,10 @@ public static class DraftKinds
     /// <summary>A Library creature, from a pack or the campaign's homebrew, to put on the campaign's Bestiary shortlist.</summary>
     public const string Bestiary = "bestiary";
 
-    public static readonly IReadOnlyList<string> All = new[] { Homebrew, Wiki, Npc, Fact, Place, Edit, Tags, Bestiary };
+    /// <summary>A prepared encounter (ENCOUNTER_BUILDER_DESIGN.md 6), saved as a Draft plan, GM only: a place, a lineup of creatures and cast members, and notes. The AI never starts it.</summary>
+    public const string Encounter = "encounter";
+
+    public static readonly IReadOnlyList<string> All = new[] { Homebrew, Wiki, Npc, Fact, Place, Edit, Tags, Bestiary, Encounter };
 
     /// <summary>Kinds that change something the campaign has instead of adding a new thing.</summary>
     public static bool ChangesExisting(string kind) => kind is Edit or Tags or Bestiary;
@@ -60,7 +63,33 @@ public enum EditTarget
     /// <summary>A secret or rumour in Lore: its name (the fact itself) and details (<c>existing:fact:&lt;id&gt;</c>).</summary>
     Fact,
     /// <summary>A character's sheet: the sheet keys the system declares, set or cleared (<c>existing:sheet:&lt;actorId&gt;</c>; <see cref="SheetProposal"/>).</summary>
-    Sheet
+    Sheet,
+    /// <summary>A prepared encounter: its name, place, lineup, notes, tags and status, or deleting it (<c>existing:encounter:&lt;id&gt;</c>, the id a GUID).</summary>
+    Encounter
+}
+
+/// <summary>One line of a proposed encounter's lineup: a Library or homebrew creature with a count, or a cast member. <see cref="Entry"/> is what the model wrote;
+/// the rest is what the parser and the check made of it.</summary>
+public sealed class DraftLine
+{
+    public string Entry { get; set; } = string.Empty;
+
+    /// <summary>The Library type of a creature line (a pack's or the campaign's homebrew); null for a cast member.</summary>
+    public string? Type { get; set; }
+    public string? Id { get; set; }
+    public bool Homebrew { get; set; }
+
+    /// <summary>The ref of a homebrew creature in this proposal; the line points at the entry it becomes when saved.</summary>
+    public string? Ref { get; set; }
+
+    /// <summary>A cast member line: the actor's id.</summary>
+    public string? ActorId { get; set; }
+    public int Count { get; set; } = 1;
+    public string? Note { get; set; }
+    public bool Hidden { get; set; }
+
+    /// <summary>The name as the game master reads it; filled by the check (the proposal's own name for a ref).</summary>
+    public string Name { get; set; } = string.Empty;
 }
 
 /// <summary>A proposed feature's notes for the DM (see <c>PlaceFeature</c>): free text in the campaign's own terms, empty for none.</summary>
@@ -247,6 +276,36 @@ public sealed class WorldDraft
     /// <summary>True when the entry wrote its own <c>resolves</c> (an empty list too). A revision of an edit that does replaces what the earlier version
     /// claimed (so a claim can be withdrawn); one that leaves it out keeps the earlier claims (<c>WorldChat.CarryOver</c>).</summary>
     public bool ResolvesGiven { get; set; }
+
+    /// <summary>For an encounter, or an edit of one: its place, another entry's <see cref="Ref"/> or <c>existing:place:&lt;id&gt;</c>; null for no place.
+    /// For an edit it is only read when <see cref="PlaceGiven"/> is set (null then clears the place).</summary>
+    public string? Place { get; set; }
+
+    /// <summary>For an edit of an encounter: the entry named a place (an empty one clears it).</summary>
+    public bool PlaceGiven { get; set; }
+
+    /// <summary>For an encounter: the place as the game master reads it, filled by the check (the proposal's own name for a ref).</summary>
+    public string? PlaceName { get; set; }
+
+    /// <summary>For an encounter, or an edit that gives <see cref="LineupGiven"/>: the lineup.</summary>
+    public List<DraftLine> Lineup { get; set; } = new();
+
+    /// <summary>For an edit of an encounter: <see cref="Lineup"/> replaces the stored lineup in full.</summary>
+    public bool LineupGiven { get; set; }
+
+    /// <summary>For an encounter, or an edit of one: "draft" or "ready" (null: an edit leaves it, a new one is a draft).</summary>
+    public string? Status { get; set; }
+
+    /// <summary>For an edit of an encounter: its place and lineup as they are now, in a line each, for the review card.</summary>
+    public string? BeforePlace { get; set; }
+    public string? BeforeLineup { get; set; }
+    public string? BeforeStatus { get; set; }
+
+    /// <summary>For an encounter: the difficulty readout in the game master's language, filled by the check when the system declares one. Information only.</summary>
+    public string? Readout { get; set; }
+
+    /// <summary>For an encounter, or an edit of one: the hazards at its place, as the game master reads them, filled by the check.</summary>
+    public List<string> PlaceHazards { get; set; } = new();
 }
 
 /// <summary>Something a tags entry changes: its key, its name and its tags before the change.</summary>
@@ -283,6 +342,9 @@ public sealed class WorldBundle
 
     /// <summary>The prefix of an existing cast member's sheet, after <see cref="ExistingPrefix"/>: <c>existing:sheet:&lt;actorId&gt;</c>.</summary>
     public const string SheetPrefix = "sheet:";
+
+    /// <summary>The prefix of an existing prepared encounter, after <see cref="ExistingPrefix"/>: <c>existing:encounter:&lt;id&gt;</c>, the id a GUID (the part of a plan's id after <c>preparedencounters/</c>).</summary>
+    public const string EncounterPrefix = "encounter:";
 
     /// <summary>What an <c>existing:</c> key points at: a place (<c>existing:place:id</c>), a cast member (<c>existing:actor:id</c>)
     /// or, otherwise, a wiki page by slug. <paramref name="id"/> is the key without its prefixes.</summary>
@@ -326,6 +388,12 @@ public sealed class WorldBundle
             return EditTarget.Sheet;
         }
 
+        if (rest.StartsWith(EncounterPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            id = rest[EncounterPrefix.Length..];
+            return EditTarget.Encounter;
+        }
+
         id = rest;
         return EditTarget.Page;
     }
@@ -365,6 +433,14 @@ public sealed class WorldBundle
             }
         }
 
+        // An encounter set in a place, or using a creature, that is left out would be saved pointing at nothing: it is left out too.
+        foreach (var encounter in Drafts.Where(d => d.Selected && IsEncounterPlan(d) && !gone.Contains(d)).ToList())
+        {
+            if (!References(encounter).Any(r => Find(r) is { } target && gone.Contains(target))) continue;
+            gone.Add(encounter);
+            also.Add(encounter);
+        }
+
         foreach (var fact in Drafts.Where(d => d.Selected && d.Kind == DraftKinds.Fact && d.Links.Count > 0))
         {
             var about = fact.Links.Select(l => l.StartsWith(ExistingPrefix, StringComparison.OrdinalIgnoreCase) ? null : Find(l)).ToList();
@@ -402,7 +478,31 @@ public sealed class WorldBundle
             at = up;
         }
 
+        // An encounter comes back with the place it is set in and the homebrew creatures it uses.
+        if (IsEncounterPlan(draft))
+        {
+            foreach (var target in References(draft).Select(Find).OfType<WorldDraft>().Where(t => t != draft && !t.Selected).ToList())
+            {
+                also.Add(target);
+                also.AddRange(Select(target));
+            }
+        }
+
         return also;
+    }
+
+    /// <summary>An encounter entry, or an edit of an encounter that is not a delete: the entries that name places and creatures of this proposal.</summary>
+    public static bool IsEncounterPlan(WorldDraft d) =>
+        d.Kind == DraftKinds.Encounter || d is { Kind: DraftKinds.Edit, Remove: false, Target: { } target } && ParseTarget(target, out _) == EditTarget.Encounter;
+
+    /// <summary>The refs of the entries of this proposal that an encounter's place and lineup point at.</summary>
+    public static IEnumerable<string> References(WorldDraft d)
+    {
+        if (d.Place is { Length: > 0 } place && !place.StartsWith(ExistingPrefix, StringComparison.OrdinalIgnoreCase)) yield return place;
+        foreach (var line in d.Lineup)
+        {
+            if (!string.IsNullOrEmpty(line.Ref)) yield return line.Ref;
+        }
     }
 }
 
@@ -429,7 +529,9 @@ public sealed record ProposalRules(
     string? HazardType = null,
     IReadOnlyDictionary<string, string>? ExistingPageIds = null,
     Codex.Plugin.Abstractions.SystemDefinition? System = null,
-    IReadOnlyCollection<string>? ExistingSheets = null);
+    IReadOnlyCollection<string>? ExistingSheets = null,
+    IReadOnlyDictionary<string, string>? ExistingEncounters = null,
+    IReadOnlyCollection<string>? CreatureTypes = null);
 
 /// <summary>A checked proposal: the entries as they would be saved, and what is wrong with it (nothing is saved while there are
 /// <see cref="Errors"/>) or worth a second look (<see cref="Warnings"/>), each naming the entry it is about.</summary>
@@ -609,6 +711,9 @@ public static class WorldBundleParser
 
                         if (draft.Name.Length == 0) draft.Name = draft.OutlineName = draft.SuggestedStats;
                         break;
+                    case DraftKinds.Encounter:
+                        if (!ReadEncounter(draft, element, label, rules, errors, warnings)) continue;
+                        break;
                     case DraftKinds.Homebrew:
                         if (FieldCoercion.String(element, "type") is not { } typeText || !types.TryGetValue(typeText, out var type))
                         {
@@ -631,7 +736,7 @@ public static class WorldBundleParser
                     warnings.Add($"{label}: only a place has a parent; it was ignored.");
                 }
 
-                if (draft.Body == null && kind is not DraftKinds.Fact && !DraftKinds.ChangesExisting(kind) && draft.BasedOn == null)
+                if (draft.Body == null && kind is not (DraftKinds.Fact or DraftKinds.Encounter) && !DraftKinds.ChangesExisting(kind) && draft.BasedOn == null)
                 {
                     warnings.Add($"{label}: has no text, so its page will only hold its name.");
                 }
@@ -647,6 +752,7 @@ public static class WorldBundleParser
             }
 
             ResolveHazards(bundle, rules, warnings);
+            ResolveEncounters(bundle, rules, errors);
             CheckResolves(bundle, rules, openIssues ?? Array.Empty<Issue>(), errors);
 
             // Two pages may share a title ("Sister Maren", "Sister Maren"); a link by title reaches the first, as the wiki's does.
@@ -664,7 +770,7 @@ public static class WorldBundleParser
                         var key = link[WorldBundle.ExistingPrefix.Length..];
                         if (pages.ContainsKey(key)) resolved = WorldBundle.ExistingPrefix + key;
                     }
-                    else if (bundle.Drafts.FirstOrDefault(d => !DraftKinds.ChangesExisting(d.Kind) && (string.Equals(d.Ref, link, StringComparison.OrdinalIgnoreCase) || string.Equals(d.Name, link, StringComparison.OrdinalIgnoreCase))) is { } target)
+                    else if (bundle.Drafts.FirstOrDefault(d => !DraftKinds.ChangesExisting(d.Kind) && d.Kind != DraftKinds.Encounter && (string.Equals(d.Ref, link, StringComparison.OrdinalIgnoreCase) || string.Equals(d.Name, link, StringComparison.OrdinalIgnoreCase))) is { } target)
                     {
                         if (target != draft) resolved = target.Ref;
                     }
@@ -683,6 +789,26 @@ public static class WorldBundleParser
                     foreach (var inside in bundle.Drafts.Where(d => d != draft && string.Equals(d.Parent, deleted, StringComparison.OrdinalIgnoreCase)))
                     {
                         errors.Add($"{inside.Ref} ({inside.Kind} '{inside.Name}'): its parent '{inside.Parent}' is deleted by {draft.Ref}; choose another parent.");
+                    }
+
+                    // An encounter set in a place that is deleted in the same proposal would be saved with no place.
+                    foreach (var held in bundle.Drafts.Where(d => d != draft && WorldBundle.IsEncounterPlan(d) && (d.Kind == DraftKinds.Encounter || d.PlaceGiven) && string.Equals(d.Place, deleted, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        errors.Add($"{held.Ref} ({held.Kind} '{held.Name}'): its place '{held.Place}' is deleted by {draft.Ref}; choose another place.");
+                    }
+
+                    // A creature or cast member that the same proposal deletes (or retires) would be left as a line that points at nothing.
+                    var homebrewKey = WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix;
+                    var actorKey = WorldBundle.ExistingPrefix + WorldBundle.ActorPrefix;
+                    foreach (var plan in bundle.Drafts.Where(d => d != draft && WorldBundle.IsEncounterPlan(d)))
+                    {
+                        var uses = plan.Lineup.FirstOrDefault(l =>
+                            (l.ActorId != null && string.Equals(actorKey + l.ActorId, deleted, StringComparison.OrdinalIgnoreCase))
+                            || (l.Homebrew && l.Ref == null && l.Type != null && string.Equals($"{homebrewKey}{l.Type}/{l.Id}", deleted, StringComparison.OrdinalIgnoreCase)));
+                        if (uses != null)
+                        {
+                            errors.Add($"{plan.Ref} ({plan.Kind} '{plan.Name}'): its creature '{uses.Entry}' is {(uses.ActorId != null ? "deleted or retired" : "deleted")} by {draft.Ref}; choose another creature or keep it.");
+                        }
                     }
                 }
 
@@ -856,9 +982,17 @@ public static class WorldBundleParser
         }
 
         var kind = WorldBundle.ParseTarget(key, out var id);
+        // An encounter is addressed by the GUID of its id and nothing else: no other kind of document, and no other campaign's, can be named through this.
+        if (kind == EditTarget.Encounter && !Guid.TryParse(id, out _))
+        {
+            errors.Add($"{label}: target '{key}' is not an encounter's key; use existing:encounter:<id> exactly as list_encounters gives it (the id is a GUID).");
+            return false;
+        }
+
         // The id as stored, whatever its case in the key: what is saved later matches it exactly.
         var stored = kind switch
         {
+            EditTarget.Encounter => rules.ExistingEncounters?.Keys.FirstOrDefault(e => string.Equals(e, id, StringComparison.OrdinalIgnoreCase)),
             EditTarget.Place => rules.ExistingPlaces.FirstOrDefault(p => string.Equals(p, id, StringComparison.OrdinalIgnoreCase)),
             EditTarget.Actor => rules.ExistingActors?.FirstOrDefault(a => string.Equals(a, id, StringComparison.OrdinalIgnoreCase)),
             EditTarget.Homebrew => rules.ExistingHomebrew?.Keys.FirstOrDefault(h => string.Equals(h, id, StringComparison.OrdinalIgnoreCase)),
@@ -871,6 +1005,8 @@ public static class WorldBundleParser
         {
             errors.Add(kind == EditTarget.Homebrew
                 ? $"{label}: target '{key}' is not a homebrew entry of the campaign; a pack entry cannot be changed, so make a homebrew variant of it instead (kind homebrew with \"basedOn\")."
+                : kind == EditTarget.Encounter
+                    ? $"{label}: target '{key}' is not a prepared encounter the campaign has; use a key from list_encounters (it may have been deleted since)."
                 : kind == EditTarget.Sheet
                     ? $"{label}: target '{key}' is not a character whose sheet a proposal can change (it must exist, must not be retired and must not be a bestiary creature); use existing:sheet:<id> with an id from search_world."
                     : $"{label}: target '{key}' is not something the campaign has; use a key from search_world, get_page or list_places.");
@@ -886,6 +1022,7 @@ public static class WorldBundleParser
             EditTarget.Region => WorldBundle.RegionPrefix + id,
             EditTarget.Fact => WorldBundle.FactPrefix + id,
             EditTarget.Sheet => WorldBundle.SheetPrefix + id,
+            EditTarget.Encounter => WorldBundle.EncounterPrefix + id,
             _ => id
         };
         if (bundle.Drafts.Any(d => d.Kind == DraftKinds.Edit && string.Equals(d.Target, canonical, StringComparison.OrdinalIgnoreCase)))
@@ -902,6 +1039,8 @@ public static class WorldBundleParser
             errors.Add($"{label}: the text is {textLength} characters; an edit holds at most {MaxBody}.");
             return false;
         }
+
+        if (kind == EditTarget.Encounter) return ReadEncounterEdit(draft, element, label, canonical, id, rules, errors, warnings);
 
         draft.Remove = element.TryGetProperty("delete", out var delete) && delete.ValueKind == JsonValueKind.True;
         draft.Rename = Cut(FieldCoercion.String(element, "rename"), MaxName) is { Length: > 0 } rename ? rename : null;
@@ -1008,6 +1147,291 @@ public static class WorldBundleParser
 
         draft.OutlineName = draft.Name;
         return true;
+    }
+
+    /// <summary>The most lines an encounter's lineup holds in a proposal, the longest note of a line, and the most of one creature (as the plan's own check says).</summary>
+    public const int MaxEncounterLines = 30;
+    private const int MaxLineNote = 300;
+    public const int MaxLineCount = 20;
+
+    /// <summary>The statuses a proposal may give a plan. Never "ran": only starting a plan at the table does that.</summary>
+    private static readonly string[] EncounterStatuses = { "draft", "ready" };
+
+    private static string? ReadStatus(JsonElement element, string label, List<string> errors, out bool ok)
+    {
+        ok = true;
+        var text = FieldCoercion.String(element, "status")?.Trim().ToLowerInvariant();
+        if (string.IsNullOrEmpty(text)) return null;
+        if (EncounterStatuses.Contains(text)) return text;
+        ok = false;
+        errors.Add($"{label}: status '{text}' must be draft or ready (a plan is marked as run only by starting it at the table).");
+        return null;
+    }
+
+    /// <summary>Reads a new encounter: its place (resolved after every entry is read), its lineup, its status and its tags. Its notes are the entry's text.</summary>
+    private static bool ReadEncounter(WorldDraft draft, JsonElement element, string label, ProposalRules rules, List<string> errors, List<string> warnings)
+    {
+        draft.Tags = ReadTagList(element, "tags");
+        draft.Status = ReadStatus(element, label, errors, out var ok) ?? "draft";
+        if (!ok) return false;
+        draft.Place = FieldCoercion.String(element, "place")?.Trim() is { Length: > 0 } place ? place : null;
+        var before = errors.Count;
+        if (element.TryGetProperty("creatures", out var list) && list.ValueKind != JsonValueKind.Null) draft.Lineup = ReadLines(list, label, rules, errors, warnings);
+        if (errors.Count > before) return false;
+        if (draft.Lineup.Count == 0) warnings.Add($"{label}: has no creatures, so the plan will be empty; give \"creatures\".");
+        return true;
+    }
+
+    /// <summary>Reads an edit of a prepared encounter: what it replaces (a new name, a place, the lineup in full, the notes in full, the complete tags, the status) or
+    /// that it is deleted, which stands alone and arrives unticked. The id is already a GUID the campaign has.</summary>
+    private static bool ReadEncounterEdit(WorldDraft draft, JsonElement element, string label, string canonical, string id, ProposalRules rules, List<string> errors, List<string> warnings)
+    {
+        var name = rules.ExistingEncounters![id];
+        draft.Remove = element.TryGetProperty("delete", out var delete) && delete.ValueKind == JsonValueKind.True;
+        draft.Rename = Cut(FieldCoercion.String(element, "rename"), MaxName) is { Length: > 0 } rename ? rename : null;
+        // A "place" says where the plan is set; "none" takes the place away (as a place's "parent" does), and an empty one says nothing, so a model that fills every field changes nothing.
+        var placeText = element.TryGetProperty("place", out var place) && place.ValueKind == JsonValueKind.String ? place.GetString()?.Trim() : null;
+        draft.PlaceGiven = !string.IsNullOrEmpty(placeText);
+        draft.Place = draft.PlaceGiven && !string.Equals(placeText, "none", StringComparison.OrdinalIgnoreCase) ? placeText : null;
+        draft.Retag = element.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array;
+        draft.Tags = draft.Retag ? ReadTagList(element, "tags") : new List<string>();
+        draft.Status = ReadStatus(element, label, errors, out var ok);
+        if (!ok) return false;
+        // An empty list is no lineup at all: a model that fills every optional field must not empty a plan by it.
+        if (element.TryGetProperty("creatures", out var list) && list.ValueKind == JsonValueKind.Array && list.GetArrayLength() > 0)
+        {
+            var before = errors.Count;
+            draft.Lineup = ReadLines(list, label, rules, errors, warnings);
+            if (errors.Count > before) return false;
+            draft.LineupGiven = true;
+        }
+
+        if (draft.Remove)
+        {
+            // An empty tags list and an empty place say nothing, so a delete that carries them is still a delete.
+            if (draft.Body != null || draft.Rename != null || draft.PlaceGiven || draft.LineupGiven || draft.Status != null || (draft.Retag && draft.Tags.Count > 0))
+            {
+                errors.Add($"{label}: a \"delete\" stands alone; make the other changes in a separate entry, or none.");
+                return false;
+            }
+
+            draft.Target = canonical;
+            draft.Retag = false;
+            // A delete is the game master's to tick: it arrives unticked, so applying everything never deletes anything unlooked-at.
+            draft.Selected = false;
+            draft.Name = draft.OutlineName = name;
+            return true;
+        }
+
+        if (draft.Body == null && draft.Rename == null && !draft.PlaceGiven && !draft.LineupGiven && draft.Status == null && !draft.Retag)
+        {
+            errors.Add($"{label}: the edit changes nothing; give a new \"rename\", a \"place\" (\"none\" for no place), the complete \"creatures\", the complete \"text\" (the notes), the complete \"tags\" or a \"status\", or \"delete\": true.");
+            return false;
+        }
+
+        draft.Target = canonical;
+        draft.Name = draft.OutlineName = name;
+        return true;
+    }
+
+    /// <summary>
+    /// Reads a lineup, <c>[{"entry", "count", "note", "hidden"}]</c>. An entry is a Library <c>type/id</c> of a creature type, <c>existing:homebrew:type/id</c>, <c>existing:actor:id</c> (a cast member
+    /// who is not a player character) or the ref of a homebrew creature in the same proposal (resolved by <see cref="ResolveEncounters"/>). A hazard is refused with a pointer to the place's feature.
+    /// Public so the <c>rate_encounter</c> tool reads a draft lineup exactly as a proposal does.
+    /// </summary>
+    public static List<DraftLine> ReadLines(JsonElement list, string label, ProposalRules rules, List<string> errors, List<string>? warnings = null)
+    {
+        var lines = new List<DraftLine>();
+        if (list.ValueKind != JsonValueKind.Array)
+        {
+            errors.Add($"{label}: \"creatures\" is a list of {{\"entry\", \"count\"}} lines.");
+            return lines;
+        }
+
+        var existingHomebrew = WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix;
+        var existingActor = WorldBundle.ExistingPrefix + WorldBundle.ActorPrefix;
+        var at = -1;
+        foreach (var item in list.EnumerateArray())
+        {
+            at++;
+            var spot = $"{label}: creatures[{at}]";
+            if (lines.Count >= MaxEncounterLines)
+            {
+                errors.Add($"{spot}: an encounter holds at most {MaxEncounterLines} lines.");
+                break;
+            }
+
+            var count = 1;
+            string? note = null;
+            var hidden = false;
+            string? entry;
+            if (item.ValueKind == JsonValueKind.String)
+            {
+                entry = item.GetString();
+            }
+            else if (item.ValueKind == JsonValueKind.Object)
+            {
+                entry = FieldCoercion.String(item, "entry");
+                if (item.TryGetProperty("count", out var c) && c.ValueKind != JsonValueKind.Null)
+                {
+                    if (c.ValueKind == JsonValueKind.Number && c.TryGetInt32(out var n)) count = n;
+                    else if (c.ValueKind == JsonValueKind.String && int.TryParse(c.GetString(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out n)) count = n;
+                    else
+                    {
+                        errors.Add($"{spot}: count must be a whole number from 1 to {MaxLineCount}.");
+                        continue;
+                    }
+                }
+
+                note = Cut(FieldCoercion.String(item, "note"), MaxLineNote) is { Length: > 0 } text ? text : null;
+                hidden = item.TryGetProperty("hidden", out var h) && h.ValueKind == JsonValueKind.True;
+            }
+            else
+            {
+                errors.Add($"{spot}: not an object; give {{\"entry\": \"type/id\", \"count\": 1}}.");
+                continue;
+            }
+
+            entry = entry?.Trim();
+            if (string.IsNullOrEmpty(entry))
+            {
+                errors.Add($"{spot}: has no \"entry\": a Library creature as search_library lists it (type/id), existing:homebrew:type/id, existing:actor:<id>, or the ref of a homebrew creature in this proposal.");
+                continue;
+            }
+
+            var line = new DraftLine { Entry = entry, Count = count, Note = note, Hidden = hidden };
+            if (entry.StartsWith(existingActor, StringComparison.OrdinalIgnoreCase))
+            {
+                var wanted = entry[existingActor.Length..];
+                if (rules.ExistingActors?.FirstOrDefault(a => string.Equals(a, wanted, StringComparison.OrdinalIgnoreCase)) is not { } actorId)
+                {
+                    errors.Add($"{spot}: '{entry}' is not a cast member who can join a fight; a player character cannot (the players run them). Use existing:actor:<id> from search_world.");
+                    continue;
+                }
+
+                if (count != 1)
+                {
+                    errors.Add($"{spot}: a cast member joins once; leave out the count or make it 1.");
+                    continue;
+                }
+
+                line.ActorId = actorId;
+                if (hidden) warnings?.Add($"{spot}: \"hidden\" does nothing for a cast member, who keeps their own visibility at the table.");
+            }
+            else if (entry.StartsWith(existingHomebrew, StringComparison.OrdinalIgnoreCase))
+            {
+                var wanted = entry[existingHomebrew.Length..];
+                if (rules.ExistingHomebrew?.Keys.FirstOrDefault(k => string.Equals(k, wanted, StringComparison.OrdinalIgnoreCase)) is not { } key || key.Split('/') is not [var type, var entryId])
+                {
+                    errors.Add($"{spot}: '{entry}' is not a homebrew entry the campaign has; use the key search_library lists.");
+                    continue;
+                }
+
+                if (CreatureType(type, spot, rules, errors) is not { } creatureType) continue;
+                line.Type = creatureType;
+                line.Id = entryId;
+                line.Homebrew = true;
+                line.Name = rules.ExistingHomebrew[key];
+            }
+            else if (entry.StartsWith(WorldBundle.ExistingPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add($"{spot}: '{entry}' is not a creature key; use type/id, existing:homebrew:type/id or existing:actor:<id>.");
+                continue;
+            }
+            else if (entry.Contains('/'))
+            {
+                if (entry.Split('/') is not [{ Length: > 0 } type, { Length: > 0 } entryId])
+                {
+                    errors.Add($"{spot}: '{entry}' is not type/id as search_library lists it.");
+                    continue;
+                }
+
+                if (CreatureType(type, spot, rules, errors) is not { } creatureType) continue;
+                line.Type = creatureType;
+                line.Id = entryId;
+            }
+            else
+            {
+                // The ref of a homebrew creature in this proposal; the proposal is read to its end before it is found.
+                line.Ref = entry;
+            }
+
+            if (line.ActorId == null && count is < 1 or > MaxLineCount)
+            {
+                errors.Add($"{spot}: count {count} is outside 1 to {MaxLineCount}.");
+                continue;
+            }
+
+            lines.Add(line);
+        }
+
+        return lines;
+    }
+
+    // A creature line's type: refused with a pointer when it is the hazard type, and when the system's creature types are known, when it is not one of them.
+    private static string? CreatureType(string type, string spot, ProposalRules rules, List<string> errors)
+    {
+        if (rules.HazardType != null && string.Equals(type, rules.HazardType, StringComparison.OrdinalIgnoreCase))
+        {
+            errors.Add($"{spot}: a hazard is not a creature line; place it on the place's feature (feature.hazard), where its state lives.");
+            return null;
+        }
+
+        if (rules.CreatureTypes == null) return type;
+        if (rules.CreatureTypes.FirstOrDefault(t => string.Equals(t, type, StringComparison.OrdinalIgnoreCase)) is { } known) return known;
+        errors.Add($"{spot}: '{type}' is not a creature type of this system ({string.Join(", ", rules.CreatureTypes)}).");
+        return null;
+    }
+
+    /// <summary>Settles what an encounter points at inside the proposal, once every entry is read: its place (another place entry's ref, or an existing place) and each homebrew
+    /// creature it names by ref (an entry of this proposal whose type is a creature type, never a hazard).</summary>
+    private static void ResolveEncounters(WorldBundle bundle, ProposalRules rules, List<string> errors)
+    {
+        var existingPlace = WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix;
+        foreach (var draft in bundle.Drafts.Where(WorldBundle.IsEncounterPlan))
+        {
+            var label = $"{draft.Ref} ({draft.Kind} '{draft.Name}')";
+            if (draft.Place is { Length: > 0 } place)
+            {
+                if (place.StartsWith(existingPlace, StringComparison.OrdinalIgnoreCase))
+                {
+                    var wanted = place[existingPlace.Length..];
+                    if (rules.ExistingPlaces.FirstOrDefault(p => string.Equals(p, wanted, StringComparison.OrdinalIgnoreCase)) is { } stored) draft.Place = existingPlace + stored;
+                    else errors.Add($"{label}: place '{place}' is not a place the campaign has; use an id from list_places.");
+                }
+                else if (bundle.Drafts.FirstOrDefault(d => d.Kind == DraftKinds.Place && string.Equals(d.Ref, place, StringComparison.OrdinalIgnoreCase)) is { } placeDraft)
+                {
+                    draft.Place = placeDraft.Ref;
+                }
+                else
+                {
+                    errors.Add($"{label}: place '{place}' must be a place entry's ref in this proposal or existing:place:<id>.");
+                }
+            }
+
+            foreach (var line in draft.Lineup.Where(l => l.Ref != null))
+            {
+                var spot = $"{label}: creature '{line.Entry}'";
+                if (bundle.Drafts.FirstOrDefault(d => d.Kind == DraftKinds.Homebrew && string.Equals(d.Ref, line.Ref, StringComparison.OrdinalIgnoreCase)) is not { Type: { } type } made)
+                {
+                    errors.Add($"{spot} is not a homebrew creature entry of this proposal; use a Library type/id, existing:homebrew:type/id, existing:actor:<id> or the ref of a homebrew creature entry.");
+                    continue;
+                }
+
+                if (CreatureType(type, spot, rules, errors) is not { } creatureType) continue;
+                // An entry tagged as a hazard is one too, whatever its type is called: the plan's own check refuses it at saving, so it is refused here.
+                if (made.Tags.Contains("hazard", StringComparer.OrdinalIgnoreCase))
+                {
+                    errors.Add($"{spot} is tagged as a hazard, so it is not a creature line; place it on the place's feature (feature.hazard), where its state lives.");
+                    continue;
+                }
+
+                line.Ref = made.Ref;
+                line.Type = creatureType;
+                line.Homebrew = true;
+                line.Name = made.Name;
+            }
+        }
     }
 
     /// <summary>Reads an edit of a character's sheet: the keys to set (with their new values) and to clear. A sheet has no text, no new name
@@ -1296,7 +1720,7 @@ public static class WorldBundleParser
         // One line per name however it is spelled, shown as it was first written.
         var missing = new Dictionary<string, (string Name, List<WorldDraft> By)>(StringComparer.Ordinal);
         var order = new List<string>();
-        foreach (var d in bundle.Drafts.Where(d => d.Selected && !string.IsNullOrWhiteSpace(d.Body) && (DraftKinds.IsPage(d.Kind) || d is { Kind: DraftKinds.Edit } && WorldBundle.ParseTarget(d.Target ?? string.Empty, out _) != EditTarget.Homebrew)))
+        foreach (var d in bundle.Drafts.Where(d => d.Selected && !string.IsNullOrWhiteSpace(d.Body) && (DraftKinds.IsPage(d.Kind) || d is { Kind: DraftKinds.Edit } && WorldBundle.ParseTarget(d.Target ?? string.Empty, out _) is not (EditTarget.Homebrew or EditTarget.Encounter))))
         {
             foreach (System.Text.RegularExpressions.Match match in WikiLink.Matches(d.Body!))
             {

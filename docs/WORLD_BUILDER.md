@@ -2,7 +2,7 @@
 
 Status: built. The **World builder** section (`/campaigns/{id}/build`, GM only) holds the GM's conversations with their own
 text model, which reads the campaign and the Library through tools and proposes related pages, places, people, secrets and
-homebrew in one go, changes to what the campaign has, Bestiary picks and tags. The wiki's *Build with AI* menu and the Library's *Homebrew with AI* button open it with a starter message. The
+homebrew in one go, changes to what the campaign has, Bestiary picks and tags, and prepared encounters (a place, a lineup and notes, saved as a Draft plan; `docs/ENCOUNTER_BUILDER_DESIGN.md` 6 and 17). The wiki's *Build with AI* menu and the Library's *Homebrew with AI* button open it with a starter message. The
 guided recipe wizards it replaced are gone. Phase 2, the same tools over MCP (§6), is design only.
 
 Related, outside the chat: any wiki page can be **promoted** to the cast (*Add to cast*: a Library stat block, a blank
@@ -88,6 +88,10 @@ would pay the write premium for an entry nothing reads.
 | `homebrew_fields(type)` | The fields a homebrew entry of a type fills |
 | `list_tags()` | The tags the campaign's pages and homebrew use, with counts |
 | `list_issues(scope?, severity?)` | The consistency checker's open issues as JSON, most severe first, at most 50 (section 9) |
+| `list_encounters(place?)` | The prepared encounters, one line each: key (`existing:encounter:<id>`), place, lineup in short, status and, where the system declares a readout, the band; with a place, those at it and under it |
+| `get_encounter(encounter)` | One plan in full: each line with its key (`type/id`, `existing:homebrew:type/id`, `existing:actor:<id>`), count, note and hidden; the notes; the hazards at its place; the readout |
+| `place_hazards(place)` | The hazards at a place and under it (entry, name, state in words, the place each is on, simple or complex) and the creatures its features name |
+| `rate_encounter(creatures)` | The readout for a draft lineup, or "this system declares no difficulty readout" |
 | `propose_changes(proposal)` | Checks the proposal: errors per entry for the model to fix, or "ready for review" |
 | `add_entries(entries)` | Puts more entries beside the waiting proposal, keeping the GM's ticks |
 
@@ -113,9 +117,19 @@ Read tools return short text, capped; they never write.
   {"ref": "m", "kind": "edit", "target": "existing:place:<id>", "parent": "existing:place:<id> | new ref | none", "placeKind": "room", "rename": "..."},
   {"ref": "d", "kind": "edit", "target": "existing:place:<id> | existing:<slug> | existing:actor:<id> | existing:homebrew:<type>/<id>", "delete": true},
   {"ref": "g", "kind": "tags", "targets": ["existing:saltmere", "existing:homebrew:spell/brine-ward"], "add": ["shareable"], "remove": ["town"]},
-  {"ref": "p", "kind": "bestiary", "entry": "monster/goblin-warrior"}
+  {"ref": "p", "kind": "bestiary", "entry": "monster/goblin-warrior"},
+  {"ref": "f", "kind": "encounter", "name": "Ambush in the cellar", "place": "c", "text": "notes: what they want, how it can end", "tags": ["grey-coast"], "status": "draft",
+   "creatures": [{"entry": "monster/bandit", "count": 3, "note": "behind the casks"}, {"entry": "h"}, {"entry": "existing:actor:<id>", "hidden": true}]},
+  {"ref": "u", "kind": "edit", "target": "existing:encounter:<id>", "rename": "...", "place": "existing:place:<id> | new ref | none", "creatures": [], "text": "the complete notes", "tags": [], "status": "ready"}
 ]}
 ```
+
+A prepared encounter (`kind: "encounter"`, `EditTarget.Encounter`, key `existing:encounter:<id>` with the id a GUID) is a plan the GM can start at the
+table later; the chat never starts one. A creature `entry` is a Library `type/id` of a creature type, `existing:homebrew:type/id`, the ref of a homebrew
+creature entry in the same proposal, or `existing:actor:<id>` (a cast member who is not a player character); a hazard is refused with a pointer to the
+place's feature. Counts are 1 to 20 (a cast member is 1), status is `draft` (the default) or `ready`, never `ran`. An edit replaces what it names in full and
+must change something; an edit's delete (`"delete": true`) stands alone, arrives unticked, is shown with a warning, and, like an edit, is refused at saving
+if the plan was saved since the review.
 
 A place's `placeKind` is one of area, settlement, district, site (a building, ship or dungeon), section (a floor, deck or
 dungeon level), room and feature; left out, it follows the parent (or, at the top, the new region's `regionKind`: a dungeon's
@@ -134,7 +148,8 @@ homebrew entry's fields and tags, each tagged thing's tags, and a stamp to tell 
 Saving (`SaveAsync`) writes pages first so titles are settled (`Name (2)` when taken) and links rewritten, then homebrew
 (variants keep where they came from as their attribution), then the Bestiary shortlist (new homebrew creatures ticked for it
 and the picked Library creatures), then cast members (page as history, AI-picked gear), then places, parents before children,
-in the parent's region or the proposal's region (found by name, else the campaign's first, else a new one), then edits (each
+in the parent's region or the proposal's region (found by name, else the campaign's first, else a new one), then prepared encounters (last among
+the new things, so every place and homebrew creature they name is stored), then edits (each
 refused if what it replaces changed since the review), then tags, then facts related to what they link to. Each entry
 records what it became (`SavedAs`), so applying again after a failure adds only the rest.
 
@@ -149,7 +164,8 @@ the workbench (the side rail and the notes dock change its width at a given scre
 - **Under 760px**: one pane at a time, picked from tabs (*Chats*, *Conversation*, *Proposal* with a count).
 
 The conversation sets the AI's words like a book's page and the GM's at the end side. Before the first message it offers
-numbered starters (a settlement, a faction, a quest, people, homebrew, a variant, revising a page, tagging for sharing). Under
+numbered starters (a settlement, a faction, a quest, people, homebrew, a variant, revising a page, tagging for sharing, an encounter). The Encounters page's
+*Build with AI* opens `/build/encounter`, with `?place=<id>` from an editor whose plan has a place ("Prepare an encounter at ..."). Under
 each reply the steps fold into one line (*7 steps · 0.4 s · 1 needed another try*); opened, each step is a line with what it
 did, how it came out and how long it took, and opens to its arguments and result, and from there to the raw JSON
 (`WorldChatSteps`, the dialog). While the model works the steps show live with the one running, its reasoning, what it is
@@ -172,7 +188,7 @@ After applying, the panel and the conversation link to everything made or change
 | `AiPrompts.WorldChat`, `WorldChatRequest` | `Codex.Core/AI/AiPrompts.cs` |
 | `WorldChatDocument` and its parts, `IWorldChatRepository` | `Codex.Persistence/WorldChatModels.cs` |
 | `HomebrewTags` (export by tag) | `Codex.Persistence/HomebrewModels.cs` |
-| `WorldBuilderService` (tool reads, check, save) | `Codex.Web/Services/WorldBuilderService.cs` |
+| `WorldBuilderService` (tool reads, check, save; prepared encounters in `WorldBuilderService.Encounters.cs`) | `Codex.Web/Services/WorldBuilderService.cs` |
 | `WorldChat`, `WorldChatLive`, `WorldChatSessions`, `ProposalInput` | `Codex.Web/Services/WorldChat.cs` |
 | `WorldChatSection`, `WorldChatSteps`, `WorldProposalPanel`, `WorldChatLinks`, `WorldChatView` | `Codex.Web/Components/Campaign` |
 | Strings | `Strings.WorldChat{,.ru,.he}.resx`, tags in `Strings.WorldBuilder*` |
@@ -193,7 +209,7 @@ scoped to one campaign, GM-only, revocable and off by default.
 ## 8. Not done yet
 
 - A chat is not shared between co-DMs, and two tabs on one chat save over each other (the last save wins).
-- Changing a homebrew entry's type, or deleting anything, is not a proposal kind.
+- Changing a homebrew entry's type is not a proposal kind.
 - Export by tag covers homebrew; wiki pages carry tags but are not part of a pack.
 
 ## 9. The consistency checker

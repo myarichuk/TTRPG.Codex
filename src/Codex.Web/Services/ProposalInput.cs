@@ -34,19 +34,19 @@ public sealed class ProposalEntry
     [JsonPropertyName("ref"), Description("A short id other entries use: \"p1\", \"n2\".")]
     public string? Ref { get; set; }
 
-    [JsonPropertyName("kind"), Description("place, npc, wiki, fact, homebrew, edit, tags or bestiary.")]
+    [JsonPropertyName("kind"), Description("place, npc, wiki, fact, homebrew, edit, tags, bestiary or encounter.")]
     public string? Kind { get; set; }
 
     [JsonPropertyName("name")]
     public string? Name { get; set; }
 
-    [JsonPropertyName("text"), Description("The page's text in markdown (a fact's details; a homebrew entry's rules text), in full sentences under short headings, usually 150 to 350 words: written for a game master to run from, never clipped notes. Link entries as [[ref]] and pages as [[existing:slug]].")]
+    [JsonPropertyName("text"), Description("The page's text in markdown (a fact's details; a homebrew entry's rules text; an encounter's notes for the game master: what the creatures want and how the fight can end other than by killing them), in full sentences under short headings, usually 150 to 350 words: written for a game master to run from, never clipped notes. Link entries as [[ref]] and pages as [[existing:slug]].")]
     public string? Text { get; set; }
 
     [JsonPropertyName("pitch"), Description("One or two plain sentences, at most 300 characters, saying what the entry is: shown in lists and on the review card, and as a place's short description.")]
     public string? Pitch { get; set; }
 
-    [JsonPropertyName("target"), Description("For an edit: the key of what to change, as search_world, get_page, list_places or search_library show it: existing:<slug> (a page's text), existing:place:<id> (a place's short description), existing:actor:<id> (a cast member's history) or existing:homebrew:<type>/<id> (a homebrew entry), existing:region:<id> (a region), existing:fact:<id> (a secret in Lore) or existing:sheet:<id> (a character's sheet values; see \"sheet\"). When the edit changes the text of a page, place or cast member, the \"text\" is the COMPLETE new text, replacing the old; an edit may instead (or also) rename, move or retype a place, or delete.")]
+    [JsonPropertyName("target"), Description("For an edit: the key of what to change, as search_world, get_page, list_places or search_library show it: existing:<slug> (a page's text), existing:place:<id> (a place's short description), existing:actor:<id> (a cast member's history) or existing:homebrew:<type>/<id> (a homebrew entry), existing:region:<id> (a region), existing:fact:<id> (a secret in Lore) or existing:sheet:<id> (a character's sheet values; see \"sheet\") or existing:encounter:<id> (a prepared encounter, from list_encounters; it takes \"rename\", \"place\", \"creatures\", \"text\" (its notes), \"tags\" and \"status\", each replacing what it names in full). When the edit changes the text of a page, place or cast member, the \"text\" is the COMPLETE new text, replacing the old; an edit may instead (or also) rename, move or retype a place, or delete.")]
     public string? Target { get; set; }
 
     [JsonPropertyName("rename"), Description("For an edit: its new name, when it should get one (a place, a cast member, a page's title or a homebrew entry).")]
@@ -55,7 +55,7 @@ public sealed class ProposalEntry
     [JsonPropertyName("regionKind"), Description("For an edit of a region: what it becomes: general, realm, wilderness, city, dungeon, vessel or plane.")]
     public string? RegionKind { get; set; }
 
-    [JsonPropertyName("delete"), Description("For an edit: true to delete what the target names (a place, page, cast member or homebrew entry). It stands alone, with no other change in the entry. The places inside a deleted place move up to its parent. The game master reviews and ticks it like any change; nothing is deleted until they apply it.")]
+    [JsonPropertyName("delete"), Description("For an edit: true to delete what the target names (a place, page, cast member, homebrew entry or prepared encounter; deleting an encounter does not touch its creatures or its place). It stands alone, with no other change in the entry. The places inside a deleted place move up to its parent. The game master reviews and ticks it like any change; nothing is deleted until they apply it.")]
     public bool? Delete { get; set; }
 
     [JsonPropertyName("links"), Description("Refs and existing:slug keys this entry is about (a fact's subjects).")]
@@ -91,7 +91,7 @@ public sealed class ProposalEntry
     [JsonPropertyName("entry"), Description("For a bestiary entry: the Library creature to put on the Bestiary shortlist, as search_library lists it (type/id).")]
     public string? Entry { get; set; }
 
-    [JsonPropertyName("tags"), Description("For a new page or homebrew entry: two to five short lower-case tags. For an edit of a homebrew entry: its COMPLETE new tags.")]
+    [JsonPropertyName("tags"), Description("For a new page, homebrew entry or encounter: two to five short lower-case tags. For an edit of a homebrew entry or an encounter: its COMPLETE new tags.")]
     public List<string>? Tags { get; set; }
 
     [JsonPropertyName("targets"), Description("For a tags entry: the keys of the wiki pages (existing:<slug>) and homebrew entries (existing:homebrew:<type>/<id>) to tag.")]
@@ -109,10 +109,35 @@ public sealed class ProposalEntry
     [JsonPropertyName("sheet"), Description("For an edit of a character's sheet (target existing:sheet:<id>, read it with get_page): the sheet keys to set, as {\"key\": value}; null clears a key. Only the keys get_page lists; a Library reference (class, background, inventory items) must be an id search_library lists. Never invent gear or values: set only what the game master asked for, or what the issue's own rule and the Library's text state. The app checks the values against the system's rules and refuses what would break them.")]
     public Dictionary<string, JsonElement>? Sheet { get; set; }
 
+    [JsonPropertyName("place"), Description("For an encounter, or an edit of one: where it is set: the ref of a place entry in this proposal, or existing:place:<id>. Leave it out for no place. In an edit, \"none\" takes the place away; leave it out (or empty) to keep it.")]
+    public string? Place { get; set; }
+
+    [JsonPropertyName("creatures"), Description("For an encounter, or an edit of one (then the COMPLETE new lineup): who is in it. Each line is an \"entry\" (a Library creature as search_library lists it, type/id; an existing homebrew one, existing:homebrew:<type>/<id>; the ref of a homebrew creature entry in this proposal; or a cast member, existing:actor:<id>, who is not a player character), a \"count\" (1 to 20, default 1; a cast member is always 1), a \"note\" and \"hidden\" (true when it starts hidden). A hazard is not a creature: put it on a place's feature.")]
+    public List<ProposalCreature>? Creatures { get; set; }
+
+    [JsonPropertyName("status"), Description("For an encounter, or an edit of one: draft (the default for a new one) or ready. Never started or run: only the game master starts an encounter.")]
+    public string? Status { get; set; }
+
     [JsonPropertyName("properties"), Description("For a homebrew entry: its fields, by the keys homebrew_fields lists. For an edit of one: only the fields that change.")]
     public Dictionary<string, JsonElement>? Properties { get; set; }
 }
 
+
+/// <summary>One line of an encounter's lineup, read by <see cref="WorldBundleParser.ReadLines"/>.</summary>
+public sealed class ProposalCreature
+{
+    [JsonPropertyName("entry"), Description("A Library creature (type/id), existing:homebrew:<type>/<id>, the ref of a homebrew creature entry in this proposal, or existing:actor:<id> for a cast member.")]
+    public string? Entry { get; set; }
+
+    [JsonPropertyName("count"), Description("How many, 1 to 20; a cast member is always 1.")]
+    public int? Count { get; set; }
+
+    [JsonPropertyName("note"), Description("A short note for the game master: where they stand, what they do.")]
+    public string? Note { get; set; }
+
+    [JsonPropertyName("hidden"), Description("True when a Library or homebrew creature line starts hidden from the players. It does nothing for a cast member, who keeps their own visibility.")]
+    public bool? Hidden { get; set; }
+}
 
 /// <summary>A feature's notes, read by <see cref="WorldBundleParser.ParseProposal"/>.</summary>
 public sealed class ProposalFeature
