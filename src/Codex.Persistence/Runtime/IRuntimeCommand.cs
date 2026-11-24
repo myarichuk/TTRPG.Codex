@@ -22,6 +22,14 @@ public interface IRuntimeCommand
     SessionEvent Describe(CampaignRuntime runtime);
 }
 
+/// <summary>A command whose work is several of the table's usual log lines: its own event, then these, in this order and in the same session write. A prepared
+/// encounter's start writes each creature's initiative line as a roll at the console would, with that creature's own actor ids, so redaction is per creature.
+/// Called after <see cref="IRuntimeCommand.Describe"/>, against the same runtime.</summary>
+internal interface IFollowedByEvents
+{
+    IReadOnlyList<SessionEvent> EventsAfter(CampaignRuntime runtime);
+}
+
 /// <summary>A change to one creature's pools or conditions (damage, healing, a condition, a death save) that the DM can take
 /// back with <see cref="UndoLastChangeCommand"/> while nothing else has changed the creature since (R5).</summary>
 public interface IUndoableCommand : IRuntimeCommand

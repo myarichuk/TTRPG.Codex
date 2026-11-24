@@ -1,0 +1,101 @@
+@using Codex.Persistence
+@using Codex.Persistence.Runtime
+@inject PreparedEncounterService Encounters
+@inject ILogger<PreparedEncounterPicker> Logger
+
+@* The GM's list of encounters ready to start (ENCOUNTER_BUILDER_DESIGN.md 5.2): Ready and Ran plans, those at the place last used first. It is a disclosure with a list of
+   buttons, not a menu, so Tab and Enter are enough. Starting one asks first; the console shows the order once the table has it. Game master only. *@
+<ConfirmDialog @ref="confirm" />
+
+<div id="prepared-encounters" class="mt-2" data-testid="prepared-encounters">
+    @if (rows == null)
+    {
+        @* Loading: nothing to say for a moment. *@
+    }
+    else if (rows.Count == 0)
+    {
+        <p class="small-muted mb-0">@L["Combat.Prepared.None"] <a href="/campaigns/@Campaign.Id/encounters">@L["Combat.Prepared.Manage"]</a></p>
+    }
+    else
+    {
+        <ul class="list-unstyled d-grid gap-2 mb-0" aria-label="@L["Combat.Prepared.ListLabel"]">
+            @foreach (var row in rows)
+            {
+                <li class="d-flex flex-wrap gap-2 align-items-baseline">
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="start-prepared-plan" aria-label="@L["Combat.Prepared.StartLabel", row.Plan.Name]"
+                                 Busy="@(startingId == row.Plan.Id)" Disabled="@(startingId != null)" OnClick="() => StartAsync(row)">@row.Plan.Name</CodexButton>
+                    <span class="small-muted">@PlaceText(row) · @row.Summary</span>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public CampaignDocument Campaign { get; set; } = null!;
+    [Parameter, EditorRequired] public CampaignAccess Access { get; set; } = null!;
+
+    /// <summary>The live encounter's place, so the plans at that place come first.</summary>
+    [Parameter] public string? PlaceId { get; set; }
+
+    [Parameter] public EventCallback<Flash> OnMessage { get; set; }
+    [Parameter] public EventCallback OnStarted { get; set; }
+
+    private IReadOnlyList<EncounterRow>? rows;
+    private string? startingId;
+    private ConfirmDialog confirm = null!;
+
+    // Drawn once per opening, so the list is fresh each time the GM opens it.
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            rows = Access.IsDm ? await Encounters.StartChoicesAsync(Campaign, Access, PlaceId) : Array.Empty<EncounterRow>();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Listing the prepared encounters failed");
+            rows = Array.Empty<EncounterRow>();
+        }
+    }
+
+    private string PlaceText(EncounterRow row) =>
+        row.PlaceGone ? L["Encounters.PlaceGone"] : row.PlacePath ?? L["Encounters.NoPlace"];
+
+    private async Task StartAsync(EncounterRow row)
+    {
+        if (startingId != null) return;
+        var n = PreparedEncounterService.CombatantsOf(row.Plan);
+        if (!await confirm.ShowAsync(L["Combat.Prepared.ConfirmTitle"], L["Combat.Prepared.Confirm", row.Plan.Name, n], L["Combat.Prepared.Start"])) return;
+
+        startingId = row.Plan.Id;
+        // The dialog's answer arrives outside the click that began this, so the buttons are drawn off here and not only when the start ends.
+        await InvokeAsync(StateHasChanged);
+        try
+        {
+            var result = await Encounters.StartAsync(Campaign, Access, row.Plan.Id);
+            if (result.Started)
+            {
+                await OnMessage.InvokeAsync(result.NotJoined.Count > 0
+                    ? Flash.Info(L["Combat.Prepared.StartedSome", row.Plan.Name, string.Join(", ", result.NotJoined)])
+                    : Flash.Success(L["Combat.Prepared.Started", row.Plan.Name]));
+                if (result.RunNotRecorded) await OnMessage.InvokeAsync(Flash.Info(L["Combat.Prepared.RunNotRecorded"]));
+                await OnStarted.InvokeAsync();
+            }
+            else
+            {
+                await OnMessage.InvokeAsync(Flash.Error(L[result.ProblemKey!]));
+            }
+        }
+        catch (Exception ex)
+        {
+            // An exception that escapes a Blazor handler ends the circuit.
+            Logger.LogError(ex, "Starting prepared encounter {Plan} failed", row.Plan.Id);
+            await OnMessage.InvokeAsync(Flash.Error(L["Combat.CommandFailed"]));
+        }
+        finally
+        {
+            startingId = null;
+        }
+    }
+}

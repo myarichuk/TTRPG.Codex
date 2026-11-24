@@ -264,4 +264,9 @@
   <data name="Event.Campaign.RowAdded" xml:space="preserve"><value>{0}: נוסף {1}.</value></data>
   <data name="Event.Campaign.RowEdited" xml:space="preserve"><value>{0}: {1} שונה.</value></data>
   <data name="Event.Campaign.RowRemoved" xml:space="preserve"><value>{0}: {1} הוסר.</value></data>
+  <data name="Event.Encounter.Started" xml:space="preserve"><value>מפגש קרב התחיל: {0}, ב{1}.</value></data>
+  <data name="Event.Encounter.StartedNoPlace" xml:space="preserve"><value>מפגש קרב התחיל: {0}.</value></data>
+  <data name="Event.Encounter.NotJoined" xml:space="preserve"><value>{1, plural, one{יצור אחד מ{0} לא הצטרף.} two{שני יצורים מ{0} לא הצטרפו.} other{# יצורים מ{0} לא הצטרפו.}}</value></data>
+  <data name="Event.Encounter.StartRefused" xml:space="preserve"><value>{0} לא התחיל: מפגש קרב כבר מתנהל.</value></data>
+  <data name="Event.Encounter.StartEmpty" xml:space="preserve"><value>{0} לא התחיל: אף אחד ממנו אינו ליד השולחן.</value></data>
 </root>

@@ -17,6 +17,7 @@ public class PreparedEncounterDocument
     public List<string> Tags { get; set; } = new();
     public PreparedStatus Status { get; set; }                  // Draft, Ready, Ran
     public List<string> RunEncounterIds { get; set; } = new();  // the live encounters started from it, newest last; only MarkRunAsync adds to it
+    public DateTime? LastRunAt { get; set; }                     // when it was last started at the table (UTC); only MarkRunAsync sets it
     public string CreatedBy { get; set; } = string.Empty;
     public DateTime UpdatedAt { get; set; }
     public string? FromChatId { get; set; }                     // the world builder chat that proposed it, if any

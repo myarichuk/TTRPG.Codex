@@ -27,8 +27,12 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
         return type is { ActorBlueprint: true } ? YamlContentPackLoader.ToActorBlueprint(item.Entry, type, system?.PrimaryResource) : null;
     }
 
-    /// <summary>Adds <paramref name="count"/> copies, numbered when more than one, hidden from players until revealed. Returns the actors created.</summary>
-    public async Task<IReadOnlyList<ActorDocument>> AddToCastAsync(LibraryItem item, CampaignDocument campaign, SystemDefinition? system, CampaignAccess access, int count = 1)
+    /// <summary>Adds <paramref name="count"/> copies, numbered when more than one, as <paramref name="visibility"/> says: Hidden (the default: the Bestiary and the Library
+    /// add creatures players do not see until revealed), or Unknown, seen by what it is (a prepared encounter's start, as Quick Add). An Unknown copy's public name
+    /// is its own name, as Quick Add sets it, so players do not read "a stranger". With <paramref name="numberFrom"/> every copy is numbered, from that number on
+    /// (a plan with two lines of one creature numbers across both). Returns the actors created.</summary>
+    public async Task<IReadOnlyList<ActorDocument>> AddToCastAsync(LibraryItem item, CampaignDocument campaign, SystemDefinition? system, CampaignAccess access, int count = 1,
+        ActorVisibility visibility = ActorVisibility.Hidden, int? numberFrom = null)
     {
         var blueprint = Blueprint(item, campaign, system);
         if (blueprint == null || !access.IsDm)
@@ -39,20 +43,40 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
         var created = new List<ActorDocument>();
         for (var i = 1; i <= Math.Clamp(count, 1, 20); i++)
         {
+            var name = numberFrom is { } from ? $"{blueprint.Name} {from + i - 1}" : count > 1 ? $"{blueprint.Name} {i}" : blueprint.Name;
             var actor = new ActorDocument
             {
                 Id = Guid.NewGuid().ToString(),
                 CampaignId = campaign.Id,
                 Kind = ActorKind.Monster,
                 BlueprintId = item.IsHomebrew ? null : $"{blueprint.SystemId}:{blueprint.Id}",
-                Name = count > 1 ? $"{blueprint.Name} {i}" : blueprint.Name,
-                Visibility = ActorVisibility.Hidden
+                Name = name,
+                Visibility = visibility,
+                PublicName = visibility == ActorVisibility.Unknown ? name : null
             };
             ActorSheetSync.SeedFromBlueprint(actor, blueprint, system, components);
             if (!actor.Sheet.ContainsKey(SheetModel.KindKey)) ApplySheetKind(actor, system);
-            if (await runtimes.TryCreateActorAsync(actor, access))
+            try
             {
-                created.Add(actor);
+                if (await runtimes.TryCreateActorAsync(actor, access))
+                {
+                    created.Add(actor);
+                }
+            }
+            catch (Exception)
+            {
+                // The copy may have been saved before the table failed to take it: if it is stored it is one of the ones made, so the caller can clean it up or
+                // go on with it, and no more copies are made. The caller sees the shortfall.
+                try
+                {
+                    if (await actors.GetVisibleAsync(actor.Id, access) != null) created.Add(actor);
+                }
+                catch (Exception)
+                {
+                    // The store cannot be read either; the copy is taken as not made.
+                }
+
+                break;
             }
         }
 

@@ -264,4 +264,9 @@
   <data name="Event.Campaign.RowAdded" xml:space="preserve"><value>{0}: {1} added.</value></data>
   <data name="Event.Campaign.RowEdited" xml:space="preserve"><value>{0}: {1} changed.</value></data>
   <data name="Event.Campaign.RowRemoved" xml:space="preserve"><value>{0}: {1} removed.</value></data>
+  <data name="Event.Encounter.Started" xml:space="preserve"><value>Encounter started: {0} at {1}.</value></data>
+  <data name="Event.Encounter.StartedNoPlace" xml:space="preserve"><value>Encounter started: {0}.</value></data>
+  <data name="Event.Encounter.NotJoined" xml:space="preserve"><value>{1, plural, one{One creature of {0} did not join.} other{# creatures of {0} did not join.}}</value></data>
+  <data name="Event.Encounter.StartRefused" xml:space="preserve"><value>{0} was not started: an encounter is already running.</value></data>
+  <data name="Event.Encounter.StartEmpty" xml:space="preserve"><value>{0} was not started: nobody in it is at the table.</value></data>
 </root>

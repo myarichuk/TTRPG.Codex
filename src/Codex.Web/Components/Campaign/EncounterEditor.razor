@@ -1,7 +1,9 @@
 @implements IDisposable
 @using System.Text.Json
 @using Codex.Persistence
+@using Codex.Persistence.Runtime
 @inject PreparedEncounterService Encounters
+@inject CampaignRuntimeManager RuntimeManager
 @inject NavigationManager Nav
 @inject ILogger<EncounterEditor> Logger
 
@@ -191,9 +193,26 @@ else
                         <a href="@Ctx.BasePath/encounters" class="cx-btn cx-etched">@L["Encounters.Cancel"]</a>
                         @if (!IsNew)
                         {
+                            @if (TableLive)
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Etched" Busy="startingPlan" Disabled="@(IsDirty() || saving)" OnClick="StartAtTableAsync" data-testid="encounter-start"
+                                             title="@(IsDirty() ? L["Encounters.Start.SaveFirst"] : null)"><LucideIcon IconName="swords" Size="16" /> @L["Encounters.Start"]</CodexButton>
+                                @if (IsDirty())
+                                {
+                                    <span class="small-muted" data-testid="encounter-start-hint">@L["Encounters.Start.SaveFirst"]</span>
+                                }
+                            }
+                            else
+                            {
+                                <a href="@Ctx.BasePath/table" class="cx-btn cx-etched" data-testid="encounter-start-table">@L["Encounters.Start.NoTable"]</a>
+                            }
                             <CodexButton Variant="CodexButtonVariant.Blood" Class="ms-auto" OnClick="DeleteAsync" data-testid="encounter-delete">@L["Encounters.Delete"]</CodexButton>
                         }
                     </SaveBar>
+                    @if (startProblem != null)
+                    {
+                        <div class="alert alert-danger mt-2" role="alert" data-testid="encounter-start-problem">@startProblem</div>
+                    }
                 </form>
             </section>
         </div>
@@ -312,8 +331,12 @@ else
     /// <summary>The most results the add panel lists; one more is asked for, to know there were more.</summary>
     private const int ResultCap = 30;
 
+    private bool startingPlan;
+    private string? startProblem;
+
     public void Dispose()
     {
+        RuntimeManager.RuntimeChanged -= OnRuntimeChanged;
         debounce?.Cancel();
         debounce?.Dispose();
     }
@@ -326,6 +349,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        RuntimeManager.RuntimeChanged += OnRuntimeChanged;
         try
         {
             places = await Encounters.PlacesAsync(Ctx.Access);
@@ -543,6 +567,45 @@ else
         finally
         {
             saving = false;
+        }
+    }
+
+    private void OnRuntimeChanged(string campaignId)
+    {
+        if (campaignId == Ctx.Campaign.Id) _ = InvokeAsync(StateHasChanged);
+    }
+
+    private bool TableLive => RuntimeManager.TryGet(Ctx.Campaign.Id) != null;
+
+    /// <summary>Starts the stored plan at the table (any status, a Draft too: the GM chose it), then shows the table. A refusal is said beside the save bar.</summary>
+    private async Task StartAtTableAsync()
+    {
+        if (draft == null || IsNew || startingPlan) return;
+        if (!await confirm.ShowAsync(L["Combat.Prepared.ConfirmTitle"], L["Combat.Prepared.Confirm", draft.Name, PreparedEncounterService.CombatantsOf(draft)], L["Combat.Prepared.Start"])) return;
+
+        startingPlan = true;
+        startProblem = null;
+        await InvokeAsync(StateHasChanged);
+        try
+        {
+            var result = await Encounters.StartAsync(Ctx.Campaign, Ctx.Access, draft.Id);
+            if (result.Started)
+            {
+                Nav.NavigateTo($"{Ctx.BasePath}/table");
+                return;
+            }
+
+            startProblem = L[result.ProblemKey!];
+            if (result.Check != null) check = result.Check;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Starting prepared encounter {Plan} failed", draft.Id);
+            startProblem = L["Combat.Prepared.Refused.Failed"];
+        }
+        finally
+        {
+            startingPlan = false;
         }
     }
 

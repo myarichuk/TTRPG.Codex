@@ -264,4 +264,9 @@
   <data name="Event.Campaign.RowAdded" xml:space="preserve"><value>{0}: добавлено «{1}».</value></data>
   <data name="Event.Campaign.RowEdited" xml:space="preserve"><value>{0}: «{1}» изменено.</value></data>
   <data name="Event.Campaign.RowRemoved" xml:space="preserve"><value>{0}: «{1}» удалено.</value></data>
+  <data name="Event.Encounter.Started" xml:space="preserve"><value>Столкновение началось: {0}, место: {1}.</value></data>
+  <data name="Event.Encounter.StartedNoPlace" xml:space="preserve"><value>Столкновение началось: {0}.</value></data>
+  <data name="Event.Encounter.NotJoined" xml:space="preserve"><value>{1, plural, one{# существо из «{0}» не вступило в бой.} few{# существа из «{0}» не вступили в бой.} many{# существ из «{0}» не вступили в бой.} other{# существа из «{0}» не вступили в бой.}}</value></data>
+  <data name="Event.Encounter.StartRefused" xml:space="preserve"><value>«{0}» не начато: столкновение уже идёт.</value></data>
+  <data name="Event.Encounter.StartEmpty" xml:space="preserve"><value>«{0}» не начато: никого из него нет за столом.</value></data>
 </root>

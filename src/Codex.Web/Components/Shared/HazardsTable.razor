@@ -29,6 +29,7 @@
     private IReadOnlyList<HazardPlace> places = Array.Empty<HazardPlace>();
     private string placeId = string.Empty;
     private bool loaded;
+    private string followed = string.Empty;
     private IReadOnlyList<string> status = Array.Empty<string>();
     private IReadOnlyList<HazardNeed> needNumber = Array.Empty<HazardNeed>();
     private string askedFor = string.Empty;
@@ -61,10 +62,23 @@
     protected override async Task OnParametersSetAsync()
     {
         if (Type == null || !Access.IsDm) return;
+
+        // The encounter the panel last took its place from. A new encounter that has a place, or a plan started in the empty one (same id, new plan), moves the
+        // panel to its place. One with no place (a fight rolled at the console) keeps what the GM picked, as today. The picker still overrides it afterwards
+        // (SetEncounterPlaceCommand), which changes neither part of the key. An encounter ending keeps what is picked.
+        var follow = Snapshot.Encounter is { } current ? current.Id + "|" + current.PreparedEncounterId : string.Empty;
+        if (!loaded || (follow != followed && Snapshot.Encounter is { } now && !string.IsNullOrEmpty(now.LocationId)))
+        {
+            placeId = Snapshot.Encounter?.LocationId ?? string.Empty;
+            // Narrowing needs no reload: Views() filters by placeId. A place with no hazard in or under it is not a choice, as LoadAsync decides.
+            if (loaded && placeId.Length > 0 && places.All(p => p.Id != placeId)) placeId = string.Empty;
+        }
+
+        followed = follow;
+
         if (!loaded)
         {
             loaded = true;
-            placeId = Snapshot.Encounter?.LocationId ?? string.Empty;
         }
         else if (loadedUnder == Under())
         {

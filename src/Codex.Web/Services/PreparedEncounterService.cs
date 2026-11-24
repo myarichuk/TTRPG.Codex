@@ -1,6 +1,9 @@
+using System.Collections.Concurrent;
 using Codex.Core;
 using Codex.Persistence;
+using Codex.Persistence.Runtime;
 using Codex.Plugin.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace Codex.Web.Services;
 
@@ -42,13 +45,42 @@ public sealed record EncounterView(PreparedEncounterDocument Plan, IReadOnlyList
 /// <summary>The outcome of a save: whether it was stored, the check that decided it, and the plan's id (set for a new plan once stored).</summary>
 public sealed record EncounterSave(bool Saved, EncounterCheck Check, string? Id);
 
+/// <summary>Why a prepared encounter was not started. The page words each one as <c>Combat.Prepared.Refused.{value}</c>.</summary>
+public enum EncounterStartProblem
+{
+    NotAllowed,       // not a GM, or the campaign's system is missing
+    NoTable,          // the table is not running for this campaign
+    NotFound,         // no such plan in this campaign
+    Invalid,          // the plan's check has errors (Check says which)
+    EncounterRunning, // an encounter with participants is running ("End the current encounter first")
+    Busy,             // another start of a plan in this campaign is under way
+    NobodyJoined,     // no line made or named anyone who could join
+    TableClosed,      // the table ended while the creatures were being made
+    Failed            // the start command threw; logged
+}
+
+/// <summary>What starting a plan came to. <see cref="NotJoined"/> names, by their plan names, the lines (or copies) that did not join: an entry gone from the
+/// Library, a cast member gone or retired, a creature the cast could not make, an actor the table did not hold. <see cref="RunNotRecorded"/> is true when the
+/// encounter started but the plan could not be marked as run.</summary>
+public sealed record EncounterStart(bool Started, EncounterStartProblem? Problem, string? EncounterId, int Joined, IReadOnlyList<string> NotJoined,
+    bool RunNotRecorded = false, EncounterCheck? Check = null)
+{
+    public string? ProblemKey => Problem is { } p ? "Combat.Prepared.Refused." + p : null;
+
+    public static EncounterStart Refused(EncounterStartProblem problem, EncounterCheck? check = null) => new(false, problem, null, 0, Array.Empty<string>(), false, check);
+}
+
 /// <summary>
-/// The one place prepared encounters are read, checked, saved and deleted (ENCOUNTER_BUILDER_DESIGN.md 4.1). GM only: every method answers nothing to anyone else, and the repository
-/// refuses them besides. Starting a plan and the difficulty readout come in later steps.
+/// The one place prepared encounters are read, checked, saved, deleted and started (ENCOUNTER_BUILDER_DESIGN.md 4.1, 4.2). GM only: every method answers nothing to anyone else, and the repository
+/// refuses them besides. The difficulty readout comes in a later step.
 /// </summary>
-public sealed class PreparedEncounterService(IPreparedEncounterRepository plans, IRegionRepository regions, IActorRepository actors, CampaignLibrary library, IContentRegistry registry)
+public sealed class PreparedEncounterService(IPreparedEncounterRepository plans, IRegionRepository regions, IActorRepository actors, CampaignLibrary library,
+    IContentRegistry registry, CastService? cast = null, CampaignRuntimeManager? runtimes = null, ILogger<PreparedEncounterService>? logger = null)
 {
     public const int MaxCount = 20;
+
+    // One start per campaign at a time: a double click, or two GMs, must not make two sets of creatures. A second start is refused at once, not queued.
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> _starting = new(StringComparer.Ordinal);
 
     /// <summary>What one call reads once, however many lines the plan has: the regions, the cast and the Library (homebrew included).</summary>
     private sealed record Reads(IReadOnlyList<RegionDocument> Regions, IReadOnlyDictionary<string, ActorDocument> Cast, Func<string, string, bool, LibraryItem?> Lookup);
@@ -202,6 +234,196 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
 
     public async Task<bool> DeleteAsync(CampaignDocument campaign, CampaignAccess access, string? route) =>
         await FindAsync(access, route) is { } plan && await plans.DeleteAsync(plan.Id, access);
+
+    /// <summary>One plan by its stored id, for the table's notes panel. Null for anyone but a GM.</summary>
+    public Task<PreparedEncounterDocument?> GetAsync(CampaignAccess access, string id) => FindAsync(access, RouteOf(id));
+
+    /// <summary>How many actors a plan puts in the order: each creature line's count, and one for each cast-member line.</summary>
+    public static int CombatantsOf(PreparedEncounterDocument plan) =>
+        plan.Lines.Sum(l => l.Kind == PreparedLineKind.Creature ? Math.Max(0, l.Count) : l.Kind == PreparedLineKind.CastMember ? 1 : 0);
+
+    /// <summary>The plans the table's menu offers (ENCOUNTER_BUILDER_DESIGN.md 5.2): Ready and Ran, never Draft. Those at the place last used come first; within each
+    /// group, by name. The place last used is <paramref name="currentPlaceId"/> (the live encounter's place) when there is one, else the place of the plan started
+    /// most recently (<see cref="PreparedEncounterDocument.LastRunAt"/>). Empty for anyone but a GM.</summary>
+    public async Task<IReadOnlyList<EncounterRow>> StartChoicesAsync(CampaignDocument campaign, CampaignAccess access, string? currentPlaceId)
+    {
+        var rows = (await ListAsync(campaign, access)).Where(r => r.Status != PreparedStatus.Draft).ToList();
+        var last = !string.IsNullOrEmpty(currentPlaceId)
+            ? currentPlaceId
+            : rows.Where(r => r.Plan.LastRunAt != null).OrderByDescending(r => r.Plan.LastRunAt).FirstOrDefault()?.Plan.PlaceId;
+        return rows
+            .OrderBy(r => !(last != null && r.Plan.PlaceId == last))
+            .ThenBy(r => r.Plan.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
+    /// <summary>Starts a plan at the table (ENCOUNTER_BUILDER_DESIGN.md 4.2): its creatures are made on the cast (Unknown, or Hidden for a line that starts hidden),
+    /// its cast members are named as they are, and on the loop the encounter takes the plan's place and everyone rolls initiative. Then the plan is marked as run.
+    /// Any status may be started (the table's menu leaves Drafts out). <paramref name="id"/> is a plan id or its route.</summary>
+    public async Task<EncounterStart> StartAsync(CampaignDocument campaign, CampaignAccess access, string id)
+    {
+        if (!access.IsDm || access.SystemMissing) return EncounterStart.Refused(EncounterStartProblem.NotAllowed);
+        if (cast == null || runtimes?.TryGet(access.CampaignId) == null) return EncounterStart.Refused(EncounterStartProblem.NoTable);
+
+        var plan = await FindAsync(access, RouteOf(id));
+        if (plan == null) return EncounterStart.Refused(EncounterStartProblem.NotFound);
+
+        // The table can end during any await, so the runtime is never taken as there.
+        EncounterStartProblem? Early() =>
+            runtimes.TryGet(access.CampaignId) is not { } live ? EncounterStartProblem.NoTable
+            : live.Snapshot.Encounter is { Participants.Count: > 0 } ? EncounterStartProblem.EncounterRunning
+            : null;
+
+        if (Early() is { } early) return EncounterStart.Refused(early);
+
+        var gate = _starting.GetOrAdd(access.CampaignId, _ => new SemaphoreSlim(1, 1));
+        if (!gate.Wait(0)) return EncounterStart.Refused(EncounterStartProblem.Busy);
+        try
+        {
+            var reads = await ReadAsync(campaign, access, null);
+            var check = Check(campaign, plan, reads);
+            if (!check.Ok) return EncounterStart.Refused(EncounterStartProblem.Invalid, check);
+            if (Early() is { } later) return EncounterStart.Refused(later);
+
+            var system = library.Definition(campaign);
+            var created = new List<string>();
+            var ids = new List<string>();
+            var notJoined = new List<string>();
+            var names = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            var creatures = plan.Lines.Where(l => l.Kind == PreparedLineKind.Creature).ToList();
+            // Numbers are per creature, and a visible copy's number is its public name, so they must say nothing about the hidden ones: the visible copies are numbered
+            // first, and only when there is more than one of them. Hidden copies take the numbers after (their names are the GM's alone), whatever order the lines are in.
+            var visible = creatures.Where(l => !l.StartsHidden).GroupBy(KeyOf).ToDictionary(g => g.Key, g => g.Sum(l => l.Count));
+            var totals = creatures.GroupBy(KeyOf).ToDictionary(g => g.Key, g => g.Sum(l => l.Count));
+            var nextVisible = totals.Keys.ToDictionary(k => k, _ => 1);
+            var nextHidden = totals.Keys.ToDictionary(k => k, k => visible.GetValueOrDefault(k) + 1);
+            foreach (var line in plan.Lines)
+            {
+                if (line.Kind == PreparedLineKind.Creature)
+                {
+                    var key = KeyOf(line);
+                    var item = reads.Lookup(line.EntryType, line.EntryId, line.IsHomebrew);
+                    if (item == null)
+                    {
+                        notJoined.Add(line.Name);
+                        continue;
+                    }
+
+                    int? from = line.StartsHidden
+                        ? totals[key] > 1 ? nextHidden[key] : null
+                        : visible[key] > 1 ? nextVisible[key] : null;
+                    IReadOnlyList<ActorDocument> made;
+                    try
+                    {
+                        made = await cast.AddToCastAsync(item, campaign, system, access, line.Count, line.StartsHidden ? ActorVisibility.Hidden : ActorVisibility.Unknown, from);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger?.LogWarning(ex, "Creating {Creature} for prepared encounter {Plan} failed", line.Name, plan.Id);
+                        notJoined.Add(line.Name);
+                        continue;
+                    }
+
+                    if (line.StartsHidden) nextHidden[key] += line.Count;
+                    else nextVisible[key] += line.Count;
+                    foreach (var actor in made)
+                    {
+                        created.Add(actor.Id);
+                        ids.Add(actor.Id);
+                        names[actor.Id] = actor.Name;
+                    }
+
+                    if (line.Count - made.Count > 0) notJoined.Add(line.Name);
+                }
+                else if (line.Kind == PreparedLineKind.CastMember)
+                {
+                    if (!string.IsNullOrEmpty(line.ActorId) && reads.Cast.TryGetValue(line.ActorId, out var member) && !member.Retired)
+                    {
+                        ids.Add(member.Id);
+                        names[member.Id] = member.Name;
+                    }
+                    else
+                    {
+                        notJoined.Add(line.Name);
+                    }
+                }
+            }
+
+            async Task CleanUpAsync()
+            {
+                // Only what this start made: a cast member it reused is never touched.
+                foreach (var actorId in created)
+                {
+                    try
+                    {
+                        await runtimes.TryDeleteActorAsync(actorId, access);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger?.LogWarning(ex, "Removing {Actor} after a prepared encounter did not start failed", actorId);
+                    }
+                }
+            }
+
+            EncounterStart Stopped(EncounterStartProblem problem, IEnumerable<string>? skipped = null) =>
+                new(false, problem, null, 0, notJoined.Concat((skipped ?? []).Select(s => names.GetValueOrDefault(s, s))).ToList());
+
+            if (ids.Count == 0) return Stopped(EncounterStartProblem.NobodyJoined);
+
+            var runtime = runtimes.TryGet(access.CampaignId);
+            if (runtime == null)
+            {
+                await CleanUpAsync();
+                return Stopped(EncounterStartProblem.TableClosed);
+            }
+
+            var (_, place, placeName, _, _) = FindPlace(reads.Regions, plan);
+            var command = new StartPreparedEncounterCommand(plan.Id, plan.Name, place?.Id, placeName ?? string.Empty, ids, access.UserId);
+            try
+            {
+                await runtime.EnqueueAsync(command);
+            }
+            catch (Exception ex)
+            {
+                // The loop reports any later failure (the persists, the session write) as a failed enqueue, though the command has already changed the table. Once the
+                // command has started the encounter, its creatures are in the order: they are kept and the start goes on, whatever came after.
+                if (command.EncounterId == null)
+                {
+                    if (ex is not InvalidOperationException) logger?.LogError(ex, "Starting prepared encounter {Plan} failed", plan.Id);
+                    await CleanUpAsync();
+                    return Stopped(ex is InvalidOperationException ? EncounterStartProblem.TableClosed : EncounterStartProblem.Failed);
+                }
+
+                logger?.LogWarning(ex, "Prepared encounter {Plan} started, but the table reported a failure afterwards", plan.Id);
+            }
+
+            if (command.Refusal is { } refusal)
+            {
+                await CleanUpAsync();
+                return Stopped(refusal == PreparedStartRefusal.EncounterRunning ? EncounterStartProblem.EncounterRunning : EncounterStartProblem.NobodyJoined, command.Skipped);
+            }
+
+            notJoined.AddRange(command.Skipped.Select(s => names.GetValueOrDefault(s, s)));
+            var marked = false;
+            try
+            {
+                marked = await plans.MarkRunAsync(plan.Id, command.EncounterId!, access);
+            }
+            catch (Exception ex)
+            {
+                // The encounter is live; a plan that could not be marked is told to the GM, not reported as a failed start.
+                logger?.LogWarning(ex, "Marking prepared encounter {Plan} as run failed", plan.Id);
+            }
+
+            if (!marked) logger?.LogWarning("Prepared encounter {Plan} started but could not be marked as run", plan.Id);
+            return new EncounterStart(true, null, command.EncounterId, command.Joined.Count, notJoined, !marked);
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
 
     /// <summary>The Library's creatures for the add search: the types the system makes actors of, each searched as the Bestiary does, with every complex hazard left out
     /// (HAZARDS_DESIGN.md 3.3: creatures and hazards are never mixed). A hazard is placed on the place, not added here.</summary>

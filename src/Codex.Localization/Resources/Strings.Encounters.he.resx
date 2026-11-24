@@ -95,4 +95,8 @@
   <data name="Encounters.Hazards.None" xml:space="preserve"><value>אין כאן סכנות. הציבו אותן בדף המקום.</value></data>
   <data name="Encounters.Hazards.OpenPlace" xml:space="preserve"><value>פתיחת המקום</value></data>
   <data name="Encounters.Hazards.At" xml:space="preserve"><value>ב{0}</value></data>
+  <data name="Encounters.Start" xml:space="preserve"><value>התחלה ליד השולחן</value></data>
+  <data name="Encounters.Start.NoTable" xml:space="preserve"><value>הפעילו את השולחן כדי לקיים את מפגש הקרב הזה</value></data>
+  <data name="Encounters.Start.SaveFirst" xml:space="preserve"><value>שמרו את השינויים כדי להתחיל.</value></data>
+  <data name="Encounters.RanOn" xml:space="preserve"><value>{0, plural, one{התקיים ב{1}} two{התקיים פעמיים, לאחרונה ב{1}} other{התקיים # פעמים, לאחרונה ב{1}}}</value></data>
 </root>

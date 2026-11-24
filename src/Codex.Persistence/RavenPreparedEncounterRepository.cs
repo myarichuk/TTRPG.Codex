@@ -41,6 +41,7 @@ public sealed class RavenPreparedEncounterRepository(RavenDbService dbService) :
             document.CreatedBy = current.UserId;
             document.UpdatedAt = DateTime.UtcNow;
             document.RunEncounterIds = new List<string>(); // a new plan has run nowhere, whatever the copy says
+            document.LastRunAt = null;
             if (document.Status == PreparedStatus.Ran) document.Status = PreparedStatus.Ready; // only MarkRunAsync sets Ran
             using var session = dbService.Store.OpenAsyncSession();
             await session.StoreAsync(document, string.Empty, id);
@@ -79,6 +80,7 @@ public sealed class RavenPreparedEncounterRepository(RavenDbService dbService) :
 
             document.Status = stored.Status;
             document.RunEncounterIds = stored.RunEncounterIds.ToList();
+            document.LastRunAt = stored.LastRunAt;
             document.CreatedBy = stored.CreatedBy;
             document.UpdatedAt = stored.UpdatedAt;
             return true;
@@ -119,6 +121,7 @@ public sealed class RavenPreparedEncounterRepository(RavenDbService dbService) :
             // Only the run fields (and the time): a plan saved by someone else since the start was read keeps all its edits.
             if (!stored.RunEncounterIds.Contains(encounterId)) stored.RunEncounterIds.Add(encounterId);
             stored.Status = PreparedStatus.Ran;
+            stored.LastRunAt = DateTime.UtcNow;
             stored.UpdatedAt = DateTime.UtcNow;
             try
             {

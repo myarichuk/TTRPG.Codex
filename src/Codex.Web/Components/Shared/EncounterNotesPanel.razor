@@ -1,0 +1,66 @@
+@using Codex.Core
+@using Codex.Persistence
+@inject PreparedEncounterService Encounters
+
+@* The notes of the prepared encounter the table is running (ENCOUNTER_BUILDER_DESIGN.md 4.2), folded by default. Game master only: a player's access draws nothing and the
+   service answers a player nothing. The plan's id comes from the table's snapshot, never the live runtime. The heading stands outside the fold, so it is a heading whether the
+   notes are open or not; the plan is read again each time the fold is opened or closed, so notes edited since the start are what the game master reads. *@
+@if (Access.IsDm && plan != null)
+{
+    <section class="panel" aria-labelledby="encounter-notes-heading" data-testid="encounter-notes">
+        <div class="panel-title"><h3 id="encounter-notes-heading">@L["Combat.Prepared.Notes"]</h3></div>
+        <details @ontoggle="ReloadAsync">
+            <summary>@plan.Name</summary>
+            @if (!string.IsNullOrWhiteSpace(plan.Notes))
+            {
+                <div class="rules-text" data-testid="encounter-notes-text">@((MarkupString)TextFormatting.ToHtml(plan.Notes))</div>
+            }
+            else
+            {
+                <p class="small-muted">@L["Combat.Prepared.NoNotes"]</p>
+            }
+            @if (plan.Lines.Any(l => !string.IsNullOrWhiteSpace(l.Note)))
+            {
+                <ul class="small mb-2" data-testid="encounter-notes-lines">
+                    @foreach (var line in plan.Lines.Where(l => !string.IsNullOrWhiteSpace(l.Note)))
+                    {
+                        <li>@L["Combat.Prepared.LineNote", line.Name, line.Note!]</li>
+                    }
+                </ul>
+            }
+            <a href="/campaigns/@Campaign.Id/encounters/@Uri.EscapeDataString(PreparedEncounterService.RouteOf(plan.Id))" data-testid="encounter-notes-plan">@L["Combat.Prepared.OpenPlan"]</a>
+        </details>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public CampaignDocument Campaign { get; set; } = null!;
+    [Parameter, EditorRequired] public CampaignAccess Access { get; set; } = null!;
+    [Parameter] public string? PreparedEncounterId { get; set; }
+
+    private PreparedEncounterDocument? plan;
+    private string? loadedFor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (PreparedEncounterId == loadedFor) return;
+        loadedFor = PreparedEncounterId;
+        plan = null;
+        await LoadAsync();
+    }
+
+    private async Task ReloadAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            plan = Access.IsDm && !string.IsNullOrEmpty(PreparedEncounterId) ? await Encounters.GetAsync(Access, PreparedEncounterId) : plan;
+            if (!Access.IsDm || string.IsNullOrEmpty(PreparedEncounterId)) plan = null;
+        }
+        catch (Exception)
+        {
+            // A failed read keeps what was shown, and shows nothing when nothing was.
+        }
+    }
+}

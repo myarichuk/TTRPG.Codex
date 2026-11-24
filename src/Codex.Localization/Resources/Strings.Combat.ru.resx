@@ -331,4 +331,28 @@
   <data name="Combat.Card.Hide" xml:space="preserve"><value>Показать меньше: {0}</value></data>
   <data name="Combat.Card.Equipped" xml:space="preserve"><value>Надето и в руках:</value></data>
   <data name="Combat.Card.Rules" xml:space="preserve"><value>Что делает</value></data>
+  <data name="Combat.Prepared.Open" xml:space="preserve"><value>Начать подготовленное столкновение</value></data>
+  <data name="Combat.Prepared.ListLabel" xml:space="preserve"><value>Подготовленные столкновения</value></data>
+  <data name="Combat.Prepared.None" xml:space="preserve"><value>Нет столкновений, готовых к началу.</value></data>
+  <data name="Combat.Prepared.Manage" xml:space="preserve"><value>Подготовить</value></data>
+  <data name="Combat.Prepared.StartLabel" xml:space="preserve"><value>Начать: {0}</value></data>
+  <data name="Combat.Prepared.ConfirmTitle" xml:space="preserve"><value>Начать подготовленное столкновение</value></data>
+  <data name="Combat.Prepared.Confirm" xml:space="preserve"><value>Начать «{0}»? {1, plural, one{В бой вступает # существо и бросает инициативу.} few{В бой вступают # существа и бросают инициативу.} many{В бой вступают # существ и бросают инициативу.} other{В бой вступают # существа и бросают инициативу.}}</value></data>
+  <data name="Combat.Prepared.Start" xml:space="preserve"><value>Начать</value></data>
+  <data name="Combat.Prepared.Started" xml:space="preserve"><value>Столкновение «{0}» началось.</value></data>
+  <data name="Combat.Prepared.StartedSome" xml:space="preserve"><value>Столкновение «{0}» началось. Не вступили в бой: {1}.</value></data>
+  <data name="Combat.Prepared.RunNotRecorded" xml:space="preserve"><value>Столкновение началось, но отметить план как проведённый не удалось.</value></data>
+  <data name="Combat.Prepared.Notes" xml:space="preserve"><value>Заметки о столкновении</value></data>
+  <data name="Combat.Prepared.NoNotes" xml:space="preserve"><value>В этом плане нет заметок.</value></data>
+  <data name="Combat.Prepared.LineNote" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Combat.Prepared.OpenPlan" xml:space="preserve"><value>Открыть план</value></data>
+  <data name="Combat.Prepared.Refused.NotAllowed" xml:space="preserve"><value>Начать столкновение может только мастер.</value></data>
+  <data name="Combat.Prepared.Refused.NoTable" xml:space="preserve"><value>Сначала запустите стол.</value></data>
+  <data name="Combat.Prepared.Refused.NotFound" xml:space="preserve"><value>Этого столкновения больше нет.</value></data>
+  <data name="Combat.Prepared.Refused.Invalid" xml:space="preserve"><value>В этом столкновении есть ошибки. Откройте его и сначала исправьте их.</value></data>
+  <data name="Combat.Prepared.Refused.EncounterRunning" xml:space="preserve"><value>Сначала завершите текущее столкновение.</value></data>
+  <data name="Combat.Prepared.Refused.Busy" xml:space="preserve"><value>Столкновение уже запускается.</value></data>
+  <data name="Combat.Prepared.Refused.NobodyJoined" xml:space="preserve"><value>Никто из этого столкновения не смог вступить в бой.</value></data>
+  <data name="Combat.Prepared.Refused.TableClosed" xml:space="preserve"><value>Стол закрылся раньше, чем началось столкновение.</value></data>
+  <data name="Combat.Prepared.Refused.Failed" xml:space="preserve"><value>Не удалось начать столкновение.</value></data>
 </root>

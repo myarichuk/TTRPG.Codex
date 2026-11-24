@@ -36,6 +36,13 @@ internal sealed class MemoryPlans : IPreparedEncounterRepository
             return Task.FromResult(false);
         }
 
+        // As the real repository: the run list and its time belong to MarkRunAsync, not to a copy.
+        if (Held.TryGetValue(document.Id, out var held))
+        {
+            document.RunEncounterIds = held.RunEncounterIds.ToList();
+            document.LastRunAt = held.LastRunAt;
+        }
+
         document.UpdatedAt = DateTime.UtcNow;
         Held[document.Id] = Copy(document);
         return Task.FromResult(true);
@@ -45,7 +52,19 @@ internal sealed class MemoryPlans : IPreparedEncounterRepository
 
     public Task DeleteAllForCampaignAsync(string campaignId) => Task.CompletedTask;
 
-    public Task<bool> MarkRunAsync(string id, string encounterId, CampaignAccess access) => Task.FromResult(false);
+    /// <summary>A test sets this to see what a start does when the plan cannot be marked as run (a database fault).</summary>
+    public bool ThrowOnMarkRun { get; set; }
+
+    public Task<bool> MarkRunAsync(string id, string encounterId, CampaignAccess access)
+    {
+        if (ThrowOnMarkRun) throw new InvalidOperationException("The database is down.");
+        if (!access.IsDm || !Held.TryGetValue(id, out var plan) || plan.CampaignId != access.CampaignId) return Task.FromResult(false);
+        if (!plan.RunEncounterIds.Contains(encounterId)) plan.RunEncounterIds.Add(encounterId);
+        plan.Status = PreparedStatus.Ran;
+        plan.LastRunAt = DateTime.UtcNow;
+        plan.UpdatedAt = DateTime.UtcNow;
+        return Task.FromResult(true);
+    }
 
     public Task<IReadOnlyList<PreparedEncounterDocument>> GetAllForCampaignAsync(string campaignId) =>
         Task.FromResult<IReadOnlyList<PreparedEncounterDocument>>(Held.Values.Where(p => p.CampaignId == campaignId).ToList());

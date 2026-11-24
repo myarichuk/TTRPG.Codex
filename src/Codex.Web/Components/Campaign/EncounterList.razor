@@ -1,6 +1,7 @@
 @using Codex.Persistence
 @inject PreparedEncounterService Encounters
 @inject ILogger<EncounterList> Logger
+@inject Codex.Web.Services.ViewerClock ViewerTime
 
 @* The list of prepared encounters (ENCOUNTER_BUILDER_DESIGN.md 5.1): one row each with its name, place, creatures and status, filtered by place and status and
    searched by name. Game master only; the section does not draw this for anyone else. *@
@@ -132,6 +133,8 @@ else
 
     private string StatusText(EncounterRow row) =>
         row.Status == PreparedStatus.Ran && row.RunCount > 0
-            ? L["Encounters.RanTimes", row.RunCount]
+            ? row.Plan.LastRunAt is { } lastRun
+                ? L["Encounters.RanOn", row.RunCount, ViewerTime.Format(lastRun, "d MMM yyyy")]
+                : L["Encounters.RanTimes", row.RunCount]
             : L[$"Encounters.Status.{row.Status}"];
 }
