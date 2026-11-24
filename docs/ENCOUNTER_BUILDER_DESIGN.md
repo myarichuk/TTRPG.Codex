@@ -101,17 +101,26 @@ encounters:
   difficulty:
     # Shape 1, "sum": each creature is worth a field of its entry; the party's budget is a per-character row by level.
     shape: sum
-    creatureValue: xp                 # a Number field of every actorBlueprint type that takes part
-    partyLevel: level                 # the sheet field the budget reads, per player character
-    bands: [low, moderate, high]      # band keys, in order; labels in system.<locale>.yaml like other values
-    budget:                           # one row per character level, one number per band (per character)
+    creatureValue: xp                 # a Number field of an actorBlueprint type (a Number wherever a type has it)
+    unit: XP                          # optional; the word after the total ("250 XP"); translated
+    partyLevel: level                 # optional: the sheet field the budget reads per player character; default fieldRoles.level
+    pick: atMost                      # optional, default atMost: a budget is the most a band allows (atLeast: what a band starts at)
+    bands:                            # in order, easiest first; keys never translate, labels do (system.<locale>.yaml)
+      - { key: low, label: Low }
+      - { key: moderate, label: Moderate }
+      - { key: high, label: High }
+    budget:                           # one row per character level, one whole number per band (per character)
       - { level: 1, low: ..., moderate: ..., high: ... }
     # Shape 2, "byLevel": each creature is worth a value looked up by (its level - the party's level); the budget is per party size.
     # shape: byLevel
-    # creatureLevel: level
-    # values: [ { delta: -4, value: ... }, ... ]
-    # budget: { perCharacter: true, bands: [ { key: trivial, value: ... }, ... ] }
+    # creatureLevel: level            # a Number field, like creatureValue
+    # values: [ { delta: -2, value: ... }, { delta: -1, value: ... } ]    # deltas go up by exactly one, no gaps
+    # partySize: 4                    # the size the band budgets are written for
+    # bands:                          # under byLevel each band carries its own budget (no separate budget list)
+    #   - { key: low, label: Low, value: ..., perCharacter: ... }   # perCharacter: added (or taken) for each character above (or below) partySize
 ```
+
+As built, see section 16.
 
 - The readout says the party (the campaign's player characters and their levels), the lineup's total, and the band it falls in, in
   words ("Moderate for 4 characters of level 3"), never only a colour. A line whose entry has no value says so; the readout does not
@@ -593,3 +602,68 @@ readout (B4).
 **Left for later**
 - B4: the readout in the editor and the list, and in the picker. B5: *Build with AI* and the proposal kind. B6: the in-app tools. B7: hazard lines and the "joins initiative" tick, which
   will add a region id to the command if the hazards need one.
+
+## 16. B4 as built (2026-11-24)
+
+B4 builds the difficulty readout: the system block and its loader checks, the pure rating, the service's `RateAsync`, and the editor, list and picker. It adds **no numbers to any bundled
+system**: srd5e's budget is B4b (from the SRD text), the degrees system's comes later, so on main no bundled system shows a readout (decision 12.9: no block, no readout, no "unknown" badge).
+Everything is tested on two fixture systems with invented numbers.
+
+**Files**
+- `Codex.Plugin.Abstractions/EncounterRules.cs` (new): `EncounterRules`, `DifficultyRules`, `DifficultyBand`, `DifficultyValue`, and the translation shapes `EncounterTranslation` and
+  `DifficultyTranslation`. `SystemDefinition.Encounters` (null: none); `SystemTranslation.Encounters`; `SystemDefinition.Localize` words the band labels and the unit in a new copy and shares the rest.
+- `Codex.Core/Systems/EncounterChecks.cs` (new), called from `SystemDefinitionLoader.Validate`: every check of the brief, each a sentence naming the path (`encounters.difficulty.budget[1] ...`).
+- `Codex.Core/Rules/EncounterDifficulty.cs` (new): `EncounterDifficulty.Rate(rules, partyLevels, lines)` -> `DifficultyRating`; pure, no language (reasons are a key and arguments).
+- `Codex.Web/Services/PreparedEncounterService.cs`: `RateAsync`, `PartyOverride`, `PartySource`, `EncounterRating`; `EncounterRow.Rating` (optional, trailing); `ListAsync` and
+  `StartChoicesAsync` take an optional culture. `Codex.Web/Services/DifficultyText.cs` (new): the words, shared by the list, the picker and the editor.
+- `EncounterEditor`, `EncounterList`, `PreparedEncounterPicker` changed. Strings `Encounters.Difficulty.*` in `Strings.Encounters{,.ru,.he}.resx` (the picker's too, so no new resx).
+- Generated, not hand-edited: `docs/schema/system.schema.json` and `docs/SYSTEM_YAML_REFERENCE.md` (`dotnet run --project tools/Codex.SystemCheck -- --schema docs`).
+- Tests: `SystemDefinitionLoaderTests` (new, the loader's checks), `EncounterDifficultyTests` (pure), `PreparedEncounterRatingTests` (service), `Components/EncounterDifficultyUiTests`;
+  fixtures `Fixtures/difficulty-sum` and `Fixtures/difficulty-bylevel`; `EncounterWorld` takes an optional system.
+
+**The wiring**
+- `budget` is one YAML key with two row shapes, so the model reads it as a list of string maps (as `hazards.scaling` does) and the loader and the rating parse it per shape.
+  A field of the other shape (`values` or `partySize` under `sum`; `creatureValue` or `unit` under `byLevel`) is an error, so a half-edited block is caught.
+- The party is the campaign's player-character actors that are not retired and for which `SheetLayout.IsPartyMember` is true (a companion or familiar does not count), each at the level
+  the block's `partyLevel` (default `fieldRoles.level`) names on the sheet. A character with no whole-number level makes the readout unavailable and is named; "Rate for a different party" still works.
+- A creature line reads its Library or homebrew entry's field times its count. A cast-member line reads the same key on the actor's sheet (a creature made from a stat block has its
+  properties there), else the Library actor it was made from (`BlueprintId`, pack entries only), else it has no value. A line with no value, a delta the table lacks, or a level that is
+  not a whole number is named with its reason and not counted; the band is given from the rest and the readout says "N lines not counted". A hazard line is listed apart (none can exist
+  until B7).
+- The editor rates its unsaved copy on every change (add, remove, count, shortlist, the party form), so it follows the lineup without a save. The summary line is also in one polite live
+  region that waits 600 ms after the last change, so adding three creatures in a row is one sentence. The readout is a section at the top of the right column (beside the lineup it follows).
+- The list and the picker show the band word ("Moderate", "Above High", "Below Easy") as a pill beside the plan, with the section's name as hidden text, for the campaign's party. The list
+  is rated in one pass: the cast and the Library are read once, not once per plan. Nothing is shown when the system has no block, the campaign has no characters, a level is unknown,
+  or nothing is counted yet.
+
+**Decisions, and where the code differed from the brief**
+- *`RateAsync` takes the `CampaignDocument`* (not an id), like every other method, and the plan to rate (the saved one or the page's copy), a `PartyOverride?` and a culture.
+- *Band words are worded in the reader's language* by rating with `SystemDefinition.Localize(culture)`; the rating keeps the keys.
+- *Levels between budget rows.* A character level with no row of its own but inside the rows' range takes the row just below it; only a level below the first or above the last row makes the
+  readout unavailable.
+- *Total 0 says "Nothing counted yet"* whether there are no lines or all are worth 0; any total above 0 under `atMost` is at least the first band (pinned in the tests, both).
+- *`unit` is `sum` only*, as the brief lists it; under `byLevel` it is a loader error.
+- *Review changes (2026-11-24).* Under `byLevel` the budget is on each band (`value`, `perCharacter`, both `int?` and required there, forbidden under `sum`); there is no `budget` list
+  there, and `budget` is `sum` only, so a band's budget can no longer sit out of band order. The loader checks that the bands never cross for a party of 1 and of 20 (a budget is linear in
+  the size before its floor at zero, so the two ends are enough), and `ByLevelBudgets` keeps a running maximum as a second guard. `level` is reserved as a band key under `sum`.
+  `DifficultyValue.Delta` and `Value` are `int?` and required. An empty or blank `partyLevel` falls back to `fieldRoles.level`, in the loader and the service. A negative value on an entry or
+  sheet is "no value" with a reason, not summed. `SystemDefinition.Localize` copies the whole `EncounterRules` and replaces only `Difficulty`. A fault while rating the list is logged and the
+  list comes without ratings. Hebrew "below" no longer glues the band label to a prefix.
+- *The "different party" level range.* `sum`: the first and last budget row. `byLevel` has no level rows, so the level field's own `min` and `max` (1 to 20 when it has none). The form
+  opens with the party the readout is for now; with no characters it opens by itself, filled with 4 (or `partySize`) characters of the lowest level, and says "rating for ...".
+- *Mixed levels in `byLevel`:* the party level is the level most characters have, the lower on a tie, and the readout says the levels vary. This and the "Rate for a different party" form
+  are our own decisions, not from any rule text.
+- *No numbers for no characters in the list.* With no party characters the list and the picker show no band (a stand-in party's band would claim something about nobody); the editor shows it, and says so.
+- *The old `SystemDefinitionLoaderTests`* did not exist (the loader's tests are `SystemDefinitionTests`); the brief's name is a new class that holds the block's checks.
+- *Strings.* Russian «столкновение» and «мастер» only for the GM, Hebrew «מפגש קרב»; the ru and he texts are drafts for native review.
+
+**Known limits**
+- Shape `sum` is checked against the SRD rule text in B4b and may gain a field there (for example a multiplier for the number of creatures, if the text has one). `byLevel` is provisional
+  until a system declares it. The first real numbers are B4b's.
+- A player character's level is read from the sheet's field only; a level a sheet formula works out is whatever the stored sheet holds.
+- The editor reads the cast and the Library again on every change (a few small reads); the list reads them once. Caching them for the page's lifetime is left for later: it needs a reload when
+  the cast changes, and the reads are small.
+
+**Left for later**
+- B4b: srd5e's `sum` budget from the SRD 5.2.1 text, with a test that compares the data to it. The degrees system's `byLevel` block when its pack has the numbers. Hazard values (`hazardValue`)
+  with B7.

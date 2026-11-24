@@ -1,0 +1,7 @@
+encounters:
+  difficulty:
+    unit: оч.
+    bands:
+      low: Лёгкое
+      moderate: Среднее
+      high: Тяжёлое

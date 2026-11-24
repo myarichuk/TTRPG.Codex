@@ -8,8 +8,8 @@
 @inject ILogger<EncounterEditor> Logger
 
 @* One prepared encounter, or a new one (ENCOUNTER_BUILDER_DESIGN.md 5.1): its name, place, notes and status, the lineup of creatures with counts, the hazards at the place
-   (read only: they are placed on the place's page), and the check's errors and warnings as text. The page edits a copy, which Save hands to the service. Starting it at the
-   table and the difficulty readout come in later steps. *@
+   (read only: they are placed on the place's page), the difficulty readout (when the system declares one; it follows the unsaved lineup), and the check's errors and warnings as
+   text. The page edits a copy, which Save hands to the service. *@
 <ConfirmDialog @ref="confirm" />
 <UnsavedChangesGuard IsDirty="IsDirty" />
 
@@ -143,14 +143,14 @@ else
                                         {
                                             <label for="encounter-line-@at-count" class="visually-hidden">@L["Encounters.HowMany", LineName(line)]</label>
                                             <input @key="CountKey(line)" id="encounter-line-@at-count" type="number" min="1" max="@PreparedEncounterService.MaxCount" class="field-input field-sm count-input" value="@line.Count"
-                                                   @onchange="e => SetCount(line, e.Value?.ToString())" data-testid="encounter-line-count" />
+                                                   @onchange="e => SetCountAsync(line, e.Value?.ToString())" data-testid="encounter-line-count" />
                                         }
                                         <span class="line-check">
                                             <input id="encounter-line-@at-hidden" type="checkbox" class="form-check-input" checked="@line.StartsHidden" aria-label="@L["Encounters.StartsHiddenFor", LineName(line)]"
                                                    @onchange="e => line.StartsHidden = e.Value is true" data-testid="encounter-line-hidden" />
                                             <label for="encounter-line-@at-hidden" class="form-check-label" aria-hidden="true">@L["Encounters.StartsHidden"]</label>
                                         </span>
-                                        <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Encounters.Remove", LineName(line)]" OnClick="() => Remove(line)" data-testid="encounter-line-remove" />
+                                        <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Encounters.Remove", LineName(line)]" OnClick="() => RemoveAsync(line)" data-testid="encounter-line-remove" />
                                     </div>
                                 </li>
                             }
@@ -218,6 +218,71 @@ else
         </div>
 
         <div class="col-lg-5">
+            @if (rating is { } rated)
+            {
+                var result = rated.Rating;
+                <section class="panel" aria-labelledby="encounter-difficulty-heading" data-testid="encounter-difficulty">
+                    <div class="panel-title"><h3 id="encounter-difficulty-heading" class="h6"><LucideIcon IconName="swords" Size="18" Class="title-icon" /> @L["Encounters.Difficulty.Title"]</h3></div>
+                    <p class="mb-2" data-testid="encounter-difficulty-summary"><strong>@DifficultyText.Summary(result, L)</strong></p>
+                    <p class="visually-hidden" role="status" aria-live="polite" data-testid="encounter-difficulty-live">@liveSummary</p>
+                    @if (rated.Source == PartySource.Default)
+                    {
+                        <p class="small-muted mb-2" data-testid="encounter-difficulty-source">@L["Encounters.Difficulty.Source.Default", PartyText(rated)]</p>
+                    }
+                    else if (rated.Source == PartySource.Override)
+                    {
+                        <p class="small-muted mb-2" data-testid="encounter-difficulty-source">@L["Encounters.Difficulty.Source.Override", PartyText(rated)]</p>
+                    }
+
+                    @if (result.Available)
+                    {
+                        <p class="small-muted mb-2" data-testid="encounter-difficulty-bands"><span class="visually-hidden">@L["Encounters.Difficulty.Bands"]: </span>@DifficultyText.Budgets(result, L)</p>
+                        @if (result.NotCounted.Count > 0)
+                        {
+                            <div class="mb-2" data-testid="encounter-difficulty-notcounted">
+                                <p class="mb-1">@L["Encounters.Difficulty.NotCounted", result.NotCounted.Count]</p>
+                                <ul class="small-muted mb-0">
+                                    @foreach (var skipped in result.NotCounted)
+                                    {
+                                        <li>@DifficultyText.Reason(skipped.Reason, L)</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+
+                        @if (result.Hazards.Count > 0)
+                        {
+                            <p class="small-muted mb-2" data-testid="encounter-difficulty-hazards">@L["Encounters.Difficulty.HazardsNotCounted", result.Hazards.Count]</p>
+                        }
+                    }
+
+                    <button type="button" class="cx-btn cx-etched" aria-expanded="@(differentOpen ? "true" : "false")" aria-controls="encounter-difficulty-different" @onclick="ToggleDifferent"
+                            data-testid="encounter-difficulty-toggle">@L["Encounters.Difficulty.Different"]</button>
+                    @if (differentOpen)
+                    {
+                        <div id="encounter-difficulty-different" class="field-grid mt-2" data-testid="encounter-difficulty-different">
+                            <div>
+                                <label for="encounter-difficulty-size" class="field-label">@L["Encounters.Difficulty.Characters"]</label>
+                                <input @key='("size", differentRedraws)' id="encounter-difficulty-size" type="number" min="1" max="@PreparedEncounterService.MaxParty" class="field-input field-sm" value="@differentSize"
+                                       aria-describedby="encounter-difficulty-hint" @onchange='e => DifferentChangedAsync("size", e.Value?.ToString())' data-testid="encounter-difficulty-size" />
+                            </div>
+                            <div>
+                                <label for="encounter-difficulty-level" class="field-label">@L["Encounters.Difficulty.Level"]</label>
+                                <input @key='("level", differentRedraws)' id="encounter-difficulty-level" type="number" min="@rated.LevelFrom" max="@rated.LevelTo" class="field-input field-sm" value="@differentLevel"
+                                       aria-describedby="encounter-difficulty-hint" @onchange='e => DifferentChangedAsync("level", e.Value?.ToString())' data-testid="encounter-difficulty-level" />
+                            </div>
+                            <p id="encounter-difficulty-hint" class="field-hint field-wide mb-0">@L["Encounters.Difficulty.DifferentHint"]</p>
+                            @if (partyOverride != null)
+                            {
+                                <div class="field-wide">
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="UseCampaignPartyAsync" data-testid="encounter-difficulty-reset">@L["Encounters.Difficulty.UseCampaign"]</CodexButton>
+                                </div>
+                            }
+                        </div>
+                    }
+                </section>
+            }
+
             <section class="panel" aria-labelledby="encounter-add-heading">
                 <div class="panel-title"><h3 id="encounter-add-heading" class="h6"><LucideIcon IconName="user-plus" Size="18" Class="title-icon" /> @L["Encounters.Add"]</h3></div>
                 <div class="md-tabs mb-2" role="group" aria-label="@L["Encounters.Add.Source"]">
@@ -245,7 +310,7 @@ else
                                         }
                                     </div>
                                 </div>
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddCreature(item)" aria-label="@L["Encounters.Add.Creature", item.Entry.Name]" data-testid="encounter-add-creature"><LucideIcon IconName="plus" Size="14" /> @L["Encounters.Add.Button"]</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddCreatureAsync(item)" aria-label="@L["Encounters.Add.Creature", item.Entry.Name]" data-testid="encounter-add-creature"><LucideIcon IconName="plus" Size="14" /> @L["Encounters.Add.Button"]</CodexButton>
                             </li>
                         }
                     </ul>
@@ -257,7 +322,7 @@ else
                         {
                             <li class="list-row">
                                 <div class="row-main"><div class="row-title">@actor.Name</div></div>
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddCast(actor)" aria-label="@L["Encounters.Add.Creature", actor.Name]" data-testid="encounter-add-cast"><LucideIcon IconName="plus" Size="14" /> @L["Encounters.Add.Button"]</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddCastAsync(actor)" aria-label="@L["Encounters.Add.Creature", actor.Name]" data-testid="encounter-add-cast"><LucideIcon IconName="plus" Size="14" /> @L["Encounters.Add.Button"]</CodexButton>
                             </li>
                         }
                     </ul>
@@ -265,7 +330,7 @@ else
 
                 @if (Ctx.Campaign.Bestiary.Count > 0)
                 {
-                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="AddShortlist" data-testid="encounter-add-shortlist"><LucideIcon IconName="bookmark" Size="16" /> @L["Encounters.Add.Shortlist"]</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="AddShortlistAsync" data-testid="encounter-add-shortlist"><LucideIcon IconName="bookmark" Size="16" /> @L["Encounters.Add.Shortlist"]</CodexButton>
                 }
             </section>
 
@@ -334,11 +399,26 @@ else
     private bool startingPlan;
     private string? startProblem;
 
+    // The difficulty readout: the rating of the unsaved copy, the party the GM asked to rate for instead (never stored), and the one line the live region says, a moment after the last change.
+    private EncounterRating? rating;
+    private PartyOverride? partyOverride;
+    private bool differentOpen;
+    private bool autoOpened;
+    private int differentRedraws;
+    private int differentSize = 4;
+    private int differentLevel = 1;
+    private string liveSummary = string.Empty;
+    private int ratingVersion;
+    private CancellationTokenSource? liveDelay;
+    private const int LiveDelayMs = 600;
+
     public void Dispose()
     {
         RuntimeManager.RuntimeChanged -= OnRuntimeChanged;
         debounce?.Cancel();
         debounce?.Dispose();
+        liveDelay?.Cancel();
+        liveDelay?.Dispose();
     }
 
     private object CountKey(PreparedLine line) => (line, countRedraws.GetValueOrDefault(line));
@@ -369,6 +449,7 @@ else
         }
 
         savedJson = Snapshot();
+        await RateAsync(announceNow: true);
         loading = false;
         await SearchAsync(BeginSearch());
     }
@@ -472,6 +553,135 @@ else
 
         draft.Lines.Add(line);
         return line.Count;
+    }
+
+    private async Task SetCountAsync(PreparedLine line, string? raw)
+    {
+        SetCount(line, raw);
+        await RateAsync();
+    }
+
+    private async Task RemoveAsync(PreparedLine line)
+    {
+        Remove(line);
+        await RateAsync();
+    }
+
+    private async Task AddCreatureAsync(LibraryItem item)
+    {
+        AddCreature(item);
+        await RateAsync();
+    }
+
+    private async Task AddCastAsync(ActorDocument actor)
+    {
+        AddCast(actor);
+        await RateAsync();
+    }
+
+    private async Task AddShortlistAsync()
+    {
+        AddShortlist();
+        await RateAsync();
+    }
+
+    /// <summary>Rates the page's copy of the plan (saved or not) for the campaign's party, or the one the GM asked for. Null when the system has no readout. An older answer that arrives late is dropped.</summary>
+    private async Task RateAsync(bool announceNow = false)
+    {
+        if (draft == null) return;
+        var version = ++ratingVersion;
+        EncounterRating? rated;
+        try
+        {
+            var copy = JsonSerializer.Deserialize<PreparedEncounterDocument>(Snapshot())!;
+            rated = await Encounters.RateAsync(Ctx.Campaign, Ctx.Access, copy, partyOverride, L.Culture.Name);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Rating the prepared encounter of campaign {CampaignId} failed", Ctx.Campaign.Id);
+            rated = null;
+        }
+
+        if (version != ratingVersion) return;
+        rating = rated;
+        if (rated == null) return;
+        // With no characters in the campaign the readout is for a stand-in party, and the form that changes it opens by itself, filled with that party.
+        if (rated.Source == PartySource.Default && !autoOpened)
+        {
+            autoOpened = true;
+            differentOpen = true;
+            FillFromRating();
+        }
+
+        if (announceNow)
+        {
+            liveSummary = DifficultyText.Summary(rated.Rating, L);
+            return;
+        }
+
+        // The readout on the page changes at once; the live region waits until the changes stop, so adding three creatures in a row is one sentence, not three.
+        liveDelay?.Cancel();
+        liveDelay?.Dispose();
+        var delay = liveDelay = new CancellationTokenSource();
+        _ = SayLaterAsync(delay.Token);
+    }
+
+    private async Task SayLaterAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(LiveDelayMs, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (rating == null) return;
+        liveSummary = DifficultyText.Summary(rating.Rating, L);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>"4 characters of level 3" for the party the rating is for, even when the rating itself is unavailable.</summary>
+    private string PartyText(EncounterRating rated) =>
+        rated.Rating.PartySize > 0 ? DifficultyText.Party(rated.Rating, L) : L["Encounters.Difficulty.Party", rated.DefaultSize, rated.DefaultLevel];
+
+    private void ToggleDifferent()
+    {
+        differentOpen = !differentOpen;
+        // Opening starts from the party the readout is for now, so the two boxes say what the readout rates.
+        if (differentOpen && partyOverride == null) FillFromRating();
+    }
+
+    private void FillFromRating()
+    {
+        if (rating == null) return;
+        var known = rating.Rating.PartySize > 0;
+        differentSize = known ? rating.Rating.PartySize : rating.DefaultSize;
+        differentLevel = known ? rating.Rating.PartyLevel : rating.DefaultLevel;
+    }
+
+    private async Task DifferentChangedAsync(string which, string? raw)
+    {
+        if (rating == null) return;
+        var parsed = int.TryParse(raw, out var number);
+        if (parsed)
+        {
+            if (which == "size") differentSize = Math.Clamp(number, 1, PreparedEncounterService.MaxParty);
+            else differentLevel = Math.Clamp(number, rating.LevelFrom, rating.LevelTo);
+            partyOverride = new PartyOverride(differentSize, differentLevel);
+        }
+
+        // The box shows what was typed; when that is not what the readout rates for (clamped, or unreadable), it is drawn again with the number that is.
+        if (!parsed || number != (which == "size" ? differentSize : differentLevel)) differentRedraws++;
+        await RateAsync();
+    }
+
+    private async Task UseCampaignPartyAsync()
+    {
+        partyOverride = null;
+        await RateAsync();
+        FillFromRating();
     }
 
     private async Task SwitchTabAsync(string next)

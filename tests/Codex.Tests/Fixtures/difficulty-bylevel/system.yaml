@@ -1,0 +1,43 @@
+# A test fixture for the encounter difficulty readout, shape "byLevel" (docs/ENCOUNTER_BUILDER_DESIGN.md 2.1 and 16). Every number here is invented so that a
+# test can work the answer out by hand; none is from any game. Band budgets are for a party of four, with a number added or taken for each character more or fewer.
+id: difficulty-bylevel
+name: Difficulty readout, by level (test fixture)
+version: 0.1.0
+license:
+  name: CC0-1.0
+  attribution: Test fixture released to the public domain by the TTRPG.Codex project.
+
+actorFields:
+  - { key: level, label: Level, type: Number, defaultValue: 1, min: 1, max: 20 }
+fieldRoles:
+  level: level
+
+entityTypes:
+  - type: monster
+    label: Creature
+    pluralLabel: Creatures
+    folder: monsters
+    actorBlueprint: true
+    fields:
+      - { key: tier, label: Tier, type: Number }
+
+sheetKinds:
+  - { kind: hero, label: Hero, role: player }
+  - { kind: pet, label: Pet, role: player, partyMember: false }
+
+encounters:
+  difficulty:
+    shape: byLevel
+    creatureLevel: tier
+    pick: atLeast
+    bands:
+      - { key: easy, label: Easy, value: 10, perCharacter: 1 }
+      - { key: fair, label: Fair, value: 20, perCharacter: 2 }
+      - { key: hard, label: Hard, value: 30, perCharacter: 3 }
+    values:
+      - { delta: -2, value: 1 }
+      - { delta: -1, value: 2 }
+      - { delta: 0, value: 3 }
+      - { delta: 1, value: 4 }
+      - { delta: 2, value: 5 }
+    partySize: 4

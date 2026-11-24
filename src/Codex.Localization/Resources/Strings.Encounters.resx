@@ -99,4 +99,35 @@
   <data name="Encounters.Start.NoTable" xml:space="preserve"><value>Start the table to run this encounter</value></data>
   <data name="Encounters.Start.SaveFirst" xml:space="preserve"><value>Save your changes to start it.</value></data>
   <data name="Encounters.RanOn" xml:space="preserve"><value>{0, plural, one{Ran on {1}} other{Ran # times, last on {1}}}</value></data>
+  <data name="Encounters.Difficulty.Title" xml:space="preserve"><value>Difficulty</value></data>
+  <data name="Encounters.Difficulty.Above" xml:space="preserve"><value>Above {0}</value></data>
+  <data name="Encounters.Difficulty.Below" xml:space="preserve"><value>Below {0}</value></data>
+  <data name="Encounters.Difficulty.Nothing" xml:space="preserve"><value>Nothing counted yet</value></data>
+  <data name="Encounters.Difficulty.Summary" xml:space="preserve"><value>{0}: {1} for {2}</value></data>
+  <data name="Encounters.Difficulty.TotalUnit" xml:space="preserve"><value>{0} {1}</value></data>
+  <data name="Encounters.Difficulty.Party" xml:space="preserve"><value>{0, plural, one{# character} other{# characters}} of level {1}</value></data>
+  <data name="Encounters.Difficulty.PartyVaries" xml:space="preserve"><value>{0, plural, one{# character} other{# characters}}, levels {1} to {2}</value></data>
+  <data name="Encounters.Difficulty.PartyLevelVaries" xml:space="preserve"><value>{0, plural, one{# character} other{# characters}} at party level {1} (levels vary)</value></data>
+  <data name="Encounters.Difficulty.Bands" xml:space="preserve"><value>Bands for this party</value></data>
+  <data name="Encounters.Difficulty.UpTo" xml:space="preserve"><value>{0} up to {1}</value></data>
+  <data name="Encounters.Difficulty.From" xml:space="preserve"><value>{0} from {1}</value></data>
+  <data name="Encounters.Difficulty.NotCounted" xml:space="preserve"><value>{0, plural, one{# line not counted} other{# lines not counted}}</value></data>
+  <data name="Encounters.Difficulty.HazardsNotCounted" xml:space="preserve"><value>{0, plural, one{# hazard is not counted} other{# hazards are not counted}}</value></data>
+  <data name="Encounters.Difficulty.NoValue" xml:space="preserve"><value>{0} has no {1}</value></data>
+  <data name="Encounters.Difficulty.NoEntry" xml:space="preserve"><value>{0} is no longer in the Library</value></data>
+  <data name="Encounters.Difficulty.NoActor" xml:space="preserve"><value>{0} is no longer in the cast</value></data>
+  <data name="Encounters.Difficulty.TooFarAbove" xml:space="preserve"><value>{0} is too far above the party for the table</value></data>
+  <data name="Encounters.Difficulty.TooFarBelow" xml:space="preserve"><value>{0} is too far below the party for the table</value></data>
+  <data name="Encounters.Difficulty.NotWhole" xml:space="preserve"><value>The level of {0} is not a whole number</value></data>
+  <data name="Encounters.Difficulty.Negative" xml:space="preserve"><value>{0} has a negative value</value></data>
+  <data name="Encounters.Difficulty.NoParty" xml:space="preserve"><value>There are no characters to rate for.</value></data>
+  <data name="Encounters.Difficulty.NoBudgetRow" xml:space="preserve"><value>The system has no budget row for level {0}.</value></data>
+  <data name="Encounters.Difficulty.LevelUnknown" xml:space="preserve"><value>{1, plural, one{The level of {0} is not known, so there is no readout. Set it on the character's sheet, or rate for a different party.} other{The levels of {0} are not known, so there is no readout. Set them on the characters' sheets, or rate for a different party.}}</value></data>
+  <data name="Encounters.Difficulty.Source.Default" xml:space="preserve"><value>No characters in this campaign yet; rating for {0}.</value></data>
+  <data name="Encounters.Difficulty.Source.Override" xml:space="preserve"><value>Rating for a different party: {0}.</value></data>
+  <data name="Encounters.Difficulty.Different" xml:space="preserve"><value>Rate for a different party</value></data>
+  <data name="Encounters.Difficulty.Characters" xml:space="preserve"><value>Characters</value></data>
+  <data name="Encounters.Difficulty.Level" xml:space="preserve"><value>Level</value></data>
+  <data name="Encounters.Difficulty.DifferentHint" xml:space="preserve"><value>This only changes what is shown here. It is not saved.</value></data>
+  <data name="Encounters.Difficulty.UseCampaign" xml:space="preserve"><value>Use the campaign's party</value></data>
 </root>

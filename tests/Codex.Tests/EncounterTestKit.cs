@@ -106,7 +106,13 @@ internal sealed class EncounterWorld
     public CampaignLibrary Library { get; }
     public PreparedEncounterService Service { get; }
 
-    public EncounterWorld(IPreparedEncounterRepository? plans = null)
+    /// <summary>A fixture system under tests/Codex.Tests/Fixtures (read through the loader, translations beside it included): <c>difficulty-sum</c> or <c>difficulty-bylevel</c>.</summary>
+    public static SystemDefinition Fixture(string folder) =>
+        Codex.Core.Systems.SystemDefinitionLoader.Load(Path.Combine(TestPaths.RepoRoot, "tests", "Codex.Tests", "Fixtures", folder, "system.yaml"));
+
+    /// <param name="plans">The plans' store; in memory when none is given.</param>
+    /// <param name="system">The campaign's system in place of the plain one (the difficulty tests give a fixture system); the plain one is shared by every test, so never changed.</param>
+    public EncounterWorld(IPreparedEncounterRepository? plans = null, SystemDefinition? system = null)
     {
         Registry.RegisterEntry(new ContentEntry { Id = "bandit", Type = "monster", SystemId = "demo", PackId = "base", Name = "Bandit" }, 0);
         Registry.RegisterEntry(new ContentEntry { Id = "wolf", Type = "monster", SystemId = "demo", PackId = "base", Name = "Wolf" }, 0);
@@ -138,7 +144,7 @@ internal sealed class EncounterWorld
         var homebrew = HomebrewRepo;
         homebrew.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => Brews.AsEnumerable());
         var catalog = Substitute.For<ISystemCatalog>();
-        catalog.GetDefinition("demo").Returns(Demo);
+        catalog.GetDefinition("demo").Returns(system ?? Demo);
         Library = new CampaignLibrary(Registry, homebrew, catalog);
         Service = new PreparedEncounterService(plans ?? Plans, RegionRepo, ActorRepo, Library, Registry);
     }

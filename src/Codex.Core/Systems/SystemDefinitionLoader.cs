@@ -301,6 +301,11 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        foreach (var error in EncounterChecks.Problems(definition))
+        {
+            yield return error;
+        }
+
         foreach (var error in IssueCheckProblems.Problems(definition))
         {
             yield return error;

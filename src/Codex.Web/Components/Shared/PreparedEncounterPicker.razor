@@ -25,6 +25,10 @@
                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="start-prepared-plan" aria-label="@L["Combat.Prepared.StartLabel", row.Plan.Name]"
                                  Busy="@(startingId == row.Plan.Id)" Disabled="@(startingId != null)" OnClick="() => StartAsync(row)">@row.Plan.Name</CodexButton>
                     <span class="small-muted">@PlaceText(row) · @row.Summary</span>
+                    @if (DifficultyText.Word(row.Rating, L) is { } band)
+                    {
+                        <span class="pill" data-testid="prepared-difficulty"><span class="visually-hidden">@L["Encounters.Difficulty.Title"]: </span>@band</span>
+                    }
                 </li>
             }
         </ul>
@@ -50,7 +54,7 @@
     {
         try
         {
-            rows = Access.IsDm ? await Encounters.StartChoicesAsync(Campaign, Access, PlaceId) : Array.Empty<EncounterRow>();
+            rows = Access.IsDm ? await Encounters.StartChoicesAsync(Campaign, Access, PlaceId, L.Culture.Name) : Array.Empty<EncounterRow>();
         }
         catch (Exception ex)
         {

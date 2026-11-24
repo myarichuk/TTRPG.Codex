@@ -754,6 +754,9 @@ public class SystemDefinition
     /// <summary>What the system says about hazards beyond the type's own fields: how hard a hazard of each level is. Absent on a system with no hazard type.</summary>
     public HazardRules? Hazards { get; set; }
 
+    /// <summary>What the system says about encounters: how hard a lineup is for the party. Absent: the encounter builder shows no difficulty readout.</summary>
+    public EncounterRules? Encounters { get; set; }
+
     /// <summary>Named rolls with inputs and outcomes (see Rolls.cs).</summary>
     public List<RollDefinition> Rolls { get; set; } = new();
 
@@ -961,6 +964,11 @@ public class SystemDefinition
         }).ToList();
         copy.Moments = Moments.Select(m => new MomentDefinition { Key = m.Key, OnSet = m.OnSet, Scope = m.Scope, While = m.While, Note = m.Note, Label = t.Moments.TryGetValue(m.Key, out var shown) ? shown : m.Label }).ToList();
         copy.SheetRules = SheetRules == null ? null : ApplyRuleLabels(SheetRules, t.SheetRules, t.Categories);
+        if (Encounters?.Difficulty != null)
+        {
+            copy.Encounters = Copy(Encounters);
+            copy.Encounters.Difficulty = ApplyDifficultyLabels(Encounters.Difficulty, t.Encounters.Difficulty);
+        }
         copy.Translations = Translations;
         copy.ConditionLabels = new Dictionary<string, string>(t.Conditions);
         copy.CategoryLabels = new Dictionary<string, string>(t.Categories);
@@ -980,6 +988,15 @@ public class SystemDefinition
 
     private static string Pick(Dictionary<string, string> map, string key, string original) =>
         map.TryGetValue(key, out var shown) && !string.IsNullOrWhiteSpace(shown) ? shown : original;
+
+    /// <summary>The readout with its band labels and unit worded in the reader's language. A copy: the original, which the rules read, is untouched; keys, budgets and values are shared.</summary>
+    private static DifficultyRules ApplyDifficultyLabels(DifficultyRules rules, DifficultyTranslation t)
+    {
+        var copy = Copy(rules);
+        copy.Bands = rules.Bands.Select(b => { var band = Copy(b); band.Label = Pick(t.Bands, b.Key, b.Label); return band; }).ToList();
+        copy.Unit = string.IsNullOrWhiteSpace(t.Unit) ? rules.Unit : t.Unit;
+        return copy;
+    }
 
     /// <summary>The rules with their labels translated. Only the label-bearing objects on the way down are copied; every
     /// formula, condition and key is shared with the original.</summary>

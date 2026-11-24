@@ -99,4 +99,35 @@
   <data name="Encounters.Start.NoTable" xml:space="preserve"><value>הפעילו את השולחן כדי לקיים את מפגש הקרב הזה</value></data>
   <data name="Encounters.Start.SaveFirst" xml:space="preserve"><value>שמרו את השינויים כדי להתחיל.</value></data>
   <data name="Encounters.RanOn" xml:space="preserve"><value>{0, plural, one{התקיים ב{1}} two{התקיים פעמיים, לאחרונה ב{1}} other{התקיים # פעמים, לאחרונה ב{1}}}</value></data>
+  <data name="Encounters.Difficulty.Title" xml:space="preserve"><value>רמת קושי</value></data>
+  <data name="Encounters.Difficulty.Above" xml:space="preserve"><value>מעל {0}</value></data>
+  <data name="Encounters.Difficulty.Below" xml:space="preserve"><value>מתחת לרמה: {0}</value></data>
+  <data name="Encounters.Difficulty.Nothing" xml:space="preserve"><value>עדיין לא נספר דבר</value></data>
+  <data name="Encounters.Difficulty.Summary" xml:space="preserve"><value>{0}: {1} עבור {2}</value></data>
+  <data name="Encounters.Difficulty.TotalUnit" xml:space="preserve"><value>{0} {1}</value></data>
+  <data name="Encounters.Difficulty.Party" xml:space="preserve"><value>{0, plural, one{דמות אחת} two{שתי דמויות} other{# דמויות}} ברמה {1}</value></data>
+  <data name="Encounters.Difficulty.PartyVaries" xml:space="preserve"><value>{0, plural, one{דמות אחת} two{שתי דמויות} other{# דמויות}}, ברמות {1} עד {2}</value></data>
+  <data name="Encounters.Difficulty.PartyLevelVaries" xml:space="preserve"><value>{0, plural, one{דמות אחת} two{שתי דמויות} other{# דמויות}}, רמת הקבוצה {1} (הרמות שונות)</value></data>
+  <data name="Encounters.Difficulty.Bands" xml:space="preserve"><value>הטווחים לקבוצה הזאת</value></data>
+  <data name="Encounters.Difficulty.UpTo" xml:space="preserve"><value>{0} עד {1}</value></data>
+  <data name="Encounters.Difficulty.From" xml:space="preserve"><value>{0} מ-{1}</value></data>
+  <data name="Encounters.Difficulty.NotCounted" xml:space="preserve"><value>{0, plural, one{שורה אחת לא נספרה} two{שתי שורות לא נספרו} other{# שורות לא נספרו}}</value></data>
+  <data name="Encounters.Difficulty.HazardsNotCounted" xml:space="preserve"><value>{0, plural, one{סכנה אחת לא נספרת} two{שתי סכנות לא נספרות} other{# סכנות לא נספרות}}</value></data>
+  <data name="Encounters.Difficulty.NoValue" xml:space="preserve"><value>{0}: אין ערך ({1})</value></data>
+  <data name="Encounters.Difficulty.NoEntry" xml:space="preserve"><value>{0} כבר לא בספרייה</value></data>
+  <data name="Encounters.Difficulty.NoActor" xml:space="preserve"><value>{0} כבר לא בין הדמויות</value></data>
+  <data name="Encounters.Difficulty.TooFarAbove" xml:space="preserve"><value>{0} חזק מדי ביחס לקבוצה, ואין לו שורה בטבלה</value></data>
+  <data name="Encounters.Difficulty.TooFarBelow" xml:space="preserve"><value>{0} חלש מדי ביחס לקבוצה, ואין לו שורה בטבלה</value></data>
+  <data name="Encounters.Difficulty.NotWhole" xml:space="preserve"><value>הרמה של {0} אינה מספר שלם</value></data>
+  <data name="Encounters.Difficulty.Negative" xml:space="preserve"><value>{0}: הערך שלילי</value></data>
+  <data name="Encounters.Difficulty.NoParty" xml:space="preserve"><value>אין דמויות שאפשר להעריך עבורן.</value></data>
+  <data name="Encounters.Difficulty.NoBudgetRow" xml:space="preserve"><value>במערכת אין שורת תקציב לרמה {0}.</value></data>
+  <data name="Encounters.Difficulty.LevelUnknown" xml:space="preserve"><value>{1, plural, one{הרמה של {0} לא ידועה, ולכן אין הערכה. אפשר להגדיר אותה בדף הדמות, או להעריך עבור קבוצה אחרת.} other{הרמות של {0} לא ידועות, ולכן אין הערכה. אפשר להגדיר אותן בדפי הדמויות, או להעריך עבור קבוצה אחרת.}}</value></data>
+  <data name="Encounters.Difficulty.Source.Default" xml:space="preserve"><value>אין עדיין דמויות בקמפיין הזה; ההערכה עבור {0}.</value></data>
+  <data name="Encounters.Difficulty.Source.Override" xml:space="preserve"><value>ההערכה עבור קבוצה אחרת: {0}.</value></data>
+  <data name="Encounters.Difficulty.Different" xml:space="preserve"><value>הערכה עבור קבוצה אחרת</value></data>
+  <data name="Encounters.Difficulty.Characters" xml:space="preserve"><value>דמויות</value></data>
+  <data name="Encounters.Difficulty.Level" xml:space="preserve"><value>רמה</value></data>
+  <data name="Encounters.Difficulty.DifferentHint" xml:space="preserve"><value>זה משנה רק את מה שמוצג כאן. הוא לא נשמר.</value></data>
+  <data name="Encounters.Difficulty.UseCampaign" xml:space="preserve"><value>שימוש בקבוצת הקמפיין</value></data>
 </root>
