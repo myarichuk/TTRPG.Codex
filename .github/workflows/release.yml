@@ -39,14 +39,14 @@ jobs:
 
       - name: Install GitVersion
         if: inputs.version == ''
-        uses: gittools/actions/gitversion/setup@v4.5.0
+        uses: gittools/actions/gitversion/setup@v5.0.0
         with:
           versionSpec: '6.x'
 
       - name: Determine version with GitVersion
         if: inputs.version == ''
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v4.5.0
+        uses: gittools/actions/gitversion/execute@v5.0.0
 
       - name: Pick the version
         id: pick
