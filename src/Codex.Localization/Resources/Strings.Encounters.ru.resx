@@ -48,7 +48,7 @@
   <data name="Encounters.Homebrew" xml:space="preserve"><value>Собственный</value></data>
   <data name="Encounters.CastMember" xml:space="preserve"><value>Из персонажей</value></data>
   <data name="Encounters.Gone.Cast" xml:space="preserve"><value>Его больше нет среди персонажей</value></data>
-  <data name="Encounters.Gone.Entry" xml:space="preserve"><value>Нет в библиотеке</value></data>
+  <data name="Encounters.Gone.Entry" xml:space="preserve"><value>Нет в Библиотеке</value></data>
   <data name="Encounters.NoteFor" xml:space="preserve"><value>Заметка: {0}</value></data>
   <data name="Encounters.NotePlaceholder" xml:space="preserve"><value>Ждёт за дверью</value></data>
   <data name="Encounters.HowMany" xml:space="preserve"><value>Сколько: {0}</value></data>
@@ -64,8 +64,8 @@
   <data name="Encounters.Check.CountRange" xml:space="preserve"><value>{0}: число должно быть от 1 до {1}.</value></data>
   <data name="Encounters.Check.CastCount" xml:space="preserve"><value>{0} — один персонаж, поэтому число должно быть 1.</value></data>
   <data name="Encounters.Check.CastIsPlayer" xml:space="preserve"><value>{0}: персонаж игрока или его спутник. В столкновении могут быть только персонажи, которыми управляет мастер.</value></data>
-  <data name="Encounters.Check.HazardLine" xml:space="preserve"><value>{0}: опасности добавляются на месте, а не здесь. Поставьте её на странице места.</value></data>
-  <data name="Encounters.Warn.EntryGone" xml:space="preserve"><value>{0} больше нет в библиотеке.</value></data>
+  <data name="Encounters.Check.HazardLine" xml:space="preserve"><value>{0}: это опасность, а не существо. Сложную опасность добавьте через «Опасности» в панели добавления, остальные поставьте на странице места.</value></data>
+  <data name="Encounters.Warn.EntryGone" xml:space="preserve"><value>{0} больше нет в Библиотеке.</value></data>
   <data name="Encounters.Warn.CastGone" xml:space="preserve"><value>{0} больше нет среди персонажей.</value></data>
   <data name="Encounters.Warn.PlaceGone" xml:space="preserve"><value>Место удалено.</value></data>
   <data name="Encounters.Error.NotAllowed" xml:space="preserve"><value>Это может делать только мастер.</value></data>
@@ -83,7 +83,7 @@
   <data name="Encounters.Add.Source" xml:space="preserve"><value>Откуда добавить</value></data>
   <data name="Encounters.Add.Library" xml:space="preserve"><value>Библиотека</value></data>
   <data name="Encounters.Add.Cast" xml:space="preserve"><value>Персонажи</value></data>
-  <data name="Encounters.Add.SearchCreatures" xml:space="preserve"><value>Поиск среди существ библиотеки и ваших собственных</value></data>
+  <data name="Encounters.Add.SearchCreatures" xml:space="preserve"><value>Поиск среди существ Библиотеки и ваших собственных материалов</value></data>
   <data name="Encounters.Add.SearchCast" xml:space="preserve"><value>Поиск среди персонажей</value></data>
   <data name="Encounters.Add.Placeholder" xml:space="preserve"><value>Поиск по названию</value></data>
   <data name="Encounters.Add.Count" xml:space="preserve"><value>{0, plural, one{# результат} few{# результата} many{# результатов} other{# результата}}</value></data>
@@ -92,16 +92,16 @@
   <data name="Encounters.Add.Shortlist" xml:space="preserve"><value>Добавить из списка бестиария</value></data>
   <data name="Encounters.Hazards" xml:space="preserve"><value>Опасности в этом месте</value></data>
   <data name="Encounters.Hazards.ChoosePlace" xml:space="preserve"><value>Выберите место, чтобы увидеть его опасности.</value></data>
-  <data name="Encounters.Hazards.None" xml:space="preserve"><value>Здесь нет опасностей. Поставьте их на странице места.</value></data>
+  <data name="Encounters.Hazards.None" xml:space="preserve"><value>Здесь нет опасностей. Поставьте их на странице места или добавьте здесь сложную.</value></data>
   <data name="Encounters.Hazards.OpenPlace" xml:space="preserve"><value>Открыть место</value></data>
   <data name="Encounters.Hazards.At" xml:space="preserve"><value>Место: {0}</value></data>
   <data name="Encounters.Start" xml:space="preserve"><value>Начать за столом</value></data>
   <data name="Encounters.Start.NoTable" xml:space="preserve"><value>Запустите стол, чтобы провести это столкновение</value></data>
   <data name="Encounters.Start.SaveFirst" xml:space="preserve"><value>Сохраните изменения, чтобы начать.</value></data>
-  <data name="Encounters.RanOn" xml:space="preserve"><value>{0, plural, one{Проведено {1}} few{Проведено # раза, последний раз {1}} many{Проведено # раз, последний раз {1}} other{Проведено # раза, последний раз {1}}}</value></data>
+  <data name="Encounters.RanOn" xml:space="preserve"><value>{0, plural, =1{Проведено {1}} one{Проведено # раз, последний раз {1}} few{Проведено # раза, последний раз {1}} many{Проведено # раз, последний раз {1}} other{Проведено # раза, последний раз {1}}}</value></data>
   <data name="Encounters.Difficulty.Title" xml:space="preserve"><value>Сложность</value></data>
-  <data name="Encounters.Difficulty.Above" xml:space="preserve"><value>Выше: {0}</value></data>
-  <data name="Encounters.Difficulty.Below" xml:space="preserve"><value>Ниже: {0}</value></data>
+  <data name="Encounters.Difficulty.Above" xml:space="preserve"><value>Выше «{0}»</value></data>
+  <data name="Encounters.Difficulty.Below" xml:space="preserve"><value>Ниже «{0}»</value></data>
   <data name="Encounters.Difficulty.Nothing" xml:space="preserve"><value>Пока ничего не учтено</value></data>
   <data name="Encounters.Difficulty.Summary" xml:space="preserve"><value>{0}: {1} для {2}</value></data>
   <data name="Encounters.Difficulty.TotalUnit" xml:space="preserve"><value>{0} {1}</value></data>
@@ -114,7 +114,7 @@
   <data name="Encounters.Difficulty.NotCounted" xml:space="preserve"><value>{0, plural, one{# строка не учтена} few{# строки не учтены} many{# строк не учтено} other{# строки не учтено}}</value></data>
   <data name="Encounters.Difficulty.HazardsNotCounted" xml:space="preserve"><value>{0, plural, one{# опасность не учитывается} few{# опасности не учитываются} many{# опасностей не учитывается} other{# опасности не учитываются}}</value></data>
   <data name="Encounters.Difficulty.NoValue" xml:space="preserve"><value>У существа «{0}» нет значения: {1}</value></data>
-  <data name="Encounters.Difficulty.NoEntry" xml:space="preserve"><value>{0} больше нет в библиотеке</value></data>
+  <data name="Encounters.Difficulty.NoEntry" xml:space="preserve"><value>{0} больше нет в Библиотеке</value></data>
   <data name="Encounters.Difficulty.NoActor" xml:space="preserve"><value>{0} больше нет среди персонажей</value></data>
   <data name="Encounters.Difficulty.TooFarAbove" xml:space="preserve"><value>{0} намного сильнее отряда: в таблице такого нет</value></data>
   <data name="Encounters.Difficulty.TooFarBelow" xml:space="preserve"><value>{0} намного слабее отряда: в таблице такого нет</value></data>
@@ -124,7 +124,7 @@
   <data name="Encounters.Difficulty.NoBudgetRow" xml:space="preserve"><value>В системе нет строки бюджета для уровня {0}.</value></data>
   <data name="Encounters.Difficulty.LevelUnknown" xml:space="preserve"><value>{1, plural, one{Уровень персонажа {0} неизвестен, поэтому оценки нет. Укажите его в листе персонажа или оцените для другого отряда.} few{Уровни персонажей {0} неизвестны, поэтому оценки нет. Укажите их в листах персонажей или оцените для другого отряда.} many{Уровни персонажей {0} неизвестны, поэтому оценки нет. Укажите их в листах персонажей или оцените для другого отряда.} other{Уровни персонажей {0} неизвестны, поэтому оценки нет. Укажите их в листах персонажей или оцените для другого отряда.}}</value></data>
   <data name="Encounters.Difficulty.Source.Default" xml:space="preserve"><value>В этой кампании пока нет персонажей; оценка для {0}.</value></data>
-  <data name="Encounters.Difficulty.Source.Override" xml:space="preserve"><value>Оценка для другого отряда: {0}.</value></data>
+  <data name="Encounters.Difficulty.Source.Override" xml:space="preserve"><value>Оценка для {0} (другой отряд).</value></data>
   <data name="Encounters.Difficulty.Different" xml:space="preserve"><value>Оценить для другого отряда</value></data>
   <data name="Encounters.Difficulty.Characters" xml:space="preserve"><value>Число персонажей</value></data>
   <data name="Encounters.Difficulty.Level" xml:space="preserve"><value>Уровень</value></data>
@@ -135,15 +135,15 @@
   <data name="Encounters.Hazards.JoinsFor" xml:space="preserve"><value>{0}: вступает в порядок инициативы</value></data>
   <data name="Encounters.Error.NotSavedHazardPlaced" xml:space="preserve"><value>Опасность поставлена в месте, но столкновение не сохранено. Сохраните ещё раз.</value></data>
   <data name="Encounters.Hazards.LeftOutFor" xml:space="preserve"><value>{0}: не вступит в порядок инициативы</value></data>
-  <data name="Encounters.Hazards.WontJoin.Disabled" xml:space="preserve"><value>Обезврежена: не вступит в бой</value></data>
-  <data name="Encounters.Hazards.WontJoin.Triggered" xml:space="preserve"><value>Уже сработала: не вступит в бой</value></data>
+  <data name="Encounters.Hazards.WontJoin.Disabled" xml:space="preserve"><value>Обезврежена: не вступит в порядок инициативы</value></data>
+  <data name="Encounters.Hazards.WontJoin.Triggered" xml:space="preserve"><value>Уже сработала: не вступит в порядок инициативы</value></data>
   <data name="Encounters.Hazards.Pending" xml:space="preserve"><value>{0}: будет поставлена в месте «{1}» при сохранении</value></data>
   <data name="Encounters.Hazards.PendingRemove" xml:space="preserve"><value>Не ставить: {0}</value></data>
   <data name="Encounters.Hazards.PendingCleared" xml:space="preserve"><value>{0} не добавлена: в месте «{1}» уже есть опасность.</value></data>
   <data name="Encounters.Add.Hazards" xml:space="preserve"><value>Опасности</value></data>
   <data name="Encounters.Add.HazardsChoosePlace" xml:space="preserve"><value>Сначала выберите место</value></data>
-  <data name="Encounters.Add.SearchHazards" xml:space="preserve"><value>Искать сложные опасности в Библиотеке и в ваших собственных материалах</value></data>
-  <data name="Encounters.Add.Hazard" xml:space="preserve"><value>Поставить: {0}</value></data>
+  <data name="Encounters.Add.SearchHazards" xml:space="preserve"><value>Поиск сложных опасностей в Библиотеке и среди ваших собственных материалов</value></data>
+  <data name="Encounters.Add.Hazard" xml:space="preserve"><value>Добавить в это место: {0}</value></data>
   <data name="Encounters.Add.HazardPlaced" xml:space="preserve"><value>{0}: будет поставлена в месте «{1}» при сохранении.</value></data>
   <data name="Encounters.Add.HazardTaken" xml:space="preserve"><value>В месте «{0}» уже есть опасность ({1}). В месте может быть только одна.</value></data>
   <data name="Encounters.Add.HazardPendingAlready" xml:space="preserve"><value>В месте «{0}» уже ждёт постановки опасность. В месте может быть только одна.</value></data>

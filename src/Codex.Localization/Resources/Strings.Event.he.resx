@@ -80,8 +80,8 @@
   <data name="Event.Initiative.Rolled" xml:space="preserve"><value>{0}: יוזמה {1}.</value></data>
   <data name="Event.Initiative.Removed" xml:space="preserve"><value>{0}: יציאה מסדר היוזמה.</value></data>
   <data name="Event.Initiative.NotIn" xml:space="preserve"><value>{0}: לא בסדר היוזמה.</value></data>
-  <data name="Event.Encounter.Ended" xml:space="preserve"><value>המפגש הסתיים אחרי סבבים: {0}.</value></data>
-  <data name="Event.Encounter.None" xml:space="preserve"><value>אין מפגש לסיים.</value></data>
+  <data name="Event.Encounter.Ended" xml:space="preserve"><value>מפגש הקרב הסתיים אחרי {0, plural, one{סבב אחד} two{שני סבבים} other{# סבבים}}.</value></data>
+  <data name="Event.Encounter.None" xml:space="preserve"><value>אין מפגש קרב לסיים.</value></data>
   <data name="Event.Actor.Left" xml:space="preserve"><value>{0}: עזיבת השולחן.</value></data>
   <data name="Event.Actor.Joined" xml:space="preserve"><value>{0}: הצטרפות לשולחן.</value></data>
   <data name="Event.Sheet.Edited" xml:space="preserve"><value>דף הדמות של {0} נערך.</value></data>
@@ -148,7 +148,7 @@
   <data name="Event.Type.Damage" xml:space="preserve"><value>נזק</value></data>
   <data name="Event.Type.DeathSave" xml:space="preserve"><value>הצלה ממוות</value></data>
   <data name="Event.Type.DiceRoll" xml:space="preserve"><value>הטלה</value></data>
-  <data name="Event.Type.EncounterEnded" xml:space="preserve"><value>סוף מפגש</value></data>
+  <data name="Event.Type.EncounterEnded" xml:space="preserve"><value>סוף מפגש קרב</value></data>
   <data name="Event.Type.Exhaustion" xml:space="preserve"><value>תשישות</value></data>
   <data name="Event.Type.Healing" xml:space="preserve"><value>ריפוי</value></data>
   <data name="Event.Type.HitDice" xml:space="preserve"><value>קוביות חיים</value></data>
@@ -264,9 +264,9 @@
   <data name="Event.Campaign.RowAdded" xml:space="preserve"><value>{0}: נוסף {1}.</value></data>
   <data name="Event.Campaign.RowEdited" xml:space="preserve"><value>{0}: {1} שונה.</value></data>
   <data name="Event.Campaign.RowRemoved" xml:space="preserve"><value>{0}: {1} הוסר.</value></data>
-  <data name="Event.Encounter.Started" xml:space="preserve"><value>מפגש קרב התחיל: {0}, ב{1}.</value></data>
+  <data name="Event.Encounter.Started" xml:space="preserve"><value>מפגש קרב התחיל: {0}, מקום: {1}.</value></data>
   <data name="Event.Encounter.StartedNoPlace" xml:space="preserve"><value>מפגש קרב התחיל: {0}.</value></data>
-  <data name="Event.Encounter.NotJoined" xml:space="preserve"><value>{1, plural, one{יצור אחד מ{0} לא הצטרף.} two{שני יצורים מ{0} לא הצטרפו.} other{# יצורים מ{0} לא הצטרפו.}}</value></data>
-  <data name="Event.Encounter.StartRefused" xml:space="preserve"><value>{0} לא התחיל: מפגש קרב כבר מתנהל.</value></data>
-  <data name="Event.Encounter.StartEmpty" xml:space="preserve"><value>{0} לא התחיל: אף אחד ממנו אינו ליד השולחן.</value></data>
+  <data name="Event.Encounter.NotJoined" xml:space="preserve"><value>{1, plural, one{יצור אחד מתוך {0} לא הצטרף.} two{שני יצורים מתוך {0} לא הצטרפו.} other{# יצורים מתוך {0} לא הצטרפו.}}</value></data>
+  <data name="Event.Encounter.StartRefused" xml:space="preserve"><value>מפגש הקרב {0} לא התחיל: מפגש קרב כבר מתנהל.</value></data>
+  <data name="Event.Encounter.StartEmpty" xml:space="preserve"><value>מפגש הקרב {0} לא התחיל: אף אחד ממנו אינו ליד השולחן.</value></data>
 </root>

@@ -92,8 +92,10 @@ public static class MessageFormatter
             i = close + 1;
         }
 
+        // An exact branch ("=1{...}") wins over the category, as in ICU: Russian's "one" also covers 21, 31..., so a text meant for exactly one run says "=1".
         // A language missing the exact category falls back to "other", then to whatever branch exists, so text never vanishes.
-        if (!map.TryGetValue(category, out var chosen) && !map.TryGetValue("other", out chosen))
+        if (!map.TryGetValue("=" + number.ToString(CultureInfo.InvariantCulture), out var chosen)
+            && !map.TryGetValue(category, out chosen) && !map.TryGetValue("other", out chosen))
         {
             if (map.Count == 0) return "";
             chosen = map.Values.First();

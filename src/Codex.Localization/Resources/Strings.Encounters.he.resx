@@ -64,7 +64,7 @@
   <data name="Encounters.Check.CountRange" xml:space="preserve"><value>{0}: הכמות צריכה להיות בין 1 ל-{1}.</value></data>
   <data name="Encounters.Check.CastCount" xml:space="preserve"><value>{0} הוא דמות אחת, ולכן הכמות חייבת להיות 1.</value></data>
   <data name="Encounters.Check.CastIsPlayer" xml:space="preserve"><value>{0}: דמות של שחקן או בן לוויה שלה. רק דמויות שמנחה המשחק מנהל יכולות להיות במפגש קרב.</value></data>
-  <data name="Encounters.Check.HazardLine" xml:space="preserve"><value>{0}: סכנות מוסיפים על המקום ולא כאן. הציבו אותה בדף המקום.</value></data>
+  <data name="Encounters.Check.HazardLine" xml:space="preserve"><value>{0}: זו סכנה ולא יצור. סכנה מורכבת מוסיפים דרך "סכנות" בחלונית ההוספה, ואת האחרות מציבים בדף המקום.</value></data>
   <data name="Encounters.Warn.EntryGone" xml:space="preserve"><value>{0} כבר לא בספרייה.</value></data>
   <data name="Encounters.Warn.CastGone" xml:space="preserve"><value>{0} כבר לא בין הדמויות.</value></data>
   <data name="Encounters.Warn.PlaceGone" xml:space="preserve"><value>המקום נמחק.</value></data>
@@ -87,27 +87,27 @@
   <data name="Encounters.Add.SearchCast" xml:space="preserve"><value>חיפוש בין הדמויות</value></data>
   <data name="Encounters.Add.Placeholder" xml:space="preserve"><value>חיפוש לפי שם</value></data>
   <data name="Encounters.Add.Count" xml:space="preserve"><value>{0, plural, one{תוצאה אחת} two{שתי תוצאות} other{# תוצאות}}</value></data>
-  <data name="Encounters.Add.Creature" xml:space="preserve"><value>הוספת {0}</value></data>
+  <data name="Encounters.Add.Creature" xml:space="preserve"><value>הוספה: {0}</value></data>
   <data name="Encounters.Add.Button" xml:space="preserve"><value>הוספה</value></data>
   <data name="Encounters.Add.Shortlist" xml:space="preserve"><value>הוספה מהרשימה הקצרה של ספר המפלצות</value></data>
   <data name="Encounters.Hazards" xml:space="preserve"><value>סכנות במקום הזה</value></data>
   <data name="Encounters.Hazards.ChoosePlace" xml:space="preserve"><value>בחרו מקום כדי לראות את הסכנות שבו.</value></data>
-  <data name="Encounters.Hazards.None" xml:space="preserve"><value>אין כאן סכנות. הציבו אותן בדף המקום.</value></data>
+  <data name="Encounters.Hazards.None" xml:space="preserve"><value>אין כאן סכנות. הציבו אותן בדף המקום, או הוסיפו כאן סכנה מורכבת.</value></data>
   <data name="Encounters.Hazards.OpenPlace" xml:space="preserve"><value>פתיחת המקום</value></data>
-  <data name="Encounters.Hazards.At" xml:space="preserve"><value>ב{0}</value></data>
+  <data name="Encounters.Hazards.At" xml:space="preserve"><value>במקום {0}</value></data>
   <data name="Encounters.Start" xml:space="preserve"><value>התחלה ליד השולחן</value></data>
   <data name="Encounters.Start.NoTable" xml:space="preserve"><value>הפעילו את השולחן כדי לקיים את מפגש הקרב הזה</value></data>
   <data name="Encounters.Start.SaveFirst" xml:space="preserve"><value>שמרו את השינויים כדי להתחיל.</value></data>
-  <data name="Encounters.RanOn" xml:space="preserve"><value>{0, plural, one{התקיים ב{1}} two{התקיים פעמיים, לאחרונה ב{1}} other{התקיים # פעמים, לאחרונה ב{1}}}</value></data>
+  <data name="Encounters.RanOn" xml:space="preserve"><value>{0, plural, one{התקיים ב-{1}} two{התקיים פעמיים, לאחרונה ב-{1}} other{התקיים # פעמים, לאחרונה ב-{1}}}</value></data>
   <data name="Encounters.Difficulty.Title" xml:space="preserve"><value>רמת קושי</value></data>
-  <data name="Encounters.Difficulty.Above" xml:space="preserve"><value>מעל לרמה: {0}</value></data>
-  <data name="Encounters.Difficulty.Below" xml:space="preserve"><value>מתחת לרמה: {0}</value></data>
+  <data name="Encounters.Difficulty.Above" xml:space="preserve"><value>מעל לרמה {0}</value></data>
+  <data name="Encounters.Difficulty.Below" xml:space="preserve"><value>מתחת לרמה {0}</value></data>
   <data name="Encounters.Difficulty.Nothing" xml:space="preserve"><value>עדיין לא נספר דבר</value></data>
   <data name="Encounters.Difficulty.Summary" xml:space="preserve"><value>{0}: {1} עבור {2}</value></data>
   <data name="Encounters.Difficulty.TotalUnit" xml:space="preserve"><value>{0} {1}</value></data>
-  <data name="Encounters.Difficulty.Party" xml:space="preserve"><value>{0, plural, one{דמות אחת} two{שתי דמויות} other{# דמויות}} ברמה {1}</value></data>
-  <data name="Encounters.Difficulty.PartyVaries" xml:space="preserve"><value>{0, plural, one{דמות אחת} two{שתי דמויות} other{# דמויות}}, ברמות {1} עד {2}</value></data>
-  <data name="Encounters.Difficulty.PartyLevelVaries" xml:space="preserve"><value>{0, plural, one{דמות אחת} two{שתי דמויות} other{# דמויות}}, רמת הקבוצה {1} (הרמות שונות)</value></data>
+  <data name="Encounters.Difficulty.Party" xml:space="preserve"><value>{0, plural, one{דמות אחת} two{שתי דמויות} other{# דמויות}} בדרגה {1}</value></data>
+  <data name="Encounters.Difficulty.PartyVaries" xml:space="preserve"><value>{0, plural, one{דמות אחת} two{שתי דמויות} other{# דמויות}}, בדרגות {1} עד {2}</value></data>
+  <data name="Encounters.Difficulty.PartyLevelVaries" xml:space="preserve"><value>{0, plural, one{דמות אחת} two{שתי דמויות} other{# דמויות}}, דרגת הקבוצה {1} (הדרגות שונות)</value></data>
   <data name="Encounters.Difficulty.Bands" xml:space="preserve"><value>הטווחים לקבוצה הזאת</value></data>
   <data name="Encounters.Difficulty.UpTo" xml:space="preserve"><value>{0} עד {1}</value></data>
   <data name="Encounters.Difficulty.From" xml:space="preserve"><value>{0} מ-{1}</value></data>
@@ -118,16 +118,16 @@
   <data name="Encounters.Difficulty.NoActor" xml:space="preserve"><value>{0} כבר לא בין הדמויות</value></data>
   <data name="Encounters.Difficulty.TooFarAbove" xml:space="preserve"><value>{0} חזק מדי ביחס לקבוצה, ואין לו שורה בטבלה</value></data>
   <data name="Encounters.Difficulty.TooFarBelow" xml:space="preserve"><value>{0} חלש מדי ביחס לקבוצה, ואין לו שורה בטבלה</value></data>
-  <data name="Encounters.Difficulty.NotWhole" xml:space="preserve"><value>הרמה של {0} אינה מספר שלם</value></data>
+  <data name="Encounters.Difficulty.NotWhole" xml:space="preserve"><value>הדרגה של {0} אינה מספר שלם</value></data>
   <data name="Encounters.Difficulty.Negative" xml:space="preserve"><value>{0}: הערך שלילי</value></data>
   <data name="Encounters.Difficulty.NoParty" xml:space="preserve"><value>אין דמויות שאפשר להעריך עבורן.</value></data>
-  <data name="Encounters.Difficulty.NoBudgetRow" xml:space="preserve"><value>במערכת אין שורת תקציב לרמה {0}.</value></data>
-  <data name="Encounters.Difficulty.LevelUnknown" xml:space="preserve"><value>{1, plural, one{הרמה של {0} לא ידועה, ולכן אין הערכה. אפשר להגדיר אותה בדף הדמות, או להעריך עבור קבוצה אחרת.} other{הרמות של {0} לא ידועות, ולכן אין הערכה. אפשר להגדיר אותן בדפי הדמויות, או להעריך עבור קבוצה אחרת.}}</value></data>
+  <data name="Encounters.Difficulty.NoBudgetRow" xml:space="preserve"><value>במערכת אין שורת תקציב לדרגה {0}.</value></data>
+  <data name="Encounters.Difficulty.LevelUnknown" xml:space="preserve"><value>{1, plural, one{הדרגה של {0} לא ידועה, ולכן אין הערכה. אפשר להגדיר אותה בדף הדמות, או להעריך עבור קבוצה אחרת.} other{הדרגות של {0} לא ידועות, ולכן אין הערכה. אפשר להגדיר אותן בדפי הדמויות, או להעריך עבור קבוצה אחרת.}}</value></data>
   <data name="Encounters.Difficulty.Source.Default" xml:space="preserve"><value>אין עדיין דמויות בקמפיין הזה; ההערכה עבור {0}.</value></data>
   <data name="Encounters.Difficulty.Source.Override" xml:space="preserve"><value>ההערכה עבור קבוצה אחרת: {0}.</value></data>
   <data name="Encounters.Difficulty.Different" xml:space="preserve"><value>הערכה עבור קבוצה אחרת</value></data>
   <data name="Encounters.Difficulty.Characters" xml:space="preserve"><value>דמויות</value></data>
-  <data name="Encounters.Difficulty.Level" xml:space="preserve"><value>רמה</value></data>
+  <data name="Encounters.Difficulty.Level" xml:space="preserve"><value>דרגה</value></data>
   <data name="Encounters.Difficulty.DifferentHint" xml:space="preserve"><value>זה משנה רק את מה שמוצג כאן. הוא לא נשמר.</value></data>
   <data name="Encounters.Difficulty.UseCampaign" xml:space="preserve"><value>שימוש בקבוצת הקמפיין</value></data>
   <data name="Encounters.BuildWithAi" xml:space="preserve"><value>בנייה באמצעות AI</value></data>
@@ -137,16 +137,16 @@
   <data name="Encounters.Hazards.LeftOutFor" xml:space="preserve"><value>{0}: לא תצטרף לסדר היוזמה</value></data>
   <data name="Encounters.Hazards.WontJoin.Disabled" xml:space="preserve"><value>מנוטרלת: לא תצטרף</value></data>
   <data name="Encounters.Hazards.WontJoin.Triggered" xml:space="preserve"><value>כבר הופעלה: לא תצטרף</value></data>
-  <data name="Encounters.Hazards.Pending" xml:space="preserve"><value>{0}: תוצב ב{1} בעת השמירה</value></data>
+  <data name="Encounters.Hazards.Pending" xml:space="preserve"><value>{0}: תוצב במקום {1} בעת השמירה</value></data>
   <data name="Encounters.Hazards.PendingRemove" xml:space="preserve"><value>לא להציב: {0}</value></data>
-  <data name="Encounters.Hazards.PendingCleared" xml:space="preserve"><value>{0} לא נוספה: כבר יש סכנה ב{1}.</value></data>
+  <data name="Encounters.Hazards.PendingCleared" xml:space="preserve"><value>{0} לא נוספה: כבר יש סכנה במקום {1}.</value></data>
   <data name="Encounters.Add.Hazards" xml:space="preserve"><value>סכנות</value></data>
   <data name="Encounters.Add.HazardsChoosePlace" xml:space="preserve"><value>בחרו קודם מקום</value></data>
   <data name="Encounters.Add.SearchHazards" xml:space="preserve"><value>חיפוש סכנות מורכבות בספרייה ובתכנים שלכם</value></data>
-  <data name="Encounters.Add.Hazard" xml:space="preserve"><value>הצבת {0}</value></data>
-  <data name="Encounters.Add.HazardPlaced" xml:space="preserve"><value>{0}: תוצב ב{1} בעת השמירה.</value></data>
-  <data name="Encounters.Add.HazardTaken" xml:space="preserve"><value>כבר יש סכנה ב{0} ({1}). במקום אחד יש סכנה אחת.</value></data>
-  <data name="Encounters.Add.HazardPendingAlready" xml:space="preserve"><value>סכנה כבר ממתינה להצבה ב{0}. במקום אחד יש סכנה אחת.</value></data>
+  <data name="Encounters.Add.Hazard" xml:space="preserve"><value>הוספה למקום: {0}</value></data>
+  <data name="Encounters.Add.HazardPlaced" xml:space="preserve"><value>{0}: תוצב במקום {1} בעת השמירה.</value></data>
+  <data name="Encounters.Add.HazardTaken" xml:space="preserve"><value>במקום {0} כבר יש סכנה ({1}). במקום אחד יש סכנה אחת.</value></data>
+  <data name="Encounters.Add.HazardPendingAlready" xml:space="preserve"><value>סכנה כבר ממתינה להצבה במקום {0}. במקום אחד יש סכנה אחת.</value></data>
   <data name="Encounters.Add.HazardsHint" xml:space="preserve"><value>סכנה מורכבת שנוספה כאן תוצב במקום של מפגש הקרב הזה בעת השמירה. היא פועלת בתורה בסדר היוזמה.</value></data>
   <data name="Encounters.Error.HazardNoPlace" xml:space="preserve"><value>בחרו מקום לפני שמוסיפים לו סכנה.</value></data>
   <data name="Encounters.Error.HazardGone" xml:space="preserve"><value>הסכנה הזאת כבר אינה בספרייה. בחרו אחרת.</value></data>

@@ -1,0 +1,16 @@
+- id: collapsing-roof
+  name: 'Обрушивающийся потолок'
+- id: falling-net
+  name: 'Падающая сеть'
+- id: fire-casting-statue
+  name: 'Статуя, мечущая огонь'
+- id: hidden-pit
+  name: 'Скрытая яма'
+- id: poisoned-darts
+  name: 'Отравленные дротики'
+- id: poisoned-needle
+  name: 'Отравленная игла'
+- id: rolling-stone
+  name: 'Катящийся камень'
+- id: spiked-pit
+  name: 'Яма с шипами'

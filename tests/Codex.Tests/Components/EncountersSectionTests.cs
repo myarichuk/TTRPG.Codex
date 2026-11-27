@@ -244,7 +244,7 @@ public class EncountersSectionTests : ComponentTestBase
 
         cut.WaitForState(() => cut.FindAll(Id("encounter-hazards-none")).Count > 0, Patience);
         var none = cut.Find(Id("encounter-hazards-none"));
-        Assert.StartsWith("No hazards are placed here. Place one on the place's page.", none.TextContent);
+        Assert.StartsWith("No hazards are placed here. Place one on the place's page, or add a complex one here.", none.TextContent);
         Assert.Equal("/campaigns/c1/world#place-hall", none.QuerySelector("a")!.GetAttribute("href"));
     }
 
@@ -602,7 +602,7 @@ public class EncountersSectionTests : ComponentTestBase
         cut.Find(Id("encounter-tab-hazards")).Click();
         cut.WaitForState(() => cut.FindAll(Id("encounter-add-hazard")).Count > 0, Patience);
         var hazards = cut.FindAll(Id("encounter-add-hazard")).Select(b => b.GetAttribute("aria-label")).Order().ToList();
-        Assert.Equal(new[] { "Place Crushing press", "Place Swinging blade" }, hazards);
+        Assert.Equal(new[] { "Add Crushing press to the place", "Add Swinging blade to the place" }, hazards);
         Assert.Equal("2 results", cut.Find(Id("encounter-add-count")).TextContent);
     }
 
@@ -616,7 +616,7 @@ public class EncountersSectionTests : ComponentTestBase
         cut.Find(Id("encounter-tab-hazards")).Click();
         cut.WaitForState(() => cut.FindAll(Id("encounter-add-hazard")).Count == 2, Patience);
 
-        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Place Swinging blade").Click();
+        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Add Swinging blade to the place").Click();
 
         Assert.Equal("Swinging blade will be placed at Hall when you save", cut.Find(Id("encounter-hazard-pending")).TextContent.Trim());
         Assert.Equal("Swinging blade will be placed at Hall when you save.", cut.Find(Id("encounter-announce")).TextContent);
@@ -643,7 +643,7 @@ public class EncountersSectionTests : ComponentTestBase
         cut.Find(Id("encounter-tab-hazards")).Click();
         cut.WaitForState(() => cut.FindAll(Id("encounter-add-hazard")).Count == 2, Patience);
 
-        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Place Swinging blade").Click();
+        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Add Swinging blade to the place").Click();
 
         Assert.Equal("Cellar already has a hazard (Spiked pit). A place holds one.", cut.Find(Id("encounter-announce")).TextContent);
         // And in view, for someone who is not listening to the live region.
@@ -683,7 +683,7 @@ public class EncountersSectionTests : ComponentTestBase
         cut.WaitForState(() => cut.FindAll(Id("encounter-tab-hazards")).Count > 0, Patience);
         cut.Find(Id("encounter-tab-hazards")).Click();
         cut.WaitForState(() => cut.FindAll(Id("encounter-add-hazard")).Count == 2, Patience);
-        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Place Swinging blade").Click();
+        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Add Swinging blade to the place").Click();
         cut.Find(Id("encounter-name")).Input("Renamed");
         // Another tab placed a hazard on the hall meanwhile.
         _w.Region.Locations.Single(l => l.Id == "hall").Feature = new PlaceFeature { Hazard = new PlacedHazard { Entry = "hazard/press" } };
@@ -704,7 +704,7 @@ public class EncountersSectionTests : ComponentTestBase
         cut.WaitForState(() => cut.FindAll(Id("encounter-tab-hazards")).Count > 0, Patience);
         cut.Find(Id("encounter-tab-hazards")).Click();
         cut.WaitForState(() => cut.FindAll(Id("encounter-add-hazard")).Count == 2, Patience);
-        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Place Swinging blade").Click();
+        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Add Swinging blade to the place").Click();
         // The plan was deleted in another tab: placing works, the plan's own save does not.
         _w.Plans.Held.Remove(plan.Id);
 
@@ -715,13 +715,13 @@ public class EncountersSectionTests : ComponentTestBase
         Assert.Empty(cut.FindAll(Id("encounter-hazard-pending")));
         cut.WaitForState(() => cut.FindAll(Id("encounter-hazard")).Count == 1, Patience);
         // Taking the same hazard again is refused as the place holds one, not placed twice.
-        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Place Swinging blade").Click();
+        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Add Swinging blade to the place").Click();
         Assert.Contains("already has a hazard", cut.Find(Id("encounter-hazard-notice")).TextContent);
         Assert.Equal(1, _w.PlacingCalls);
     }
 
     [Theory]
-    [InlineData("ru", "Вступает в порядок инициативы", "Обезврежена: не вступит в бой")]
+    [InlineData("ru", "Вступает в порядок инициативы", "Обезврежена: не вступит в порядок инициативы")]
     [InlineData("he", "מצטרפת לסדר היוזמה", "מנוטרלת: לא תצטרף")]
     public async Task TheTick_SpeaksTheReadersLanguage(string culture, string joins, string disabled)
     {

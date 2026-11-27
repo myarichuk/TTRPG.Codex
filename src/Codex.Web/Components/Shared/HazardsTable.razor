@@ -23,7 +23,25 @@
     [Parameter] public IEnumerable<ActorDocument> Actors { get; set; } = Enumerable.Empty<ActorDocument>();
     [Parameter] public SystemDefinition? Definition { get; set; }
 
-    private sealed record Placement(RegionDocument Region, LocationDocument Place, PlacedHazard Stored, LibraryItem? Item);
+    /// <param name="Shown">The hazard's name in the reader's language, for display only: the rules, the commands and the log keep the entry's own name.</param>
+    private sealed record Placement(RegionDocument Region, LocationDocument Place, PlacedHazard Stored, LibraryItem? Item, string? Shown = null);
+
+    /// <summary>The name a pack's translation gives the hazard, or null when the page is in English or there is none.</summary>
+    private async Task<string?> ShownNameAsync(PlacedHazard stored, LibraryItem? item)
+    {
+        // Homebrew has no translations, so it is not read a second time.
+        if (item == null || stored.IsHomebrew || L.Culture.TwoLetterISOLanguageName == "en") return null;
+        try
+        {
+            var shown = (await Library.GetAsync(Campaign, Access, stored.EntryType, stored.EntryId, stored.IsHomebrew, L.Culture.Name))?.Entry.Name;
+            return string.IsNullOrWhiteSpace(shown) ? null : shown;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "A placed hazard's translated name {Entry} could not be read for the table", stored.Entry);
+            return null;
+        }
+    }
 
     private List<Placement> placements = new();
     private IReadOnlyList<HazardPlace> places = Array.Empty<HazardPlace>();
@@ -109,7 +127,7 @@
                     Logger.LogWarning(ex, "A placed hazard's entry {Entry} could not be read for the table", stored.Entry);
                 }
 
-                found.Add(new Placement(region, place, stored, item));
+                found.Add(new Placement(region, place, stored, item, await ShownNameAsync(stored, item)));
             }
         }
 
@@ -129,7 +147,7 @@
                 Logger.LogWarning(ex, "A hazard actor's entry {Entry} could not be read for the table", stored.Entry);
             }
 
-            loose.Add(new Placement(new RegionDocument { Id = string.Empty }, new LocationDocument { Id = actor.Id, Name = L["Combat.Hazard.FromLibrary"] }, stored, item));
+            loose.Add(new Placement(new RegionDocument { Id = string.Empty }, new LocationDocument { Id = actor.Id, Name = L["Combat.Hazard.FromLibrary"] }, stored, item, await ShownNameAsync(stored, item)));
         }
 
         placements = found.Concat(loose).ToList();
@@ -168,7 +186,7 @@
             var noticed = state.NoticedBy.Select(id => names.GetValueOrDefault(id, id)).ToList();
             if (placement.Item is not { } item || Type is not { Hazard: { } hazard } type)
             {
-                views.Add(new HazardView(key, null, name, placement.Place.Name, state.State, state.Successes, noticed, Array.Empty<HazardWay>(), Array.Empty<HazardWay>(), Array.Empty<string>(), 0));
+                views.Add(new HazardView(key, null, placement.Shown ?? name, placement.Place.Name, state.State, state.Successes, noticed, Array.Empty<HazardWay>(), Array.Empty<HazardWay>(), Array.Empty<string>(), 0));
                 continue;
             }
 
@@ -186,7 +204,7 @@
                     order?.Current?.ActorId == actor.Id, HazardNumbers.HasEffect(numbers, hazard));
             }
 
-            views.Add(new HazardView(key, site, name, placement.Place.Name, state.State, state.Successes, noticed,
+            views.Add(new HazardView(key, site, placement.Shown ?? name, placement.Place.Name, state.State, state.Successes, noticed,
                 detect.Where(Open).Select(r => new HazardWay(HazardRoutes.KeyOf(r), WayLabel(r))).ToList(),
                 disarm.Where(Open).Select(r => new HazardWay(HazardRoutes.KeyOf(r), WayLabel(r), r.TriggersOn.Count > 0)).ToList(),
                 HazardNumbers.Methods(numbers, hazard).Select(m => m.Shown).ToList(),

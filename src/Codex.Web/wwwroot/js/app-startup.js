@@ -633,6 +633,14 @@ window.codex = {
         const el = document.getElementById(id);
         if (el) el.focus();
     },
+    // A button that was turned off while it worked (Save, Start) drops the focus it held; it gets it back only when nothing else has it, so a person who
+    // moved on to another field meanwhile is not pulled back.
+    focusIfLost: function (id) {
+        const active = document.activeElement;
+        if (active && active !== document.body && active.isConnected) return;
+        const el = document.getElementById(id);
+        if (el) el.focus();
+    },
     guardModal: function (id) {
         const el = document.getElementById(id);
         if (el && !el.dataset.guarded) {

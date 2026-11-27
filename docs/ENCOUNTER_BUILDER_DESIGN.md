@@ -834,3 +834,56 @@ B4b gives srd5e its difficulty readout: the first real numbers in a bundled syst
 
 **Known limits**
 - Every SRD monster has an `xp`; a homebrew creature without one is named and left out of the total, as for any `sum` system.
+
+## 20. B6 as built (2026-11-27)
+
+B6 is the strings pass (en, ru, he), the hazard names in ru and he, and the accessibility pass of 5.3. Stacked on B5, B7, B4b and the site guide. The full list of words for a native reader is
+[i18n-encounters-review.md](i18n-encounters-review.md).
+
+**Strings**
+- *One word for an encounter.* Russian «столкновение» everywhere (the session log said «схватка», which is also the Forged in the Dark *Skirmish*; now «Конец столкновения»), Hebrew «מפגש קרב» (the table's «התחלת עימות»
+  and «אין עימות פעיל» now say «מפגש קרב», and the bare «המפגש», which means the session, names the encounter in full in the table's messages and the log). English says "encounter" where it said "plan" at the table.
+- *Plurals that keep their count.* `Event.Encounter.Ended` had no plural in ru and he («через раундов: 3»); it has now. Russian `Encounters.RanOn` dropped the count for «one», which is also 21, 31 and so on; it keeps it.
+- *Case.* Russian «Библиотека» capital throughout (it was lower case in four places); the party text is in the genitive because it always follows «для», so `Source.Override` now reads «Оценка для {0} (другой отряд).» rather than putting that
+  genitive after a colon; «ни одна» for hazards («никто» is for people).
+- *Right to left.* Hebrew no longer glues «ב» to a placeholder that holds a name or a date: «במקום {0}» and «מתוך {0}» for places, «ב-{1}» for the date, «מקום: {1}» in the log. Hebrew «דרגה» for a level (the glossary's word and the sheet's), «רמת קושי» for the readout.
+  The count in the review card is isolated (`<bdi>`), so «×3» stays «×3» after a Hebrew name.
+- *Stale English.* `Encounters.Hazards.None` and `Encounters.Check.HazardLine` said hazards are only placed on the place's page, which B7's Hazards group made untrue; they now name both ways.
+- *Label in name.* The hazard result button shows "Add", so its name is "Add {0} to the place" (it was "Place {0}"); Hebrew «הוספה: {0}», in the creature button too, so the name holds the word on the button (WCAG 2.5.3).
+- Tests: `EncounterStringsTests` (no English left in a ru or he value of the feature, one word for an encounter, the plural forms, no bare prefix before a placeholder, the case of the party text).
+
+**Hazard names**
+- `codex-hazards-ru` and `codex-hazards-he`, translation packs of `codex-hazards` (MIT, ours): name, description, trigger, duration, effect, reset and the text of the routine, detect, disarm and methods rows. A translation replaces a whole
+  property, so those rows are restated with every key they had (`id`, `check`, `dc`, `after`) unchanged; the other fields the loader would accept (`kind`, `severity`, `level`, `saveAttribute`, `damage`, `conditions`,
+  `higherLevels`) are not translated, because rules and filters read them.
+- The eight SRD hazards: `hazard/hazards.yaml` in `srd-5.2.1-ru` and `-he`, **names only**. Their text stays English until someone translates it from our data.
+- `HazardsTable` shows the translated name (one more read with the reader's culture); the rules, the commands, the log and a hazard actor's stored name keep the entry's own name. The Library page and the editor's lists
+  already took the name through `Localize`.
+- Tests: `HazardTranslationPackTests` (the packs load without warnings, every hazard has a name in the language, a restated row keeps every key and number, the SRD hazards are named only, the English entry is untouched), `HazardsTableTests` (two: Russian and English names).
+  A translated `duration` is display text only (the book's stat block prints it; nothing compares it).
+
+**Accessibility, what was checked**
+- *Found fine:* every count box, note box, check box and remove button names its creature or hazard; the lineup and the hazards are lists; the add search's count and the add and refuse outcomes are in polite regions; the Hazards group
+  stays reachable with no place (`aria-disabled`, with its reason tied by `aria-describedby`); the headings run h2, h3, h4; the dialogs are the native `<dialog>` (focus held inside, Escape cancels); the pills say their state in words; the encounter CSS
+  uses logical properties only (`.line-check`, `.count-input`, `.row-actions`; the Bootstrap `ms-*` and `me-*` are overridden to logical ones), so the count box and the remove button swap sides in Hebrew.
+- *Fixed:*
+  - The editor read the difficulty sentence twice (the visible line and the live region, which is visually hidden). The visible copy is `aria-hidden`; the live region (polite, debounced) is the one a screen reader gets.
+  - Removing a line, taking back the waiting hazard and "Use the campaign's party" took away the button that held focus. Focus now goes to the next line's remove button (the one before for the last; the "Creatures" heading when none is left), to the Hazards
+    heading, and to the first box of the party form (`codex.focusById`, the pattern the Hazards panel uses). Save, Start and the picker's start buttons are turned off while they work; they get focus back, only if nothing else has it
+    (`codex.focusIfLost`, new).
+  - The disabled Start button said why only in a tooltip; the hint is text now, tied with `aria-describedby`.
+  - The lists are `role="list"` (Safari drops the list of a list whose bullets are styled away); the "different party" boxes are a group named by the button that opened them.
+- *Contrast, measured from the theme tokens:* the pills' text on their (opaque, tinted) background is 9.8:1 (`.pill`), 7.1 (`.pill-success`) and 6.8 (`.pill-warning`) in the dark theme, and 8.0, 4.8 and 4.5 in the light one (the warning pill is the closest to the 4.5:1 line);
+  `.pill-accent` is 10.6 and 10.1. No pair fails; a theme token was not changed.
+- Tests: `EncounterAccessibilityTests` (seven), and two in `EncounterDifficultyUiTests` (the live region read once, the party group and its focus).
+
+**Left**
+- Russian and Hebrew need a native reader (the review list). The long texts of the SRD hazards are not translated; a hazard added from the table's quick-add keeps the English name in its actor.
+- The summary line of a plan in the list (`Bandit ×3, Wendel Tarr`) is one string from the service; it sits in a `<bdi>`, but a Hebrew name followed by «×3» can still show as «3×». Fixing it means building the line from parts.
+- No screen reader or browser run; the focus moves are tested as the asks the page makes of the browser (`node --check` passes on the one new JS function, which no test runs).
+- After saving a new encounter the address changes and the page is drawn again, so focus starts at the top; the "Saved" notice is announced.
+- *Review (2026-11-27).* The message formatter now honours an exact plural branch (`=1{...}`, ICU's rule: it wins over the category), so the Russian "ran once"
+  reads like the English while 21 and 31 keep their count. The Hazards panel reads a translated name only for Library hazards (homebrew has none). Left:
+  the loader lets a translation pack replace any text field of a hazard, rules fields included; only `HazardTranslationPackTests` stops a pack from
+  changing a `dc` or a `damage`, and a guard in the loader is for later. The panel's status lines still name the hazard in English (the command's own
+  name). `Encounters.Check.HazardLine` is also what the check says for any non-creature line, which for a crafted import may not be a hazard.

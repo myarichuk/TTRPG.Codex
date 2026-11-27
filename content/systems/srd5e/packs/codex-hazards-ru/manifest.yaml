@@ -1,0 +1,19 @@
+id: codex-hazards-ru
+name: 'TTRPG.Codex homebrew hazards (Русский)'
+version: 1.0.0
+systemId: srd5e
+minAppVersion: 0.0.0
+priority: 2
+kind: translation
+locale: ru
+translationOf: codex-hazards
+dependencies:
+- srd-5.2.1
+- codex-hazards
+description: 'Machine-drafted Russian translation of the two homebrew hazards: names, descriptions, triggers, effects, resets and durations. The numbers, the checks and the routes stay as written in the original, so the rules keep running on it.'
+authors:
+- TTRPG.Codex contributors
+license:
+  name: MIT
+  url: https://opensource.org/licenses/MIT
+  attribution: These hazards are original work by TTRPG.Codex contributors, released under the MIT License (https://opensource.org/licenses/MIT), independent of the repository licence. Machine-drafted translation; native review welcome.

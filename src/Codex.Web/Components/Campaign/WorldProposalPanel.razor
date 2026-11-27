@@ -625,7 +625,8 @@
                     @foreach (var line in d.Lineup)
                     {
                         <li>
-                            <strong>@(string.IsNullOrWhiteSpace(line.Name) ? line.Entry : line.Name)</strong>@(line.Count > 1 ? " ×" + line.Count : string.Empty)
+                            @* A name in one script and a count in digits: each is isolated, so "×3" stays "×3" after a Hebrew name instead of turning into "3×". *@
+                            <strong><bdi>@(string.IsNullOrWhiteSpace(line.Name) ? line.Entry : line.Name)</bdi></strong>@if (line.Count > 1) {<text> </text><bdi>×@line.Count</bdi>}
                             @if (line.Hidden)
                             {
                                 <span class="small-muted"> · @L["WorldChat.Proposal.Encounter.Hidden"]</span>

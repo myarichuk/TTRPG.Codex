@@ -75,6 +75,7 @@ What is translated today (all machine-drafted; the English text stays authoritat
 | Rules text and names: classes, subclasses, species, backgrounds, feats, conditions, rule entries (`srd-5.2.1-<lang>`) | yes (OmnisGM, CC BY 4.0) | yes (own draft) |
 | Rules text and names: spells | yes | yes |
 | Rules text and names: creatures, magic items, equipment | yes | yes (own draft) |
+| Hazards: names of the eight SRD ones (`srd-5.2.1-<lang>`); names and text of the two homebrew ones (`codex-hazards-<lang>`) | yes | yes |
 
 The srd5e species `lineages` rows (elf, gnome, goliath, tiefling, dragonborn) and the Circle of the Land's land `options` are translated in both packs: the overlay replaces the whole property and `EntryDisplay.Row` matches rows by index, so a translation must list every row, in the English order, with `name` and `description` only (never `choose`). The Forged in the Dark SRD (`fitd-srd`) has `system.ru.yaml` / `system.he.yaml` and the packs `srd-fitd-2017-ru` / `-he` (machine drafts, terms in [i18n-glossary.md](i18n-glossary.md)); sheet-kind labels (tracks, action rows, layout sections) have no translation section yet, so their words sit under `values`.
 

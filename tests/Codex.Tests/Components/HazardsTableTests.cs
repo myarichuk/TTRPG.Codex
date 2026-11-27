@@ -92,11 +92,23 @@ public class HazardsTableTests : ComponentTestBase
         }, place)
     };
 
-    private IRenderedComponent<HazardsTable> DrawComplex(ContentEntry entry, IEnumerable<ActorDocument> actors, RuntimeSnapshot snapshot, string placeAt = "p1")
+    private IRenderedComponent<HazardsTable> DrawComplex(ContentEntry entry, IEnumerable<ActorDocument> actors, RuntimeSnapshot snapshot, string placeAt = "p1", string? russianName = null)
     {
         var registry = Substitute.For<IContentRegistry>();
         registry.GetEntry("srd5e", "hazard", "stone").Returns(entry);
         registry.Localize(Arg.Any<ContentEntry>(), Arg.Any<string?>()).Returns(call => call.Arg<ContentEntry>());
+        if (russianName != null)
+        {
+            // The page is in Russian, and the pack has a translation of the hazard's name.
+            Services.AddSingleton(Codex.Localization.Localizer.For("ru"));
+            registry.Localize(Arg.Any<ContentEntry>(), Arg.Is<string?>(c => c != null && c.StartsWith("ru"))).Returns(call =>
+            {
+                var shown = call.Arg<ContentEntry>().Clone();
+                shown.Name = russianName;
+                return shown;
+            });
+        }
+
         _regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(new[]
         {
             new RegionDocument
@@ -134,6 +146,23 @@ public class HazardsTableTests : ComponentTestBase
         // The hazard's own actor is not somebody the hazard can be tried on; the character is.
         Assert.NotEmpty(cut.FindAll(Id("hazard-who-hero")));
         Assert.Empty(cut.FindAll(Id("hazard-who-stone1")));
+    }
+
+    [Fact]
+    public void InRussian_ThePanelShowsTheHazardByItsTranslatedName_AndInEnglishByItsOwn()
+    {
+        var russian = DrawComplex(StoneEntry(), new[] { Hero, StoneActor(Placed()) }, Running(place: "p1"), russianName: "Катящийся камень");
+        russian.WaitForAssertion(() => Assert.NotEmpty(russian.FindAll(Id("hazard-0"))), Patience);
+        Assert.Contains("Катящийся камень", russian.Find(Id("hazard-0")).TextContent);
+        Assert.DoesNotContain("Rolling Stone", russian.Find(Id("hazard-0")).TextContent);
+    }
+
+    [Fact]
+    public void InEnglish_ThePanelShowsTheHazardByItsOwnName()
+    {
+        var english = DrawComplex(StoneEntry(), new[] { Hero, StoneActor(Placed()) }, Running(place: "p1"));
+        english.WaitForAssertion(() => Assert.NotEmpty(english.FindAll(Id("hazard-0"))), Patience);
+        Assert.Contains("Rolling Stone", english.Find(Id("hazard-0")).TextContent);
     }
 
     [Fact]

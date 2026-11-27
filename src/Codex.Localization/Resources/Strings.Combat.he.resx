@@ -94,7 +94,7 @@
   <data name="Combat.QuickAddCreatures" xml:space="preserve"><value>יצורים</value></data>
   <data name="Combat.QuickAddNoCreatures" xml:space="preserve"><value>אין יצור שמתאים.</value></data>
   <data name="Combat.QuickAddHazards" xml:space="preserve"><value>סכנות</value></data>
-  <data name="Combat.QuickAddPlaceHazards" xml:space="preserve"><value>סכנות ב{0}</value></data>
+  <data name="Combat.QuickAddPlaceHazards" xml:space="preserve"><value>סכנות במקום {0}</value></data>
   <data name="Combat.QuickAddInitiative" xml:space="preserve"><value>(יוזמה {0})</value></data>
   <data name="Combat.AddHazardToOrder" xml:space="preserve"><value>הוספה לסדר</value></data>
   <data name="Combat.AddHazardToOrderFor" xml:space="preserve"><value>הוספת {0} לסדר היוזמה</value></data>
@@ -324,8 +324,8 @@
   <data name="Combat.Objects.AddRow" xml:space="preserve"><value>הוסף</value></data>
   <data name="Combat.Objects.RemoveRow" xml:space="preserve"><value>הסר את {0}</value></data>
   <data name="Combat.Objects.NotChanged" xml:space="preserve"><value>שום דבר לא השתנה: השם תפוס, ריק, או שכבר אינו קיים.</value></data>
-  <data name="Combat.StartEncounter" xml:space="preserve"><value>התחלת עימות</value></data>
-  <data name="Combat.NoEncounterHint" xml:space="preserve"><value>אין עימות פעיל. התחילו אחד כדי להטיל יוזמה; הכרטיסים למטה פועלים בכל מקרה.</value></data>
+  <data name="Combat.StartEncounter" xml:space="preserve"><value>התחלת מפגש קרב</value></data>
+  <data name="Combat.NoEncounterHint" xml:space="preserve"><value>אין מפגש קרב פעיל. התחילו אחד כדי להטיל יוזמה; הכרטיסים למטה פועלים בכל מקרה.</value></data>
   <data name="Combat.Card.Heading" xml:space="preserve"><value>דמויות ויצורים</value></data>
   <data name="Combat.Card.Show" xml:space="preserve"><value>הצגת פרטים נוספים: {0}</value></data>
   <data name="Combat.Card.Hide" xml:space="preserve"><value>הסתרת פרטים: {0}</value></data>
@@ -334,18 +334,18 @@
   <data name="Combat.Prepared.Open" xml:space="preserve"><value>התחלת מפגש קרב מוכן</value></data>
   <data name="Combat.Prepared.ListLabel" xml:space="preserve"><value>מפגשי קרב מוכנים</value></data>
   <data name="Combat.Prepared.None" xml:space="preserve"><value>אין מפגשי קרב מוכנים להתחלה.</value></data>
-  <data name="Combat.Prepared.Manage" xml:space="preserve"><value>הכנת מפגש</value></data>
+  <data name="Combat.Prepared.Manage" xml:space="preserve"><value>הכנת מפגש קרב</value></data>
   <data name="Combat.Prepared.StartLabel" xml:space="preserve"><value>התחלת {0}</value></data>
   <data name="Combat.Prepared.ConfirmTitle" xml:space="preserve"><value>התחלת מפגש קרב מוכן</value></data>
   <data name="Combat.Prepared.Confirm" xml:space="preserve"><value>להתחיל את {0}? {1, plural, one{יצור אחד מצטרף לקרב ומטיל יוזמה.} two{שני יצורים מצטרפים לקרב ומטילים יוזמה.} other{# יצורים מצטרפים לקרב ומטילים יוזמה.}}</value></data>
   <data name="Combat.Prepared.Start" xml:space="preserve"><value>התחלה</value></data>
-  <data name="Combat.Prepared.Started" xml:space="preserve"><value>המפגש {0} התחיל.</value></data>
-  <data name="Combat.Prepared.StartedSome" xml:space="preserve"><value>המפגש {0} התחיל. אלה לא הצטרפו: {1}.</value></data>
-  <data name="Combat.Prepared.RunNotRecorded" xml:space="preserve"><value>המפגש התחיל, אך לא ניתן היה לסמן את התוכנית כמופעלת.</value></data>
+  <data name="Combat.Prepared.Started" xml:space="preserve"><value>מפגש הקרב {0} התחיל.</value></data>
+  <data name="Combat.Prepared.StartedSome" xml:space="preserve"><value>מפגש הקרב {0} התחיל. אלה לא הצטרפו: {1}.</value></data>
+  <data name="Combat.Prepared.RunNotRecorded" xml:space="preserve"><value>מפגש הקרב התחיל, אך לא ניתן היה לסמן אותו כמפגש שהתקיים.</value></data>
   <data name="Combat.Prepared.Notes" xml:space="preserve"><value>הערות למפגש הקרב</value></data>
-  <data name="Combat.Prepared.NoNotes" xml:space="preserve"><value>בתוכנית הזו אין הערות.</value></data>
+  <data name="Combat.Prepared.NoNotes" xml:space="preserve"><value>במפגש הקרב הזה אין הערות.</value></data>
   <data name="Combat.Prepared.LineNote" xml:space="preserve"><value>{0}: {1}</value></data>
-  <data name="Combat.Prepared.OpenPlan" xml:space="preserve"><value>פתיחת התוכנית</value></data>
+  <data name="Combat.Prepared.OpenPlan" xml:space="preserve"><value>פתיחת מפגש הקרב</value></data>
   <data name="Combat.Prepared.Refused.NotAllowed" xml:space="preserve"><value>רק מנחה המשחק יכול להתחיל מפגש קרב.</value></data>
   <data name="Combat.Prepared.Refused.NoTable" xml:space="preserve"><value>הפעילו קודם את השולחן.</value></data>
   <data name="Combat.Prepared.Refused.NotFound" xml:space="preserve"><value>מפגש הקרב הזה כבר לא קיים.</value></data>
@@ -353,7 +353,7 @@
   <data name="Combat.Prepared.Refused.EncounterRunning" xml:space="preserve"><value>סיימו קודם את מפגש הקרב הנוכחי.</value></data>
   <data name="Combat.Prepared.Refused.Busy" xml:space="preserve"><value>מפגש קרב כבר בתהליך התחלה.</value></data>
   <data name="Combat.Prepared.Refused.NobodyJoined" xml:space="preserve"><value>אף אחד במפגש הקרב הזה לא יכול היה להצטרף לקרב.</value></data>
-  <data name="Combat.Prepared.Refused.TableClosed" xml:space="preserve"><value>השולחן נסגר לפני שהמפגש יכול היה להתחיל.</value></data>
+  <data name="Combat.Prepared.Refused.TableClosed" xml:space="preserve"><value>השולחן נסגר לפני שמפגש הקרב יכול היה להתחיל.</value></data>
   <data name="Combat.Prepared.Refused.Failed" xml:space="preserve"><value>לא ניתן היה להתחיל את מפגש הקרב.</value></data>
   <data name="Combat.Prepared.ConfirmBoth" xml:space="preserve"><value>להתחיל את {0}? {1, plural, one{יצור אחד} two{שני יצורים} other{# יצורים}} {2, plural, one{וסכנה אחת} two{ושתי סכנות} other{ו־# סכנות}} מצטרפים לקרב ומטילים יוזמה.</value></data>
   <data name="Combat.Prepared.ConfirmHazards" xml:space="preserve"><value>להתחיל את {0}? {1, plural, one{סכנה אחת מצטרפת לקרב ומטילה יוזמה.} two{שתי סכנות מצטרפות לקרב ומטילות יוזמה.} other{# סכנות מצטרפות לקרב ומטילות יוזמה.}}</value></data>
