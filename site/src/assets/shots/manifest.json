@@ -39,6 +39,18 @@
   1100,
   1300
  ],
+ "encounter-editor": [
+  1100,
+  1500
+ ],
+ "encounter-start": [
+  1100,
+  820
+ ],
+ "encounters": [
+  1100,
+  820
+ ],
  "hero": [
   1024,
   720

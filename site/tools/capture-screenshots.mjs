@@ -14,7 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { languages, party } from './demo-data.mjs';
+import { languages, party, encounterPlans } from './demo-data.mjs';
 import { loadStrings } from './resx.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -26,6 +26,9 @@ const PASSWORD = 'Correct-Horse-1';
 const PY = args.python ?? 'python3'; // needs Pillow (and poppler's pdftoppm for the printed-pages shot)
 // --book-only: set the demo campaign up and take only the book's screens (the rest are unchanged, so rerunning them is wasted time).
 const BOOK_ONLY = 'book-only' in args || process.argv.includes('--book-only');
+// --encounters-only: the same, for the prepared-encounter screens (the Encounters list, the editor and the table's picker).
+const ENC_ONLY = 'encounters-only' in args || process.argv.includes('--encounters-only');
+const SKIP_TABLE = BOOK_ONLY || ENC_ONLY;
 
 const KIND = { pc: 0, npc: 1, monster: 2 };
 const VIS = { Hidden: 0, Unknown: 1, Known: 2 };
@@ -143,7 +146,7 @@ async function captureLanguage(browser, lang) {
   await dm.goto(`/campaigns/${campaignId}`);
   await interactive(dm);
   await dm.getByTestId('setup-checklist').waitFor();
-  await shoot(dm, lang, 'setup');
+  if (!ENC_ONLY) await shoot(dm, lang, 'setup');
 
   const goTop = (page) => page.evaluate(() => window.scrollTo(0, 0));
   const section = async (page, s) => { await page.goto(`/campaigns/${campaignId}/${s}`); await interactive(page); };
@@ -212,7 +215,7 @@ async function captureLanguage(browser, lang) {
   await dm.getByRole('button', { name: ui['Session.SaveRecap'] }).first().click();
   await settle(dm, 900);
 
-  if (!BOOK_ONLY) {
+  if (!SKIP_TABLE) {
   // ---- live table ----
   await section(dm, 'table');
   await dm.getByTestId('start-table').click();
@@ -313,7 +316,7 @@ async function captureLanguage(browser, lang) {
   // ---- the book: print panel, pictures, the editor ----
   // Nothing here asks a model or draws a picture, and no key is ever entered: the AI and picture screens are shown as they
   // are before a run (the "set up a model" notes and the choices), and the editor's Ask AI bar is only ever in view, never used.
-  {
+  if (!ENC_ONLY) {
     await dm.evaluate(() => localStorage.removeItem('codex-theme')); // the app is dark unless the reader chose otherwise
     const art = `${OUT}-art`;
     execFileSync(PY, [join(here, 'demo-art.py'), art], { stdio: 'inherit' });
@@ -445,7 +448,7 @@ async function captureLanguage(browser, lang) {
     await dm.setViewportSize({ width: 1100, height: 820 });
   }
 
-  if (!BOOK_ONLY) {
+  if (!SKIP_TABLE) {
   // ---- what a player sees, on a phone ----
   const phone = await browser.newContext({
     baseURL: BASE, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: lang, colorScheme: 'dark',
@@ -460,6 +463,97 @@ async function captureLanguage(browser, lang) {
   await shoot(pp, lang, 'phone-sheet');
   await phone.close();
 
+  }
+
+  // ---- prepared encounters: the list, the editor, and the table's picker ----
+  // Three plans are made through the editor, the way a GM would. Nothing here asks a model: "Build with AI" is only in view, never used.
+  // It runs last, because the first plan places a complex hazard on its place and the earlier screens should not show it.
+  if (!BOOK_ONLY) {
+    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const plans = encounterPlans[lang];
+    await dm.evaluate(() => localStorage.removeItem('codex-theme'));
+    await dm.setViewportSize({ width: 1100, height: 1250 });
+    let firstPlan = null;
+    for (const p of plans) {
+      await dm.goto(`/campaigns/${campaignId}/encounters/new`);
+      await interactive(dm);
+      await dm.getByTestId('encounter-name').fill(p.name);
+      const place = dm.getByTestId('encounter-place-select');
+      const value = await place.evaluate((el, name) => [...el.options].find((o) => o.textContent.replace(/\s+/g, ' ').trim() === name)?.value, d.places[p.place].name);
+      if (!value) throw new Error(`no place option for ${d.places[p.place].name}`);
+      await place.selectOption(value);
+      await settle(dm, 300);
+      await dm.getByTestId('encounter-status-select').selectOption(p.status);
+      await dm.locator('textarea[data-testid=encounter-notes]').fill(p.notes);
+      await dm.locator('textarea[data-testid=encounter-notes]').press('Tab'); // blur: the editor commits its text on change
+      for (const line of p.lines) {
+        await dm.getByTestId('encounter-add-search').fill(line.name);
+        const result = dm.getByTestId('encounter-add-results').locator('li').filter({ has: dm.locator('.row-title', { hasText: new RegExp(`^\\s*${esc(line.name)}\\s*$`) }) }).first();
+        await result.waitFor({ timeout: 20_000 });
+        await result.getByTestId('encounter-add-creature').click();
+        const row = dm.getByTestId('encounter-line').filter({ hasText: line.name }).first();
+        await row.waitFor();
+        if (line.count > 1) {
+          await row.getByTestId('encounter-line-count').fill(String(line.count));
+          await row.getByTestId('encounter-line-count').press('Tab');
+          await settle(dm, 300);
+        }
+        if (line.hidden) await row.getByTestId('encounter-line-hidden').check();
+      }
+      if (p.hazard) {
+        await dm.getByTestId('encounter-tab-hazards').click();
+        await dm.getByTestId('encounter-add-search').fill('');
+        const first = dm.getByTestId('encounter-add-hazard').first();
+        await first.waitFor({ timeout: 20_000 });
+        await first.click();
+        await dm.getByTestId('encounter-hazard-pending').waitFor();
+        await dm.getByTestId('encounter-tab-library').click();
+      }
+      await settle(dm, 600);
+      await dm.getByTestId('encounter-save').click();
+      await dm.waitForURL((u) => /\/encounters\/[0-9a-f-]{36}$/.test(u.pathname), { timeout: 30_000 });
+      await interactive(dm);
+      await dm.getByTestId('encounter-line').first().waitFor();
+      firstPlan ??= new URL(dm.url()).pathname;
+      console.log('  plan', p.name);
+    }
+
+    // the list: three plans, one of each band, and the filters
+    await dm.setViewportSize({ width: 1100, height: 820 });
+    await dm.goto(`/campaigns/${campaignId}/encounters`);
+    await interactive(dm);
+    await dm.getByTestId('encounter-row').nth(plans.length - 1).waitFor();
+    await dm.getByTestId('encounter-difficulty').first().waitFor();
+    await goTop(dm);
+    await shoot(dm, lang, 'encounters');
+
+    // the editor: the lineup, the difficulty readout, and the hazard at the place with its tick
+    await dm.setViewportSize({ width: 1100, height: 1500 });
+    await dm.goto(firstPlan);
+    await interactive(dm);
+    await dm.getByTestId('encounter-difficulty-summary').waitFor();
+    await dm.getByTestId('encounter-hazard').first().waitFor();
+    await goTop(dm);
+    await shoot(dm, lang, 'encounter-editor');
+
+    // the table's picker: a table with no fight running (a full run ends the one the table shots left)
+    await dm.setViewportSize({ width: 1100, height: 820 });
+    await dm.goto(`/campaigns/${campaignId}/table`);
+    await interactive(dm);
+    if (await dm.getByTestId('start-table').count()) {
+      await dm.getByTestId('start-table').click();
+      await dm.getByTestId('initiative-header').waitFor();
+    }
+    if (await dm.getByTestId('end-encounter-btn').count()) {
+      await dm.getByTestId('end-encounter-btn').click();
+      await dm.getByTestId('confirm-accept').click();
+      await dm.getByTestId('start-prepared').waitFor();
+    }
+    await dm.getByTestId('start-prepared').click();
+    await dm.getByTestId('start-prepared-plan').first().waitFor();
+    await dm.getByTestId('prepared-difficulty').first().waitFor();
+    await goTop(dm);
+    await shoot(dm, lang, 'encounter-start');
   }
 
   for (const { ctx } of playerPages) await ctx.close();

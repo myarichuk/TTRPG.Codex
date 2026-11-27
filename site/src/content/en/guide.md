@@ -18,6 +18,7 @@ Inside a campaign, a side rail holds the sections. On a phone it becomes a strip
 | [[ui:Page.Campaign.Section.Journal]] | Your private notebook. Nobody else can read it, the DM included. |
 | [[ui:Page.Campaign.Section.Cast]] | Player characters, NPCs and monsters, with portraits. |
 | [[ui:Page.Campaign.Section.Bestiary]] | The DM's shortlist of creatures for upcoming encounters. |
+| [[ui:Page.Campaign.Section.Encounters]] | Fights the DM prepares before the session, with a difficulty readout, ready to start at the table. |
 | [[ui:Page.Campaign.Section.Places]] | Regions and the places inside them. |
 | [[ui:Page.Campaign.Section.Wiki]] | Linked pages about your world. |
 | [[ui:Page.Campaign.Section.Build]] | The AI world builder (optional). |
@@ -181,12 +182,59 @@ The DM can extend it:
 
 To add a whole new game system, or a setting pack, write YAML files and drop them in your `content` folder. The format is described in [the content pack documentation](https://github.com/myarichuk/TTRPG.Codex/blob/main/docs/CONTENT_PACKS.md).
 
+## Prepare encounters {#encounters}
+
+A **prepared encounter** is a fight you set up before the session: where it happens, which creatures are in it, how many, and what to remember when it starts. Only you see it. Players see nothing until you start it at the table, and then only what the table always shows them.
+
+Open [[ui:Page.Campaign.Section.Encounters]] (it is for the DM only). Each row shows the encounter's name, its place, its creatures, a difficulty band when the system can give one, and its status: [[ui:Encounters.Status.Draft]], [[ui:Encounters.Status.Ready]] or [[ui:Encounters.Status.Ran]], with how many times it ran. Search by name, or filter by place and by status. Press [[ui:Encounters.New]] to prepare one.
+
+![The Encounters page: three prepared encounters with their place, creatures, a difficulty band and a status.](shot:encounters)
+
+### Write the encounter {#encounters-editor}
+
+1. Give it a name, choose its place from your [[ui:Page.Campaign.Section.Places]] and set its status. Leave it as [[ui:Encounters.Status.Draft]] while you are still working: the table offers only the ready ones.
+2. Write notes that only you see: tactics, terrain, what sets it off and how it can end.
+3. Add creatures from the add panel. The [[ui:Encounters.Add.Library]] tab searches the Library's creatures and your homebrew. The [[ui:Encounters.Add.Cast]] tab adds someone already in your cast, such as a named NPC. [[ui:Encounters.Add.Shortlist]] adds every creature on your Bestiary shortlist. Adding the same creature again raises its count.
+4. Set how many of each in the count box (up to 20), and add a short note, such as where it waits. Tick [[ui:Encounters.StartsHidden]] on a creature that should be hidden when the fight starts, like an ambusher.
+5. Press [[ui:Encounters.Save]].
+
+A cast member is one person, so its count stays at 1. Player characters cannot be in an encounter. If a creature or place is later deleted, the encounter keeps its name and warns you instead of dropping it.
+
+![The editor: the lineup with counts, one creature starting hidden, and the Difficulty readout below it.](shot:encounter-editor)
+
+### The difficulty readout {#encounters-difficulty}
+
+When the game system has a rule for rating a fight, the [[ui:Encounters.Difficulty.Title]] panel reads your lineup against your party and names a band, and it follows the lineup as you edit, before you save. It follows that system's own rule. For the bundled 5e SRD system it is the SRD's XP budget: every character of the party has a budget for their level, the budgets are added up, and the creatures' XP is counted against the total. The panel shows the result ("Moderate: 2350 XP for 4 characters of level 5") and where each band ends. A lineup past the last band reads "Above High".
+
+The party is the campaign's player characters, at the level on each sheet (companions do not count). To try another party without changing anything, press [[ui:Encounters.Difficulty.Different]] and set a number of characters and a level; it is only for looking and is not saved. A creature with no XP value, as a homebrew one may be, is named and left out of the total. The list and the table's picker show the band as a small tag, but only when the campaign has characters to rate for. A system with no rule for it shows no readout at all.
+
+### Hazards at the encounter's place {#encounters-hazards}
+
+The [[ui:Encounters.Hazards]] panel of the editor lists the hazards placed at the encounter's place or inside it, with their state. A complex hazard, one that takes its own turn, has a tick, [[ui:Encounters.Hazards.JoinsOrder]], on by default: untick it to leave that hazard out of this encounter. A hazard that is disabled or already set off cannot join, and the editor says so. A simple hazard never joins the order.
+
+To place a complex hazard from here, open the [[ui:Encounters.Add.Hazards]] tab of the add panel, pick one from the Library or your homebrew, and save: it is placed on the encounter's place (a place holds one hazard). Other hazards are placed on the place's page in [[ui:Page.Campaign.Section.Places]].
+
+### Start it at the table {#encounters-run}
+
+1. Start the table, then press [[ui:Combat.Prepared.Open]] beside [[ui:Combat.StartEncounter]]. The list shows the ready encounters and the ones that already ran, those at the place you used last first, each with its place, creatures and band.
+2. Press the encounter's name. The table asks first how many creatures and hazards will join; press [[ui:Combat.Prepared.Start]].
+3. Its creatures join the cast and roll initiative by the system's own rule, as if you had rolled for them yourself. Creatures set to start hidden stay hidden from the players. Complex hazards at its place join the order too, hidden, with a roll only you see. The table's place is set, so the Hazards panel shows that place, and the encounter's notes wait in a folded panel on the table that only you can open.
+4. Player characters are not rolled for you: add them with [[ui:Combat.AddToInitiative]] as usual.
+
+The encounter is then marked as run, and the list says when. You can run it again. From the editor, [[ui:Encounters.Start]] does the same while a table is running; save your changes first.
+
+![The table's list of prepared encounters, opened beside the usual way to start a fight, with each one's place, creatures and difficulty band.](shot:encounter-start)
+
+### Build one with AI {#encounters-ai}
+
+[[ui:Encounters.BuildWithAi]], on the list and in the editor, opens a chat in the [[ui:Page.Campaign.Section.Build]]. Describe the fight; the model reads the place, its hazards, your party and the Library, and proposes an encounter. It can also change or delete the ones you have. As everywhere in the world builder, you review each proposal and **nothing is saved until you apply it**. The AI never starts an encounter. See [Optional AI](#ai).
+
 ## Run the table {#table}
 
 This is the part you use at the table.
 
 1. Open [[ui:Page.Campaign.Section.Table]] and press [[ui:Combat.Console.StartTable]]. Every player's page attaches to the running table; until then they see “[[ui:Combat.Console.WaitingDm]]”. Players press [[ui:Campaign.Overview.JoinTable]].
-2. Add combatants with [[ui:Combat.AddToInitiative]]: pick someone, then either roll a d20 for them or type their total and press [[ui:Combat.Set]]. Use [[ui:Combat.QuickAdd]] to search the Library and drop a monster straight in.
+2. Add combatants with [[ui:Combat.AddToInitiative]]: pick someone, then either roll a d20 for them or type their total and press [[ui:Combat.Set]]. Use [[ui:Combat.QuickAdd]] to search the Library and drop a monster straight in. To bring in a whole fight you prepared earlier, press [[ui:Combat.Prepared.Open]] instead ([how that works](#encounters-run)).
 3. Press [[ui:Combat.NextTurn]] to move through the order ([[ui:Combat.Previous]] steps back). The active turn is highlighted, and the round counter advances.
 4. Click a combatant to open their controls. Apply damage or healing, add temporary hit points, and add a condition with a round count: it counts down by itself and expires at the right moment. Death saves, hit dice, spell slots and exhaustion are tracked here as well. Pressed the wrong button? The undo button in the same panel takes back the last change to that creature.
 5. The dice tray rolls any expression such as `1d20` or `2d6+3`. Tick **[[ui:Combat.SecretRoll]]** and only you see the result.
@@ -332,7 +380,7 @@ AI is off until you set it up, and it never runs by itself. Click your name in t
 
 The person running the server can also give the whole server a model and key in its settings file. Anyone without models of their own then uses those, within a daily allowance per account (200 requests and 20 pictures unless the server sets other numbers). AI settings says when this is so and how much you have used today; the server's admin sees everyone's use.
 
-What it can do: draft session recaps, write or rewrite a character's history or the DM's notes on an NPC, give level-up advice, build a character from a concept, expand rough wiki notes, and, in the [[ui:Page.Campaign.Section.Build]], hold named chats that read your campaign and Library and propose places, people, factions, quests, secrets, spells, items and creatures. Each proposal is reviewed entry by entry, and **nothing is saved until you apply it**; everything starts hidden. Every tool call the model makes can be opened, down to the raw JSON.
+What it can do: draft session recaps, write or rewrite a character's history or the DM's notes on an NPC, give level-up advice, build a character from a concept, expand rough wiki notes, and, in the [[ui:Page.Campaign.Section.Build]], hold named chats that read your campaign and Library and propose places, people, factions, quests, secrets, spells, items, creatures and [prepared encounters](#encounters-ai) (it can also change or delete the encounters you have). Each proposal is reviewed entry by entry, and **nothing is saved until you apply it**; everything starts hidden. Every tool call the model makes can be opened, down to the raw JSON.
 
 > [!NOTE]
 > The world builder needs a model that supports tool calls. Nothing is sent to any model until someone clicks an AI button, and the AI writes in the reader's language.

@@ -145,4 +145,38 @@ export const languages = {
   },
 };
 
-export { party, sheet };
+// The prepared encounters of the demo campaign. `creatures` holds the Library's own names for four SRD creatures, in that language
+// (the Library is searched by the name the reader sees); `place` indexes `places`. With the demo party (four characters of level 5)
+// the first reads Low, the second Moderate and the third Below Low. The first also gets the Library's complex hazard, placed on its place.
+const names = {
+  en: { ogre: 'Ogre', bugbear: 'Bugbear Warrior', boss: 'Goblin Boss', goblin: 'Goblin Warrior' },
+  ru: { ogre: 'Огр', bugbear: 'Багбир-воин', boss: 'Гоблин-босс', goblin: 'Гоблин-воин' },
+  he: { ogre: 'אוג׳ר', bugbear: 'באגבר לוחם', boss: 'ראש גובלינים', goblin: 'גובלין לוחם' },
+};
+const plan = (n, text) => [
+  {
+    name: text[0], place: 1, status: 'Ready', notes: text[1], hazard: true,
+    lines: [{ name: n.ogre, count: 3 }, { name: n.bugbear, count: 4 }, { name: n.boss, count: 1, hidden: true }],
+  },
+  { name: text[2], place: 0, status: 'Ready', notes: text[3], lines: [{ name: n.ogre, count: 5 }, { name: n.bugbear, count: 4 }] },
+  { name: text[4], place: 0, status: 'Draft', notes: text[5], lines: [{ name: n.boss, count: 1 }, { name: n.goblin, count: 6 }] },
+];
+const encounterPlans = {
+  en: plan(names.en, [
+    'Ambush in the nave', 'The ogres wait behind the pews. The goblin boss stays out of sight until the bell tolls.',
+    'Toll at the quay', 'They stop every boat and ask for the bell fund.',
+    'Goblins on the quay road', 'Not sure yet whether this happens before the chapel.',
+  ]),
+  ru: plan(names.ru, [
+    'Засада в нефе', 'Огры ждут за скамьями. Гоблин-босс не показывается, пока не зазвонит колокол.',
+    'Пошлина на причале', 'Они останавливают каждую лодку и требуют взнос в колокольный фонд.',
+    'Гоблины на дороге к причалу', 'Пока не решено, случится ли это до часовни.',
+  ]),
+  he: plan(names.he, [
+    'מארב בהיכל', 'האוג׳רים מחכים מאחורי הספסלים. ראש הגובלינים נשאר מוסתר עד שהפעמון מצלצל.',
+    'מס במזח', 'הם עוצרים כל סירה ודורשים תרומה לקרן הפעמון.',
+    'גובלינים בדרך למזח', 'עדיין לא ברור אם זה קורה לפני הקפלה.',
+  ]),
+};
+
+export { party, sheet, encounterPlans };
