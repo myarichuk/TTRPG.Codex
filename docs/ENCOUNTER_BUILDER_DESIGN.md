@@ -801,7 +801,7 @@ B7 makes the complex hazards placed at a plan's place join the fight when it sta
 - "Already at the table" is read from the stored actors (a live, non-retired actor with a link to the placement). A hazard actor the GM took out by hand and a second console are as H5 left them.
 - The editor's tick is for the hazards the plan's place and its inside hold at the moment; a hazard moved to another place later is simply not a key of this plan any more (dropped at the next save).
 - A refused hazard (the place has one, one is waiting) is said in a visible line in the Hazards panel and in the live region.
-- No test starts a plan against a hazard whose own roll throws; the command-level tests cover a hazard the table does not hold, and the service names it.
+- The command-level tests cover a hazard the table does not hold and a hazard whose join fails (a counter refill by a die that cannot be rolled); the service names the skipped one.
 
 **Checked in the app (2026-11-27)**
 - A plan at a place with a goblin, the Rolling Stone added from the Hazards tab (placed on save, ticked by default), started from the table's picker: "1 creature and 1 hazard join
@@ -811,6 +811,9 @@ B7 makes the complex hazards placed at a plan's place join the fight when it sta
   sheet), so the console's quick-add is fixed too; `ComplexHazardTests.AHazardsActor_DoesNotWearItsEffectsConditions` pins it.
 - *Seen, left as H5 has them:* after an encounter ends, its hazard actor is retired and the GM's roll log names its old secret roll by the actor's id; and the console's
   "Characters and creatures" cards list a hazard actor with creature numbers (an initiative of +0 beside its own +8 roll).
+  - *Fixed (hazard table quirks):* the log names a retired actor's roll by its name (`CombatConsole` gets `AllActors`; `TableVisibility.RollerName`; a Hidden actor is still never named to a player).
+  - *Fixed (hazard table quirks):* a hazard actor's card prints no creature numbers (`TableCard.Stats` sends an actor with a `Hazard` link to `HazardStats`): it shows the hazard type's own durability (armor class, damage threshold, immunities) and initiative bonus, under the type's own field labels. Checked in the app: the Rolling Stone's card reads AC 17, threshold 10, its immunities and +8.
+  - *Fixed (hazard table quirks):* `JoinInitiativeCommand` and `RollInitiativeCommand` record their roll only after the set succeeded, and `SetInitiativeCommand` refills its counters before it touches the order, so a failed join (a hazard's or a creature's) leaves no roll and no place in the order. The refill itself is not atomic: a counter refilled before one that threw keeps its value and its log line.
 
 ## 19. B4b as built (2026-11-27)
 

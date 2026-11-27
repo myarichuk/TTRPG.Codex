@@ -25,6 +25,35 @@ public class TableVisibilityTests
         Assert.Null(TableVisibility.TurnPosition(Order(0), isDm: false, Seen));
     }
 
+    private static IReadOnlyDictionary<string, ActorDocument> Known(params ActorDocument[] actors) => actors.ToDictionary(a => a.Id);
+
+    [Fact]
+    public void ARollByAnActorRetiredSince_IsStillNamed_NotShownByItsId()
+    {
+        var stone = new ActorDocument { Id = "actors/9", Name = "Rolling Stone", Hazard = new HazardActorLink(), Retired = true };
+
+        // The retired actor is in the viewer's full list, though not in the list of those in play.
+        Assert.Equal("Rolling Stone", TableVisibility.RollerName(stone.Id, Known(stone), isDm: true, "someone unseen"));
+        Assert.Equal("actors/9", TableVisibility.RollerName(stone.Id, Known(), isDm: true, "someone unseen"));
+    }
+
+    [Fact]
+    public void APlayer_IsNeverToldAHiddenHazardsName_NorItsId()
+    {
+        // A player's list leaves a Hidden actor out altogether, retired or not.
+        Assert.Equal("someone unseen", TableVisibility.RollerName("actors/9", Known(new ActorDocument { Id = "actors/1", Name = "Aria" }), isDm: false, "someone unseen"));
+    }
+
+    [Fact]
+    public void ASecretRollOfARetiredHazard_StaysWithTheGm()
+    {
+        var log = new[] { new RollLogEntry { ActorId = "actors/9", Expression = "1d20+8", Total = 20, IsSecret = true, Timestamp = DateTime.UtcNow } };
+        var everyone = new HashSet<string> { "actors/9" };
+
+        Assert.Single(TableVisibility.Rolls(log, isDm: true, everyone));
+        Assert.Empty(TableVisibility.Rolls(log, isDm: false, everyone));
+    }
+
     [Fact]
     public void APlayer_SeesNoRollMadeForAHiddenActor_NorASecretOne()
     {

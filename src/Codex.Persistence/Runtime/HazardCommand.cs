@@ -75,7 +75,7 @@ public sealed record JoinInitiativeCommand(string ActorId, string Expression, st
     {
         var result = runtime.DiceRoller.Roll(Expression);
         _total = result.Total;
-        runtime.RecordRoll(new RollLogEntry
+        var entry = new RollLogEntry
         {
             ActorId = ActorId,
             RollerUserId = RollerUserId,
@@ -87,9 +87,13 @@ public sealed record JoinInitiativeCommand(string ActorId, string Expression, st
             Modifier = result.Modifier,
             CheckDieIndex = result.CheckDieIndex,
             IsSecret = true
-        });
+        };
+
+        // The roll is logged only once the actor is in the order: a set that fails (the start lists the hazard as skipped and the console says nothing joined) must not leave a
+        // secret roll in the GM's log for an actor that is not there.
         _set = new SetInitiativeCommand(ActorId, result.Total, TieBreak, RollerUserId);
         _set.Apply(runtime);
+        runtime.RecordRoll(entry);
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Hazard",

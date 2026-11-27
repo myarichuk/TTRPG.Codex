@@ -320,10 +320,18 @@
     private static string Signed(object value) => YamlValues.ToNumber(value) is { } number ? (number >= 0 ? "+" : "") + number.ToString(System.Globalization.CultureInfo.InvariantCulture) : value.ToString() ?? string.Empty;
 
     /// <summary>Armor class, speed, the system's derived values, and spell save DC and attack. A printed creature's numbers come from what it prints with its
-    /// conditions applied (<see cref="Printed"/>), in place of the worked-out ones, never on top of them.</summary>
+    /// conditions applied (<see cref="Printed"/>), in place of the worked-out ones, never on top of them. A complex hazard that is an actor (it carries the link to its
+    /// placement) has none of these: the creature rules would work them out from a sheet that is no creature's and print an "Initiative +0" next to its real roll. It
+    /// shows its own numbers instead (<see cref="HazardStats"/>).</summary>
     private IEnumerable<(string Label, string Value, string? Title)> Stats()
     {
         if (Definition == null) yield break;
+        if (Actor.Hazard != null)
+        {
+            foreach (var stat in HazardStats()) yield return stat;
+            yield break;
+        }
+
         var shown = new HashSet<PrintedNumber>();
         if (Rules?.ArmorClass is { } armor)
         {
@@ -395,6 +403,35 @@
         {
             var isRoll = other.Target.StartsWith("save.", StringComparison.Ordinal) || other.Target.StartsWith("check.skill.", StringComparison.Ordinal) || other.Target == "attack";
             yield return (other.Label, isRoll ? Signed(other.Total) : other.Total.ToString(), PrintedTitle(other));
+        }
+    }
+
+    /// <summary>What a hazard actor has of its own: the armor class, damage threshold and immunities the system's hazard type calls its durability, and its initiative bonus,
+    /// read from the numbers the actor was seeded with and named by the hazard type's own field labels. A hazard without one of them prints nothing for it.</summary>
+    private IEnumerable<(string Label, string Value, string? Title)> HazardStats()
+    {
+        if (Definition?.EntityTypes.FirstOrDefault(t => t.Hazard != null) is not { Hazard: { } hazard } type) yield break;
+        string LabelOf(string key) => type.Fields.FirstOrDefault(f => f.Key == key) is { } field ? field.Abbreviation ?? field.Label : key;
+
+        if (hazard.Durability?.ArmorClass is { Length: > 0 } armor && YamlValues.GetInt(Actor.Sheet, armor) is { } armorClass)
+        {
+            yield return (LabelOf(armor), armorClass.ToString(), null);
+        }
+
+        if (hazard.Durability?.DamageThreshold is { Length: > 0 } threshold && YamlValues.GetInt(Actor.Sheet, threshold) is { } damageThreshold)
+        {
+            yield return (LabelOf(threshold), damageThreshold.ToString(), null);
+        }
+
+        if (hazard.Durability?.Immunities is { Length: > 0 } immunities && Actor.Sheet.TryGetValue(immunities, out var raw) && raw is System.Collections.IEnumerable list and not string)
+        {
+            var named = list.Cast<object?>().Select(i => i?.ToString()).Where(i => !string.IsNullOrWhiteSpace(i)).ToList();
+            if (named.Count > 0) yield return (LabelOf(immunities), string.Join(", ", named), null);
+        }
+
+        if (hazard.Initiative is { Length: > 0 } initiative && YamlValues.GetInt(Actor.Sheet, initiative) is { } bonus)
+        {
+            yield return (LabelOf(initiative), Signed(bonus), null);
         }
     }
 
