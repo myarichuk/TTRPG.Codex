@@ -73,6 +73,21 @@ public class ComplexHazardTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
     }
 
     [Fact]
+    public void AHazardsActor_DoesNotWearItsEffectsConditions()
+    {
+        // The Rolling Stone's `conditions` (Prone) are what its Crush puts on a creature. Seeding copied them onto the actor's own condition list, and the
+        // table showed the stone with a condition made of the effect's raw data.
+        var stone = _content.GetActorsBySystem("srd5e").Single(a => a.Id == "rolling-stone" && a.Tags.Contains("hazard"));
+
+        var actor = HazardOffers.ToActor("c1", HazardOffers.FromLibrary(stone, HazardType), System, _registry);
+
+        Assert.False(actor.Sheet.ContainsKey(SheetModel.ConditionsKey));
+        Assert.Empty(SheetConditions.Listed(System, actor.Sheet));
+        Assert.Equal(100L, actor.Sheet["HP"]);
+        Assert.Equal(ActorVisibility.Hidden, actor.Visibility);
+    }
+
+    [Fact]
     public void TheHazardOverload_ReadsItsHitPointsFromTheHazardBlock_NotFromHitPointsProperty()
     {
         var entry = Entry("rolling-stone");

@@ -15,6 +15,15 @@ public class PreparedEncounterDocument
     public List<PreparedLine> Lines { get; set; } = new();
     public string? Notes { get; set; }                          // markdown, GM only
     public List<string> Tags { get; set; } = new();
+
+    /// <summary>The complex hazards placed at the place (or under it) that do not join the initiative order when this plan starts, each as <see cref="HazardKey"/>.
+    /// Empty: every one joins, and one placed later joins too. A plan never holds a hazard line; the hazard itself is placed on the place (ENCOUNTER_BUILDER_DESIGN.md 18).</summary>
+    public List<string> HazardsLeftOut { get; set; } = new();
+
+    /// <summary>The key of one placement in <see cref="HazardsLeftOut"/>: <c>{regionId}/{locationId}</c>, as <see cref="HazardActorLink"/> names a placement. A copy of the
+    /// campaign renames the region id wherever it stands whole, so the key follows it.</summary>
+    public static string HazardKey(string regionId, string locationId) => $"{regionId}/{locationId}";
+
     public PreparedStatus Status { get; set; }                  // Draft, Ready, Ran
     public List<string> RunEncounterIds { get; set; } = new();  // the live encounters started from it, newest last; only MarkRunAsync adds to it
     public DateTime? LastRunAt { get; set; }                     // when it was last started at the table (UTC); only MarkRunAsync sets it

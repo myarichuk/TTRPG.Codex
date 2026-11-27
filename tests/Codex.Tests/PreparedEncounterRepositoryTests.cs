@@ -643,6 +643,105 @@ public class PreparedEncounterRepositoryTests : IClassFixture<RavenDbFixture>, I
     }
 
     [Fact]
+    public async Task HazardsLeftOut_IsStoredWithThePlan_ChangesWithAnEdit_AndIsEmptyForAPlanThatNeverHadOne()
+    {
+        var t = NewTable();
+        var plan = Plan(t.CampaignId);
+        Assert.Empty(plan.HazardsLeftOut);
+        plan.HazardsLeftOut = [PreparedEncounterDocument.HazardKey("region-1", "vault")];
+        Assert.True(await _plans.SaveAsync(plan, t.Gm));
+        Assert.Equal(["region-1/vault"], (await _plans.GetAsync(plan.Id, t.Gm))!.HazardsLeftOut);
+
+        // An edit saved through the repository's update path (not a new document) carries the list too, and so does clearing it.
+        var edit = (await _plans.GetAsync(plan.Id, t.Gm))!;
+        edit.HazardsLeftOut = ["region-1/vault", "region-1/cellar"];
+        Assert.True(await _plans.SaveAsync(edit, t.Gm));
+        Assert.Equal(["region-1/vault", "region-1/cellar"], (await _plans.GetAsync(plan.Id, t.Gm))!.HazardsLeftOut);
+        var again = (await _plans.GetAsync(plan.Id, t.Gm))!;
+        again.HazardsLeftOut = [];
+        Assert.True(await _plans.SaveAsync(again, t.Gm));
+        Assert.Empty((await _plans.GetAsync(plan.Id, t.Gm))!.HazardsLeftOut);
+
+        // Starting the plan (a patch of the run fields) leaves it alone.
+        again.HazardsLeftOut = ["region-1/vault"];
+        Assert.True(await _plans.SaveAsync(again, t.Gm));
+        Assert.True(await _plans.MarkRunAsync(plan.Id, "enc-1", t.Gm));
+        Assert.Equal(["region-1/vault"], (await _plans.GetAsync(plan.Id, t.Gm))!.HazardsLeftOut);
+    }
+
+    [Fact]
+    public async Task RestoreOfAPlanWithNoLeftOutList_GivesItAnEmptyOne()
+    {
+        var t = NewTable();
+        var plan = Plan(t.CampaignId);
+        plan.Id = Guid.NewGuid().ToString();
+        plan.HazardsLeftOut = null!;
+
+        await _plans.RestoreAsync(plan);
+
+        Assert.Empty((await _plans.GetAsync(plan.Id, t.Gm))!.HazardsLeftOut);
+    }
+
+    [Fact]
+    public async Task PlaceHazardIfNone_PatchesOnlyTheHazard_IsIdempotent_AndNeverReplacesAnother()
+    {
+        var t = NewTable();
+        var region = new RegionDocument { Id = "region-" + Guid.NewGuid(), CampaignId = t.CampaignId, Name = "Vale" };
+        Assert.True(await _regions.SaveAsync(region, t.Gm));
+        var hall = new LocationDocument { Id = Guid.NewGuid().ToString(), Name = "Hall", Description = "Cold.", Feature = new PlaceFeature { Lock = "Barred" } };
+        Assert.True(await _regions.UpsertLocationAsync(region.Id, hall, t.Gm));
+        var blade = new PlacedHazard { Entry = "hazard/blade", State = HazardState.Hidden };
+
+        Assert.Equal(HazardPlacing.Placed, await _regions.PlaceHazardIfNoneAsync(region.Id, hall.Id, blade, t.Gm));
+        var stored = (await _regions.GetAsync(region.Id, t.Gm))!.Locations.Single();
+        Assert.Equal(("hazard/blade", "Cold.", "Barred"), (stored.Feature!.Hazard!.Entry, stored.Description, stored.Feature.Lock));
+
+        // The same hazard again changes nothing and says so; another one is refused and leaves the first.
+        Assert.Equal(HazardPlacing.AlreadyThere, await _regions.PlaceHazardIfNoneAsync(region.Id, hall.Id, blade, t.Gm));
+        Assert.Equal(HazardPlacing.Taken, await _regions.PlaceHazardIfNoneAsync(region.Id, hall.Id, new PlacedHazard { Entry = "hazard/press" }, t.Gm));
+        Assert.Equal(HazardPlacing.Taken, await _regions.PlaceHazardIfNoneAsync(region.Id, hall.Id, new PlacedHazard { Entry = "hazard/blade", IsHomebrew = true }, t.Gm));
+        Assert.Equal("hazard/blade", (await _regions.GetAsync(region.Id, t.Gm))!.Locations.Single().Feature!.Hazard!.Entry);
+
+        // Not a place, not a player's, not another campaign's, not an entry that names nothing.
+        Assert.Equal(HazardPlacing.Refused, await _regions.PlaceHazardIfNoneAsync(region.Id, "nowhere", blade, t.Gm));
+        Assert.Equal(HazardPlacing.Refused, await _regions.PlaceHazardIfNoneAsync(region.Id, hall.Id, blade, t.Player));
+        Assert.Equal(HazardPlacing.Refused, await _regions.PlaceHazardIfNoneAsync(region.Id, hall.Id, new PlacedHazard { Entry = "" }, t.Gm));
+        var other = NewTable();
+        Assert.Equal(HazardPlacing.Refused, await _regions.PlaceHazardIfNoneAsync(region.Id, hall.Id, blade, other.Gm));
+    }
+
+    [Fact]
+    public async Task ImportAsACopy_FollowsTheRegionIdInsideTheLeftOutKeys()
+    {
+        var campaignId = "camp-copy-" + Guid.NewGuid();
+        await _campaigns.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "gm", Name = "Original", SystemId = "srd5e" });
+        var gm = new CampaignAccess(campaignId, "gm", CampaignRole.DM);
+        var region = new RegionDocument { Id = "region-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vale" };
+        Assert.True(await _regions.SaveAsync(region, gm));
+        var cellar = new LocationDocument { Id = Guid.NewGuid().ToString(), Name = "Cellar" };
+        var vault = new LocationDocument { Id = Guid.NewGuid().ToString(), Name = "Vault", ParentId = cellar.Id };
+        Assert.True(await _regions.UpsertLocationAsync(region.Id, cellar, gm));
+        Assert.True(await _regions.UpsertLocationAsync(region.Id, vault, gm));
+        var plan = Plan(campaignId);
+        plan.RegionId = region.Id;
+        plan.PlaceId = cellar.Id;
+        plan.HazardsLeftOut = [PreparedEncounterDocument.HazardKey(region.Id, vault.Id)];
+        Assert.True(await _plans.SaveAsync(plan, gm));
+
+        var newId = await _export.ImportAsNewAsync(CampaignExportService.Deserialize(CampaignExportService.Serialize((await _export.ExportAsync(gm))!)), "gm");
+
+        Assert.NotNull(newId);
+        var copyAccess = new CampaignAccess(newId, "gm", CampaignRole.DM);
+        var copy = (await _plans.ListAsync(copyAccess)).Single();
+        var newRegion = (await _regions.GetVisibleForCampaignAsync(copyAccess)).Single();
+        Assert.NotEqual(region.Id, newRegion.Id);
+        // The key names the copy's region now, and a place that kept its id inside it: it still points at the vault.
+        Assert.Equal([PreparedEncounterDocument.HazardKey(newRegion.Id, vault.Id)], copy.HazardsLeftOut);
+        Assert.Contains(newRegion.Locations, l => l.Id == vault.Id);
+        Assert.Equal([PreparedEncounterDocument.HazardKey(region.Id, vault.Id)], (await _plans.GetAsync(plan.Id, gm))!.HazardsLeftOut);
+    }
+
+    [Fact]
     public async Task ABundleFromBeforePlansExisted_ImportsAndLeavesStoredPlansAlone()
     {
         var t = NewTable();

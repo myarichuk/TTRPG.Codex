@@ -56,6 +56,7 @@ public class PreparedEncounterDocument
     public List<PreparedLine> Lines { get; set; } = new();
     public string? Notes { get; set; }                          // markdown, GM only: tactics, terrain, what sets it off, the way out
     public List<string> Tags { get; set; } = new();
+    public List<string> HazardsLeftOut { get; set; } = new();   // B7: placed complex hazards that do not join the order, as {regionId}/{locationId}; empty: all join
     public PreparedStatus Status { get; set; }                  // Draft, Ready, Ran
     public List<string> RunEncounterIds { get; set; } = new();  // the live encounters started from it, newest last
     public string CreatedBy { get; set; } = string.Empty;
@@ -85,6 +86,8 @@ public class PreparedLine
   and no write-back. **Recommended:** choosing a complex hazard in the editor places it on the encounter's place (a feature of that
   place, made when the plan is saved), and the line is then only the "joins initiative" tick of that placement; with no place chosen,
   the Hazards group is disabled with "Choose a place first". Open question 10. Before H5 the Hazards group is not offered.
+  **As built (B7, section 18): there is no hazard line at all.** `PreparedLineKind.Hazard` stays in the enum so old data reads, and the check
+  refuses a plan that holds one. What the plan stores is `HazardsLeftOut`, the placements that do not join.
 - **What the encounter shows of its place**: the place's hazards and those of its child places, read live through the same walk the
   Hazards panel uses (`HazardsTable.Chain`, moved to a shared helper), with their state and, after H5, whether each joins initiative.
   A disabled or triggered hazard is shown but does not join.
@@ -204,7 +207,9 @@ new place. That is the one change to the panel. The picker still overrides it, t
 **After H5.** A complex hazard placed at the place or under it, and not disabled or triggered, joins initiative: the service makes its
 actor through H5's `ToActorBlueprint` overload, and its roll uses the hazard's own initiative field (the system's hazard block names it).
 (A complex hazard added in the editor was placed on the place when the plan was saved, so it is one of these.) Each placed complex hazard has a tick on the prepared encounter, "Joins the
-initiative order", on by default; the GM can untick one (a rolling stone that has not been set off yet).
+initiative order", on by default; the GM can untick one (a rolling stone that has not been set off yet). **As built, section 18:** the start makes the actor through the console's own helper
+(`HazardOffers.ToActor`) and the command joins it with `JoinInitiativeCommand` after the creatures, with the hazard's own bonus, a secret roll and a GM-only line; the tick is stored as
+`HazardsLeftOut` on the plan.
 
 ## 5. UI
 
@@ -225,7 +230,8 @@ an encounter is for in one sentence and offers both buttons.
   the cast, and *Add from the Bestiary shortlist*.
 - *Hazards at this place* (read only): each hazard at the place and under it, with its state in words and a link to the place. After
   H5, complex ones carry the "Joins the initiative order" tick. When the place has none: "No hazards are placed here. Place one on the
-  place's page." with a link.
+  place's page." with a link. (Built in B7, section 18: a complex hazard that can join has the tick as a labelled check box; a disarmed or set-off one shows its state and a disabled tick with the
+  reason. The add search has a third group, *Hazards*, that places one on the plan's place when the plan is saved.)
 - *Difficulty* (only when the system declares it): the readout as a sentence in a polite live region, updated as lines change.
 - *Start at the table*: enabled only while the table is running; otherwise its text says "Start the table to run this encounter" and
   links to the table. Starting goes to the table.
@@ -728,3 +734,80 @@ never starts an encounter and never sets `Ran`.
 - The review panel shows an encounter's lineup as plain text, not as links to the Library entries.
 - Hidden on a cast member's line is stored but means nothing at the table (a cast member keeps its own visibility, B3).
 - Two plans with the same name are allowed, as in the editor.
+
+## 18. B7 as built (2026-11-27)
+
+B7 makes the complex hazards placed at a plan's place join the fight when it starts, with a per-hazard tick, and lets the editor add one. It is stacked on B5.
+
+**Files**
+- `Codex.Persistence/PreparedEncounterModels.cs`: `PreparedEncounterDocument.HazardsLeftOut` and `HazardKey`. `RavenPreparedEncounterRepository.SaveAsync` copies the field onto the stored plan (it copies field by field).
+- `Codex.Persistence/Runtime/PreparedEncounterCommands.cs`: `PreparedHazardJoin`, and `StartPreparedEncounterCommand` takes a trailing optional `Hazards`.
+- `Codex.Web/Components/Shared/HazardOffers.cs`: `ToActor`, the one place that makes a hazard's actor; `CombatConsole.QuickAddHazardAsync` calls it too.
+- `Codex.Web/Services/PreparedEncounterService.cs`: the start, `JoiningHazardsAsync`, `SearchHazardsAsync`, `SaveAsync(..., HazardToPlace?)`, `PlacedKeys`, the readout's hazard list. `PreparedConfirm.cs` (new): the confirm sentence.
+- `EncounterEditor.razor`, `PreparedEncounterPicker.razor`; `Codex.Core/WorldBuilder/WorldBundle.cs`, `ProposalInput.cs`, `WorldBuilderService.Encounters.cs`, `WorldChat.Tools.cs` (the world builder's `hazardsLeftOut`).
+- Strings: `Encounters.Hazards.*`, `Encounters.Add.Hazard*`, `Encounters.Error.Hazard*`, `Encounters.Difficulty.HazardsJoin`, `Combat.Prepared.ConfirmBoth` and `.ConfirmHazards`, in en, ru and he.
+- Tests: `PreparedEncounterStartTests` (hazards at the table and the command), `EncounterHazardJoinTests` (which hazards join, the Hazards search, placing on save, pruning, the readout), `PreparedEncounterRepositoryTests` (the field is stored, copied with the region id mapped), `EncountersSectionTests` (the tick, the group),
+  `PreparedEncounterPickerTests` (the confirm), `WorldBuilderEncounterTests` (`hazardsLeftOut`).
+
+**What starts**
+- A hazard joins when it is a **complex** hazard placed at the plan's place or under it (the walk the Hazards panel uses), **not Disabled and not Triggered**, **not in `HazardsLeftOut`**, and **with no live actor at the table** (a retired actor does not count). A plan with no place joins none.
+  `PreparedEncounterService.JoiningAsync` is the one reading of this; the start, the confirm count, the readout and `get_encounter` all use it. `HazardOffers.ForPlaceAsync` still does not filter Triggered (the console offers a set-off hazard); the service does.
+- *Through the console's path.* The service makes each hazard's actor with `HazardOffers.ToActor` (Hidden, with the link to its placement, seeded from the blueprint) and `CampaignRuntimeManager.TryCreateActorAsync`, then hands the command `PreparedHazardJoin(actorId, bonus)` with the bonus
+  from `HazardOffers.ForPlaceAsync` (`HazardNumbers.InitiativeOf`). On the loop the command applies a `JoinInitiativeCommand` for each, **after the creatures' rolls**: the system's die plus the hazard's own bonus, a secret roll-log entry and the GM-only line `Hazard.Joined`
+  (written after the creatures' own lines, as `IFollowedByEvents`). Hazard actors are never in `ActorIds`, so `RollInitiativeCommand`, whose roll and line a player could see, never touches one.
+- *Secrecy.* The start's own line counts only creatures that did not join (`Encounter.NotJoined`); a hazard that did not join is reported only to the GM in `EncounterStart.NotJoined`, so a count cannot tell a player a hidden hazard exists. A player's view of the log has none of it (a test pins it).
+- *Failure.* A hazard whose actor cannot be made, or that the table does not hold, or whose roll fails, is named as not joined like a creature. Its actor (if one was made) is removed, so its place offers it again. The clean-up of a start that is refused removes this start's hazard actors with its creatures.
+  Hazards count toward "somebody joined": a plan of only hazards starts, and a start where nothing could join is `NobodyJoined` (and creates no encounter).
+- `EncounterStart.Joined` counts hazards too; `JoinedHazards` says how many of them.
+- The confirm says "Start {name}? 3 creatures and 1 hazard join the fight and roll initiative." (`PreparedConfirm`), with the hazard-only and creature-only forms; the picker and the editor both ask `JoiningHazardsAsync` first. A fault in that read leaves the hazards out of the sentence, not the start refused.
+
+**The tick (data)**
+- `HazardsLeftOut` holds `{regionId}/{locationId}` keys (the placement's address as `HazardActorLink` names it, without the ledger's `hazard:` prefix). Empty means every hazard joins, and one placed later joins too. A copy of the campaign (`WithNewIds`) renames the region id wherever it stands whole, so the key follows with no
+  export code (a test pins it); a place keeps its id in the copy.
+- *Left-out keys are pruned quietly on save* (`SaveAsync`): a key that names no hazard placed at the plan's place or under it is dropped (a place change, a hazard taken off the place, a plan with no place), once each. A warning would only nag about a thing the GM did not touch.
+- B5's edit path edits the stored plan, so an edit that leaves `hazardsLeftOut` out keeps it. The repository's field-by-field save would have dropped it silently; a test saves and re-reads it.
+
+**The editor**
+- *Hazards at this place* shows each hazard with its state. A **complex** one has a check box "Joins the initiative order" (`.line-check`, labelled with the hazard's name, on by default, stored as left-out when unticked). A **Disabled or Triggered** one has a disabled box, unticked, and the reason in text ("Disabled: it won't join"), tied to the box with `aria-describedby`.
+  A simple hazard has no tick.
+- *The Hazards group* is a third tab of the add panel (Library, Cast, Hazards): the Library's and the campaign's homebrew entries of the system's hazard type whose `complex` field is true (`SearchHazardsAsync`, through `CampaignLibrary.SearchAsync`, so homebrew comes too; the registry-actor path the quick-add panel uses finds pack hazards only). The creature search never lists a hazard (unchanged, pinned by
+  `EncounterCreatureSearchTests` and a new editor test). With no place the tab is disabled and a line says "Choose a place first".
+- *No hazard line is ever stored. The pending hazard is editor state only.* Adding a hazard sets `pendingHazard` and shows "{hazard} will be placed at {place} when you save" with a button to take it back; the page counts as having unsaved changes. Save passes it to `SaveAsync`, which **places it on the plan's place** (a `PlacedHazard`, state Hidden, through `PlaceHazardIfNoneAsync`; see "After review"), and only then stores the plan. If the placing is refused (the place has a hazard now, is gone, or the entry is gone or not complex) nothing is saved and the check says why. **One hazard per place**: the editor refuses a second at add time ("{place} already has a hazard ({name}). A place holds one."), and the service refuses again at save.
+  A pending hazard is dropped when the plan moves to a place that has one (said) or to no place.
+- The readout lists the joining hazards apart ("1 hazard is not counted · Joining the order: Crushing press"): they come from the same reading as the start and are fed to the rating as `RatedLine(..., Hazard: true)`. The list's rating does not carry them.
+
+**The world builder**
+- The `encounter` kind and its edit take `hazardsLeftOut`: place keys `existing:place:<id>`. The check refuses a key that is not one, a place that is not the plan's place or under it, and any key when the plan's place is one the same proposal makes (no hazard there exists yet); a key at a place with no hazard placed is a warning and the save drops it.
+  The kind still never carries a hazard of its own (it places one through a place's `feature.hazard`, H6). On an edit the list replaces the stored one when given; an empty list says nothing (a model that fills every optional field changes nothing); `["none"]` empties it. A delete that carries one is refused as not standing alone.
+- `get_encounter` says, for each complex hazard, whether it joins the order, is left out by this plan, or will not join (made safe, went off); `list_encounters` adds the names of those that join. The review card does not show `hazardsLeftOut` (see the limits). `CarryOver` compares it.
+
+**Decisions, and where the code differed from the brief**
+- *The check still refuses a `Hazard`-kind line.* The brief said B2's check no longer refuses "on account of hazards (there are no hazard lines to refuse)". It is kept as the guard that makes "a plan never holds a hazard line" true for a crafted import or a proposal: nothing in the app now makes one, and a test pins that.
+- *Keys.* `{regionId}/{locationId}`, the first option the brief gave, not `HazardLedger.KeyOf`'s `hazard:` form: the ledger's prefix would give the export's id mapping and the pruning nothing and cost a parse.
+- *A hazard placed by the editor starts Hidden*, as the Places form's default, whatever the Library entry says.
+- *The editor never rates the pending hazard* (it is not placed until the save); the readout and the confirm see it after.
+
+**After review (2026-11-27)**
+- *The start cleans up when reading the hazards fails.* `JoiningAsync` is in a try: a fault removes the creatures this start made and answers `Failed`. `HazardOffers.ToActor` and the save are inside the per-hazard try, so one hazard that throws is named as not joined and the rest join.
+- *Placing is a patch and idempotent.* `IRegionRepository.PlaceHazardIfNoneAsync` (`HazardPlacing`: Placed, AlreadyThere, Taken, Refused) sets only `PlaceFeature.Hazard`, only when the place has none, under `RavenUpdate.RunAsync` like `PatchPlacedHazardAsync`; the rest of the place is never rewritten. The same entry already there counts as placed. `PlaceHazardAsync` uses it (the earlier "reads the region and upserts the place" limit is gone).
+  The order is still place first, then plan. If the plan's own save fails after that, `EncounterSave.HazardPlaced` is true, the message says "The hazard was placed on the place, but the encounter was not saved. Save again to store it.", and the editor stops waiting for it and reloads the place's hazards; a retry with the same hazard goes through.
+- *The review card* shows "Left out of the order: {places}" for a new encounter and for an edit that gives the list, and for an empty given list "nothing (every hazard there joins)", so an edit that only changes it shows a visible change (`WorldDraft.HazardsLeftOutNames`, filled by the check).
+- `list_encounters` reads the places, cast and Library once for all rows (`JoiningHazardsAsync(plans)`). `RestoreAsync` defaults `HazardsLeftOut`. Hebrew "and N hazards" is `ו־` before a digit. With no place the Hazards tab is `aria-disabled` (not `disabled`) so a keyboard user reaches its reason; pressing it does nothing.
+- *Left as it is:* `HazardOffers` stays in `Components/Shared` and is called from the service (layering); and the secret roll of a joining hazard is written to the roll log as a GM-only (secret) entry whose Hazard.Joined line is GM-only, exactly as the console's quick-add writes it, so a stray GM-only roll entry also appears for a start that is then refused (the roll is not undone).
+- *Not tested:* a hazard whose actor build throws, and a start whose `EnqueueAsync` throws before the encounter started (no seam without a fake runtime), and the deletion of a hazard actor the command skipped. The code paths are the creatures' own (clean-up list, `TryDeleteActorAsync`).
+
+**Known limits**
+- The hazard is named by its place in `hazardsLeftOut`, and a place's hazard is one per place.
+- "Already at the table" is read from the stored actors (a live, non-retired actor with a link to the placement). A hazard actor the GM took out by hand and a second console are as H5 left them.
+- The editor's tick is for the hazards the plan's place and its inside hold at the moment; a hazard moved to another place later is simply not a key of this plan any more (dropped at the next save).
+- A refused hazard (the place has one, one is waiting) is said in a visible line in the Hazards panel and in the live region.
+- No test starts a plan against a hazard whose own roll throws; the command-level tests cover a hazard the table does not hold, and the service names it.
+
+**Checked in the app (2026-11-27)**
+- A plan at a place with a goblin, the Rolling Stone added from the Hazards tab (placed on save, ticked by default), started from the table's picker: "1 creature and 1 hazard join
+  the fight", the stone Hidden with a secret roll of its own bonus, the goblin a Stranger.
+- *A fix on the way, in H5's code.* The stone's row showed a condition made of raw data: seeding copies every entry field onto the sheet, and a hazard's `conditions` (what its
+  effect puts on a creature: the stone's Prone) landed on the actor's own condition list. `HazardOffers.ToActor` now drops that key (hazard rules read the entry, never this
+  sheet), so the console's quick-add is fixed too; `ComplexHazardTests.AHazardsActor_DoesNotWearItsEffectsConditions` pins it.
+- *Seen, left as H5 has them:* after an encounter ends, its hazard actor is retired and the GM's roll log names its old secret roll by the actor's id; and the console's
+  "Characters and creatures" cards list a hazard actor with creature numbers (an initiative of +0 beside its own +8 roll).

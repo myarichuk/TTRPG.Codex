@@ -293,6 +293,16 @@ public sealed class WorldDraft
     /// <summary>For an edit of an encounter: <see cref="Lineup"/> replaces the stored lineup in full.</summary>
     public bool LineupGiven { get; set; }
 
+    /// <summary>For an encounter, or an edit that gives <see cref="HazardsLeftOutGiven"/>: the complex hazards that do not join the initiative order when it starts, each as the id of the
+    /// existing place the hazard is placed on (the entry names it <c>existing:place:&lt;id&gt;</c>). Checked against the plan's place and the places under it.</summary>
+    public List<string> HazardsLeftOut { get; set; } = new();
+
+    /// <summary>For an edit of an encounter: <see cref="HazardsLeftOut"/> replaces the stored list in full (an empty list given as <c>["none"]</c> clears it).</summary>
+    public bool HazardsLeftOutGiven { get; set; }
+
+    /// <summary>The names of the places in <see cref="HazardsLeftOut"/>, as the game master reads them, filled by the check, for the review card.</summary>
+    public List<string> HazardsLeftOutNames { get; set; } = new();
+
     /// <summary>For an encounter, or an edit of one: "draft" or "ready" (null: an edit leaves it, a new one is a draft).</summary>
     public string? Status { get; set; }
 
@@ -1179,7 +1189,40 @@ public static class WorldBundleParser
         if (element.TryGetProperty("creatures", out var list) && list.ValueKind != JsonValueKind.Null) draft.Lineup = ReadLines(list, label, rules, errors, warnings);
         if (errors.Count > before) return false;
         if (draft.Lineup.Count == 0) warnings.Add($"{label}: has no creatures, so the plan will be empty; give \"creatures\".");
-        return true;
+        draft.HazardsLeftOut = ReadLeftOut(element, label, errors, out var okLeft, out _);
+        return okLeft;
+    }
+
+    /// <summary>
+    /// Reads <c>hazardsLeftOut</c>: the complex hazards placed at the encounter's place (or under it) that should not join the initiative order, each named by the place it is on,
+    /// <c>existing:place:&lt;id&gt;</c> (a hazard the proposal places itself is not named here: it joins). Returns the place ids. A key that is not one is an error; whether it is at the
+    /// plan's place is checked with the plan (<c>WorldBuilderService</c>). <c>["none"]</c> alone is the empty list given.
+    /// </summary>
+    private static List<string> ReadLeftOut(JsonElement element, string label, List<string> errors, out bool ok, out bool given)
+    {
+        ok = true;
+        given = false;
+        var left = new List<string>();
+        // An empty list says nothing (a model that fills every optional field must not change a plan by it); "none" is how an edit empties the list.
+        if (!element.TryGetProperty("hazardsLeftOut", out var list) || list.ValueKind != JsonValueKind.Array || list.GetArrayLength() == 0) return left;
+        given = true;
+        var prefix = WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix;
+        foreach (var item in list.EnumerateArray())
+        {
+            var text = item.ValueKind == JsonValueKind.String ? item.GetString()?.Trim() ?? string.Empty : string.Empty;
+            if (string.Equals(text, "none", StringComparison.OrdinalIgnoreCase) || text.Length == 0) continue;
+            if (!text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || text.Length == prefix.Length)
+            {
+                errors.Add($"{label}: hazardsLeftOut names '{text}'; name the place the hazard is on, as {prefix}<id> (place_hazards lists them).");
+                ok = false;
+                continue;
+            }
+
+            var id = text[prefix.Length..];
+            if (!left.Contains(id, StringComparer.Ordinal)) left.Add(id);
+        }
+
+        return left;
     }
 
     /// <summary>Reads an edit of a prepared encounter: what it replaces (a new name, a place, the lineup in full, the notes in full, the complete tags, the status) or
@@ -1206,10 +1249,14 @@ public static class WorldBundleParser
             draft.LineupGiven = true;
         }
 
+        draft.HazardsLeftOut = ReadLeftOut(element, label, errors, out var okLeft, out var leftGiven);
+        if (!okLeft) return false;
+        draft.HazardsLeftOutGiven = leftGiven;
+
         if (draft.Remove)
         {
             // An empty tags list and an empty place say nothing, so a delete that carries them is still a delete.
-            if (draft.Body != null || draft.Rename != null || draft.PlaceGiven || draft.LineupGiven || draft.Status != null || (draft.Retag && draft.Tags.Count > 0))
+            if (draft.Body != null || draft.Rename != null || draft.PlaceGiven || draft.LineupGiven || draft.HazardsLeftOutGiven || draft.Status != null || (draft.Retag && draft.Tags.Count > 0))
             {
                 errors.Add($"{label}: a \"delete\" stands alone; make the other changes in a separate entry, or none.");
                 return false;
@@ -1223,9 +1270,9 @@ public static class WorldBundleParser
             return true;
         }
 
-        if (draft.Body == null && draft.Rename == null && !draft.PlaceGiven && !draft.LineupGiven && draft.Status == null && !draft.Retag)
+        if (draft.Body == null && draft.Rename == null && !draft.PlaceGiven && !draft.LineupGiven && !draft.HazardsLeftOutGiven && draft.Status == null && !draft.Retag)
         {
-            errors.Add($"{label}: the edit changes nothing; give a new \"rename\", a \"place\" (\"none\" for no place), the complete \"creatures\", the complete \"text\" (the notes), the complete \"tags\" or a \"status\", or \"delete\": true.");
+            errors.Add($"{label}: the edit changes nothing; give a new \"rename\", a \"place\" (\"none\" for no place), the complete \"creatures\", the complete \"hazardsLeftOut\" ([\"none\"] to let every hazard join), the complete \"text\" (the notes), the complete \"tags\" or a \"status\", or \"delete\": true.");
             return false;
         }
 

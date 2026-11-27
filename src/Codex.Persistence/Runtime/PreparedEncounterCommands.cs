@@ -12,12 +12,19 @@ public enum PreparedStartRefusal
     NobodyAtTable
 }
 
+/// <summary>A complex hazard that joins the order when a prepared encounter starts: its actor (Hidden, with the link to its placement, already at the table) and the
+/// initiative bonus its own numbers give (<see cref="Codex.Core.Systems.HazardNumbers.InitiativeOf"/>), worked out by the caller as the console's quick-add does.</summary>
+public sealed record PreparedHazardJoin(string ActorId, int Bonus);
+
 /// <summary>
 /// Starts a prepared encounter at the table (ENCOUNTER_BUILDER_DESIGN.md 4.2), on the loop, after <c>PreparedEncounterService.StartAsync</c> made its creatures.
 /// It sets the encounter's place and plan, and rolls each named actor's initiative through <see cref="RollInitiativeCommand"/>. The bonus and tie-break come
 /// from <see cref="TableInitiative"/> over the actor's live sheet, as the console works them out. Its own log line names the plan and the place as GM-only
 /// terms. Each roll's own "Initiative" line follows it, as a roll at the console writes it (<see cref="IFollowedByEvents"/>), so a Hidden creature's roll is
 /// redacted exactly as today. Results are read off the command once it is applied, as <see cref="MakeCheckCommand.Result"/> is.
+/// A complex hazard (<paramref name="Hazards"/>) joins after the creatures through <see cref="JoinInitiativeCommand"/>, the console's own path: a secret roll with the
+/// hazard's own bonus and a GM-only line. It is never rolled by <see cref="RollInitiativeCommand"/>, whose roll and line a player could see, and the start's own line
+/// never counts it, so a player cannot learn from it that a hidden hazard exists.
 /// </summary>
 public sealed record StartPreparedEncounterCommand(
     string PreparedId,
@@ -25,9 +32,13 @@ public sealed record StartPreparedEncounterCommand(
     string? PlaceId,
     string PlaceLabel,
     IReadOnlyList<string> ActorIds,
-    string RollerUserId) : IRuntimeCommand, IFollowedByEvents
+    string RollerUserId,
+    IReadOnlyList<PreparedHazardJoin>? Hazards = null) : IRuntimeCommand, IFollowedByEvents
 {
     private readonly List<RollInitiativeCommand> _rolls = new();
+    private readonly List<JoinInitiativeCommand> _hazardJoins = new();
+    private readonly List<string> _joinedHazards = new();
+    private readonly List<string> _skippedHazards = new();
     private readonly List<string> _skipped = new();
 
     /// <summary>Once applied: why nothing changed, or null when the encounter started.</summary>
@@ -42,8 +53,16 @@ public sealed record StartPreparedEncounterCommand(
     /// <summary>Once applied: the actors that rolled and joined the order.</summary>
     public IReadOnlyList<string> Joined => _rolls.Select(r => r.ActorId).ToList();
 
+    /// <summary>Once applied: the complex hazards that joined the order.</summary>
+    public IReadOnlyList<string> JoinedHazards => _joinedHazards;
+
+    /// <summary>Once applied: the hazard actors that did not join (not at the table, or their roll failed). Kept apart from <see cref="Skipped"/> so the log line's count says
+    /// nothing of a hazard; the service names them to the game master.</summary>
+    public IReadOnlyList<string> SkippedHazards => _skippedHazards;
+
     // Counters that refill on entering the order change the actor's state: each inner roll reports them (SetInitiativeCommand), and they are persisted.
-    public IReadOnlyCollection<string> AffectedActorIds => _rolls.SelectMany(r => r.AffectedActorIds).Distinct().ToArray();
+    public IReadOnlyCollection<string> AffectedActorIds =>
+        _rolls.SelectMany(r => r.AffectedActorIds).Concat(_hazardJoins.SelectMany(j => j.AffectedActorIds)).Distinct().ToArray();
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -65,8 +84,15 @@ public sealed record StartPreparedEncounterCommand(
             held.Add((id, doc));
         }
 
+        var hazardsHeld = new List<PreparedHazardJoin>();
+        foreach (var hazard in (Hazards ?? Array.Empty<PreparedHazardJoin>()).DistinctBy(h => h.ActorId, StringComparer.Ordinal))
+        {
+            if (runtime.GetActorDocument(hazard.ActorId) is not { } doc || doc.Retired || runtime.GetEntity(hazard.ActorId) == null) _skippedHazards.Add(hazard.ActorId);
+            else hazardsHeld.Add(hazard);
+        }
+
         // Before GetOrCreateEncounter, so a start that joins nobody leaves no empty encounter behind.
-        if (held.Count == 0)
+        if (held.Count == 0 && hazardsHeld.Count == 0)
         {
             Refusal = PreparedStartRefusal.NobodyAtTable;
             return;
@@ -92,8 +118,24 @@ public sealed record StartPreparedEncounterCommand(
             }
         }
 
+        // The complex hazards take their turn in the order after the creatures, each as the console's quick-add does it: the die with the hazard's own bonus, rolled in secret.
+        foreach (var hazard in hazardsHeld)
+        {
+            try
+            {
+                var join = new JoinInitiativeCommand(hazard.ActorId, TableInitiative.Expression(die, hazard.Bonus), RollerUserId);
+                join.Apply(runtime);
+                _hazardJoins.Add(join);
+                _joinedHazards.Add(hazard.ActorId);
+            }
+            catch (Exception)
+            {
+                _skippedHazards.Add(hazard.ActorId);
+            }
+        }
+
         // Nobody rolled (the system's die is unreadable): nothing was added to the order, so there is nothing to start. No plan or place is set either.
-        if (_rolls.Count == 0 || runtime.ActiveEncounter is not { } encounter)
+        if (_rolls.Count + _hazardJoins.Count == 0 || runtime.ActiveEncounter is not { } encounter)
         {
             Refusal = PreparedStartRefusal.NobodyAtTable;
             return;
@@ -124,5 +166,6 @@ public sealed record StartPreparedEncounterCommand(
         return SessionEvent.From("EncounterStarted", parts);
     }
 
-    public IReadOnlyList<SessionEvent> EventsAfter(CampaignRuntime runtime) => _rolls.Select(r => r.Describe(runtime)).ToList();
+    public IReadOnlyList<SessionEvent> EventsAfter(CampaignRuntime runtime) =>
+        _rolls.Select(r => r.Describe(runtime)).Concat(_hazardJoins.Select(j => j.Describe(runtime))).ToList();
 }

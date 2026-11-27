@@ -355,4 +355,6 @@
   <data name="Combat.Prepared.Refused.NobodyJoined" xml:space="preserve"><value>אף אחד במפגש הקרב הזה לא יכול היה להצטרף לקרב.</value></data>
   <data name="Combat.Prepared.Refused.TableClosed" xml:space="preserve"><value>השולחן נסגר לפני שהמפגש יכול היה להתחיל.</value></data>
   <data name="Combat.Prepared.Refused.Failed" xml:space="preserve"><value>לא ניתן היה להתחיל את מפגש הקרב.</value></data>
+  <data name="Combat.Prepared.ConfirmBoth" xml:space="preserve"><value>להתחיל את {0}? {1, plural, one{יצור אחד} two{שני יצורים} other{# יצורים}} {2, plural, one{וסכנה אחת} two{ושתי סכנות} other{ו־# סכנות}} מצטרפים לקרב ומטילים יוזמה.</value></data>
+  <data name="Combat.Prepared.ConfirmHazards" xml:space="preserve"><value>להתחיל את {0}? {1, plural, one{סכנה אחת מצטרפת לקרב ומטילה יוזמה.} two{שתי סכנות מצטרפות לקרב ומטילות יוזמה.} other{# סכנות מצטרפות לקרב ומטילות יוזמה.}}</value></data>
 </root>

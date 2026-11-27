@@ -199,6 +199,8 @@
   <data name="WorldChat.Proposal.Encounter.Status" xml:space="preserve"><value>מצב: {0}</value></data>
   <data name="WorldChat.Proposal.Encounter.Notes" xml:space="preserve"><value>הערות</value></data>
   <data name="WorldChat.Proposal.Encounter.Readout" xml:space="preserve"><value>קושי: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.LeftOut" xml:space="preserve"><value>לא מצטרפות לסדר: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.LeftOutNone" xml:space="preserve"><value>לא מצטרפות לסדר: אף אחת (כל הסכנות במקום מצטרפות)</value></data>
   <data name="WorldChat.Proposal.Encounter.Hazards" xml:space="preserve"><value>סכנות במקום: {0}</value></data>
   <data name="WorldChat.Proposal.Encounter.PlaceChange" xml:space="preserve"><value>מקום: היה „{0}”, יהיה „{1}”</value></data>
   <data name="WorldChat.Proposal.Encounter.StatusChange" xml:space="preserve"><value>מצב: היה „{0}”, יהיה „{1}”</value></data>

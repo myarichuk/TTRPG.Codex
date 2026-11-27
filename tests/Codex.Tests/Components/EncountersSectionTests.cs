@@ -505,6 +505,248 @@ public class EncountersSectionTests : ComponentTestBase
         Assert.Equal("/campaigns/c1/build/encounter?place=cellar", cut.Find(Id("encounter-build-ai")).GetAttribute("href"));
     }
 
+    // ---- Complex hazards: the tick and the Hazards group (ENCOUNTER_BUILDER_DESIGN.md 18) ----
+
+    /// <summary>The Library gets two complex hazards (a press and a blade), the vault's hazard becomes the press, and the region can be read and written for a placement.</summary>
+    private void ComplexHazards()
+    {
+        _w.Registry.RegisterEntry(new Codex.Plugin.Abstractions.ContentEntry { Id = "press", Type = "hazard", SystemId = "demo", PackId = "base", Name = "Crushing press", Properties = { ["complex"] = true } }, 0);
+        _w.Registry.RegisterEntry(new Codex.Plugin.Abstractions.ContentEntry { Id = "blade", Type = "hazard", SystemId = "demo", PackId = "base", Name = "Swinging blade", Properties = { ["complex"] = true } }, 0);
+        _w.Region.Locations.Single(l => l.Id == "vault").Feature!.Hazard!.Entry = "hazard/press";
+        _w.RegionRepo.GetAsync("r1", Arg.Any<CampaignAccess>()).Returns(_w.Region);
+        _w.StubPlacing();
+    }
+
+    [Fact]
+    public async Task TheTick_IsOnlyOnAComplexHazard_OnByDefault_NamesItsHazard_AndAnUntickIsSaved()
+    {
+        ComplexHazards();
+        var plan = await StoredAsync("Ambush", "cellar", PreparedStatus.Draft, EncounterWorld.Bandits(1));
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+        cut.WaitForState(() => cut.FindAll(Id("encounter-hazard")).Count == 2, Patience);
+
+        var rows = cut.FindAll(Id("encounter-hazard"));
+        // The cellar's pit is simple: no tick. The vault's press is complex: a tick, on, named for a screen reader, laid out by the app's own rule.
+        Assert.Empty(rows[0].QuerySelectorAll(Id("encounter-hazard-join")));
+        var box = rows[1].QuerySelector(Id("encounter-hazard-join-box"))!;
+        Assert.True(box.HasAttribute("checked"));
+        Assert.Equal("Crushing press joins the initiative order", box.GetAttribute("aria-label"));
+        Assert.Contains("Joins the initiative order", rows[1].TextContent);
+        Assert.NotNull(rows[1].QuerySelector(".line-check"));
+        Assert.Null(rows[1].QuerySelector(".form-check"));
+
+        box.Change(false);
+        Assert.False(cut.FindAll(Id("encounter-hazard"))[1].QuerySelector(Id("encounter-hazard-join-box"))!.HasAttribute("checked"));
+        cut.Find(Id("encounter-editor")).Submit();
+
+        cut.WaitForAssertion(() => Assert.Equal(new[] { "r1/vault" }, _w.Plans.Held[plan.Id].HazardsLeftOut), Patience);
+        // The page re-reads the stored plan after the save and still shows it unticked.
+        cut.WaitForAssertion(() => Assert.False(cut.FindAll(Id("encounter-hazard"))[1].QuerySelector(Id("encounter-hazard-join-box"))!.HasAttribute("checked")), Patience);
+    }
+
+    [Theory]
+    [InlineData(HazardState.Disabled, "Disabled: it won't join")]
+    [InlineData(HazardState.Triggered, "Triggered: it won't join")]
+    public async Task ADisabledOrSetOffComplexHazard_ShowsItsState_AndADisabledTickWithTheReason(HazardState state, string reason)
+    {
+        ComplexHazards();
+        _w.Region.Locations.Single(l => l.Id == "vault").Feature!.Hazard!.State = state;
+        var plan = await StoredAsync("Ambush", "cellar", PreparedStatus.Draft, EncounterWorld.Bandits(1));
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+        cut.WaitForState(() => cut.FindAll(Id("encounter-hazard")).Count == 2, Patience);
+
+        var row = cut.FindAll(Id("encounter-hazard"))[1];
+        var tick = row.QuerySelector("input[type=checkbox]")!;
+        Assert.True(tick.HasAttribute("disabled"));
+        Assert.False(tick.HasAttribute("checked"));
+        Assert.Equal("Crushing press joins the initiative order", tick.GetAttribute("aria-label"));
+        Assert.Equal(reason, row.QuerySelector(Id("encounter-hazard-why"))!.TextContent);
+        Assert.Contains(state.ToString(), row.TextContent);
+        // The reason is tied to the box for a screen reader.
+        Assert.Equal(row.QuerySelector(Id("encounter-hazard-why"))!.Id, tick.GetAttribute("aria-describedby"));
+    }
+
+    [Fact]
+    public void TheHazardsGroup_IsOffWithNoPlace_SaysSo_AndOpensOnceAPlaceIsChosen()
+    {
+        ComplexHazards();
+        var cut = Draw("new");
+        cut.WaitForState(() => cut.FindAll(Id("encounter-tab-hazards")).Count > 0, Patience);
+
+        // Not `disabled`, so a keyboard user can reach it and hear why; pressing it does nothing.
+        Assert.Equal("true", cut.Find(Id("encounter-tab-hazards")).GetAttribute("aria-disabled"));
+        Assert.False(cut.Find(Id("encounter-tab-hazards")).HasAttribute("disabled"));
+        Assert.Equal("encounter-hazards-tab-hint", cut.Find(Id("encounter-tab-hazards")).GetAttribute("aria-describedby"));
+        Assert.Equal("Choose a place first", cut.Find(Id("encounter-hazards-tab-hint")).TextContent);
+        cut.Find(Id("encounter-tab-hazards")).Click();
+        Assert.Equal("false", cut.Find(Id("encounter-tab-hazards")).GetAttribute("aria-pressed"));
+
+        cut.Find(Id("encounter-place-select")).Change("r1|hall");
+
+        cut.WaitForAssertion(() => Assert.Null(cut.Find(Id("encounter-tab-hazards")).GetAttribute("aria-disabled")), Patience);
+        Assert.Empty(cut.FindAll(Id("encounter-hazards-tab-hint")));
+    }
+
+    [Fact]
+    public async Task TheCreatureGroup_NeverListsAHazard_AndTheHazardsGroupNeverListsACreatureNorASimpleHazard()
+    {
+        ComplexHazards();
+        var plan = await StoredAsync("Ambush", "hall", PreparedStatus.Draft);
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+        cut.WaitForState(() => cut.FindAll(Id("encounter-add-creature")).Count > 0, Patience);
+
+        var creatures = cut.FindAll(Id("encounter-add-creature")).Select(b => b.GetAttribute("aria-label")).ToList();
+        Assert.DoesNotContain("Add Swinging blade", creatures);
+        Assert.DoesNotContain("Add Crushing press", creatures);
+
+        cut.Find(Id("encounter-tab-hazards")).Click();
+        cut.WaitForState(() => cut.FindAll(Id("encounter-add-hazard")).Count > 0, Patience);
+        var hazards = cut.FindAll(Id("encounter-add-hazard")).Select(b => b.GetAttribute("aria-label")).Order().ToList();
+        Assert.Equal(new[] { "Place Crushing press", "Place Swinging blade" }, hazards);
+        Assert.Equal("2 results", cut.Find(Id("encounter-add-count")).TextContent);
+    }
+
+    [Fact]
+    public async Task AddingAHazard_ShowsItAsWaitingToBePlaced_AndSavingPlacesItOnThePlansPlace()
+    {
+        ComplexHazards();
+        var plan = await StoredAsync("Ambush", "hall", PreparedStatus.Draft, EncounterWorld.Bandits(1));
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+        cut.WaitForState(() => cut.FindAll(Id("encounter-tab-hazards")).Count > 0, Patience);
+        cut.Find(Id("encounter-tab-hazards")).Click();
+        cut.WaitForState(() => cut.FindAll(Id("encounter-add-hazard")).Count == 2, Patience);
+
+        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Place Swinging blade").Click();
+
+        Assert.Equal("Swinging blade will be placed at Hall when you save", cut.Find(Id("encounter-hazard-pending")).TextContent.Trim());
+        Assert.Equal("Swinging blade will be placed at Hall when you save.", cut.Find(Id("encounter-announce")).TextContent);
+        // Nothing is placed until the save, and the plan never gets a hazard line.
+        Assert.Null(_w.Region.Locations.Single(l => l.Id == "hall").Feature);
+
+        cut.Find(Id("encounter-editor")).Submit();
+
+        cut.WaitForAssertion(() => Assert.Equal("hazard/blade", _w.Region.Locations.Single(l => l.Id == "hall").Feature?.Hazard?.Entry), Patience);
+        cut.WaitForAssertion(() => Assert.Empty(cut.FindAll(Id("encounter-hazard-pending"))), Patience);
+        Assert.DoesNotContain(_w.Plans.Held[plan.Id].Lines, l => l.Kind == PreparedLineKind.Hazard);
+        // The placed hazard now stands in the list with its tick.
+        cut.WaitForState(() => cut.FindAll(Id("encounter-hazard")).Count == 1, Patience);
+        Assert.NotNull(cut.Find(Id("encounter-hazard-join-box")));
+    }
+
+    [Fact]
+    public async Task APlaceThatHoldsAHazardAlready_SaysSo_AndAddsNoSecondOne()
+    {
+        ComplexHazards();
+        var plan = await StoredAsync("Ambush", "cellar", PreparedStatus.Draft, EncounterWorld.Bandits(1));
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+        cut.WaitForState(() => cut.FindAll(Id("encounter-hazard")).Count == 2, Patience);
+        cut.Find(Id("encounter-tab-hazards")).Click();
+        cut.WaitForState(() => cut.FindAll(Id("encounter-add-hazard")).Count == 2, Patience);
+
+        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Place Swinging blade").Click();
+
+        Assert.Equal("Cellar already has a hazard (Spiked pit). A place holds one.", cut.Find(Id("encounter-announce")).TextContent);
+        // And in view, for someone who is not listening to the live region.
+        Assert.Equal("Cellar already has a hazard (Spiked pit). A place holds one.", cut.Find(Id("encounter-hazard-notice")).TextContent);
+        Assert.Empty(cut.FindAll(Id("encounter-hazard-pending")));
+        Assert.Equal(0, _w.PlacingCalls);
+    }
+
+    [Fact]
+    public async Task OneHazardWaitingForAPlace_RefusesASecond()
+    {
+        ComplexHazards();
+        var plan = await StoredAsync("Chat", "hall", PreparedStatus.Draft);
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+        cut.WaitForState(() => cut.FindAll(Id("encounter-tab-hazards")).Count > 0, Patience);
+        cut.Find(Id("encounter-tab-hazards")).Click();
+        cut.WaitForState(() => cut.FindAll(Id("encounter-add-hazard")).Count == 2, Patience);
+
+        cut.FindAll(Id("encounter-add-hazard"))[0].Click();
+        cut.FindAll(Id("encounter-add-hazard"))[1].Click();
+
+        Assert.Equal("A hazard is already waiting to be placed at Hall. A place holds one.", cut.Find(Id("encounter-announce")).TextContent);
+        Assert.Equal("A hazard is already waiting to be placed at Hall. A place holds one.", cut.Find(Id("encounter-hazard-notice")).TextContent);
+        Assert.Single(cut.FindAll(Id("encounter-hazard-pending")));
+
+        // Taking it back leaves the place free, and the page unchanged.
+        cut.Find(Id("encounter-hazard-pending-remove")).Click();
+        Assert.Empty(cut.FindAll(Id("encounter-hazard-pending")));
+    }
+
+    [Fact]
+    public async Task ARefusedPlacing_SavesNothing_AndSaysWhy()
+    {
+        ComplexHazards();
+        var plan = await StoredAsync("Ambush", "hall", PreparedStatus.Draft, EncounterWorld.Bandits(1));
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+        cut.WaitForState(() => cut.FindAll(Id("encounter-tab-hazards")).Count > 0, Patience);
+        cut.Find(Id("encounter-tab-hazards")).Click();
+        cut.WaitForState(() => cut.FindAll(Id("encounter-add-hazard")).Count == 2, Patience);
+        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Place Swinging blade").Click();
+        cut.Find(Id("encounter-name")).Input("Renamed");
+        // Another tab placed a hazard on the hall meanwhile.
+        _w.Region.Locations.Single(l => l.Id == "hall").Feature = new PlaceFeature { Hazard = new PlacedHazard { Entry = "hazard/press" } };
+
+        cut.Find(Id("encounter-editor")).Submit();
+
+        cut.WaitForAssertion(() => Assert.Contains("The place already has a hazard", cut.Find(Id("encounter-errors")).TextContent), Patience);
+        Assert.Equal("Ambush", _w.Plans.Held[plan.Id].Name);
+        Assert.Single(cut.FindAll(Id("encounter-hazard-pending")));
+    }
+
+    [Fact]
+    public async Task WhenThePlanCannotBeStoredAfterTheHazardWasPlaced_ThePageSaysSo_ShowsTheHazardAndStopsWaitingForIt()
+    {
+        ComplexHazards();
+        var plan = await StoredAsync("Ambush", "hall", PreparedStatus.Draft, EncounterWorld.Bandits(1));
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+        cut.WaitForState(() => cut.FindAll(Id("encounter-tab-hazards")).Count > 0, Patience);
+        cut.Find(Id("encounter-tab-hazards")).Click();
+        cut.WaitForState(() => cut.FindAll(Id("encounter-add-hazard")).Count == 2, Patience);
+        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Place Swinging blade").Click();
+        // The plan was deleted in another tab: placing works, the plan's own save does not.
+        _w.Plans.Held.Remove(plan.Id);
+
+        cut.Find(Id("encounter-editor")).Submit();
+
+        cut.WaitForAssertion(() => Assert.Contains("The hazard was placed on the place, but the encounter was not saved", cut.Find(Id("encounter-errors")).TextContent), Patience);
+        Assert.Equal("hazard/blade", _w.Region.Locations.Single(l => l.Id == "hall").Feature!.Hazard!.Entry);
+        Assert.Empty(cut.FindAll(Id("encounter-hazard-pending")));
+        cut.WaitForState(() => cut.FindAll(Id("encounter-hazard")).Count == 1, Patience);
+        // Taking the same hazard again is refused as the place holds one, not placed twice.
+        cut.FindAll(Id("encounter-add-hazard")).First(b => b.GetAttribute("aria-label") == "Place Swinging blade").Click();
+        Assert.Contains("already has a hazard", cut.Find(Id("encounter-hazard-notice")).TextContent);
+        Assert.Equal(1, _w.PlacingCalls);
+    }
+
+    [Theory]
+    [InlineData("ru", "Вступает в порядок инициативы", "Обезврежена: не вступит в бой")]
+    [InlineData("he", "מצטרפת לסדר היוזמה", "מנוטרלת: לא תצטרף")]
+    public async Task TheTick_SpeaksTheReadersLanguage(string culture, string joins, string disabled)
+    {
+        ComplexHazards();
+        _w.Region.Locations.Single(l => l.Id == "vault").Feature!.Hazard!.State = HazardState.Disabled;
+        _w.Region.Locations.Single(l => l.Id == "cellar").Feature!.Hazard!.Entry = "hazard/blade";
+        var plan = await StoredAsync("Ambush", "cellar", PreparedStatus.Draft, EncounterWorld.Bandits(1));
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id), culture: culture);
+        cut.WaitForState(() => cut.FindAll(Id("encounter-hazard")).Count == 2, Patience);
+
+        Assert.Contains(joins, cut.FindAll(Id("encounter-hazard"))[0].TextContent);
+        Assert.Equal(disabled, cut.Find(Id("encounter-hazard-why")).TextContent);
+    }
+
+    [Theory]
+    [InlineData("ru", "Сначала выберите место")]
+    [InlineData("he", "בחרו קודם מקום")]
+    public void TheHazardsGroupsHint_SpeaksTheReadersLanguage(string culture, string choosePlace)
+    {
+        var cut = Draw("new", culture: culture);
+
+        cut.WaitForState(() => cut.FindAll(Id("encounter-hazards-tab-hint")).Count > 0, Patience);
+        Assert.Equal(choosePlace, cut.Find(Id("encounter-hazards-tab-hint")).TextContent);
+    }
+
     [Theory]
     [InlineData("ru", "Собрать с помощью ИИ")]
     [InlineData("he", "בנייה באמצעות AI")]

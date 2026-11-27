@@ -199,6 +199,8 @@
   <data name="WorldChat.Proposal.Encounter.Status" xml:space="preserve"><value>Статус: {0}</value></data>
   <data name="WorldChat.Proposal.Encounter.Notes" xml:space="preserve"><value>Заметки</value></data>
   <data name="WorldChat.Proposal.Encounter.Readout" xml:space="preserve"><value>Сложность: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.LeftOut" xml:space="preserve"><value>Не вступают в порядок инициативы: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.LeftOutNone" xml:space="preserve"><value>Не вступают в порядок инициативы: никто (вступают все опасности в этом месте)</value></data>
   <data name="WorldChat.Proposal.Encounter.Hazards" xml:space="preserve"><value>Опасности в этом месте: {0}</value></data>
   <data name="WorldChat.Proposal.Encounter.PlaceChange" xml:space="preserve"><value>Место: меняется с «{0}» на «{1}»</value></data>
   <data name="WorldChat.Proposal.Encounter.StatusChange" xml:space="preserve"><value>Статус: меняется с «{0}» на «{1}»</value></data>

@@ -848,18 +848,7 @@ else
     /// <summary>A complex hazard takes a turn: its actor is made (Hidden, so no player sees it, with the link to its placement) and rolls its initiative in secret with its own bonus.</summary>
     private async Task<bool> QuickAddHazardAsync(HazardOffer offer)
     {
-        var definition = offer.Definition;
-        var actor = new ActorDocument
-        {
-            Id = Guid.NewGuid().ToString(),
-            CampaignId = CampaignId,
-            Kind = ActorKind.Monster,
-            BlueprintId = $"{definition.SystemId}:{definition.Id}",
-            Name = definition.Name,
-            Visibility = ActorVisibility.Hidden,
-            Hazard = offer.Link
-        };
-        ActorSheetSync.SeedFromBlueprint(actor, definition, Definition, Components);
+        var actor = HazardOffers.ToActor(CampaignId, offer, Definition, Components);
 
         if (!await RuntimeManager.TryCreateActorAsync(actor, Access))
         {

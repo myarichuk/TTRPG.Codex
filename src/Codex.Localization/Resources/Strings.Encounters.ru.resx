@@ -131,4 +131,28 @@
   <data name="Encounters.Difficulty.DifferentHint" xml:space="preserve"><value>Это меняет только то, что показано здесь. Оно не сохраняется.</value></data>
   <data name="Encounters.Difficulty.UseCampaign" xml:space="preserve"><value>Взять отряд кампании</value></data>
   <data name="Encounters.BuildWithAi" xml:space="preserve"><value>Собрать с помощью ИИ</value></data>
+  <data name="Encounters.Hazards.JoinsOrder" xml:space="preserve"><value>Вступает в порядок инициативы</value></data>
+  <data name="Encounters.Hazards.JoinsFor" xml:space="preserve"><value>{0}: вступает в порядок инициативы</value></data>
+  <data name="Encounters.Error.NotSavedHazardPlaced" xml:space="preserve"><value>Опасность поставлена в месте, но столкновение не сохранено. Сохраните ещё раз.</value></data>
+  <data name="Encounters.Hazards.LeftOutFor" xml:space="preserve"><value>{0}: не вступит в порядок инициативы</value></data>
+  <data name="Encounters.Hazards.WontJoin.Disabled" xml:space="preserve"><value>Обезврежена: не вступит в бой</value></data>
+  <data name="Encounters.Hazards.WontJoin.Triggered" xml:space="preserve"><value>Уже сработала: не вступит в бой</value></data>
+  <data name="Encounters.Hazards.Pending" xml:space="preserve"><value>{0}: будет поставлена в месте «{1}» при сохранении</value></data>
+  <data name="Encounters.Hazards.PendingRemove" xml:space="preserve"><value>Не ставить: {0}</value></data>
+  <data name="Encounters.Hazards.PendingCleared" xml:space="preserve"><value>{0} не добавлена: в месте «{1}» уже есть опасность.</value></data>
+  <data name="Encounters.Add.Hazards" xml:space="preserve"><value>Опасности</value></data>
+  <data name="Encounters.Add.HazardsChoosePlace" xml:space="preserve"><value>Сначала выберите место</value></data>
+  <data name="Encounters.Add.SearchHazards" xml:space="preserve"><value>Искать сложные опасности в Библиотеке и в ваших собственных материалах</value></data>
+  <data name="Encounters.Add.Hazard" xml:space="preserve"><value>Поставить: {0}</value></data>
+  <data name="Encounters.Add.HazardPlaced" xml:space="preserve"><value>{0}: будет поставлена в месте «{1}» при сохранении.</value></data>
+  <data name="Encounters.Add.HazardTaken" xml:space="preserve"><value>В месте «{0}» уже есть опасность ({1}). В месте может быть только одна.</value></data>
+  <data name="Encounters.Add.HazardPendingAlready" xml:space="preserve"><value>В месте «{0}» уже ждёт постановки опасность. В месте может быть только одна.</value></data>
+  <data name="Encounters.Add.HazardsHint" xml:space="preserve"><value>Сложная опасность, добавленная здесь, ставится в месте этого столкновения при сохранении. Она ходит в порядке инициативы сама.</value></data>
+  <data name="Encounters.Error.HazardNoPlace" xml:space="preserve"><value>Выберите место, прежде чем добавлять в него опасность.</value></data>
+  <data name="Encounters.Error.HazardGone" xml:space="preserve"><value>Этой опасности больше нет в Библиотеке. Выберите другую.</value></data>
+  <data name="Encounters.Error.HazardNotComplex" xml:space="preserve"><value>Здесь можно добавить только сложную опасность, которая ходит сама. Остальные ставятся на странице места.</value></data>
+  <data name="Encounters.Error.HazardPlaceGone" xml:space="preserve"><value>Места больше нет, поэтому опасность не поставлена. Ничего не сохранено.</value></data>
+  <data name="Encounters.Error.HazardTaken" xml:space="preserve"><value>В месте уже есть опасность, а в месте может быть только одна. Ничего не сохранено.</value></data>
+  <data name="Encounters.Error.HazardNotPlaced" xml:space="preserve"><value>Не удалось поставить опасность в месте. Ничего не сохранено.</value></data>
+  <data name="Encounters.Difficulty.HazardsJoin" xml:space="preserve"><value>Вступают в порядок: {0}</value></data>
 </root>
