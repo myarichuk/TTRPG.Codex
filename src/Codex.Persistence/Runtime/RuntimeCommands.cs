@@ -510,13 +510,19 @@ public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, in
 
     public void Apply(CampaignRuntime runtime)
     {
+        // The counters that refill on initiative do so when the actor enters the order, not on a corrected roll. They are refilled before the order is touched, so a refill that
+        // throws (a die it cannot roll) leaves the order as it was. The refill itself is not atomic: a counter refilled before the one that threw keeps its new value and its log line.
+        if (runtime.ActiveEncounter?.Participants.Any(p => p.ActorId == ActorId) != true && runtime.GetEntity(ActorId) is { } entity)
+        {
+            _refilled = TableRules.RefillCounters(runtime, ActorId, entity, Codex.Core.Rules.FeatureRecovery.Initiative, RollerUserId);
+        }
+
         var encounter = runtime.GetOrCreateEncounter();
         // Only a fight under way has a current turn to keep; while the order is still being rolled
         // the turn belongs to whoever ends up on top.
         var underWay = encounter.Round > 1 || encounter.Participants.Any(p => p.HasActed);
         var current = underWay && encounter.TurnIndex < encounter.Participants.Count ? encounter.Participants[encounter.TurnIndex] : null;
         var participant = encounter.Participants.FirstOrDefault(p => p.ActorId == ActorId);
-        var joined = participant == null;
         if (participant == null)
         {
             participant = new EncounterParticipant { ActorId = ActorId };
@@ -528,12 +534,6 @@ public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, in
         CampaignRuntime.SortParticipants(encounter);
         encounter.TurnIndex = current != null ? Math.Max(0, encounter.Participants.IndexOf(current)) : 0;
         runtime.MarkEncounterDirty();
-
-        // The counters that refill on initiative do so when the actor enters the order, not on a corrected roll.
-        if (joined && runtime.GetEntity(ActorId) is { } entity)
-        {
-            _refilled = TableRules.RefillCounters(runtime, ActorId, entity, Codex.Core.Rules.FeatureRecovery.Initiative, RollerUserId);
-        }
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) =>
@@ -557,7 +557,7 @@ public sealed record RollInitiativeCommand(string ActorId, string Expression, st
     public void Apply(CampaignRuntime runtime)
     {
         _result = runtime.DiceRoller.Roll(Expression);
-        runtime.RecordRoll(new RollLogEntry
+        var entry = new RollLogEntry
         {
             ActorId = ActorId,
             RollerUserId = RollerUserId,
@@ -568,9 +568,12 @@ public sealed record RollInitiativeCommand(string ActorId, string Expression, st
             Dropped = _result.Dropped.ToList(),
             Modifier = _result.Modifier,
             CheckDieIndex = _result.CheckDieIndex
-        });
+        };
+
+        // Logged once the actor is in the order, so a set that fails leaves no roll for an actor that did not join.
         _set = new SetInitiativeCommand(ActorId, _result.Total, TieBreak, RollerUserId);
         _set.Apply(runtime);
+        runtime.RecordRoll(entry);
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) =>

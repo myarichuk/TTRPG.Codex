@@ -985,6 +985,65 @@ public class PreparedEncounterStartTests : IClassFixture<RavenDbFixture>, IDispo
     }
 
     [Fact]
+    public async Task Start_ACreatureWhoseJoinFails_IsSkipped_AndLeavesNoRollNorPlaceInTheOrder_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var ogre = await SeedAsync(campaignId, "Ogre", 14);
+        var imp = await SeedAsync(campaignId, "Imp", 8, visibility: ActorVisibility.Unknown, publicName: "Imp");
+        // A counter that refills on entering the order by a die the roller cannot roll: the set fails after the creature's own roll was made.
+        imp.Sheet["uses_charge"] = 0L;
+        imp.Sheet["uses_charge_Max"] = 3L;
+        imp.Sheet["uses_charge_Rest"] = "Initiative=1d4";
+        ActorSheetSync.ApplySheetToState(imp, Srd, _registry);
+        await _actors.SaveAsync(imp);
+        var session = await SeedSessionAsync(campaignId);
+        var dice = ScriptedDice();
+        dice.Roll("1d4").Returns(_ => throw new InvalidOperationException("The die cannot be rolled."));
+        await using var runtime = Runtime(campaignId, session, dice);
+        runtime.Hydrate(new[] { ogre, imp });
+
+        var command = Start("plan-1", "cellar", ogre, imp);
+        await runtime.EnqueueAsync(command);
+
+        Assert.Null(command.Refusal);
+        Assert.Equal(new[] { imp.Id }, command.Skipped);
+        Assert.Equal(new[] { ogre.Id }, command.Joined);
+        Assert.DoesNotContain(session.RollLog, r => r.ActorId == imp.Id);
+        Assert.Equal(ogre.Id, Assert.Single(runtime.ActiveEncounter!.Participants).ActorId);
+    }
+
+    [Fact]
+    public async Task TheCommand_AHazardWhoseJoinFails_IsSkipped_AndLeavesNoRollNorLineNorPlaceInTheOrder_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var ogre = await SeedAsync(campaignId, "Ogre", 14);
+        var stone = await SeedAsync(campaignId, "Rolling stone", 10);
+        // A counter that refills on entering the order by a die the roller cannot roll: the join's set fails after the hazard's own roll was made.
+        stone.Sheet["uses_charge"] = 0L;
+        stone.Sheet["uses_charge_Max"] = 3L;
+        stone.Sheet["uses_charge_Rest"] = "Initiative=1d4";
+        ActorSheetSync.ApplySheetToState(stone, Srd, _registry);
+        await _actors.SaveAsync(stone);
+        var session = await SeedSessionAsync(campaignId);
+        var dice = ScriptedDice();
+        dice.Roll("1d4").Returns(_ => throw new InvalidOperationException("The die cannot be rolled."));
+        await using var runtime = Runtime(campaignId, session, dice);
+        runtime.Hydrate(new[] { ogre, stone });
+
+        var command = new StartPreparedEncounterCommand("plan-1", "Cellar ambush", "cellar", "Cellar", new[] { ogre.Id }, "gm", new[] { new PreparedHazardJoin(stone.Id, 4) });
+        await runtime.EnqueueAsync(command);
+
+        Assert.Null(command.Refusal);
+        Assert.Equal(new[] { stone.Id }, command.SkippedHazards);
+        Assert.Empty(command.JoinedHazards);
+        dice.Received(1).Roll("1d4");
+        Assert.DoesNotContain(session.RollLog, r => r.ActorId == stone.Id);
+        Assert.Equal(ogre.Id, Assert.Single(runtime.ActiveEncounter!.Participants).ActorId);
+        Assert.DoesNotContain(session.Events, e => e.Parts.Any(p => p.Key == "Hazard.Joined"));
+        Assert.DoesNotContain(session.Events, e => e.Type == "Hazard");
+    }
+
+    [Fact]
     public async Task TheCommand_WithOnlyHazards_Starts_AndWithOnlyAHazardNobodyHolds_IsRefused_Async()
     {
         var campaignId = Guid.NewGuid().ToString();

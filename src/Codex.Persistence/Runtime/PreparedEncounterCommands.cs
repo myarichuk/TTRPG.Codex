@@ -103,8 +103,8 @@ public sealed record StartPreparedEncounterCommand(
         var die = TableInitiative.Die(system);
         foreach (var (id, doc) in held)
         {
-            // Everything that can fail for one actor (its sheet, a die the system wrote badly) skips that actor and no one else: the numbers are worked out before the roll
-            // and the roll fails before it records anything, so a skipped actor leaves nothing half-applied.
+            // Everything that can fail for one actor (its sheet, a die the system wrote badly) skips that actor and no one else: the numbers are worked out before the roll,
+            // and the roll is logged only after the actor has joined the order, so a skipped actor leaves no roll and no place in the order.
             try
             {
                 var bonus = TableInitiative.Bonus(system, engine, () => runtime.LiveSheetOf(doc), () => runtime.LinkedFor(doc.Sheet));

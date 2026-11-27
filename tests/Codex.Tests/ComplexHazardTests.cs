@@ -138,9 +138,13 @@ public class ComplexHazardTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
         public Queue<int> Faces { get; } = new();
         public List<string> Expressions { get; } = new();
 
+        /// <summary>An expression that cannot be rolled (the roller throws on it), to make a step after the initiative roll fail.</summary>
+        public string? FailOn { get; set; }
+
         public DiceRollResult Roll(string expression)
         {
             Expressions.Add(expression);
+            if (expression == FailOn) throw new InvalidOperationException("The die cannot be rolled.");
             var kept = new List<int>();
             var modifier = 0;
             var total = 0;
@@ -264,6 +268,35 @@ public class ComplexHazardTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
         Assert.Equal(20, participants[0].InitiativeRoll);
         Assert.All(table.Runtime.Snapshot.RollLog, r => Assert.True(r.IsSecret));
         Assert.Equal(100, Hp(table, stone));
+    }
+
+    [Fact]
+    public async Task AJoinWhoseSetFails_RecordsNoRoll_AndLeavesTheOrderAsItWas_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var entry = Entry("rolling-stone");
+        var placed = await PlaceAsync(table, StoneAt(entry));
+        await table.Runtime.EnqueueAsync(new SetInitiativeCommand(table.Aria.Id, 15));
+
+        // A counter that refills when the actor enters the order, by a die that cannot be rolled: the set fails after the hazard's own initiative roll was made.
+        var stone = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = table.Runtime.CampaignId, Kind = ActorKind.Monster, Name = "Rolling Stone", Visibility = ActorVisibility.Hidden, Hazard = LinkOf(placed),
+            Sheet = new Dictionary<string, object> { ["HP"] = 100L, ["HP_Max"] = 100L, ["uses_charge"] = 0L, ["uses_charge_Max"] = 3L, ["uses_charge_Rest"] = "Initiative=1d4" }
+        };
+        ActorSheetSync.ApplySheetToState(stone, System, _registry);
+        await _actors.SaveAsync(stone);
+        await table.Runtime.EnqueueAsync(new HydrateActorCommand(stone));
+        table.Dice.FailOn = "1d4";
+        var rolls = table.Session.RollLog.Count;
+
+        await Assert.ThrowsAnyAsync<Exception>(() => table.Runtime.EnqueueAsync(new JoinInitiativeCommand(stone.Id, "1d20+8", Gm)));
+
+        // A failed command publishes no snapshot, so the log and the order are read from the live session and encounter.
+        Assert.Contains("1d4", table.Dice.Expressions);
+        Assert.Equal(rolls, table.Session.RollLog.Count);
+        Assert.Equal(new[] { table.Aria.Id }, table.Runtime.ActiveEncounter!.Participants.Select(p => p.ActorId));
     }
 
     // ---- A routine turn, and Crush on another creature's turn ----

@@ -60,6 +60,11 @@ public static class TableVisibility
             : Array.Empty<RerollChoice>();
     }
 
+    /// <summary>Who a roll of the log was made by. <paramref name="known"/> is every actor the viewer may see, retired ones too, so a roll of an actor retired since (a hazard's, when its
+    /// encounter ended) still has its name. One the viewer may not see is never named: the GM gets its id, anyone else <paramref name="unseen"/>.</summary>
+    public static string RollerName(string actorId, IReadOnlyDictionary<string, ActorDocument> known, bool isDm, string unseen) =>
+        known.GetValueOrDefault(actorId)?.Name ?? (isDm ? actorId : unseen);
+
     /// <summary>The latest rolls this viewer may see: no secret rolls, and none made for an actor they cannot see, since a
     /// hidden monster's initiative or attack would announce it, dice and all, the moment the DM rolled for it (as the
     /// session log already avoids).</summary>

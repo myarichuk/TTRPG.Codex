@@ -234,6 +234,10 @@ else
     [Parameter] public CampaignAccess Access { get; set; } = null!;
     [Parameter] public string CurrentUserId { get; set; } = string.Empty;
     [Parameter] public IEnumerable<ActorDocument> Actors { get; set; } = Enumerable.Empty<ActorDocument>();
+
+    /// <summary>Every actor this viewer may see, retired ones too (a hazard's actor is retired when its encounter ends, but its rolls stay in the log). Names the roll log;
+    /// when not given, the actors in play are all there is.</summary>
+    [Parameter] public IEnumerable<ActorDocument>? AllActors { get; set; }
     [Parameter] public SystemDefinition? Definition { get; set; }
     [Parameter] public EventCallback OnActorAdded { get; set; }
     [Parameter] public EventCallback<Flash> OnMessage { get; set; }
@@ -261,6 +265,9 @@ else
     private Dictionary<string, ActorDocument> ActorsById { get; set; } = new();
     // The actors this viewer can see, built with ActorsById for the visibility rules each render reads (F4).
     private HashSet<string> VisibleActorIds { get; set; } = new();
+    // The same with the retired ones, for who a roll of the log was made by.
+    private Dictionary<string, ActorDocument> KnownById { get; set; } = new();
+    private HashSet<string> KnownIds { get; set; } = new();
     private VitalsRules? Vitals => Definition?.Vitals;
     /// <summary>A rest as the table reads it ("Long Rest"); the rules still get the system's own name.</summary>
     private string RestLabel(string rest) => Definition?.DisplayValue(rest) ?? rest;
@@ -287,6 +294,8 @@ else
         printedNumbers.Clear();
         campaignLinked = null;
         VisibleActorIds = ActorsById.Keys.ToHashSet();
+        KnownById = (AllActors ?? Actors).GroupBy(a => a.Id).ToDictionary(g => g.Key, g => g.First());
+        KnownIds = KnownById.Keys.ToHashSet();
         if (!subscribedToManager)
         {
             RuntimeManager.RuntimeChanged += OnRuntimeChanged;
@@ -930,12 +939,12 @@ else
     private string RollWord(string word) => DegreeWords.Of(L, Definition, word) ?? Definition?.DisplayOption(L.Culture.Name, string.Empty, word) ?? word;
 
     private IEnumerable<RollLogEntry> VisibleRollLog() =>
-        TableVisibility.Rolls(snapshot.RollLog, Access.IsDm, VisibleActorIds);
+        TableVisibility.Rolls(snapshot.RollLog, Access.IsDm, KnownIds);
 
-    /// <summary>Who rolled. Like the turn banner, a creature the viewer can't see is never named (nor its id shown).</summary>
+    /// <summary>Who rolled. Like the turn banner, a creature the viewer can't see is never named (nor its id shown); one that was retired since still has its name.</summary>
     private string ResolveRollerName(RollLogEntry entry) =>
         entry.ActorId != null
-            ? ActorsById.GetValueOrDefault(entry.ActorId)?.Name ?? (Access.IsDm ? entry.ActorId : L["Combat.SomeoneUnseen"])
+            ? TableVisibility.RollerName(entry.ActorId, KnownById, Access.IsDm, L["Combat.SomeoneUnseen"])
             : (entry.RollerUserId == CurrentUserId ? L["Combat.You"] : CampaignAccessResolver.RoleOf(Campaign, entry.RollerUserId) == CampaignRole.DM ? L["Combat.Dm"] : L["Combat.Player"]);
 
     public async ValueTask DisposeAsync()
