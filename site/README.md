@@ -65,7 +65,8 @@ The demo campaign (names, texts, languages) is `tools/demo-data.mjs`. If a scree
 WebP files.
 
 Options for step 2: `--book-only true` sets the campaign up and takes only the book's screens (the print panel,
-the pictures tray and the editor: its chapters, Ask AI, the party leak check and a stale chapter); `--chrome <path>`
+the pictures tray and the editor: its chapters, Ask AI, the party leak check and a stale chapter); `--encounters-only true` does the same for the prepared-encounter screens (the Encounters list, the editor and the
+table's picker); `--chrome <path>`
 uses an installed Chrome when Playwright's own browser is not downloaded; `--python <path>` picks the Python that
 has Pillow. The printed-pages picture (`book-pages`) also needs poppler's `pdftoppm`, and is skipped without it.
 Nothing in the script asks a model or draws a picture, and it never types a key: the AI and picture screens are
