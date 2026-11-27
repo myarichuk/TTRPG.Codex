@@ -6,6 +6,7 @@
 @inject CampaignRuntimeManager RuntimeManager
 @inject NavigationManager Nav
 @inject ILogger<EncounterEditor> Logger
+@inject IJSRuntime JS
 
 @* One prepared encounter, or a new one (ENCOUNTER_BUILDER_DESIGN.md 5.1): its name, place, notes and status, the lineup of creatures with counts, the hazards at the place
    (read only: they are placed on the place's page), the difficulty readout (when the system declares one; it follows the unsaved lineup), and the check's errors and warnings as
@@ -99,14 +100,15 @@ else
                     <MarkdownEditor Id="encounter-notes" Title="@L["Encounters.Field.Notes"]" Rows="8" @bind-Value="draft.Notes" DescribedBy="encounter-notes-hint" TestId="encounter-notes" />
                     <p id="encounter-notes-hint" class="field-hint mb-3">@L["Encounters.NotesHint"]</p>
 
-                    <h4 id="encounter-lineup-heading" class="h6">@L["Encounters.Creatures"]</h4>
+                    <h4 id="encounter-lineup-heading" class="h6" tabindex="-1">@L["Encounters.Creatures"]</h4>
                     @if (draft.Lines.Count == 0)
                     {
                         <p class="small-muted" data-testid="encounter-lineup-empty">@L["Encounters.Creatures.Empty"]</p>
                     }
                     else
                     {
-                        <ul class="list-unstyled mb-3" aria-labelledby="encounter-lineup-heading" data-testid="encounter-lineup">
+                        @* role="list": some screen readers drop the list of a bulleted list whose bullets are styled away. *@
+                        <ul class="list-unstyled mb-3" role="list" aria-labelledby="encounter-lineup-heading" data-testid="encounter-lineup">
                             @for (var i = 0; i < draft.Lines.Count; i++)
                             {
                                 var line = draft.Lines[i];
@@ -154,7 +156,7 @@ else
                                                    @onchange="e => line.StartsHidden = e.Value is true" data-testid="encounter-line-hidden" />
                                             <label for="encounter-line-@at-hidden" class="form-check-label" aria-hidden="true">@L["Encounters.StartsHidden"]</label>
                                         </span>
-                                        <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Encounters.Remove", LineName(line)]" OnClick="() => RemoveAsync(line)" data-testid="encounter-line-remove" />
+                                        <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Encounters.Remove", LineName(line)]" OnClick="() => RemoveAsync(line)" id="@($"encounter-line-{at}-remove")" data-testid="encounter-line-remove" />
                                     </div>
                                 </li>
                             }
@@ -193,17 +195,18 @@ else
                     }
 
                     <SaveBar Dirty="IsDirty()" TestId="encounter-save-bar">
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Busy="saving" data-testid="encounter-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]"><LucideIcon IconName="check" Size="18" /> @L["Encounters.Save"]</CodexButton>
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Busy="saving" id="encounter-save" data-testid="encounter-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]"><LucideIcon IconName="check" Size="18" /> @L["Encounters.Save"]</CodexButton>
                         <a href="@Ctx.BasePath/encounters" class="cx-btn cx-etched">@L["Encounters.Cancel"]</a>
                         @if (!IsNew)
                         {
                             @if (TableLive)
                             {
-                                <CodexButton Variant="CodexButtonVariant.Etched" Busy="startingPlan" Disabled="@(IsDirty() || saving)" OnClick="StartAtTableAsync" data-testid="encounter-start"
-                                             title="@(IsDirty() ? L["Encounters.Start.SaveFirst"] : null)"><LucideIcon IconName="swords" Size="16" /> @L["Encounters.Start"]</CodexButton>
+                                @* Why it is off is text, tied to the button, not only a tooltip. *@
+                                <CodexButton Variant="CodexButtonVariant.Etched" Busy="startingPlan" Disabled="@(IsDirty() || saving)" OnClick="StartAtTableAsync" id="encounter-start" data-testid="encounter-start"
+                                             aria-describedby="@(IsDirty() ? "encounter-start-hint" : null)"><LucideIcon IconName="swords" Size="16" /> @L["Encounters.Start"]</CodexButton>
                                 @if (IsDirty())
                                 {
-                                    <span class="small-muted" data-testid="encounter-start-hint">@L["Encounters.Start.SaveFirst"]</span>
+                                    <span id="encounter-start-hint" class="small-muted" data-testid="encounter-start-hint">@L["Encounters.Start.SaveFirst"]</span>
                                 }
                             }
                             else
@@ -227,7 +230,8 @@ else
                 var result = rated.Rating;
                 <section class="panel" aria-labelledby="encounter-difficulty-heading" data-testid="encounter-difficulty">
                     <div class="panel-title"><h3 id="encounter-difficulty-heading" class="h6"><LucideIcon IconName="swords" Size="18" Class="title-icon" /> @L["Encounters.Difficulty.Title"]</h3></div>
-                    <p class="mb-2" data-testid="encounter-difficulty-summary"><strong>@DifficultyText.Summary(result, L)</strong></p>
+                    @* The line is on the page for the eye and in the live region for the ear, once each: the visible copy is hidden from assistive technology so a reader that walks the page does not read it twice. *@
+                    <p class="mb-2" aria-hidden="true" data-testid="encounter-difficulty-summary"><strong>@DifficultyText.Summary(result, L)</strong></p>
                     <p class="visually-hidden" role="status" aria-live="polite" data-testid="encounter-difficulty-live">@liveSummary</p>
                     @if (rated.Source == PartySource.Default)
                     {
@@ -261,11 +265,12 @@ else
                         }
                     }
 
-                    <button type="button" class="cx-btn cx-etched" aria-expanded="@(differentOpen ? "true" : "false")" aria-controls="encounter-difficulty-different" @onclick="ToggleDifferent"
+                    <button type="button" id="encounter-difficulty-toggle" class="cx-btn cx-etched" aria-expanded="@(differentOpen ? "true" : "false")" aria-controls="encounter-difficulty-different" @onclick="ToggleDifferent"
                             data-testid="encounter-difficulty-toggle">@L["Encounters.Difficulty.Different"]</button>
                     @if (differentOpen)
                     {
-                        <div id="encounter-difficulty-different" class="field-grid mt-2" data-testid="encounter-difficulty-different">
+                        @* A group named by the button that opened it, so "Characters" and "Level" are read as the party they rate for. *@
+                        <div id="encounter-difficulty-different" class="field-grid mt-2" role="group" aria-labelledby="encounter-difficulty-toggle" data-testid="encounter-difficulty-different">
                             <div>
                                 <label for="encounter-difficulty-size" class="field-label">@L["Encounters.Difficulty.Characters"]</label>
                                 <input @key='("size", differentRedraws)' id="encounter-difficulty-size" type="number" min="1" max="@PreparedEncounterService.MaxParty" class="field-input field-sm" value="@differentSize"
@@ -314,7 +319,7 @@ else
 
                 @if (tab == "library")
                 {
-                    <ul class="list-unstyled mb-2" aria-label="@L["Encounters.Add.Library"]" data-testid="encounter-add-results">
+                    <ul class="list-unstyled mb-2" role="list" aria-label="@L["Encounters.Add.Library"]" data-testid="encounter-add-results">
                         @foreach (var item in (results ?? new List<LibraryItem>()).Take(ResultCap))
                         {
                             <li class="list-row">
@@ -333,7 +338,7 @@ else
                 }
                 else if (tab == "hazards")
                 {
-                    <ul class="list-unstyled mb-2" aria-label="@L["Encounters.Add.Hazards"]" data-testid="encounter-add-results">
+                    <ul class="list-unstyled mb-2" role="list" aria-label="@L["Encounters.Add.Hazards"]" data-testid="encounter-add-results">
                         @foreach (var item in (NoPlace ? new List<LibraryItem>() : hazardResults ?? new List<LibraryItem>()).Take(ResultCap))
                         {
                             <li class="list-row">
@@ -352,7 +357,7 @@ else
                 }
                 else
                 {
-                    <ul class="list-unstyled mb-2" aria-label="@L["Encounters.Add.Cast"]" data-testid="encounter-add-results">
+                    <ul class="list-unstyled mb-2" role="list" aria-label="@L["Encounters.Add.Cast"]" data-testid="encounter-add-results">
                         @foreach (var actor in (castResults ?? new List<ActorDocument>()).Take(ResultCap))
                         {
                             <li class="list-row">
@@ -370,7 +375,7 @@ else
             </section>
 
             <section class="panel" aria-labelledby="encounter-hazards-heading" data-testid="encounter-hazards">
-                <div class="panel-title"><h3 id="encounter-hazards-heading" class="h6"><LucideIcon IconName="alert-triangle" Size="18" Class="title-icon" /> @L["Encounters.Hazards"]</h3></div>
+                <div class="panel-title"><h3 id="encounter-hazards-heading" class="h6" tabindex="-1"><LucideIcon IconName="alert-triangle" Size="18" Class="title-icon" /> @L["Encounters.Hazards"]</h3></div>
                 @if (hazardNotice.Length > 0)
                 {
                     @* What the polite live region says of a refused hazard, in view too: a sighted game master clicking Add must see why nothing happened. *@
@@ -390,7 +395,7 @@ else
                 }
                 else
                 {
-                    <ul class="list-unstyled mb-0">
+                    <ul class="list-unstyled mb-0" role="list" aria-labelledby="encounter-hazards-heading">
                         @for (var h = 0; h < hazards.Count; h++)
                         {
                             var hazard = hazards[h];
@@ -426,7 +431,7 @@ else
                         {
                             <li class="list-row" data-testid="encounter-hazard-pending">
                                 <div class="row-main"><div class="row-title">@L["Encounters.Hazards.Pending", pendingName, PlaceName()]</div></div>
-                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Encounters.Hazards.PendingRemove", pendingName]" OnClick="ClearPendingAsync" data-testid="encounter-hazard-pending-remove" />
+                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Encounters.Hazards.PendingRemove", pendingName]" OnClick="ClearPendingAsync" id="encounter-hazard-pending-remove" data-testid="encounter-hazard-pending-remove" />
                             </li>
                         }
                     </ul>
@@ -575,7 +580,35 @@ else
         pendingHazard = null;
         hazardNotice = string.Empty;
         announce = L["Encounters.Removed", pendingName];
+        // The button that was pressed is gone with the line: focus goes to the panel's heading, not to the top of the page.
+        Focus("encounter-hazards-heading");
         await RateAsync();
+    }
+
+    // Focus. A button that takes itself away (a line's remove button, the waiting hazard's) hands focus to the next line's, or the heading above the list when there is none; a button turned off
+    // while it works (Save, Start) gets it back, if nothing else has it by then. The browser does the moving (codex.focusById / focusIfLost), after the render that drew the new page.
+    private string? focusId;
+    private bool focusOnlyIfLost;
+
+    private void Focus(string id, bool onlyIfLost = false)
+    {
+        focusId = id;
+        focusOnlyIfLost = onlyIfLost;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusId is not { } id) return;
+        var onlyIfLost = focusOnlyIfLost;
+        focusId = null;
+        try
+        {
+            await JS.InvokeVoidAsync(onlyIfLost ? "codex.focusIfLost" : "codex.focusById", id);
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or InvalidOperationException)
+        {
+            // No focus to move (prerender or a closed circuit): nothing to report.
+        }
     }
 
     /// <summary>Takes a complex hazard to place on the plan's place when the plan is saved. A place holds one hazard, so it is refused (and said) when the place has one or one is waiting.</summary>
@@ -711,7 +744,10 @@ else
 
     private async Task RemoveAsync(PreparedLine line)
     {
+        var at = draft!.Lines.IndexOf(line);
         Remove(line);
+        // The next line's remove button now stands where this one did (the last line hands it to the one before); with none left, the heading above the list.
+        Focus(draft.Lines.Count == 0 ? "encounter-lineup-heading" : $"encounter-line-{Math.Min(Math.Max(at, 0), draft.Lines.Count - 1)}-remove");
         await RateAsync();
     }
 
@@ -828,6 +864,8 @@ else
     private async Task UseCampaignPartyAsync()
     {
         partyOverride = null;
+        // The button that was pressed goes away with the override: focus moves to the first box of the form, which stays open.
+        Focus("encounter-difficulty-size");
         await RateAsync();
         FillFromRating();
     }
@@ -946,6 +984,7 @@ else
         finally
         {
             saving = false;
+            Focus("encounter-save", onlyIfLost: true);
         }
     }
 
@@ -996,6 +1035,7 @@ else
         finally
         {
             startingPlan = false;
+            Focus("encounter-start", onlyIfLost: true);
         }
     }
 

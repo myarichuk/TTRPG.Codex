@@ -152,6 +152,49 @@ public class EncounterDifficultyUiTests : ComponentTestBase
     }
 
     [Fact]
+    public async Task TheReadoutsLine_IsReadOnce_ByAScreenReader_ThroughTheLiveRegion_AndNotAlsoThroughTheVisibleCopy()
+    {
+        var plan = await StoredAsync("Ambush", PreparedStatus.Ready, Goblins(2));
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+        cut.WaitForState(() => cut.FindAll(Id("encounter-difficulty-summary")).Count > 0, Patience);
+
+        // The same sentence is on the page twice (one to look at, one for the live region), and only one is in the accessibility tree.
+        var visible = cut.Find(Id("encounter-difficulty-summary"));
+        var live = cut.Find(Id("encounter-difficulty-live"));
+        Assert.Equal(visible.TextContent.Trim(), live.TextContent.Trim());
+        Assert.Equal("true", visible.GetAttribute("aria-hidden"));
+        Assert.Null(live.GetAttribute("aria-hidden"));
+        Assert.Contains("visually-hidden", live.ClassName);
+        var readable = cut.FindAll("[data-testid=encounter-difficulty] p").Where(p => p.TextContent.Trim() == visible.TextContent.Trim() && p.GetAttribute("aria-hidden") != "true");
+        Assert.Single(readable);
+    }
+
+    [Fact]
+    public async Task TheDifferentPartyBoxes_AreAGroupNamedByTheButtonThatOpenedThem_AndUsingTheCampaignsPartyKeepsFocusInTheForm()
+    {
+        var plan = await StoredAsync("Ambush", PreparedStatus.Ready, Goblins(5));
+        var cut = Draw(PreparedEncounterService.RouteOf(plan.Id));
+        cut.WaitForState(() => cut.FindAll(Id("encounter-difficulty-toggle")).Count > 0, Patience);
+        cut.Find(Id("encounter-difficulty-toggle")).Click();
+
+        var group = cut.Find(Id("encounter-difficulty-different"));
+        Assert.Equal("group", group.GetAttribute("role"));
+        Assert.Equal("Rate for a different party", cut.Find($"#{group.GetAttribute("aria-labelledby")}").TextContent);
+        Assert.Equal("encounter-difficulty-different", cut.Find(Id("encounter-difficulty-toggle")).GetAttribute("aria-controls"));
+        // The hint ties to both boxes.
+        Assert.Equal("encounter-difficulty-hint", cut.Find(Id("encounter-difficulty-size")).GetAttribute("aria-describedby"));
+        Assert.Equal("encounter-difficulty-hint", cut.Find(Id("encounter-difficulty-level")).GetAttribute("aria-describedby"));
+
+        cut.Find(Id("encounter-difficulty-size")).Change("4");
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll(Id("encounter-difficulty-reset"))), Patience);
+        cut.Find(Id("encounter-difficulty-reset")).Click();
+
+        // The button went away with the override; focus is asked to go to the first box.
+        cut.WaitForAssertion(() => Assert.Equal("encounter-difficulty-size", JSInterop.Invocations.Where(i => i.Identifier == "codex.focusById").Select(i => (string)i.Arguments[0]!).Last()), Patience);
+        Assert.Empty(cut.FindAll(Id("encounter-difficulty-reset")));
+    }
+
+    [Fact]
     public async Task ANumberTypedPastTheLimit_IsClamped_AndTheBoxShowsTheNumberTheReadoutUses()
     {
         var plan = await StoredAsync("Ambush", PreparedStatus.Ready, Goblins(1));

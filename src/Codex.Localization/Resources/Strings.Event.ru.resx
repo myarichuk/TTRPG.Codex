@@ -80,8 +80,8 @@
   <data name="Event.Initiative.Rolled" xml:space="preserve"><value>{0} бросает инициативу: {1}.</value></data>
   <data name="Event.Initiative.Removed" xml:space="preserve"><value>{0} выходит из порядка инициативы.</value></data>
   <data name="Event.Initiative.NotIn" xml:space="preserve"><value>{0} не было в порядке инициативы.</value></data>
-  <data name="Event.Encounter.Ended" xml:space="preserve"><value>Схватка закончилась через раундов: {0}.</value></data>
-  <data name="Event.Encounter.None" xml:space="preserve"><value>Не было схватки, которую можно завершить.</value></data>
+  <data name="Event.Encounter.Ended" xml:space="preserve"><value>Столкновение закончилось через {0, plural, one{# раунд} few{# раунда} many{# раундов} other{# раунда}}.</value></data>
+  <data name="Event.Encounter.None" xml:space="preserve"><value>Не было столкновения, которое можно завершить.</value></data>
   <data name="Event.Actor.Left" xml:space="preserve"><value>{0} покидает стол.</value></data>
   <data name="Event.Actor.Joined" xml:space="preserve"><value>{0} присоединяется к столу.</value></data>
   <data name="Event.Sheet.Edited" xml:space="preserve"><value>Лист персонажа {0} изменён.</value></data>
@@ -148,7 +148,7 @@
   <data name="Event.Type.Damage" xml:space="preserve"><value>Урон</value></data>
   <data name="Event.Type.DeathSave" xml:space="preserve"><value>Спасбросок от смерти</value></data>
   <data name="Event.Type.DiceRoll" xml:space="preserve"><value>Бросок</value></data>
-  <data name="Event.Type.EncounterEnded" xml:space="preserve"><value>Конец схватки</value></data>
+  <data name="Event.Type.EncounterEnded" xml:space="preserve"><value>Конец столкновения</value></data>
   <data name="Event.Type.Exhaustion" xml:space="preserve"><value>Истощение</value></data>
   <data name="Event.Type.Healing" xml:space="preserve"><value>Лечение</value></data>
   <data name="Event.Type.HitDice" xml:space="preserve"><value>Кости хитов</value></data>

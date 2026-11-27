@@ -1,0 +1,16 @@
+- id: collapsing-roof
+  name: "תקרה קורסת"
+- id: falling-net
+  name: "רשת נופלת"
+- id: fire-casting-statue
+  name: "פסל מטיל אש"
+- id: hidden-pit
+  name: "בור נסתר"
+- id: poisoned-darts
+  name: "חיצי זריקה מורעלים"
+- id: poisoned-needle
+  name: "מחט מורעלת"
+- id: rolling-stone
+  name: "אבן מתגלגלת"
+- id: spiked-pit
+  name: "בור עם דוקרנים"

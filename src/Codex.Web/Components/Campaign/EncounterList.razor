@@ -73,7 +73,7 @@ else
     }
     else
     {
-        <ul class="list-unstyled mb-0" data-testid="encounter-list">
+        <ul class="list-unstyled mb-0" role="list" aria-label="@L["Encounters.Title"]" data-testid="encounter-list">
             @foreach (var row in shown)
             {
                 <li class="list-row align-items-start" data-testid="encounter-row">
@@ -81,7 +81,7 @@ else
                     <div class="row-main">
                         <div class="row-title"><a href="@Ctx.BasePath/encounters/@Uri.EscapeDataString(row.Route)" data-testid="encounter-open">@row.Plan.Name</a></div>
                         <div class="row-sub" data-testid="encounter-place">@PlaceText(row)</div>
-                        <div class="row-sub" data-testid="encounter-summary">@(row.Summary.Length > 0 ? row.Summary : L["Encounters.NoCreatures"])</div>
+                        <div class="row-sub" data-testid="encounter-summary"><bdi>@(row.Summary.Length > 0 ? row.Summary : L["Encounters.NoCreatures"])</bdi></div>
                     </div>
                     <div class="row-actions">
                         @if (DifficultyText.Word(row.Rating, L) is { } band)

@@ -64,7 +64,7 @@
   <data name="Encounters.Check.CountRange" xml:space="preserve"><value>{0}: the count must be from 1 to {1}.</value></data>
   <data name="Encounters.Check.CastCount" xml:space="preserve"><value>{0} is one person, so the count must be 1.</value></data>
   <data name="Encounters.Check.CastIsPlayer" xml:space="preserve"><value>{0} is a player character or a companion. Only characters the GM runs can be in an encounter.</value></data>
-  <data name="Encounters.Check.HazardLine" xml:space="preserve"><value>{0}: hazards are added on the place, not here. Place it on the place's page.</value></data>
+  <data name="Encounters.Check.HazardLine" xml:space="preserve"><value>{0} is a hazard, not a creature. Add a complex hazard with Hazards in the add panel, or place it on the place's page.</value></data>
   <data name="Encounters.Warn.EntryGone" xml:space="preserve"><value>{0} is no longer in the Library.</value></data>
   <data name="Encounters.Warn.CastGone" xml:space="preserve"><value>{0} is no longer in the cast.</value></data>
   <data name="Encounters.Warn.PlaceGone" xml:space="preserve"><value>The place was deleted.</value></data>
@@ -92,7 +92,7 @@
   <data name="Encounters.Add.Shortlist" xml:space="preserve"><value>Add from the Bestiary shortlist</value></data>
   <data name="Encounters.Hazards" xml:space="preserve"><value>Hazards at this place</value></data>
   <data name="Encounters.Hazards.ChoosePlace" xml:space="preserve"><value>Choose a place to see the hazards placed there.</value></data>
-  <data name="Encounters.Hazards.None" xml:space="preserve"><value>No hazards are placed here. Place one on the place's page.</value></data>
+  <data name="Encounters.Hazards.None" xml:space="preserve"><value>No hazards are placed here. Place one on the place's page, or add a complex one here.</value></data>
   <data name="Encounters.Hazards.OpenPlace" xml:space="preserve"><value>Open the place</value></data>
   <data name="Encounters.Hazards.At" xml:space="preserve"><value>At {0}</value></data>
   <data name="Encounters.Start" xml:space="preserve"><value>Start at the table</value></data>
@@ -143,7 +143,7 @@
   <data name="Encounters.Add.Hazards" xml:space="preserve"><value>Hazards</value></data>
   <data name="Encounters.Add.HazardsChoosePlace" xml:space="preserve"><value>Choose a place first</value></data>
   <data name="Encounters.Add.SearchHazards" xml:space="preserve"><value>Search the Library's complex hazards and your homebrew</value></data>
-  <data name="Encounters.Add.Hazard" xml:space="preserve"><value>Place {0}</value></data>
+  <data name="Encounters.Add.Hazard" xml:space="preserve"><value>Add {0} to the place</value></data>
   <data name="Encounters.Add.HazardPlaced" xml:space="preserve"><value>{0} will be placed at {1} when you save.</value></data>
   <data name="Encounters.Add.HazardTaken" xml:space="preserve"><value>{0} already has a hazard ({1}). A place holds one.</value></data>
   <data name="Encounters.Add.HazardPendingAlready" xml:space="preserve"><value>A hazard is already waiting to be placed at {0}. A place holds one.</value></data>
