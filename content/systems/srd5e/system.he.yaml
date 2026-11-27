@@ -602,3 +602,11 @@ sheetRules:
   skillsLabel: מיומנויות
   inventoryLabel: ציוד
   multiclassLabel: מקצועות נוספים
+
+encounters:
+  difficulty:
+    unit: נקודות ניסיון
+    bands:
+      low: נמוכה
+      moderate: בינונית
+      high: גבוהה

@@ -669,14 +669,14 @@ Everything is tested on two fixture systems with invented numbers.
 - *Strings.* Russian «столкновение» and «мастер» only for the GM, Hebrew «מפגש קרב»; the ru and he texts are drafts for native review.
 
 **Known limits**
-- Shape `sum` is checked against the SRD rule text in B4b and may gain a field there (for example a multiplier for the number of creatures, if the text has one). `byLevel` is provisional
-  until a system declares it. The first real numbers are B4b's.
+- Shape `sum` was checked against the SRD rule text in B4b (section 19): it needed no new field, since the SRD has no multiplier for the number of creatures. `byLevel` is provisional
+  until a system declares it.
 - A player character's level is read from the sheet's field only; a level a sheet formula works out is whatever the stored sheet holds.
 - The editor reads the cast and the Library again on every change (a few small reads); the list reads them once. Caching them for the page's lifetime is left for later: it needs a reload when
   the cast changes, and the reads are small.
 
 **Left for later**
-- B4b: srd5e's `sum` budget from the SRD 5.2.1 text, with a test that compares the data to it. The degrees system's `byLevel` block when its pack has the numbers. Hazard values (`hazardValue`)
+- ~~B4b: srd5e's `sum` budget from the SRD 5.2.1 text~~ (done, section 19). The degrees system's `byLevel` block when its pack has the numbers. Hazard values (`hazardValue`)
   with B7.
 
 ## 17. B5 as built (2026-11-24)
@@ -811,3 +811,26 @@ B7 makes the complex hazards placed at a plan's place join the fight when it sta
   sheet), so the console's quick-add is fixed too; `ComplexHazardTests.AHazardsActor_DoesNotWearItsEffectsConditions` pins it.
 - *Seen, left as H5 has them:* after an encounter ends, its hazard actor is retired and the GM's roll log names its old secret roll by the actor's id; and the console's
   "Characters and creatures" cards list a hazard actor with creature numbers (an initiative of +0 beside its own +8 roll).
+
+## 19. B4b as built (2026-11-27)
+
+B4b gives srd5e its difficulty readout: the first real numbers in a bundled system. It is data and a test; no code changed.
+
+**Files**
+- `content/systems/srd5e/system.yaml`: `encounters.difficulty`, shape `sum`, `creatureValue: xp`, unit `XP`, `pick: atMost`, bands Low, Moderate and High, and a budget row for each level 1 to 20, read from
+  the SRD 5.2.1 "XP Budget per Character" table (Combat Encounter Difficulty). `partyLevel` is left out: the default is the `fieldRoles.level` field, `level`.
+- `system.ru.yaml` and `system.he.yaml`: the unit and the three band labels. Russian «ОО», the abbreviation the ru pack's stat blocks use for XP, bands «Низкая», «Умеренная», «Высокая» (agreeing with
+  «Сложность»); Hebrew «נקודות ניסיון» as the he pack words it, bands «נמוכה», «בינונית», «גבוהה» (agreeing with «רמת קושי»). The Hebrew "above" string is now «מעל לרמה: {0}», like
+  "below". Drafts for native review.
+- `tests/Codex.Tests/Srd5eDifficultyTests.cs`: the block loads and SystemCheck reports no problem; the 20 rows equal the table (written out in the test); the SRD's three worked examples rate as their band,
+  with each monster's XP read from the pack; a mixed party sums each character's own row.
+
+**The shape needed no change.** The SRD has one rule for the budget (the row's number times the characters, spent without going over) and no multiplier for many creatures, which is what `sum` with
+`atMost` does. No new field, so the schema and the reference are unchanged.
+
+**Decisions**
+- *Mixed levels.* The SRD gives one party level. `sum` adds each character's own row, which equals the SRD's figure for a party of one level; for a mixed party it is our reading.
+- *The Archmage* is worth 8,000 XP, as its own stat block says, not the 8,400 the Challenge Rating table gives for CR 12. The readout follows the entry's `xp`.
+
+**Known limits**
+- Every SRD monster has an `xp`; a homebrew creature without one is named and left out of the total, as for any `sum` system.
