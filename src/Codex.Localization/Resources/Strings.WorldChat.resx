@@ -199,6 +199,8 @@
   <data name="WorldChat.Proposal.Encounter.Status" xml:space="preserve"><value>Status: {0}</value></data>
   <data name="WorldChat.Proposal.Encounter.Notes" xml:space="preserve"><value>Notes</value></data>
   <data name="WorldChat.Proposal.Encounter.Readout" xml:space="preserve"><value>Difficulty: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.LeftOut" xml:space="preserve"><value>Left out of the order: {0}</value></data>
+  <data name="WorldChat.Proposal.Encounter.LeftOutNone" xml:space="preserve"><value>Left out of the order: nothing (every hazard there joins)</value></data>
   <data name="WorldChat.Proposal.Encounter.Hazards" xml:space="preserve"><value>Hazards at the place: {0}</value></data>
   <data name="WorldChat.Proposal.Encounter.PlaceChange" xml:space="preserve"><value>Place: changes from {0} to {1}</value></data>
   <data name="WorldChat.Proposal.Encounter.StatusChange" xml:space="preserve"><value>Status: changes from {0} to {1}</value></data>

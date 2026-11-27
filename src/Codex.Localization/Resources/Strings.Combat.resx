@@ -355,4 +355,6 @@
   <data name="Combat.Prepared.Refused.NobodyJoined" xml:space="preserve"><value>Nobody in this encounter could join the fight.</value></data>
   <data name="Combat.Prepared.Refused.TableClosed" xml:space="preserve"><value>The table ended before the encounter could start.</value></data>
   <data name="Combat.Prepared.Refused.Failed" xml:space="preserve"><value>The encounter could not be started.</value></data>
+  <data name="Combat.Prepared.ConfirmBoth" xml:space="preserve"><value>Start {0}? {1, plural, one{# creature} other{# creatures}} and {2, plural, one{# hazard} other{# hazards}} join the fight and roll initiative.</value></data>
+  <data name="Combat.Prepared.ConfirmHazards" xml:space="preserve"><value>Start {0}? {1, plural, one{One hazard joins the fight and rolls initiative.} other{# hazards join the fight and roll initiative.}}</value></data>
 </root>

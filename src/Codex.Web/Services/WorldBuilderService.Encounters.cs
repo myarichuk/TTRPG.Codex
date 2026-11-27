@@ -95,14 +95,19 @@ public sealed partial class WorldBuilderService
         }
 
         if (rows.Count == 0) return placeId == null ? "The campaign has no prepared encounters yet." : "No prepared encounter is set at that place or under it.";
-        var lines = rows.Take(ContextCap).Select(r =>
+        var lines = new List<string>();
+        // One read of the places, the cast and the Library for every row, not one per row.
+        var joinsBy = await encounters.JoiningHazardsAsync(campaign, access, rows.Take(ContextCap).Where(r => !r.PlaceGone).Select(r => r.Plan).ToList());
+        foreach (var r in rows.Take(ContextCap))
         {
             var plan = r.Plan;
             var where = string.IsNullOrEmpty(plan.PlaceId) ? "no place" : r.PlaceGone ? "its place was deleted" : $"place existing:{WorldBundle.PlacePrefix}{plan.PlaceId} \"{r.PlaceName}\"";
             var band = DifficultyText.Word(r.Rating, english);
-            return $"existing:{WorldBundle.EncounterPrefix}{PreparedEncounterService.RouteOf(plan.Id)} - {plan.Name}; {where}; lineup: {(r.Summary.Length == 0 ? "empty" : r.Summary)}; status: {StatusWord(plan)}" +
-                   (band == null ? string.Empty : $"; difficulty: {band}");
-        }).ToList();
+            // The complex hazards at its place (or under it) that join the initiative order when it starts.
+            var joining = joinsBy.GetValueOrDefault(plan.Id) ?? Array.Empty<string>();
+            lines.Add($"existing:{WorldBundle.EncounterPrefix}{PreparedEncounterService.RouteOf(plan.Id)} - {plan.Name}; {where}; lineup: {(r.Summary.Length == 0 ? "empty" : r.Summary)}; status: {StatusWord(plan)}" +
+                      (band == null ? string.Empty : $"; difficulty: {band}") + (joining.Count == 0 ? string.Empty : $"; hazards that join the initiative order: {string.Join(", ", joining)}"));
+        }
         if (rows.Count > ContextCap) lines.Add($"({rows.Count - ContextCap} more; give a place to narrow the list)");
         return string.Join('\n', lines);
     }
@@ -140,7 +145,7 @@ public sealed partial class WorldBuilderService
         if (view.Hazards.Count > 0)
         {
             sb.AppendLine("hazards at the place and under it:");
-            foreach (var h in view.Hazards.Take(ContextCap)) sb.AppendLine("- " + HazardLine(h));
+            foreach (var h in view.Hazards.Take(ContextCap)) sb.AppendLine("- " + HazardLine(h) + JoinWords(h, plan));
             if (view.Hazards.Count > ContextCap) sb.AppendLine($"({view.Hazards.Count - ContextCap} more hazards not shown; use place_hazards on a place inside it)");
         }
 
@@ -162,6 +167,13 @@ public sealed partial class WorldBuilderService
 
     private static string HazardLine(EncounterHazard h) =>
         $"{(h.IsHomebrew ? WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix : string.Empty)}{h.Entry} \"{h.Name}\": {StateWords(h.State)}; on \"{h.PlaceName}\" existing:{WorldBundle.PlacePrefix}{h.PlaceId}; {(h.Complex ? "complex (also takes a turn in the order)" : "simple")}";
+
+    /// <summary>Whether a complex hazard joins the initiative order when the plan starts: the plan's own say (<c>hazardsLeftOut</c>) and the hazard's state. A simple hazard says nothing.</summary>
+    private static string JoinWords(EncounterHazard h, PreparedEncounterDocument plan) =>
+        !h.Complex ? string.Empty
+        : h.CannotJoin is { } why ? $"; will not join the initiative order: {(why == Codex.Persistence.HazardState.Disabled ? "made safe" : "it went off")}"
+        : plan.HazardsLeftOut.Contains(h.Key) ? $"; left out of the initiative order by this encounter (hazardsLeftOut existing:{WorldBundle.PlacePrefix}{h.PlaceId})"
+        : "; joins the initiative order when the encounter starts";
 
     /// <summary>The hazards at a place and under it, and the creatures its features say live there ("a mimic").</summary>
     public async Task<string> PlaceHazardsAsync(CampaignDocument campaign, CampaignAccess access, string place)
@@ -348,6 +360,22 @@ public sealed partial class WorldBuilderService
                 CampaignId = campaign.Id, Name = draft.Rename ?? plan?.Name ?? draft.Name, PlaceId = placeId, Lines = lines, Status = plan?.Status ?? PreparedStatus.Draft
             };
 
+            // The hazards left out of the order are named by the place each stands on, and must stand at the plan's place or under it. One that names no placed hazard is ignored
+            // (a warning); the plan never holds a key for a place outside its own.
+            if (draft.Kind == DraftKinds.Encounter || draft.HazardsLeftOutGiven)
+            {
+                draft.HazardsLeftOutNames = draft.HazardsLeftOut.Select(id => placeNames.GetValueOrDefault(id) ?? id).ToList();
+                var home = placeId == null ? null : allRegions.FirstOrDefault(r => r.Locations.Any(l => l.Id == placeId));
+                var placed = home == null ? new HashSet<string>() : PreparedEncounterService.PlacedKeys(home, home.Locations.First(l => l.Id == placeId));
+                foreach (var leftOut in draft.HazardsLeftOut)
+                {
+                    var spot = home?.Locations.FirstOrDefault(l => l.Id == leftOut);
+                    if (home == null) errors.Add($"{label}: hazardsLeftOut names place '{leftOut}', but this encounter has no existing place yet. Only a hazard that is already placed at an existing place can be left out; leave hazardsLeftOut out.");
+                    else if (spot == null || !PlaceTree.Chain(home, spot).Any(c => c.Id == placeId)) errors.Add($"{label}: hazardsLeftOut names place '{leftOut}', which is not at the encounter's place or under it. Use place_hazards on the encounter's place to see which hazards are there.");
+                    else if (!placed.Contains(PreparedEncounterDocument.HazardKey(home.Id, leftOut))) warnings.Add($"{label}: hazardsLeftOut names '{spot.Name}', which has no hazard placed, so it changes nothing.");
+                }
+            }
+
             // Every encounter entry that is not a delete: saving runs this same check on the plan, so an edit of a plan whose stored lines no longer pass (a creature
             // gone from the Library) is refused here, not half way through an apply.
             var check = await encounters.CheckAsync(campaign, access, candidate);
@@ -443,6 +471,15 @@ public sealed partial class WorldBuilderService
                 if (bundle.Find(line.Ref)?.SavedAs.GetValueOrDefault("homebrew") is not { } entryDoc || !made.TryGetValue(entryDoc, out var entry)) throw missing;
                 plan.Lines.Add(LineOf(new DraftLine { Type = entry.Type, Id = entry.EntryId, Homebrew = true, Name = entry.Name, Count = line.Count, Note = line.Note, Hidden = line.Hidden }));
             }
+        }
+
+        if (isNew || draft.HazardsLeftOutGiven)
+        {
+            // Each place id is a key of the placement: its region and its place. A key that names nothing is dropped by the save (a plan keeps only the hazards at its own place).
+            var everywhere = draft.HazardsLeftOut.Count > 0 ? (await regions.GetVisibleForCampaignAsync(access)).ToList() : new List<RegionDocument>();
+            plan.HazardsLeftOut = draft.HazardsLeftOut
+                .Select(id => everywhere.FirstOrDefault(r => r.Locations.Any(l => l.Id == id)) is { } at ? PreparedEncounterDocument.HazardKey(at.Id, id) : null)
+                .OfType<string>().Distinct(StringComparer.Ordinal).ToList();
         }
 
         if (isNew || draft.Body != null) plan.Notes = draft.Body == null ? null : WorldBundleParser.ResolveLinks(draft.Body, bundle, keepLinks: false).Trim();

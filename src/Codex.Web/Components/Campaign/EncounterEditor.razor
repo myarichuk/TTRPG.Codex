@@ -256,7 +256,8 @@ else
 
                         @if (result.Hazards.Count > 0)
                         {
-                            <p class="small-muted mb-2" data-testid="encounter-difficulty-hazards">@L["Encounters.Difficulty.HazardsNotCounted", result.Hazards.Count]</p>
+                            @* Complex hazards that join the order are listed apart: no system declares what a hazard is worth. *@
+                            <p class="small-muted mb-2" data-testid="encounter-difficulty-hazards">@L["Encounters.Difficulty.HazardsNotCounted", result.Hazards.Count] · @L["Encounters.Difficulty.HazardsJoin", string.Join(", ", result.Hazards)]</p>
                         }
                     }
 
@@ -292,10 +293,21 @@ else
                 <div class="md-tabs mb-2" role="group" aria-label="@L["Encounters.Add.Source"]">
                     <button type="button" class="md-tab" aria-pressed="@(tab == "library" ? "true" : "false")" @onclick='() => SwitchTabAsync("library")' data-testid="encounter-tab-library">@L["Encounters.Add.Library"]</button>
                     <button type="button" class="md-tab" aria-pressed="@(tab == "cast" ? "true" : "false")" @onclick='() => SwitchTabAsync("cast")' data-testid="encounter-tab-cast">@L["Encounters.Add.Cast"]</button>
+                    @* Complex hazards are their own group, never mixed with creatures. One is placed on the plan's place, so with no place the group is off and says why. *@
+                    <button type="button" class="md-tab" aria-pressed="@(tab == "hazards" ? "true" : "false")" aria-disabled="@(NoPlace ? "true" : null)" aria-describedby="@(NoPlace ? "encounter-hazards-tab-hint" : null)"
+                            @onclick='() => SwitchTabAsync("hazards")' data-testid="encounter-tab-hazards">@L["Encounters.Add.Hazards"]</button>
                 </div>
+                @if (NoPlace)
+                {
+                    <p id="encounter-hazards-tab-hint" class="small-muted mb-2" data-testid="encounter-hazards-tab-hint">@L["Encounters.Add.HazardsChoosePlace"]</p>
+                }
+                else if (tab == "hazards")
+                {
+                    <p class="small-muted mb-2" data-testid="encounter-hazards-hint">@L["Encounters.Add.HazardsHint"]</p>
+                }
                 <div class="search mb-2">
                     <LucideIcon IconName="search" Size="18" Class="search-icon" />
-                    <label for="encounter-add-search" class="visually-hidden">@(tab == "library" ? L["Encounters.Add.SearchCreatures"] : L["Encounters.Add.SearchCast"])</label>
+                    <label for="encounter-add-search" class="visually-hidden">@(tab == "library" ? L["Encounters.Add.SearchCreatures"] : tab == "hazards" ? L["Encounters.Add.SearchHazards"] : L["Encounters.Add.SearchCast"])</label>
                     <input id="encounter-add-search" type="search" class="field-input" placeholder="@L["Encounters.Add.Placeholder"]" value="@query" @oninput="OnQueryChanged" aria-describedby="encounter-add-count" data-testid="encounter-add-search" />
                 </div>
                 <p id="encounter-add-count" class="small-muted" role="status" aria-live="polite" data-testid="encounter-add-count">@ResultCountText()</p>
@@ -315,6 +327,25 @@ else
                                     </div>
                                 </div>
                                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddCreatureAsync(item)" aria-label="@L["Encounters.Add.Creature", item.Entry.Name]" data-testid="encounter-add-creature"><LucideIcon IconName="plus" Size="14" /> @L["Encounters.Add.Button"]</CodexButton>
+                            </li>
+                        }
+                    </ul>
+                }
+                else if (tab == "hazards")
+                {
+                    <ul class="list-unstyled mb-2" aria-label="@L["Encounters.Add.Hazards"]" data-testid="encounter-add-results">
+                        @foreach (var item in (NoPlace ? new List<LibraryItem>() : hazardResults ?? new List<LibraryItem>()).Take(ResultCap))
+                        {
+                            <li class="list-row">
+                                <div class="row-main">
+                                    <div class="row-title">@item.Entry.Name
+                                        @if (item.IsHomebrew)
+                                        {
+                                            <span class="pill pill-accent ms-2">@L["Encounters.Homebrew"]</span>
+                                        }
+                                    </div>
+                                </div>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddHazardAsync(item)" aria-label="@L["Encounters.Add.Hazard", item.Entry.Name]" data-testid="encounter-add-hazard"><LucideIcon IconName="plus" Size="14" /> @L["Encounters.Add.Button"]</CodexButton>
                             </li>
                         }
                     </ul>
@@ -340,6 +371,11 @@ else
 
             <section class="panel" aria-labelledby="encounter-hazards-heading" data-testid="encounter-hazards">
                 <div class="panel-title"><h3 id="encounter-hazards-heading" class="h6"><LucideIcon IconName="alert-triangle" Size="18" Class="title-icon" /> @L["Encounters.Hazards"]</h3></div>
+                @if (hazardNotice.Length > 0)
+                {
+                    @* What the polite live region says of a refused hazard, in view too: a sighted game master clicking Add must see why nothing happened. *@
+                    <p class="small-muted mb-2" data-testid="encounter-hazard-notice">@hazardNotice</p>
+                }
                 @if (string.IsNullOrEmpty(draft.PlaceId))
                 {
                     <p class="small-muted mb-0" data-testid="encounter-hazards-noplace">@L["Encounters.Hazards.ChoosePlace"]</p>
@@ -348,20 +384,49 @@ else
                 {
                     <p class="small-muted mb-0">@L["Encounters.PlaceGone"]</p>
                 }
-                else if (hazards.Count == 0)
+                else if (hazards.Count == 0 && pendingHazard == null)
                 {
                     <p class="small-muted mb-0" data-testid="encounter-hazards-none">@L["Encounters.Hazards.None"] <a href="@Ctx.BasePath/world#place-@draft.PlaceId">@L["Encounters.Hazards.OpenPlace"]</a></p>
                 }
                 else
                 {
                     <ul class="list-unstyled mb-0">
-                        @foreach (var hazard in hazards)
+                        @for (var h = 0; h < hazards.Count; h++)
                         {
-                            <li class="list-row" data-testid="encounter-hazard">
+                            var hazard = hazards[h];
+                            var at = h;
+                            <li class="list-row align-items-start" data-testid="encounter-hazard">
                                 <div class="row-main">
                                     <div class="row-title">@hazard.Name <span class="pill ms-2">@L[$"Combat.Hazard.State.{hazard.State}"]</span></div>
                                     <div class="row-sub"><a href="@Ctx.BasePath/world#place-@hazard.PlaceId">@L["Encounters.Hazards.At", hazard.PlaceName]</a></div>
+                                    @if (hazard.Complex)
+                                    {
+                                        @* A complex hazard takes a turn: the tick says whether it joins the order when the plan starts. A simple one never does, so it has none. *@
+                                        @if (hazard.CannotJoin is { } why)
+                                        {
+                                            <span class="line-check mt-1" data-testid="encounter-hazard-join">
+                                                <input id="encounter-hazard-@at-join" type="checkbox" class="form-check-input" disabled checked="@false" aria-label="@L["Encounters.Hazards.JoinsFor", hazard.Name]" aria-describedby="encounter-hazard-@at-why" />
+                                                <label for="encounter-hazard-@at-join" class="form-check-label">@L["Encounters.Hazards.JoinsOrder"]</label>
+                                            </span>
+                                            <div id="encounter-hazard-@at-why" class="small-muted" data-testid="encounter-hazard-why">@L[$"Encounters.Hazards.WontJoin.{why}"]</div>
+                                        }
+                                        else
+                                        {
+                                            <span class="line-check mt-1" data-testid="encounter-hazard-join">
+                                                <input id="encounter-hazard-@at-join" type="checkbox" class="form-check-input" checked="@Joins(hazard)" aria-label="@L["Encounters.Hazards.JoinsFor", hazard.Name]"
+                                                       @onchange="e => SetJoinsAsync(hazard, e.Value is true)" data-testid="encounter-hazard-join-box" />
+                                                <label for="encounter-hazard-@at-join" class="form-check-label" aria-hidden="true">@L["Encounters.Hazards.JoinsOrder"]</label>
+                                            </span>
+                                        }
+                                    }
                                 </div>
+                            </li>
+                        }
+                        @if (pendingHazard != null)
+                        {
+                            <li class="list-row" data-testid="encounter-hazard-pending">
+                                <div class="row-main"><div class="row-title">@L["Encounters.Hazards.Pending", pendingName, PlaceName()]</div></div>
+                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Encounters.Hazards.PendingRemove", pendingName]" OnClick="ClearPendingAsync" data-testid="encounter-hazard-pending-remove" />
                             </li>
                         }
                     </ul>
@@ -391,7 +456,12 @@ else
     private string query = string.Empty;
     private List<LibraryItem>? results;
     private List<ActorDocument>? castResults;
+    private List<LibraryItem>? hazardResults;
     private bool capped;
+
+    // A complex hazard added here waits in the editor alone until Save places it on the plan's place (ENCOUNTER_BUILDER_DESIGN.md 18): a plan never holds a hazard line.
+    private HazardToPlace? pendingHazard;
+    private string pendingName = string.Empty;
     private CancellationTokenSource? debounce;
     private readonly Dictionary<PreparedLine, EncounterLineView> resolved = new(ReferenceEqualityComparer.Instance);
     // Bumped when a count box shows something other than the line's count (clamped or unreadable text), so the box is drawn again with the stored value.
@@ -472,7 +542,65 @@ else
 
     private string Snapshot() => draft == null ? string.Empty : JsonSerializer.Serialize(draft);
 
-    private bool IsDirty() => draft != null && Snapshot() != savedJson;
+    private bool IsDirty() => draft != null && (pendingHazard != null || Snapshot() != savedJson);
+
+    /// <summary>No place to put a hazard on: none chosen, or the one the plan names is gone.</summary>
+    private bool NoPlace => draft == null || string.IsNullOrEmpty(draft.PlaceId) || placeGone;
+
+    private string PlaceName() => places.FirstOrDefault(p => p.PlaceId == draft?.PlaceId)?.PlaceName ?? string.Empty;
+
+    /// <summary>True unless the plan leaves this placed hazard out of the order.</summary>
+    private bool Joins(EncounterHazard hazard) => draft!.HazardsLeftOut?.Contains(hazard.Key) != true;
+
+    private async Task SetJoinsAsync(EncounterHazard hazard, bool joins)
+    {
+        draft!.HazardsLeftOut ??= new List<string>();
+        draft.HazardsLeftOut.RemoveAll(k => k == hazard.Key);
+        if (!joins) draft.HazardsLeftOut.Add(hazard.Key);
+        announce = L[joins ? "Encounters.Hazards.JoinsFor" : "Encounters.Hazards.LeftOutFor", hazard.Name];
+        await RateAsync();
+    }
+
+    // Said in view as well as in the live region, for a refused hazard.
+    private string hazardNotice = string.Empty;
+
+    private void SayHazard(string text)
+    {
+        announce = text;
+        hazardNotice = text;
+    }
+
+    private async Task ClearPendingAsync()
+    {
+        pendingHazard = null;
+        hazardNotice = string.Empty;
+        announce = L["Encounters.Removed", pendingName];
+        await RateAsync();
+    }
+
+    /// <summary>Takes a complex hazard to place on the plan's place when the plan is saved. A place holds one hazard, so it is refused (and said) when the place has one or one is waiting.</summary>
+    private async Task AddHazardAsync(LibraryItem item)
+    {
+        if (draft == null || NoPlace) return;
+        var here = hazards.FirstOrDefault(h => h.PlaceId == draft.PlaceId);
+        if (here != null)
+        {
+            SayHazard(L["Encounters.Add.HazardTaken", PlaceName(), here.Name]);
+            return;
+        }
+
+        if (pendingHazard != null)
+        {
+            SayHazard(L["Encounters.Add.HazardPendingAlready", PlaceName()]);
+            return;
+        }
+
+        pendingHazard = new HazardToPlace(PlacedHazard.Reference(item.Entry.Type, item.Entry.Id), item.IsHomebrew);
+        pendingName = item.Entry.Name;
+        hazardNotice = string.Empty;
+        announce = L["Encounters.Add.HazardPlaced", item.Entry.Name, PlaceName()];
+        await RateAsync();
+    }
 
     private EncounterLineView? Resolved(PreparedLine line) => resolved.GetValueOrDefault(line);
 
@@ -496,6 +624,22 @@ else
 
         placeGone = false;
         hazards = await Encounters.HazardsAtAsync(Ctx.Campaign, Ctx.Access, draft.RegionId, draft.PlaceId, L.Culture.Name);
+
+        // A hazard waiting to be placed belongs to the place it was added for: a new place with no place, or one that already holds a hazard, cannot take it.
+        if (pendingHazard != null)
+        {
+            if (NoPlace) announce = L["Encounters.Removed", pendingName];
+            else if (hazards.Any(h => h.PlaceId == draft.PlaceId)) SayHazard(L["Encounters.Hazards.PendingCleared", pendingName, PlaceName()]);
+            if (NoPlace || hazards.Any(h => h.PlaceId == draft.PlaceId)) pendingHazard = null;
+        }
+
+        if (tab == "hazards")
+        {
+            if (NoPlace) tab = "library";
+            await SearchAsync(BeginSearch());
+        }
+
+        await RateAsync();
     }
 
     private void SetCount(PreparedLine line, string? raw)
@@ -690,6 +834,8 @@ else
 
     private async Task SwitchTabAsync(string next)
     {
+        // The Hazards tab stays reachable by keyboard with no place (aria-disabled, so its reason is read); pressing it does nothing.
+        if (next == "hazards" && NoPlace) return;
         tab = next;
         await SearchAsync(BeginSearch());
     }
@@ -721,6 +867,13 @@ else
             results = found;
             capped = found.Count > ResultCap;
         }
+        else if (tab == "hazards")
+        {
+            var found = NoPlace ? new List<LibraryItem>() : (await Encounters.SearchHazardsAsync(Ctx.Campaign, Ctx.Access, query, L.Culture.Name, ResultCap + 1)).ToList();
+            if (token.IsCancellationRequested) return;
+            hazardResults = found;
+            capped = found.Count > ResultCap;
+        }
         else
         {
             var found = (await Encounters.CastChoicesAsync(Ctx.Access, query)).ToList();
@@ -734,7 +887,7 @@ else
 
     private string ResultCountText()
     {
-        var shown = Math.Min(ResultCap, tab == "library" ? results?.Count ?? 0 : castResults?.Count ?? 0);
+        var shown = Math.Min(ResultCap, tab == "library" ? results?.Count ?? 0 : tab == "hazards" ? NoPlace ? 0 : hazardResults?.Count ?? 0 : castResults?.Count ?? 0);
         var count = L["Encounters.Add.Count", shown];
         return capped ? count + " " + L["Encounters.Add.Capped", ResultCap] : count;
     }
@@ -748,14 +901,26 @@ else
             var wasNew = IsNew;
             // The service tidies and stores a copy, so the draft on the page is never the object that was stored; the new id is taken only once it is stored.
             var copy = JsonSerializer.Deserialize<PreparedEncounterDocument>(Snapshot())!;
-            var result = await Encounters.SaveAsync(Ctx.Campaign, Ctx.Access, copy);
+            // A hazard added here is placed on the plan's place by the save, before the plan is stored; if that fails nothing is saved and the check says why.
+            var result = await Encounters.SaveAsync(Ctx.Campaign, Ctx.Access, copy, pendingHazard);
             check = result.Check;
             if (!result.Saved)
             {
+                if (result.HazardPlaced)
+                {
+                    // The hazard is on the place already (only the plan was not stored): it is no longer waiting, and the list shows it with its tick.
+                    pendingHazard = null;
+                    hazardNotice = string.Empty;
+                    hazards = await Encounters.HazardsAtAsync(Ctx.Campaign, Ctx.Access, draft.RegionId, draft.PlaceId, L.Culture.Name);
+                }
+
                 Ctx.Notify(Flash.Error(L["Encounters.NotSaved"]));
                 return;
             }
 
+            pendingHazard = null;
+            hazardNotice = string.Empty;
+            draft.HazardsLeftOut = copy.HazardsLeftOut;
             draft.Id = copy.Id;
             Ctx.Notify(Flash.Success(L["Encounters.Saved", copy.Name]));
             savedJson = Snapshot();
@@ -795,7 +960,18 @@ else
     private async Task StartAtTableAsync()
     {
         if (draft == null || IsNew || startingPlan) return;
-        if (!await confirm.ShowAsync(L["Combat.Prepared.ConfirmTitle"], L["Combat.Prepared.Confirm", draft.Name, PreparedEncounterService.CombatantsOf(draft)], L["Combat.Prepared.Start"])) return;
+        var joining = 0;
+        try
+        {
+            // The stored plan starts (the button is off while the form is unsaved), so its hazards are the ones to count.
+            joining = (await Encounters.JoiningHazardsAsync(Ctx.Campaign, Ctx.Access, draft)).Count;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Counting the hazards of prepared encounter {Plan} failed", draft.Id);
+        }
+
+        if (!await confirm.ShowAsync(L["Combat.Prepared.ConfirmTitle"], PreparedConfirm.Text(L, draft.Name, PreparedEncounterService.CombatantsOf(draft), joining), L["Combat.Prepared.Start"])) return;
 
         startingPlan = true;
         startProblem = null;

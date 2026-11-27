@@ -51,6 +51,48 @@ public class PreparedEncounterPickerTests : ComponentTestBase
     }
 
     [Fact]
+    public async Task TheConfirmCountsTheComplexHazardsThatJoin_AndOnlyThem()
+    {
+        _w.Registry.RegisterEntry(new Codex.Plugin.Abstractions.ContentEntry { Id = "press", Type = "hazard", SystemId = "demo", PackId = "base", Name = "Crushing press", Properties = { ["complex"] = true } }, 0);
+        _w.Region.Locations.Single(l => l.Id == "vault").Feature!.Hazard!.Entry = "hazard/press";
+        _w.Actors.RemoveAll(a => a.Id == "stone-1");
+        await StoredAsync("Alpha", "vault", PreparedStatus.Ready);
+        var cut = Draw();
+        cut.WaitForState(() => cut.FindAll(Id("start-prepared-plan")).Count == 1, Patience);
+
+        cut.Find(Id("start-prepared-plan")).Click();
+
+        cut.WaitForState(() => cut.FindAll(Id("confirm-accept")).Count > 0, Patience);
+        Assert.Equal("Start Alpha? 2 creatures and 1 hazard join the fight and roll initiative.", cut.Find(".dialog-body p").TextContent);
+    }
+
+    [Fact]
+    public async Task WithNoHazardThatJoins_TheConfirmIsTheOldSentence()
+    {
+        await StoredAsync("Alpha", "cellar", PreparedStatus.Ready);
+        var cut = Draw();
+        cut.WaitForState(() => cut.FindAll(Id("start-prepared-plan")).Count == 1, Patience);
+
+        cut.Find(Id("start-prepared-plan")).Click();
+
+        cut.WaitForState(() => cut.FindAll(Id("confirm-accept")).Count > 0, Patience);
+        Assert.Equal("Start Alpha? 2 creatures join the fight and roll initiative.", cut.Find(".dialog-body p").TextContent);
+    }
+
+    [Theory]
+    [InlineData("en", 3, 1, "Start Ambush? 3 creatures and 1 hazard join the fight and roll initiative.")]
+    [InlineData("en", 1, 4, "Start Ambush? 1 creature and 4 hazards join the fight and roll initiative.")]
+    [InlineData("en", 0, 1, "Start Ambush? One hazard joins the fight and rolls initiative.")]
+    [InlineData("en", 0, 2, "Start Ambush? 2 hazards join the fight and roll initiative.")]
+    [InlineData("en", 2, 0, "Start Ambush? 2 creatures join the fight and roll initiative.")]
+    [InlineData("ru", 2, 1, "Начать «Ambush»? В бой вступают 2 существа и 1 опасность. Все бросают инициативу.")]
+    [InlineData("ru", 5, 3, "Начать «Ambush»? В бой вступают 5 существ и 3 опасности. Все бросают инициативу.")]
+    [InlineData("ru", 0, 5, "Начать «Ambush»? В бой вступают 5 опасностей и бросают инициативу.")]
+    [InlineData("he", 3, 1, "להתחיל את Ambush? 3 יצורים וסכנה אחת מצטרפים לקרב ומטילים יוזמה.")]
+    public void TheConfirmSentence_IsRightInEachLanguage(string culture, int creatures, int hazards, string expected) =>
+        Assert.Equal(expected, PreparedConfirm.Text(Localizer.For(culture), "Ambush", creatures, hazards));
+
+    [Fact]
     public void WithNoPlansReady_ItSaysSo_AndLinksToTheEncounters()
     {
         var cut = Draw();

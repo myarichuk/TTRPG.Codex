@@ -1,9 +1,11 @@
 using System.Collections.Concurrent;
 using Codex.Core;
 using Codex.Core.Rules;
+using Codex.Core.Systems;
 using Codex.Persistence;
 using Codex.Persistence.Runtime;
 using Codex.Plugin.Abstractions;
+using Codex.Web.Components.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace Codex.Web.Services;
@@ -33,7 +35,17 @@ public sealed record EncounterLineView(PreparedLine Line, string Name, bool Foun
 /// <summary>A hazard placed at the plan's place or under it, read live, with the place it stands on.</summary>
 /// <param name="Entry">The Library entry as <c>type/id</c> (a homebrew one too: see <paramref name="IsHomebrew"/>).</param>
 /// <param name="Complex">True for a hazard that is also an actor with a turn in initiative.</param>
-public sealed record EncounterHazard(string Name, HazardState State, string PlaceName, string PlaceId, string RegionId, string Entry = "", bool IsHomebrew = false, bool Complex = false);
+public sealed record EncounterHazard(string Name, HazardState State, string PlaceName, string PlaceId, string RegionId, string Entry = "", bool IsHomebrew = false, bool Complex = false)
+{
+    /// <summary>The key of this placement in <see cref="PreparedEncounterDocument.HazardsLeftOut"/>.</summary>
+    public string Key => PreparedEncounterDocument.HazardKey(RegionId, PlaceId);
+
+    /// <summary>Why a complex hazard would not join the order whatever the plan says (the table has it already is not known here): disarmed, or already set off. Null when it can.</summary>
+    public HazardState? CannotJoin => State is HazardState.Disabled or HazardState.Triggered ? State : null;
+}
+
+/// <summary>A complex hazard to place on the plan's place when the plan is saved (ENCOUNTER_BUILDER_DESIGN.md 18): the Library entry as <c>type/id</c>, and whether it is the campaign's own.</summary>
+public sealed record HazardToPlace(string Entry, bool IsHomebrew);
 
 /// <summary>A place the picker offers: with its region, and how deep in the region's tree it sits.</summary>
 public sealed record EncounterPlaceChoice(string RegionId, string RegionName, string PlaceId, string PlaceName, int Depth)
@@ -47,7 +59,7 @@ public sealed record EncounterView(PreparedEncounterDocument Plan, IReadOnlyList
     IReadOnlyList<EncounterHazard> Hazards, EncounterCheck Check);
 
 /// <summary>The outcome of a save: whether it was stored, the check that decided it, and the plan's id (set for a new plan once stored).</summary>
-public sealed record EncounterSave(bool Saved, EncounterCheck Check, string? Id);
+public sealed record EncounterSave(bool Saved, EncounterCheck Check, string? Id, bool HazardPlaced = false);
 
 /// <summary>Why a prepared encounter was not started. The page words each one as <c>Combat.Prepared.Refused.{value}</c>.</summary>
 public enum EncounterStartProblem
@@ -67,7 +79,7 @@ public enum EncounterStartProblem
 /// Library, a cast member gone or retired, a creature the cast could not make, an actor the table did not hold. <see cref="RunNotRecorded"/> is true when the
 /// encounter started but the plan could not be marked as run.</summary>
 public sealed record EncounterStart(bool Started, EncounterStartProblem? Problem, string? EncounterId, int Joined, IReadOnlyList<string> NotJoined,
-    bool RunNotRecorded = false, EncounterCheck? Check = null)
+    bool RunNotRecorded = false, EncounterCheck? Check = null, int JoinedHazards = 0)
 {
     public string? ProblemKey => Problem is { } p ? "Combat.Prepared.Refused." + p : null;
 
@@ -89,7 +101,7 @@ public sealed record EncounterRating(DifficultyRating Rating, PartySource Source
 /// refuses them besides. It also rates a lineup for the party (the difficulty readout, <see cref="RateAsync"/>).
 /// </summary>
 public sealed class PreparedEncounterService(IPreparedEncounterRepository plans, IRegionRepository regions, IActorRepository actors, CampaignLibrary library,
-    IContentRegistry registry, CastService? cast = null, CampaignRuntimeManager? runtimes = null, ILogger<PreparedEncounterService>? logger = null)
+    IContentRegistry registry, CastService? cast = null, CampaignRuntimeManager? runtimes = null, ILogger<PreparedEncounterService>? logger = null, ComponentRegistry? components = null)
 {
     public const int MaxCount = 20;
 
@@ -259,7 +271,9 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
 
     /// <summary>Checks the plan and, when it has no errors, stores it. A new plan has an empty id; the repository gives it one and writes it back on <paramref name="plan"/>,
     /// and <see cref="EncounterSave.Id"/> says it. Only Draft and Ready are set here: Ran is set by starting the plan, never by a save (the repository keeps it so).</summary>
-    public async Task<EncounterSave> SaveAsync(CampaignDocument campaign, CampaignAccess access, PreparedEncounterDocument plan)
+    /// <param name="place">A complex hazard the editor added: it is placed on the plan's place first (one hazard per place), and the plan is saved only if that worked. A plan never
+    /// holds an unplaced hazard line, so this is the whole of "adding a hazard" to a plan.</param>
+    public async Task<EncounterSave> SaveAsync(CampaignDocument campaign, CampaignAccess access, PreparedEncounterDocument plan, HazardToPlace? place = null)
     {
         if (!access.IsDm) return new EncounterSave(false, EncounterCheck.Refused, null);
         plan.CampaignId = access.CampaignId;
@@ -270,13 +284,107 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
 
         var check = await CheckAsync(campaign, access, plan);
         if (!check.Ok) return new EncounterSave(false, check, null);
+        if (place != null && await PlaceHazardAsync(campaign, access, plan, place) is { } refused)
+        {
+            return new EncounterSave(false, new EncounterCheck(new[] { new EncounterIssue(refused) }, check.Warnings), null);
+        }
+
+        // A left-out key that names no hazard at the place or under it (the plan moved, or the hazard was taken off the place) says nothing now: it is dropped quietly, so it
+        // cannot switch off a different hazard placed there later by the same address. Hazards placed later join as every other does.
+        plan.HazardsLeftOut = await TidyLeftOutAsync(access, plan);
         if (!await plans.SaveAsync(plan, access))
         {
-            return new EncounterSave(false, new EncounterCheck(new[] { new EncounterIssue("Encounters.Error.NotSaved") }, check.Warnings), null);
+            // The hazard may already stand on the place: the page must know, so it does not offer it again and the message does not say nothing happened.
+            return new EncounterSave(false, new EncounterCheck(new[] { new EncounterIssue(place != null ? "Encounters.Error.NotSavedHazardPlaced" : "Encounters.Error.NotSaved") }, check.Warnings), null, place != null);
         }
 
         return new EncounterSave(true, check, plan.Id);
     }
+
+    // ---- Complex hazards in a plan (ENCOUNTER_BUILDER_DESIGN.md 18) ----
+
+    private static ContentTypeDefinition? HazardTypeOf(SystemDefinition? system) => system?.EntityTypes.FirstOrDefault(t => t.Hazard != null);
+
+    /// <summary>The complex hazards that join the order when the plan starts: those placed at the plan's place or under it (the walk the Hazards panel and the quick-add panel
+    /// use), not disarmed, not already set off, not left out by the plan, and without an actor at the table already. The one reading of this, so the start, the confirm text
+    /// and the readout cannot differ.</summary>
+    private async Task<IReadOnlyList<HazardOffer>> JoiningAsync(CampaignDocument campaign, PreparedEncounterDocument plan, Reads reads)
+    {
+        if (string.IsNullOrEmpty(plan.PlaceId) || library.Definition(campaign) is not { } system || HazardTypeOf(system) is not { Hazard: not null } type) return Array.Empty<HazardOffer>();
+        var (region, place, _, _, _) = FindPlace(reads.Regions, plan);
+        if (region == null || place == null) return Array.Empty<HazardOffer>();
+        var offers = await HazardOffers.ForPlaceAsync(new[] { region }, place.Id, system, type, reads.Cast.Values,
+            stored => Task.FromResult(reads.Lookup(stored.EntryType, stored.EntryId, stored.IsHomebrew)?.Entry));
+        var left = (plan.HazardsLeftOut ?? new List<string>()).ToHashSet(StringComparer.Ordinal);
+        return offers
+            .Where(o => !left.Contains(PreparedEncounterDocument.HazardKey(o.Link.RegionId, o.Link.LocationId))
+                        && region.Locations.FirstOrDefault(l => l.Id == o.Link.LocationId)?.Feature?.Hazard?.State != HazardState.Triggered)
+            .ToList();
+    }
+
+    /// <summary>The names of the complex hazards that would join the order if the stored or edited <paramref name="plan"/> started now. Empty for anyone but a GM.</summary>
+    public async Task<IReadOnlyList<string>> JoiningHazardsAsync(CampaignDocument campaign, CampaignAccess access, PreparedEncounterDocument plan)
+    {
+        if (!access.IsDm) return Array.Empty<string>();
+        return (await JoiningAsync(campaign, plan, await ReadAsync(campaign, access, null))).Select(o => o.Definition.Name).ToList();
+    }
+
+    /// <summary>The same for several plans, reading the regions, the cast and the Library once: the names that would join, by plan id. Empty for anyone but a GM.</summary>
+    public async Task<IReadOnlyDictionary<string, IReadOnlyList<string>>> JoiningHazardsAsync(CampaignDocument campaign, CampaignAccess access, IEnumerable<PreparedEncounterDocument> forPlans)
+    {
+        var found = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        var list = forPlans.Where(p => !string.IsNullOrEmpty(p.PlaceId)).ToList();
+        if (!access.IsDm || list.Count == 0) return found;
+        var reads = await ReadAsync(campaign, access, null);
+        foreach (var plan in list) found[plan.Id] = (await JoiningAsync(campaign, plan, reads)).Select(o => o.Definition.Name).ToList();
+        return found;
+    }
+
+    /// <summary>The Library's and the campaign's own complex hazards for the editor's Hazards group, split from the creatures by the same test the quick-add panel uses
+    /// (a hazard is never a creature): the entries of the system's hazard type whose <c>complex</c> field is true. Empty for anyone but a GM.</summary>
+    public async Task<IReadOnlyList<LibraryItem>> SearchHazardsAsync(CampaignDocument campaign, CampaignAccess access, string query, string? culture = null, int limit = 30)
+    {
+        if (!access.IsDm || HazardTypeOf(library.Definition(campaign)) is not { } type) return Array.Empty<LibraryItem>();
+        var found = await library.SearchAsync(campaign, access, query, type.Type, limit: 200, culture);
+        return found.Where(i => HazardNumbers.IsComplex(i.Entry, type)).Take(limit).ToList();
+    }
+
+    /// <summary>Places a complex hazard on the plan's place, the way the Places form does (the place's own hazard, state Hidden). Null when it was placed, else the key of why not.</summary>
+    private async Task<string?> PlaceHazardAsync(CampaignDocument campaign, CampaignAccess access, PreparedEncounterDocument plan, HazardToPlace hazard)
+    {
+        if (string.IsNullOrEmpty(plan.PlaceId) || string.IsNullOrEmpty(plan.RegionId)) return "Encounters.Error.HazardNoPlace";
+        var system = library.Definition(campaign);
+        if (HazardTypeOf(system) is not { } type) return "Encounters.Error.HazardNotComplex";
+        var entry = new PlacedHazard { Entry = hazard.Entry, IsHomebrew = hazard.IsHomebrew, State = HazardState.Hidden };
+        if (entry.EntryType != type.Type || string.IsNullOrEmpty(entry.EntryId)) return "Encounters.Error.HazardGone";
+        if (await library.GetAsync(campaign, access, entry.EntryType, entry.EntryId, entry.IsHomebrew) is not { } item) return "Encounters.Error.HazardGone";
+        if (!HazardNumbers.IsComplex(item.Entry, type)) return "Encounters.Error.HazardNotComplex";
+
+        // A patch of the place's hazard alone, made only when it has none, so one hazard per place holds even when the table or another tab placed one meanwhile, and the rest of the
+        // place is never rewritten. Idempotent: the same hazard already there counts as placed, so a retry after the plan's own save failed goes through.
+        return await regions.PlaceHazardIfNoneAsync(plan.RegionId, plan.PlaceId, entry, access) switch
+        {
+            HazardPlacing.Placed or HazardPlacing.AlreadyThere => null,
+            HazardPlacing.Taken => "Encounters.Error.HazardTaken",
+            _ => "Encounters.Error.HazardPlaceGone"
+        };
+    }
+
+    /// <summary>The plan's left-out keys that still name a hazard placed at its place or under it, once each, in the order they were kept.</summary>
+    private async Task<List<string>> TidyLeftOutAsync(CampaignAccess access, PreparedEncounterDocument plan)
+    {
+        if (plan.HazardsLeftOut == null || plan.HazardsLeftOut.Count == 0) return new List<string>();
+        var (region, place, _, _, _) = FindPlace((await regions.GetVisibleForCampaignAsync(access)).ToList(), plan);
+        var placed = PlacedKeys(region, place);
+        return plan.HazardsLeftOut.Where(placed.Contains).Distinct(StringComparer.Ordinal).ToList();
+    }
+
+    /// <summary>The keys of every hazard placed at <paramref name="place"/> or under it, as <see cref="PreparedEncounterDocument.HazardsLeftOut"/> names them.</summary>
+    public static HashSet<string> PlacedKeys(RegionDocument? region, LocationDocument? place) =>
+        region == null || place == null
+            ? new HashSet<string>(StringComparer.Ordinal)
+            : region.Locations.Where(l => l.Feature?.Hazard != null && PlaceTree.Chain(region, l).Any(c => c.Id == place.Id))
+                .Select(l => PreparedEncounterDocument.HazardKey(region.Id, l.Id)).ToHashSet(StringComparer.Ordinal);
 
     public async Task<bool> DeleteAsync(CampaignDocument campaign, CampaignAccess access, string? route) =>
         await FindAsync(access, route) is { } plan && await plans.DeleteAsync(plan.Id, access);
@@ -396,6 +504,62 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
                 }
             }
 
+            // The complex hazards placed at the place or under it that join the order (JoiningAsync says which). Each gets its actor through the one helper the console's quick-add
+            // uses; the command joins it on the loop through JoinInitiativeCommand. An actor this start made is cleaned up with the creatures when the start does not happen.
+            var hazardJoins = new List<PreparedHazardJoin>();
+            IReadOnlyList<HazardOffer> offers;
+            try
+            {
+                offers = await JoiningAsync(campaign, plan, reads);
+            }
+            catch (Exception ex)
+            {
+                // A hazard entry that cannot be read must not leave this start's creatures on the cast with no start behind them.
+                logger?.LogError(ex, "Reading the hazards of prepared encounter {Plan} failed", plan.Id);
+                await CleanUpAsync();
+                return EncounterStart.Refused(EncounterStartProblem.Failed);
+            }
+
+            foreach (var offer in offers)
+            {
+                ActorDocument? actor = null;
+                try
+                {
+                    if (components == null)
+                    {
+                        notJoined.Add(offer.Definition.Name);
+                        continue;
+                    }
+
+                    actor = HazardOffers.ToActor(campaign.Id, offer, system, components);
+                    if (!await runtimes.TryCreateActorAsync(actor, access))
+                    {
+                        notJoined.Add(offer.Definition.Name);
+                        continue;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogWarning(ex, "Creating the actor of {Hazard} for prepared encounter {Plan} failed", offer.Definition.Name, plan.Id);
+                    // It may have been saved before the table failed to take it: if it is stored it is one this start made, so it is cleaned up with the rest.
+                    try
+                    {
+                        if (actor != null && await actors.GetVisibleAsync(actor.Id, access) != null) created.Add(actor.Id);
+                    }
+                    catch (Exception)
+                    {
+                        // The store cannot be read either; the actor is taken as not made.
+                    }
+
+                    notJoined.Add(offer.Definition.Name);
+                    continue;
+                }
+
+                created.Add(actor!.Id);
+                names[actor.Id] = actor.Name;
+                hazardJoins.Add(new PreparedHazardJoin(actor.Id, offer.Initiative));
+            }
+
             async Task CleanUpAsync()
             {
                 // Only what this start made: a cast member it reused is never touched.
@@ -415,7 +579,11 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
             EncounterStart Stopped(EncounterStartProblem problem, IEnumerable<string>? skipped = null) =>
                 new(false, problem, null, 0, notJoined.Concat((skipped ?? []).Select(s => names.GetValueOrDefault(s, s))).ToList());
 
-            if (ids.Count == 0) return Stopped(EncounterStartProblem.NobodyJoined);
+            if (ids.Count == 0 && hazardJoins.Count == 0)
+            {
+                await CleanUpAsync();
+                return Stopped(EncounterStartProblem.NobodyJoined);
+            }
 
             var runtime = runtimes.TryGet(access.CampaignId);
             if (runtime == null)
@@ -425,7 +593,7 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
             }
 
             var (_, place, placeName, _, _) = FindPlace(reads.Regions, plan);
-            var command = new StartPreparedEncounterCommand(plan.Id, plan.Name, place?.Id, placeName ?? string.Empty, ids, access.UserId);
+            var command = new StartPreparedEncounterCommand(plan.Id, plan.Name, place?.Id, placeName ?? string.Empty, ids, access.UserId, hazardJoins);
             try
             {
                 await runtime.EnqueueAsync(command);
@@ -447,10 +615,23 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
             if (command.Refusal is { } refusal)
             {
                 await CleanUpAsync();
-                return Stopped(refusal == PreparedStartRefusal.EncounterRunning ? EncounterStartProblem.EncounterRunning : EncounterStartProblem.NobodyJoined, command.Skipped);
+                return Stopped(refusal == PreparedStartRefusal.EncounterRunning ? EncounterStartProblem.EncounterRunning : EncounterStartProblem.NobodyJoined, command.Skipped.Concat(command.SkippedHazards));
             }
 
-            notJoined.AddRange(command.Skipped.Select(s => names.GetValueOrDefault(s, s)));
+            // A hazard that did not join is no creature the GM would keep on the cast: its actor goes, so its place offers it again. It is named to the GM like a creature.
+            foreach (var skipped in command.SkippedHazards)
+            {
+                try
+                {
+                    await runtimes.TryDeleteActorAsync(skipped, access);
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogWarning(ex, "Removing {Actor}, a hazard that did not join, failed", skipped);
+                }
+            }
+
+            notJoined.AddRange(command.Skipped.Concat(command.SkippedHazards).Select(s => names.GetValueOrDefault(s, s)));
             var marked = false;
             try
             {
@@ -463,7 +644,7 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
             }
 
             if (!marked) logger?.LogWarning("Prepared encounter {Plan} started but could not be marked as run", plan.Id);
-            return new EncounterStart(true, null, command.EncounterId, command.Joined.Count, notJoined, !marked);
+            return new EncounterStart(true, null, command.EncounterId, command.Joined.Count + command.JoinedHazards.Count, notJoined, !marked, null, command.JoinedHazards.Count);
         }
         finally
         {
@@ -482,7 +663,16 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
     public async Task<EncounterRating?> RateAsync(CampaignDocument campaign, CampaignAccess access, PreparedEncounterDocument plan, PartyOverride? party = null, string? culture = null)
     {
         var kit = await KitAsync(campaign, access, culture);
-        return kit == null ? null : RateWith(kit, plan, party);
+        if (kit == null) return null;
+        // The complex hazards that would join are listed apart in the readout ("not counted": no system declares a hazard's value), by name.
+        IReadOnlyList<string> hazards = Array.Empty<string>();
+        if (!string.IsNullOrEmpty(plan.PlaceId) && HazardTypeOf(kit.System) != null)
+        {
+            var reads = new Reads((await regions.GetVisibleForCampaignAsync(access)).ToList(), kit.Cast, kit.Lookup);
+            hazards = (await JoiningAsync(campaign, plan, reads)).Select(o => o.Definition.Name).ToList();
+        }
+
+        return RateWith(kit, plan, party, hazards);
     }
 
     private async Task<RateKit?> KitAsync(CampaignDocument campaign, CampaignAccess access, string? culture)
@@ -499,7 +689,7 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
             (string.IsNullOrWhiteSpace(rules.PartyLevel) ? system.FieldRoles.Level : rules.PartyLevel) ?? string.Empty, string.IsNullOrWhiteSpace(label) ? valueKey : label);
     }
 
-    private EncounterRating RateWith(RateKit kit, PreparedEncounterDocument plan, PartyOverride? party)
+    private EncounterRating RateWith(RateKit kit, PreparedEncounterDocument plan, PartyOverride? party, IReadOnlyList<string>? hazards = null)
     {
         var rules = kit.Rules;
         var (from, to) = LevelRange(kit);
@@ -534,7 +724,7 @@ public sealed class PreparedEncounterService(IPreparedEncounterRepository plans,
             }
         }
 
-        var lines = plan.Lines.Select(l => RatedLineOf(kit, l)).ToList();
+        var lines = plan.Lines.Select(l => RatedLineOf(kit, l)).Concat((hazards ?? Array.Empty<string>()).Select(h => new RatedLine(h, 1, null, null, Hazard: true))).ToList();
         return new EncounterRating(EncounterDifficulty.Rate(rules, levels, lines), source, unknown, from, to, defaultSize, from);
     }
 

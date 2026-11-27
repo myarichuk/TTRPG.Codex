@@ -178,6 +178,29 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
         return region != null && patched;
     }
 
+    public async Task<HazardPlacing> PlaceHazardIfNoneAsync(string regionId, string locationId, PlacedHazard hazard, CampaignAccess access)
+    {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { IsDm: true } current || PlacedHazard.Tidy(hazard) is not { } tidy) return HazardPlacing.Refused;
+        var result = HazardPlacing.Refused;
+        await RavenUpdate.RunAsync<RegionDocument>(dbService, regionId, doc =>
+        {
+            result = HazardPlacing.Refused;
+            var place = doc.Locations.FirstOrDefault(l => l.Id == locationId);
+            if (doc.CampaignId != current.CampaignId || place == null) return;
+            if (place.Feature?.Hazard is { } there)
+            {
+                result = there.Entry == tidy.Entry && there.IsHomebrew == tidy.IsHomebrew ? HazardPlacing.AlreadyThere : HazardPlacing.Taken;
+                return;
+            }
+
+            place.Feature ??= new PlaceFeature();
+            place.Feature.Hazard = tidy;
+            doc.UpdatedAt = DateTime.UtcNow;
+            result = HazardPlacing.Placed;
+        });
+        return result;
+    }
+
     public async Task<bool> SetLocationVisibilityAsync(string regionId, string locationId, ActorVisibility visibility, CampaignAccess access)
     {
         if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;

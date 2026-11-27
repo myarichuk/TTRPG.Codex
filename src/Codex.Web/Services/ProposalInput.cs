@@ -115,6 +115,9 @@ public sealed class ProposalEntry
     [JsonPropertyName("creatures"), Description("For an encounter, or an edit of one (then the COMPLETE new lineup): who is in it. Each line is an \"entry\" (a Library creature as search_library lists it, type/id; an existing homebrew one, existing:homebrew:<type>/<id>; the ref of a homebrew creature entry in this proposal; or a cast member, existing:actor:<id>, who is not a player character), a \"count\" (1 to 20, default 1; a cast member is always 1), a \"note\" and \"hidden\" (true when it starts hidden). A hazard is not a creature: put it on a place's feature.")]
     public List<ProposalCreature>? Creatures { get; set; }
 
+    [JsonPropertyName("hazardsLeftOut"), Description("For an encounter, or an edit of one (then the COMPLETE list): the complex hazards, the ones that also take a turn in the initiative order, that should NOT join it when the encounter starts. Name each by the place it is placed on, existing:place:<id>, at the encounter's place or under it (get_encounter and place_hazards say which hazards are placed there and which join). Every complex hazard there joins unless named here. An encounter never carries a hazard of its own: place one on a place's feature (feature.hazard). In an edit, [\"none\"] lets every hazard join; leave it out to keep the list.")]
+    public List<string>? HazardsLeftOut { get; set; }
+
     [JsonPropertyName("status"), Description("For an encounter, or an edit of one: draft (the default for a new one) or ready. Never started or run: only the game master starts an encounter.")]
     public string? Status { get; set; }
 

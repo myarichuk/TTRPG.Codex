@@ -131,4 +131,28 @@
   <data name="Encounters.Difficulty.DifferentHint" xml:space="preserve"><value>This only changes what is shown here. It is not saved.</value></data>
   <data name="Encounters.Difficulty.UseCampaign" xml:space="preserve"><value>Use the campaign's party</value></data>
   <data name="Encounters.BuildWithAi" xml:space="preserve"><value>Build with AI</value></data>
+  <data name="Encounters.Hazards.JoinsOrder" xml:space="preserve"><value>Joins the initiative order</value></data>
+  <data name="Encounters.Hazards.JoinsFor" xml:space="preserve"><value>{0} joins the initiative order</value></data>
+  <data name="Encounters.Error.NotSavedHazardPlaced" xml:space="preserve"><value>The hazard was placed on the place, but the encounter was not saved. Save again to store it.</value></data>
+  <data name="Encounters.Hazards.LeftOutFor" xml:space="preserve"><value>{0} will not join the initiative order</value></data>
+  <data name="Encounters.Hazards.WontJoin.Disabled" xml:space="preserve"><value>Disabled: it won't join</value></data>
+  <data name="Encounters.Hazards.WontJoin.Triggered" xml:space="preserve"><value>Triggered: it won't join</value></data>
+  <data name="Encounters.Hazards.Pending" xml:space="preserve"><value>{0} will be placed at {1} when you save</value></data>
+  <data name="Encounters.Hazards.PendingRemove" xml:space="preserve"><value>Don't place {0}</value></data>
+  <data name="Encounters.Hazards.PendingCleared" xml:space="preserve"><value>{0} was not added: {1} already has a hazard.</value></data>
+  <data name="Encounters.Add.Hazards" xml:space="preserve"><value>Hazards</value></data>
+  <data name="Encounters.Add.HazardsChoosePlace" xml:space="preserve"><value>Choose a place first</value></data>
+  <data name="Encounters.Add.SearchHazards" xml:space="preserve"><value>Search the Library's complex hazards and your homebrew</value></data>
+  <data name="Encounters.Add.Hazard" xml:space="preserve"><value>Place {0}</value></data>
+  <data name="Encounters.Add.HazardPlaced" xml:space="preserve"><value>{0} will be placed at {1} when you save.</value></data>
+  <data name="Encounters.Add.HazardTaken" xml:space="preserve"><value>{0} already has a hazard ({1}). A place holds one.</value></data>
+  <data name="Encounters.Add.HazardPendingAlready" xml:space="preserve"><value>A hazard is already waiting to be placed at {0}. A place holds one.</value></data>
+  <data name="Encounters.Add.HazardsHint" xml:space="preserve"><value>A complex hazard added here is placed on this encounter's place when you save. It takes its own turn in the initiative order.</value></data>
+  <data name="Encounters.Error.HazardNoPlace" xml:space="preserve"><value>Choose a place before adding a hazard to it.</value></data>
+  <data name="Encounters.Error.HazardGone" xml:space="preserve"><value>That hazard is no longer in the Library. Choose another.</value></data>
+  <data name="Encounters.Error.HazardNotComplex" xml:space="preserve"><value>Only a complex hazard, one that takes its own turn, can be added here. Place the others on the place's page.</value></data>
+  <data name="Encounters.Error.HazardPlaceGone" xml:space="preserve"><value>The place is no longer there, so the hazard could not be placed. Nothing was saved.</value></data>
+  <data name="Encounters.Error.HazardTaken" xml:space="preserve"><value>The place already has a hazard. A place holds one, so nothing was saved.</value></data>
+  <data name="Encounters.Error.HazardNotPlaced" xml:space="preserve"><value>The hazard could not be placed on the place. Nothing was saved.</value></data>
+  <data name="Encounters.Difficulty.HazardsJoin" xml:space="preserve"><value>Joining the order: {0}</value></data>
 </root>

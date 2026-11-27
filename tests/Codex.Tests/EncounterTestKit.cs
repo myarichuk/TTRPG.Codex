@@ -149,6 +149,23 @@ internal sealed class EncounterWorld
         Service = new PreparedEncounterService(plans ?? Plans, RegionRepo, ActorRepo, Library, Registry);
     }
 
+    /// <summary>Makes the region repository place a hazard the way the real one does: only on a place that has none (the same hazard again is "already there"), and only for a GM. <see cref="PlacingCalls"/> counts the writes.</summary>
+    public void StubPlacing()
+    {
+        RegionRepo.PlaceHazardIfNoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<PlacedHazard>(), Arg.Any<CampaignAccess>()).Returns(ci =>
+        {
+            var hazard = ci.Arg<PlacedHazard>();
+            if (!ci.Arg<CampaignAccess>().IsDm || Region.Locations.FirstOrDefault(l => l.Id == ci.ArgAt<string>(1)) is not { } place) return HazardPlacing.Refused;
+            if (place.Feature?.Hazard is { } there) return there.Entry == hazard.Entry && there.IsHomebrew == hazard.IsHomebrew ? HazardPlacing.AlreadyThere : HazardPlacing.Taken;
+            PlacingCalls++;
+            place.Feature ??= new PlaceFeature();
+            place.Feature.Hazard = hazard;
+            return HazardPlacing.Placed;
+        });
+    }
+
+    public int PlacingCalls { get; private set; }
+
     public static PreparedLine Bandits(int count = 3) => new() { Kind = PreparedLineKind.Creature, EntryType = "monster", EntryId = "bandit", Name = "Bandit", Count = count };
 
     public static PreparedLine Cast(string actorId, string name) => new() { Kind = PreparedLineKind.CastMember, ActorId = actorId, Name = name };

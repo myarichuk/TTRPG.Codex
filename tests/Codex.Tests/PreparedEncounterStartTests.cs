@@ -282,7 +282,7 @@ public class PreparedEncounterStartTests : IClassFixture<RavenDbFixture>, IDispo
     }
 
     private sealed record Table(PreparedEncounterService Service, CastService Cast, CampaignLibrary Library, CampaignRuntimeManager Manager, MemoryPlans Plans, ActorRepository Actors,
-        CampaignDocument Campaign, CampaignAccess Dm, ActorDocument Npc, ActorDocument Pc);
+        CampaignDocument Campaign, CampaignAccess Dm, ActorDocument Npc, ActorDocument Pc, RegionDocument Region);
 
     private static readonly TimeSpan Patience = TimeSpan.FromSeconds(10);
 
@@ -300,7 +300,8 @@ public class PreparedEncounterStartTests : IClassFixture<RavenDbFixture>, IDispo
         public Task DeleteAllForCampaignAsync(string campaignId) => inner.DeleteAllForCampaignAsync(campaignId);
     }
 
-    private async Task<Table> OpenAsync(bool live, IEncounterRepository? encounters = null)
+    /// <param name="shape">Changes the region and the campaign's homebrew entries before the table is built, so a test can place hazards.</param>
+    private async Task<Table> OpenAsync(bool live, IEncounterRepository? encounters = null, Action<RegionDocument, List<HomebrewEntryDocument>>? shape = null)
     {
         var components = new ComponentRegistry();
         components.Register<ResourcePoolComponent>();
@@ -344,13 +345,14 @@ public class PreparedEncounterStartTests : IClassFixture<RavenDbFixture>, IDispo
             Id = "r1", CampaignId = campaignId, Name = "Greywater",
             Locations = { new LocationDocument { Id = "cellar", Name = "Cellar" }, new LocationDocument { Id = "hall", Name = "Hall" } }
         };
+        shape?.Invoke(region, brews);
         regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(ci => ci.Arg<CampaignAccess>().IsDm ? new[] { region } : Array.Empty<RegionDocument>());
         var registry = new ContentRegistry();
         var library = new CampaignLibrary(registry, homebrew, loader);
         var cast = new CastService(manager, registry, components, loader, _actors, wiki);
         var plans = new MemoryPlans();
-        var service = new PreparedEncounterService(plans, regions, _actors, library, registry, cast, manager);
-        return new Table(service, cast, library, manager, plans, _actors, campaign, dm, npc, pc);
+        var service = new PreparedEncounterService(plans, regions, _actors, library, registry, cast, manager, null, components);
+        return new Table(service, cast, library, manager, plans, _actors, campaign, dm, npc, pc, region);
     }
 
     private static PreparedLine Creature(string id, string name, int count, bool hidden = false) => new()
@@ -749,5 +751,257 @@ public class PreparedEncounterStartTests : IClassFixture<RavenDbFixture>, IDispo
 
         Assert.Equal(new[] { "Bandit 1" }, made.Select(a => a.Name));
         Assert.Equal(1, saved());
+    }
+
+    // ---- Complex hazards join (ENCOUNTER_BUILDER_DESIGN.md 18) ----
+
+    private static HomebrewEntryDocument Hazard(string id, string name, long? initiative) => new()
+    {
+        CampaignId = "c", SystemId = "srd5e", Type = "hazard", EntryId = id, Name = name,
+        Properties = initiative == null ? new Dictionary<string, object>() : new Dictionary<string, object> { ["complex"] = true, ["initiative"] = initiative.Value, ["hitPoints"] = 20L }
+    };
+
+    private static LocationDocument PlaceWith(string id, string? parent, string? hazard, HazardState state = HazardState.Hidden) => new()
+    {
+        Id = id, Name = char.ToUpperInvariant(id[0]) + id[1..], ParentId = parent,
+        Feature = hazard == null ? null : new PlaceFeature { Hazard = new PlacedHazard { Entry = "hazard/" + hazard, IsHomebrew = true, State = state } }
+    };
+
+    /// <summary>The cellar holds a blade (complex, +3), the vault inside it a press (complex, +5), the pit inside it a dart trap (simple) and the hall, elsewhere, a blade.</summary>
+    private static void WithHazards(RegionDocument region, List<HomebrewEntryDocument> brews)
+    {
+        brews.Add(Hazard("blade", "Swinging blade", 3));
+        brews.Add(Hazard("press", "Crushing press", 5));
+        brews.Add(Hazard("dart", "Dart trap", null));
+        region.Locations.Clear();
+        region.Locations.AddRange(new[] { PlaceWith("cellar", null, "blade"), PlaceWith("vault", "cellar", "press"), PlaceWith("pit", "cellar", "dart"), PlaceWith("hall", null, "blade") });
+    }
+
+    private static async Task<List<ActorDocument>> HazardActorsAsync(Table t) => (await CastOf(t)).Where(a => a.Hazard != null && !a.Retired).OrderBy(a => a.Hazard!.LocationId).ToList();
+
+    [Fact]
+    public async Task StartAsync_JoinsEachPlacedComplexHazard_AtThePlaceAndUnderIt_Hidden_WithItsLink_ItsOwnBonusAndAGmOnlyLine_Async()
+    {
+        var t = await OpenAsync(live: true, shape: WithHazards);
+        var plan = await PlanAsync(t, "Cellar ambush", lines: new[] { Creature("bandit", "Bandit", 1) });
+
+        var result = await t.Service.StartAsync(t.Campaign, t.Dm, plan.Id);
+
+        Assert.True(result.Started, result.ProblemKey);
+        // The blade on the cellar and the press in the vault: not the dart trap (simple) nor the hall's blade (another place).
+        Assert.Equal(2, result.JoinedHazards);
+        Assert.Equal(3, result.Joined);
+        Assert.Empty(result.NotJoined);
+        var hazards = await HazardActorsAsync(t);
+        Assert.Equal(new[] { "cellar", "vault" }, hazards.Select(a => a.Hazard!.LocationId));
+        Assert.All(hazards, a =>
+        {
+            Assert.Equal(ActorVisibility.Hidden, a.Visibility);
+            Assert.Equal("r1", a.Hazard!.RegionId);
+            Assert.True(a.Hazard.IsHomebrew);
+        });
+        Assert.Equal("hazard/blade", hazards[0].Hazard!.Entry);
+        Assert.Equal("Swinging blade", hazards[0].Name);
+
+        var runtime = t.Manager.TryGet(t.Campaign.Id)!;
+        Assert.Equal(3, runtime.ActiveEncounter!.Participants.Count);
+        Assert.Equal("cellar", runtime.ActiveEncounter.LocationId);
+        // The roll is the console's: a secret entry of the log with the die and the hazard's own bonus.
+        var rolls = runtime.ActiveSession!.RollLog;
+        var blade = rolls.Single(r => r.ActorId == hazards[0].Id);
+        var press = rolls.Single(r => r.ActorId == hazards[1].Id);
+        Assert.True(blade.IsSecret);
+        Assert.Equal("1d20+3", blade.Expression);
+        Assert.True(press.IsSecret);
+        Assert.Equal("1d20+5", press.Expression);
+        Assert.Equal(3, rolls.Count);
+        Assert.Single(rolls, r => !r.IsSecret);
+        // Its line is the console's, and names the hazard as a GM-only term.
+        var lines = runtime.ActiveSession.Events.Where(e => e.Type == "Hazard" && e.Parts.Any(p => p.Key == "Hazard.Joined")).ToList();
+        Assert.Equal(2, lines.Count);
+        Assert.All(lines, e => Assert.StartsWith(EventTerm.GmOnlyKind + ":", e.Parts[0].Kinds[0]));
+        // A player sees none of it.
+        var seen = SessionEventRedactor.ForViewer(runtime.ActiveSession.Events, new CampaignAccess(t.Campaign.Id, "player-1", CampaignRole.Player), Array.Empty<ActorDocument>());
+        Assert.DoesNotContain(seen, e => e.Type == "Hazard");
+        Assert.DoesNotContain("blade", string.Join(" ", seen.Select(e => e.Description)), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task StartAsync_SkipsAHazardLeftOut_Disarmed_SetOff_OrAlreadyAtTheTable_AndJoinsTheRest_Async()
+    {
+        var t = await OpenAsync(live: true, shape: (region, brews) =>
+        {
+            WithHazards(region, brews);
+            region.Locations.Single(l => l.Id == "vault").Feature!.Hazard!.State = HazardState.Disabled;
+            region.Locations.AddRange(new[]
+            {
+                PlaceWith("lab", "cellar", "blade", HazardState.Triggered), PlaceWith("cave", "cellar", "press"), PlaceWith("attic", "cellar", "blade", HazardState.Noticed)
+            });
+        });
+        await t.Actors.SaveAsync(new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = t.Campaign.Id, Name = "Crushing press", Kind = ActorKind.Monster, Visibility = ActorVisibility.Hidden,
+            Hazard = new HazardActorLink { RegionId = "r1", LocationId = "cave", Entry = "hazard/press", IsHomebrew = true }
+        });
+        var plan = await PlanAsync(t, "Cellar ambush", lines: new[] { Creature("bandit", "Bandit", 1) });
+        plan.HazardsLeftOut.Add(PreparedEncounterDocument.HazardKey("r1", "cellar"));
+        Assert.True(await t.Plans.SaveAsync(plan, t.Dm));
+        var before = (await HazardActorsAsync(t)).Select(a => a.Id).ToHashSet();
+
+        var result = await t.Service.StartAsync(t.Campaign, t.Dm, plan.Id);
+
+        Assert.True(result.Started, result.ProblemKey);
+        // Left out (cellar), disarmed (vault), set off (lab) and already at the table (cave) stay out; the attic's joins.
+        Assert.Equal(1, result.JoinedHazards);
+        var made = (await HazardActorsAsync(t)).Where(a => !before.Contains(a.Id)).ToList();
+        Assert.Equal("attic", Assert.Single(made).Hazard!.LocationId);
+    }
+
+    [Fact]
+    public async Task StartAsync_APlanWithNoPlace_JoinsNoHazards_Async()
+    {
+        var t = await OpenAsync(live: true, shape: WithHazards);
+        var plan = await PlanAsync(t, "Roadside", place: null, lines: new[] { Creature("bandit", "Bandit", 1) });
+
+        var result = await t.Service.StartAsync(t.Campaign, t.Dm, plan.Id);
+
+        Assert.True(result.Started, result.ProblemKey);
+        Assert.Equal(0, result.JoinedHazards);
+        Assert.Equal(1, result.Joined);
+        Assert.Empty(await HazardActorsAsync(t));
+    }
+
+    [Fact]
+    public async Task StartAsync_APlanOfOnlyHazards_Starts_WithTheHazardsInTheOrder_Async()
+    {
+        var t = await OpenAsync(live: true, shape: WithHazards);
+        var plan = await PlanAsync(t, "Vault only", place: "vault");
+
+        var result = await t.Service.StartAsync(t.Campaign, t.Dm, plan.Id);
+
+        Assert.True(result.Started, result.ProblemKey);
+        Assert.Equal(1, result.Joined);
+        Assert.Equal(1, result.JoinedHazards);
+        var runtime = t.Manager.TryGet(t.Campaign.Id)!;
+        Assert.Equal((await HazardActorsAsync(t)).Single().Id, Assert.Single(runtime.ActiveEncounter!.Participants).ActorId);
+        Assert.Equal(PreparedStatus.Ran, t.Plans.Held[plan.Id].Status);
+    }
+
+    [Fact]
+    public async Task StartAsync_APlanWithNothingToJoin_IsNobodyJoined_AndMakesNoHazardActor_Async()
+    {
+        var t = await OpenAsync(live: true, shape: WithHazards);
+        var plan = await PlanAsync(t, "Pit only", place: "pit");
+
+        var result = await t.Service.StartAsync(t.Campaign, t.Dm, plan.Id);
+
+        Assert.Equal(EncounterStartProblem.NobodyJoined, result.Problem);
+        Assert.Empty(await HazardActorsAsync(t));
+    }
+
+    [Fact]
+    public async Task StartAsync_RefusedOnTheLoop_AlsoRemovesTheHazardActorsItMade_Async()
+    {
+        var t = await OpenAsync(live: true, shape: WithHazards);
+        var plan = await PlanAsync(t, "Cellar ambush", lines: new[] { Creature("bandit", "Bandit", 1) });
+        var runtime = t.Manager.TryGet(t.Campaign.Id)!;
+        using var gate = new SemaphoreSlim(0);
+        Task<EncounterStart>? start = null;
+        try
+        {
+            _ = runtime.EnqueueAsync(new Hold(gate));
+            _ = runtime.EnqueueAsync(new RollInitiativeCommand(t.Pc.Id, "1d20", "owner"));
+            start = t.Service.StartAsync(t.Campaign, t.Dm, plan.Id);
+            // The start is held at its first creature's hydrate; once the gate opens it makes the two hazard actors and then its command is refused.
+            await WaitUntilAsync(async () => (await CastOf(t)).Any(a => a.Name == "Bandit"));
+        }
+        finally
+        {
+            gate.Release();
+        }
+
+        var result = await start!.WaitAsync(Patience);
+
+        Assert.Equal(EncounterStartProblem.EncounterRunning, result.Problem);
+        Assert.Empty(await HazardActorsAsync(t));
+        Assert.DoesNotContain(await CastOf(t), a => a.Name == "Bandit");
+        Assert.Equal(t.Pc.Id, Assert.Single(runtime.ActiveEncounter!.Participants).ActorId);
+        // Nothing is left at the table for them either: every actor on it is still stored.
+        var stored = await CastOf(t);
+        Assert.DoesNotContain(runtime.Snapshot.Actors.Keys, id => stored.All(a => a.Id != id));
+    }
+
+    // ---- The command, with hazards ----
+
+    [Fact]
+    public async Task TheCommand_JoinsHazardsAfterTheCreatures_ThroughTheConsolesJoin_SecretlyWithTheirOwnBonus_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var ogre = await SeedAsync(campaignId, "Ogre", 14, visibility: ActorVisibility.Unknown, publicName: "Ogre");
+        var stone = await SeedAsync(campaignId, "Rolling stone", 10);
+        var session = await SeedSessionAsync(campaignId);
+        var dice = ScriptedDice();
+        await using var runtime = Runtime(campaignId, session, dice);
+        runtime.Hydrate(new[] { ogre, stone });
+
+        var command = new StartPreparedEncounterCommand("plan-1", "Cellar ambush", "cellar", "Cellar", new[] { ogre.Id }, "gm", new[] { new PreparedHazardJoin(stone.Id, 4) });
+        await runtime.EnqueueAsync(command);
+
+        Assert.Null(command.Refusal);
+        Assert.Equal(new[] { ogre.Id }, command.Joined);
+        Assert.Equal(new[] { stone.Id }, command.JoinedHazards);
+        Assert.Empty(command.SkippedHazards);
+        Assert.Equal(2, runtime.ActiveEncounter!.Participants.Count);
+        dice.Received(1).Roll("1d20+4");
+        var roll = session.RollLog.Single(r => r.ActorId == stone.Id);
+        Assert.True(roll.IsSecret);
+        Assert.Equal("1d20+4", roll.Expression);
+        Assert.Equal(10, runtime.ActiveEncounter.Participants.Single(p => p.ActorId == stone.Id).InitiativeRoll);
+        var types = session.Events.Select(e => e.Type).ToList();
+        Assert.Equal(new[] { "EncounterStarted", "Initiative", "Hazard" }, types.Skip(types.IndexOf("EncounterStarted")).Take(3));
+
+        // A player's log has the creature's roll and not a word of the hazard, nor a count that would give it away.
+        var seen = SessionEventRedactor.ForViewer(session.Events, new CampaignAccess(campaignId, "player-1", CampaignRole.Player), new[] { ogre });
+        Assert.DoesNotContain(seen, e => e.Type is "Hazard" or "EncounterStarted");
+        Assert.DoesNotContain("stone", string.Join(" ", seen.Select(e => e.Description)), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task TheCommand_AHazardTheTableDoesNotHold_IsSkippedApart_AndNeverCountedInTheLogLine_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var ogre = await SeedAsync(campaignId, "Ogre", 14);
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session, ScriptedDice());
+        runtime.Hydrate(new[] { ogre });
+
+        var command = new StartPreparedEncounterCommand("plan-1", "Cellar ambush", "cellar", "Cellar", new[] { ogre.Id }, "gm", new[] { new PreparedHazardJoin("ghost", 4) });
+        await runtime.EnqueueAsync(command);
+
+        Assert.Null(command.Refusal);
+        Assert.Equal(new[] { "ghost" }, command.SkippedHazards);
+        Assert.Empty(command.Skipped);
+        Assert.DoesNotContain(session.Events, e => e.Parts.Any(p => p.Key == "Encounter.NotJoined"));
+    }
+
+    [Fact]
+    public async Task TheCommand_WithOnlyHazards_Starts_AndWithOnlyAHazardNobodyHolds_IsRefused_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var stone = await SeedAsync(campaignId, "Rolling stone", 10);
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session, ScriptedDice());
+        runtime.Hydrate(new[] { stone });
+
+        var nobody = new StartPreparedEncounterCommand("plan-1", "Cellar ambush", "cellar", "Cellar", Array.Empty<string>(), "gm", new[] { new PreparedHazardJoin("ghost", 4) });
+        await runtime.EnqueueAsync(nobody);
+        Assert.Equal(PreparedStartRefusal.NobodyAtTable, nobody.Refusal);
+        Assert.Null(runtime.ActiveEncounter);
+
+        var only = new StartPreparedEncounterCommand("plan-1", "Cellar ambush", "cellar", "Cellar", Array.Empty<string>(), "gm", new[] { new PreparedHazardJoin(stone.Id, 4) });
+        await runtime.EnqueueAsync(only);
+        Assert.Null(only.Refusal);
+        Assert.Equal(stone.Id, Assert.Single(runtime.ActiveEncounter!.Participants).ActorId);
+        Assert.Equal("plan-1", runtime.ActiveEncounter.PreparedEncounterId);
     }
 }

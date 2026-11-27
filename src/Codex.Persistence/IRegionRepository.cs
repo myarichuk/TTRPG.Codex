@@ -3,6 +3,22 @@ namespace Codex.Persistence;
 /// <summary>A place taken off the map, and the places inside it that moved up to its parent.</summary>
 public sealed record RemovedLocation(LocationDocument Location, IReadOnlyList<string> MovedIds);
 
+/// <summary>What <see cref="IRegionRepository.PlaceHazardIfNoneAsync"/> did.</summary>
+public enum HazardPlacing
+{
+    /// <summary>The place had no hazard; it holds this one now.</summary>
+    Placed,
+
+    /// <summary>The place already holds this very hazard (the same entry): nothing was written.</summary>
+    AlreadyThere,
+
+    /// <summary>The place holds another hazard: nothing was written.</summary>
+    Taken,
+
+    /// <summary>The region or the place is not there, or the caller may not write it.</summary>
+    Refused
+}
+
 public interface IRegionRepository
 {
     /// <summary>
@@ -34,6 +50,11 @@ public interface IRegionRepository
     /// call <paramref name="change"/> again (it must be a pure function of the stored hazard, and may run more than once). Campaign-scoped, not user-scoped: the table's runtime writes it, and only a DM's table runs. False when the region,
     /// the place or its hazard is not there, or <paramref name="change"/> left it.</summary>
     Task<bool> PatchPlacedHazardAsync(string campaignId, string regionId, string locationId, Func<PlacedHazard, PlacedHazard?> change);
+
+    /// <summary>Places <paramref name="hazard"/> on one place only when it has none (a prepared encounter's editor adds a hazard this way): a patch of
+    /// <see cref="PlaceFeature.Hazard"/> alone, under the same optimistic concurrency as <see cref="PatchPlacedHazardAsync"/>, so the rest of the place is never rewritten.
+    /// Idempotent: a place that already holds the same entry (and homebrew flag) answers <see cref="HazardPlacing.AlreadyThere"/> and is left as it is. DM only.</summary>
+    Task<HazardPlacing> PlaceHazardIfNoneAsync(string regionId, string locationId, PlacedHazard hazard, CampaignAccess access);
 
     /// <summary>Sets a location's visibility - the "Reveal to party" action (2.5). DM only.</summary>
     Task<bool> SetLocationVisibilityAsync(string regionId, string locationId, ActorVisibility visibility, CampaignAccess access);

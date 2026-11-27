@@ -64,6 +64,48 @@ public class WorldProposalEncounterTests : ComponentTestBase
         Assert.False(ticks["Ambush"]); // the delete is the game master's to tick
     }
 
+    private static WorldBundle LeftOutBundle(WorldDraft draft)
+    {
+        var bundle = new WorldBundle();
+        bundle.Drafts.Add(draft);
+        return bundle;
+    }
+
+    [Fact]
+    public void TheCard_ShowsWhichHazardsAreLeftOutOfTheOrder_ForANewEncounter()
+    {
+        var cut = Draw(LeftOutBundle(new WorldDraft
+        {
+            Ref = "f", Kind = DraftKinds.Encounter, Name = "Ambush", OutlineName = "Ambush", Place = "existing:place:cellar", PlaceName = "Cellar", Status = "draft",
+            HazardsLeftOut = { "vault" }, HazardsLeftOutNames = { "Vault" }, Lineup = { new DraftLine { Entry = "monster/wolf", Type = "monster", Id = "wolf", Count = 1, Name = "Wolf" } }
+        }));
+
+        Open(cut, "Ambush");
+
+        Assert.Equal("Left out of the order: Vault", cut.Find(Id("world-encounter-leftout")).TextContent.Trim());
+    }
+
+    [Fact]
+    public void AnEditThatOnlyChangesTheList_ShowsIt_AndAnEmptyListSaysEveryHazardJoins()
+    {
+        var edit = Draw(LeftOutBundle(new WorldDraft
+        {
+            Ref = "g", Kind = DraftKinds.Edit, Target = PlanKey, Name = "Wolves", OutlineName = "Wolves", HazardsLeftOutGiven = true, HazardsLeftOut = { "vault", "hall" }, HazardsLeftOutNames = { "Vault", "Hall" }
+        }));
+        Open(edit, "Wolves");
+        Assert.Equal("Left out of the order: Vault, Hall", edit.Find(Id("world-encounter-leftout")).TextContent.Trim());
+    }
+
+    [Fact]
+    public void AnEditThatEmptiesTheList_SaysEveryHazardThereJoins()
+    {
+        var cut = Draw(LeftOutBundle(new WorldDraft { Ref = "h", Kind = DraftKinds.Edit, Target = PlanKey, Name = "Rats", OutlineName = "Rats", HazardsLeftOutGiven = true }));
+
+        Open(cut, "Rats");
+
+        Assert.Contains("nothing (every hazard there joins)", cut.Find(Id("world-encounter-leftout")).TextContent);
+    }
+
     [Fact]
     public void AnEncounterEntry_ShowsItsPlace_Lineup_Notes_Status_Readout_AndTheHazardsAtItsPlace()
     {

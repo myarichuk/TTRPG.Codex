@@ -33,6 +33,7 @@ public sealed class RavenPreparedEncounterRepository(RavenDbService dbService) :
         if (document.CampaignId != current.CampaignId) return false;
         document.Lines ??= new List<PreparedLine>();
         document.Tags ??= new List<string>();
+        document.HazardsLeftOut ??= new List<string>();
 
         if (string.IsNullOrEmpty(document.Id))
         {
@@ -63,6 +64,7 @@ public sealed class RavenPreparedEncounterRepository(RavenDbService dbService) :
             stored.Lines = document.Lines;
             stored.Notes = document.Notes;
             stored.Tags = document.Tags;
+            stored.HazardsLeftOut = document.HazardsLeftOut ?? new List<string>();
             stored.FromChatId = document.FromChatId;
             stored.UpdatedAt = DateTime.UtcNow;
             // Only MarkRunAsync sets Ran: a plan with stored runs stays Ran whatever the copy says; one with none cannot be Ran.
@@ -151,6 +153,7 @@ public sealed class RavenPreparedEncounterRepository(RavenDbService dbService) :
         if (string.IsNullOrEmpty(document.Id)) document.Id = PreparedEncounterDocument.IdPrefix + Guid.NewGuid();
         document.Lines ??= new List<PreparedLine>();
         document.Tags ??= new List<string>();
+        document.HazardsLeftOut ??= new List<string>();
         document.RunEncounterIds ??= new List<string>();
         // An upsert, as every other document of an import is, but only over this campaign's own plan, or at an id nothing is stored at and that a plan
         // can have (the prefix, or a bare GUID as an import as a copy makes). Another campaign's document, another kind's, and the per-campaign ids

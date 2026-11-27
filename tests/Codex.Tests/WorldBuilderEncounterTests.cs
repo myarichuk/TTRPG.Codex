@@ -601,4 +601,141 @@ public class WorldBuilderEncounterTests
         Assert.True(prompt.IndexOf("The party has", StringComparison.Ordinal) > prompt.IndexOf("how the fight can end", StringComparison.Ordinal));
     }
 
+    // ---- Hazards left out of the initiative order (ENCOUNTER_BUILDER_DESIGN.md 18) ----
+
+    private static string Enc(string extra) =>
+        $$"""{"ref": "f", "kind": "encounter", "name": "Ambush", "place": "existing:place:cellar", "creatures": [{"entry": "monster/wolf"}]{{extra}}}""";
+
+    [Fact]
+    public async Task AnEncounter_CanLeaveAHazardOutOfTheOrder_ByThePlaceItStandsOn_AndItIsSavedAsThePlansKey()
+    {
+        var kit = new Kit();
+        var check = await kit.CheckAsync(Enc(""", "hazardsLeftOut": ["existing:place:vault"]"""));
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Empty(check.Warnings);
+
+        await kit.Builder.SaveAsync(kit.W.Campaign, kit.W.Gm, check.Bundle);
+
+        Assert.Equal(new[] { PreparedEncounterDocument.HazardKey("r1", "vault") }, Assert.Single(kit.W.Plans.Held.Values).HazardsLeftOut);
+    }
+
+    [Fact]
+    public async Task AKeyOutsideThePlansPlaceChain_OrNotAPlaceKey_OrForAPlaceThisProposalMakes_IsRefused()
+    {
+        var kit = new Kit();
+
+        var outside = await kit.CheckAsync(Enc(""", "hazardsLeftOut": ["existing:place:hall"]"""));
+        var bare = await kit.CheckAsync(Enc(""", "hazardsLeftOut": ["vault"]"""));
+        var gone = await kit.CheckAsync(Enc(""", "hazardsLeftOut": ["existing:place:nowhere"]"""));
+        var made = await kit.CheckAsync("""
+            {"ref": "c", "kind": "place", "name": "Wine cellar", "placeKind": "room", "parent": "existing:place:hall"},
+            {"ref": "f", "kind": "encounter", "name": "Ambush", "place": "c", "creatures": [{"entry": "monster/wolf"}], "hazardsLeftOut": ["existing:place:vault"]}
+            """);
+
+        Assert.False(outside.Ok);
+        Assert.Contains(outside.Errors, e => e.Contains("'hall'") && e.Contains("not at the encounter's place or under it"));
+        Assert.Contains(bare.Errors, e => e.Contains("name the place the hazard is on"));
+        Assert.Contains(gone.Errors, e => e.Contains("'nowhere'") && e.Contains("not at the encounter's place or under it"));
+        Assert.Contains(made.Errors, e => e.Contains("no existing place yet"));
+        Assert.Empty(kit.W.Plans.Held);
+    }
+
+    [Fact]
+    public async Task APlaceWithNoHazardPlaced_IsAWarning_AndChangesNothing()
+    {
+        var kit = new Kit();
+        kit.W.Region.Locations.Add(new LocationDocument { Id = "attic", Name = "Attic", ParentId = "cellar" });
+
+        var check = await kit.CheckAsync(Enc(""", "hazardsLeftOut": ["existing:place:attic"]"""));
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Contains(check.Warnings, w => w.Contains("'Attic'") && w.Contains("no hazard placed"));
+        await kit.Builder.SaveAsync(kit.W.Campaign, kit.W.Gm, check.Bundle);
+        // The save keeps only what stands at a hazard.
+        Assert.Empty(Assert.Single(kit.W.Plans.Held.Values).HazardsLeftOut);
+    }
+
+    [Fact]
+    public async Task AnEdit_KeepsTheListWhenItIsLeftOut_ReplacesItWhenGiven_AndNoneEmptiesIt()
+    {
+        var kit = new Kit();
+        var plan = await kit.StoreAsync("Ambush", "cellar");
+        plan.HazardsLeftOut.Add("r1/vault");
+        Assert.True((await kit.W.Service.SaveAsync(kit.W.Campaign, kit.W.Gm, plan)).Saved);
+        var key = Kit.Route(plan);
+        string Edit(string more) => $$"""{"ref": "g", "kind": "edit", "target": "existing:encounter:{{key}}", "rename": "Renamed"{{more}}}""";
+
+        // Left out of the entry, or an empty list: the stored list stays (a model that fills every optional field changes nothing).
+        foreach (var more in new[] { string.Empty, ", \"hazardsLeftOut\": []" })
+        {
+            var same = await kit.CheckAsync(Edit(more));
+            Assert.True(same.Ok, string.Join("; ", same.Errors));
+            await kit.Builder.SaveAsync(kit.W.Campaign, kit.W.Gm, same.Bundle);
+            Assert.Equal(new[] { "r1/vault" }, kit.W.Plans.Held[plan.Id].HazardsLeftOut);
+        }
+
+        var replace = await kit.CheckAsync(Edit(""", "hazardsLeftOut": ["existing:place:cellar"]"""));
+        Assert.True(replace.Ok, string.Join("; ", replace.Errors));
+        await kit.Builder.SaveAsync(kit.W.Campaign, kit.W.Gm, replace.Bundle);
+        Assert.Equal(new[] { "r1/cellar" }, kit.W.Plans.Held[plan.Id].HazardsLeftOut);
+
+        var none = await kit.CheckAsync(Edit(""", "hazardsLeftOut": ["none"]"""));
+        Assert.True(none.Ok, string.Join("; ", none.Errors));
+        await kit.Builder.SaveAsync(kit.W.Campaign, kit.W.Gm, none.Bundle);
+        Assert.Empty(kit.W.Plans.Held[plan.Id].HazardsLeftOut);
+    }
+
+    [Fact]
+    public async Task AnEditThatOnlyGivesTheList_IsAChange_AndIsCheckedAgainstThePlansOwnPlace_AndADeleteStaysAlone()
+    {
+        var kit = new Kit();
+        var plan = await kit.StoreAsync("Ambush", "cellar");
+        var key = Kit.Route(plan);
+
+        var only = await kit.CheckAsync($$"""{"ref": "g", "kind": "edit", "target": "existing:encounter:{{key}}", "hazardsLeftOut": ["existing:place:vault"]}""");
+        var outside = await kit.CheckAsync($$"""{"ref": "g", "kind": "edit", "target": "existing:encounter:{{key}}", "hazardsLeftOut": ["existing:place:hall"]}""");
+        var delete = await kit.CheckAsync($$"""{"ref": "g", "kind": "edit", "target": "existing:encounter:{{key}}", "delete": true, "hazardsLeftOut": ["existing:place:vault"]}""");
+
+        Assert.True(only.Ok, string.Join("; ", only.Errors));
+        Assert.Contains(outside.Errors, e => e.Contains("not at the encounter's place or under it"));
+        Assert.Contains(delete.Errors, e => e.Contains("stands alone"));
+    }
+
+    [Fact]
+    public void TheProposalToolCarriesTheField_ByItsName()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(new ProposalEntry { HazardsLeftOut = new List<string> { "existing:place:vault" } });
+
+        Assert.Contains("\"hazardsLeftOut\":[\"existing:place:vault\"]", json);
+    }
+
+    [Fact]
+    public async Task TheReadTools_SayWhichHazardsJoinTheOrder_AndWhichDoNot()
+    {
+        var kit = new Kit();
+        kit.W.Registry.RegisterEntry(new ContentEntry { Id = "press", Type = "hazard", SystemId = "demo", PackId = "base", Name = "Crushing press", Properties = { ["complex"] = true } }, 0);
+        kit.W.Region.Locations.Single(l => l.Id == "vault").Feature!.Hazard!.Entry = "hazard/press";
+        kit.W.Actors.RemoveAll(a => a.Id == "stone-1");
+        var plan = await kit.StoreAsync("Ambush", "cellar");
+        var route = Kit.Route(plan);
+
+        var listed = await kit.Builder.ListEncountersAsync(kit.W.Campaign, kit.W.Gm, null);
+        var read = await kit.Builder.EncounterAsync(kit.W.Campaign, kit.W.Gm, $"existing:encounter:{route}");
+
+        Assert.Contains("hazards that join the initiative order: Crushing press", listed);
+        Assert.Contains("hazard/press \"Crushing press\": hidden", read);
+        Assert.Contains("complex (also takes a turn in the order); joins the initiative order when the encounter starts", read);
+        // The simple pit has nothing to say about it.
+        Assert.DoesNotContain("spiked-pit \"Spiked pit\": noticed; on \"Cellar\" existing:place:cellar; simple; ", read);
+
+        plan.HazardsLeftOut.Add("r1/vault");
+        Assert.True((await kit.W.Service.SaveAsync(kit.W.Campaign, kit.W.Gm, plan)).Saved);
+        var after = await kit.Builder.EncounterAsync(kit.W.Campaign, kit.W.Gm, $"existing:encounter:{route}");
+        Assert.Contains("left out of the initiative order by this encounter (hazardsLeftOut existing:place:vault)", after);
+        Assert.DoesNotContain("hazards that join the initiative order", await kit.Builder.ListEncountersAsync(kit.W.Campaign, kit.W.Gm, null));
+
+        kit.W.Region.Locations.Single(l => l.Id == "vault").Feature!.Hazard!.State = HazardState.Disabled;
+        Assert.Contains("will not join the initiative order: made safe", await kit.Builder.EncounterAsync(kit.W.Campaign, kit.W.Gm, $"existing:encounter:{route}"));
+    }
+
 }

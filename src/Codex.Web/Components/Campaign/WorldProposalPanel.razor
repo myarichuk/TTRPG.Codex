@@ -654,6 +654,12 @@
             <p data-testid="world-encounter-readout"><LucideIcon IconName="scroll-text" Size="14" /> @L["WorldChat.Proposal.Encounter.Readout", readout]</p>
         }
 
+        // Which hazards stay out of the initiative order: a new encounter that names some, or an edit that gives the list (an empty one says that every hazard there joins).
+        if (d.HazardsLeftOutNames.Count > 0 || (edit && d.HazardsLeftOutGiven))
+        {
+            <p class="small" data-testid="world-encounter-leftout">@(d.HazardsLeftOutNames.Count > 0 ? L["WorldChat.Proposal.Encounter.LeftOut", string.Join(", ", d.HazardsLeftOutNames)] : L["WorldChat.Proposal.Encounter.LeftOutNone"])</p>
+        }
+
         if (d.PlaceHazards.Count > 0)
         {
             <p class="small" data-testid="world-encounter-hazards"><LucideIcon IconName="alert-triangle" Size="14" /> @L["WorldChat.Proposal.Encounter.Hazards", string.Join("; ", d.PlaceHazards)]</p>

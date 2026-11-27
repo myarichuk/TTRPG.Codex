@@ -287,6 +287,7 @@ public sealed partial class WorldChat
                 && old.RegionKind == draft.RegionKind && old.SuggestedStats == draft.SuggestedStats
                 && old.Place == draft.Place && old.PlaceGiven == draft.PlaceGiven && old.LineupGiven == draft.LineupGiven && old.Status == draft.Status && old.Retag == draft.Retag
                 && old.Tags.SequenceEqual(draft.Tags, StringComparer.Ordinal) && SameLineup(old.Lineup, draft.Lineup)
+                && old.HazardsLeftOutGiven == draft.HazardsLeftOutGiven && old.HazardsLeftOut.SequenceEqual(draft.HazardsLeftOut, StringComparer.Ordinal)
                 && old.SheetSet.OrderBy(p => p.Key, StringComparer.Ordinal).SequenceEqual(draft.SheetSet.OrderBy(p => p.Key, StringComparer.Ordinal)) && old.SheetClear.SequenceEqual(draft.SheetClear),
             DraftKinds.Tags => false, // tagging again changes nothing that is already tagged
             _ => new[] { old.OutlineName, old.Name }.Any(name => string.Equals(name.Trim(), draft.Name.Trim(), StringComparison.OrdinalIgnoreCase))

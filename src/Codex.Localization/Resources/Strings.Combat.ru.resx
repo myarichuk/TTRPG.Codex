@@ -355,4 +355,6 @@
   <data name="Combat.Prepared.Refused.NobodyJoined" xml:space="preserve"><value>Никто из этого столкновения не смог вступить в бой.</value></data>
   <data name="Combat.Prepared.Refused.TableClosed" xml:space="preserve"><value>Стол закрылся раньше, чем началось столкновение.</value></data>
   <data name="Combat.Prepared.Refused.Failed" xml:space="preserve"><value>Не удалось начать столкновение.</value></data>
+  <data name="Combat.Prepared.ConfirmBoth" xml:space="preserve"><value>Начать «{0}»? В бой вступают {1, plural, one{# существо} few{# существа} many{# существ} other{# существа}} и {2, plural, one{# опасность} few{# опасности} many{# опасностей} other{# опасности}}. Все бросают инициативу.</value></data>
+  <data name="Combat.Prepared.ConfirmHazards" xml:space="preserve"><value>Начать «{0}»? {1, plural, one{В бой вступает # опасность и бросает инициативу.} few{В бой вступают # опасности и бросают инициативу.} many{В бой вступают # опасностей и бросают инициативу.} other{В бой вступают # опасности и бросают инициативу.}}</value></data>
 </root>

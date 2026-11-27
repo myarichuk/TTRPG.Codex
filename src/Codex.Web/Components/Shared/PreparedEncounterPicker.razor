@@ -70,7 +70,18 @@
     {
         if (startingId != null) return;
         var n = PreparedEncounterService.CombatantsOf(row.Plan);
-        if (!await confirm.ShowAsync(L["Combat.Prepared.ConfirmTitle"], L["Combat.Prepared.Confirm", row.Plan.Name, n], L["Combat.Prepared.Start"])) return;
+        var hazards = 0;
+        try
+        {
+            // The complex hazards at the plan's place that would join too (a read; a fault only leaves them out of the sentence).
+            hazards = (await Encounters.JoiningHazardsAsync(Campaign, Access, row.Plan)).Count;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Counting the hazards of prepared encounter {Plan} failed", row.Plan.Id);
+        }
+
+        if (!await confirm.ShowAsync(L["Combat.Prepared.ConfirmTitle"], PreparedConfirm.Text(L, row.Plan.Name, n, hazards), L["Combat.Prepared.Start"])) return;
 
         startingId = row.Plan.Id;
         // The dialog's answer arrives outside the click that began this, so the buttons are drawn off here and not only when the start ends.
