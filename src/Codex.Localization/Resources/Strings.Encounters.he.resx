@@ -100,7 +100,7 @@
   <data name="Encounters.Start.SaveFirst" xml:space="preserve"><value>שמרו את השינויים כדי להתחיל.</value></data>
   <data name="Encounters.RanOn" xml:space="preserve"><value>{0, plural, one{התקיים ב{1}} two{התקיים פעמיים, לאחרונה ב{1}} other{התקיים # פעמים, לאחרונה ב{1}}}</value></data>
   <data name="Encounters.Difficulty.Title" xml:space="preserve"><value>רמת קושי</value></data>
-  <data name="Encounters.Difficulty.Above" xml:space="preserve"><value>מעל {0}</value></data>
+  <data name="Encounters.Difficulty.Above" xml:space="preserve"><value>מעל לרמה: {0}</value></data>
   <data name="Encounters.Difficulty.Below" xml:space="preserve"><value>מתחת לרמה: {0}</value></data>
   <data name="Encounters.Difficulty.Nothing" xml:space="preserve"><value>עדיין לא נספר דבר</value></data>
   <data name="Encounters.Difficulty.Summary" xml:space="preserve"><value>{0}: {1} עבור {2}</value></data>

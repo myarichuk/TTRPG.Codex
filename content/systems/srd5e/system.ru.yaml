@@ -602,3 +602,11 @@ sheetRules:
   skillsLabel: Навыки
   inventoryLabel: Снаряжение
   multiclassLabel: Дополнительные классы
+
+encounters:
+  difficulty:
+    unit: ОО
+    bands:
+      low: Низкая
+      moderate: Умеренная
+      high: Высокая
